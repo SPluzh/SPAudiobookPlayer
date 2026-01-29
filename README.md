@@ -20,7 +20,7 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 ### 🎵 Playback
 - **Multi-format support**: MP3, M4A, M4B, OGG, FLAC, WAV, WMA, AAC, OPUS
 - **High-quality audio**: Powered by BASS audio library
-- **Playback speed control**: Adjust from 0.5× to 2.0×
+- **Playback speed control**: Adjust from 0.5× to 3.0×
 - **Quick navigation**: Skip tracks, rewind/forward 10 or 60 seconds
 - **Volume control**: Smooth volume adjustment with visual feedback
 - **Windows taskbar integration**: Playback controls directly from the taskbar
@@ -98,7 +98,9 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - Your progress is **automatically saved** when you switch books or close the app
 
 ### Library Organization
-Your audiobooks should be organized in folders, with each audiobook in its own directory:
+Your audiobooks should be organized in folders, with each audiobook in its own directory. The player **supports any folder hierarchy** - you can organize books by authors, series, or any nested structure:
+
+**Simple structure:**
 ```
 Audiobooks/
 ├── Author Name - Book Title/
@@ -110,11 +112,26 @@ Audiobooks/
     └── Part 02.m4b
 ```
 
-### Keyboard Shortcuts
-- **Space**: Play/Pause
-- **Ctrl+F**: Focus search
-- **Arrow Keys**: Navigate library
-- **Enter**: Play selected audiobook
+**Hierarchical structure (Authors → Series → Books):**
+```
+Audiobooks/
+├── Author Name/
+│   ├── Series Name/
+│   │   ├── Book 1 - Title [Narrator]/
+│   │   │   ├── 01 - Chapter 1.mp3
+│   │   │   ├── 02 - Chapter 2.mp3
+│   │   │   └── cover.jpg
+│   │   └── Book 2 - Title [Narrator]/
+│   │       └── audiobook.m4b
+│   └── Standalone Book/
+│       └── Part 01.mp3
+└── Another Author/
+    └── Book Title/
+        └── file.mp3
+```
+
+The scanner will automatically find all audiobooks regardless of nesting depth.
+
 
 ## 🔧 Configuration
 
@@ -185,7 +202,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### 🎵 Воспроизведение
 - **Поддержка форматов**: MP3, M4A, M4B, OGG, FLAC, WAV, WMA, AAC, OPUS
 - **Высокое качество звука**: На базе аудиобиблиотеки BASS
-- **Управление скоростью**: Регулировка от 0,5× до 2,0×
+- **Управление скоростью**: Регулировка от 0,5× до 3,0×
 - **Быстрая навигация**: Переключение треков, перемотка на 10 или 60 секунд
 - **Управление громкостью**: Плавная регулировка с визуальной индикацией
 - **Интеграция с Windows**: Кнопки управления прямо на панели задач
@@ -263,7 +280,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Ваш прогресс **автоматически сохраняется** при переключении книг или закрытии приложения
 
 ### Организация библиотеки
-Ваши аудиокниги должны быть организованы в папках, каждая аудиокнига в своей директории:
+Ваши аудиокниги должны быть организованы в папках, каждая аудиокнига в своей директории. Плеер **поддерживает любую иерархию папок** - вы можете организовать книги по авторам, сериям или любой вложенной структуре:
+
+**Простая структура:**
 ```
 Audiobooks/
 ├── Автор - Название книги/
@@ -275,11 +294,26 @@ Audiobooks/
     └── Часть 02.m4b
 ```
 
-### Горячие клавиши
-- **Пробел**: Воспроизведение/Пауза
-- **Ctrl+F**: Фокус на поиске
-- **Стрелки**: Навигация по библиотеке
-- **Enter**: Воспроизвести выбранную аудиокнигу
+**Иерархическая структура (Авторы → Циклы → Книги):**
+```
+Audiobooks/
+├── Имя автора/
+│   ├── Название цикла/
+│   │   ├── Книга 1 - Название [Чтец]/
+│   │   │   ├── 01 - Глава 1.mp3
+│   │   │   ├── 02 - Глава 2.mp3
+│   │   │   └── cover.jpg
+│   │   └── Книга 2 - Название [Чтец]/
+│   │       └── audiobook.m4b
+│   └── Отдельная книга/
+│       └── Часть 01.mp3
+└── Другой автор/
+    └── Название книги/
+        └── file.mp3
+```
+
+Сканер автоматически найдёт все аудиокниги вне зависимости от глубины вложенности.
+
 
 ## 🔧 Конфигурация
 
