@@ -22,7 +22,6 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **High-quality audio**: Powered by BASS audio library
 - **Playback speed control**: Adjust from 0.5× to 3.0×
 - **Quick navigation**: Skip tracks, rewind/forward 10 or 60 seconds
-- **Volume control**: Smooth volume adjustment with visual feedback
 - **Windows taskbar integration**: Playback controls directly from the taskbar
 
 ### 📚 Library Management
@@ -32,6 +31,7 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Encoding fix**: Handles various tag encodings, including Cyrillic
 - **Cover art extraction**: Automatically extracts and displays embedded album art
 - **Search functionality**: Find audiobooks by title, author, or narrator
+- **Library filters**: Quick access to recently added, started, and finished books
 
 ### 📊 Progress Tracking
 - **Per-book progress**: Automatically saves playback position for each audiobook
@@ -43,17 +43,9 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 ### 🎨 User Interface
 - **Modern dark theme**: Elegant and eye-friendly interface
 - **Dual-pane layout**: Library browser on the left, player controls on the right
-- **Custom icons**: Beautiful icons for all actions and controls
 - **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
 - **Bilingual support**: Full interface localization (English/Russian)
-- **Responsive design**: Smooth animations and hover effects
 
-### 🛠️ Additional Tools
-- **ffprobe integration**: Enhanced metadata extraction with ffprobe/FFmpeg
-- **Built-in updater**: Check and install ffprobe directly from the app
-- **Database management**: SQLite-based storage with reset option
-- **Library filters**: Quick access to recently added, started, and finished books
-- **Folder navigation**: Open audiobook folders directly from the app
 
 ## 🚀 Installation
 
@@ -133,21 +125,14 @@ Audiobooks/
 The scanner will automatically find all audiobooks regardless of nesting depth.
 
 
-## 🔧 Configuration
-
-Settings are stored in `settings.ini` in the application directory:
-- `audiobooks_path`: Path to your audiobook library
-- `ffprobe_path`: Path to ffprobe.exe (for metadata extraction)
-- `covers_dir`: Directory for extracted cover images
-- `audio_formats`: Supported audio file extensions
 
 ## 📦 Building from Source
 
 To create a standalone executable:
 
-1. Install PyInstaller:
+1. Install dependencies:
    ```bash
-   pip install pyinstaller
+   pip install -r requirements.txt
    ```
 
 2. Run the build script:
@@ -204,7 +189,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Высокое качество звука**: На базе аудиобиблиотеки BASS
 - **Управление скоростью**: Регулировка от 0,5× до 3,0×
 - **Быстрая навигация**: Переключение треков, перемотка на 10 или 60 секунд
-- **Управление громкостью**: Плавная регулировка с визуальной индикацией
 - **Интеграция с Windows**: Кнопки управления прямо на панели задач
 
 ### 📚 Управление библиотекой
@@ -214,6 +198,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Исправление кодировки**: Работа с различными кодировками тегов, включая кириллицу
 - **Извлечение обложек**: Автоматическое извлечение и отображение встроенных обложек
 - **Функция поиска**: Поиск аудиокниг по названию, автору или чтецу
+- **Фильтры библиотеки**: Быстрый доступ к недавно добавленным, начатым и завершённым книгам
 
 ### 📊 Отслеживание прогресса
 - **Прогресс для каждой книги**: Автоматическое сохранение позиции воспроизведения
@@ -225,17 +210,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### 🎨 Интерфейс
 - **Современная тёмная тема**: Элегантный и приятный для глаз интерфейс
 - **Двухпанельная компоновка**: Браузер библиотеки слева, управление плеером справа
-- **Пользовательские иконки**: Красивые иконки для всех действий и элементов управления
 - **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
 - **Двуязычная поддержка**: Полная локализация интерфейса (английский/русский)
-- **Отзывчивый дизайн**: Плавные анимации и эффекты при наведении
 
-### 🛠️ Дополнительные инструменты
-- **Интеграция ffprobe**: Расширенное извлечение метаданных с помощью ffprobe/FFmpeg
-- **Встроенный обновлятель**: Проверка и установка ffprobe прямо из приложения
-- **Управление базой данных**: Хранилище на основе SQLite с возможностью сброса
-- **Фильтры библиотеки**: Быстрый доступ к недавно добавленным, начатым и завершённым книгам
-- **Навигация по папкам**: Открытие папок аудиокниг прямо из приложения
 
 ## 🚀 Установка
 
@@ -315,21 +292,14 @@ Audiobooks/
 Сканер автоматически найдёт все аудиокниги вне зависимости от глубины вложенности.
 
 
-## 🔧 Конфигурация
-
-Настройки хранятся в файле `settings.ini` в папке приложения:
-- `audiobooks_path`: Путь к вашей библиотеке аудиокниг
-- `ffprobe_path`: Путь к ffprobe.exe (для извлечения метаданных)
-- `covers_dir`: Директория для извлечённых обложек
-- `audio_formats`: Поддерживаемые расширения аудиофайлов
 
 ## 📦 Сборка из исходников
 
 Для создания автономного исполняемого файла:
 
-1. Установите PyInstaller:
+1. Установите зависимости:
    ```bash
-   pip install pyinstaller
+   pip install -r requirements.txt
    ```
 
 2. Запустите скрипт сборки:
