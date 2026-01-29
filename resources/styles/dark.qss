@@ -1,0 +1,701 @@
+/* ============================================================
+   ОСНОВНОЕ ОКНО И ВИДЖЕТЫ
+   ============================================================ */
+
+QMainWindow {
+    background-color: #444444;
+}
+
+QWidget {
+    color: #eaeaea;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+}
+
+/* ============================================================
+   КНОПКИ
+   ============================================================ */
+
+QStatusBar {
+    background-color: #373737;
+    color: #eaeaea;
+    font-size: 12px;
+}
+
+QPushButton {
+    background-color: #373737;
+    border: 1px solid #808080;
+    padding: 8px;
+    font-weight: 500;
+    min-height: 20px;
+    border-radius: 3px;
+}
+
+QPushButton:hover {
+    background-color: #018574;
+    border-color: #018574;
+}
+
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00634d, stop:1 #018574);
+}
+
+QPushButton:disabled {
+    background-color: #2a2a2a;
+    color: #666666;
+}
+
+/* Кнопка Play/Pause */
+QPushButton#playBtn {
+    /* min-width removed to allow stretching */
+}
+
+/* Кнопка ID3 Toggle */
+QPushButton#id3Btn {
+    background-color: #373737;
+    border: 1px solid #808080;
+    color: #eaeaea;
+    padding: 2px 5px;
+    font-weight: 500;
+    font-size: 11px;
+    min-height: 18px;
+    margin-top: 2px;
+    border-radius: 3px;
+}
+
+QPushButton#id3Btn:hover {
+    background-color: #018574;
+    border-color: #018574;
+    color: #ffffff;
+}
+
+QPushButton#id3Btn:checked {
+    background-color: #018574;
+    border-color: #018574;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+/* Кнопки фильтров в стиле вкладок */
+QPushButton#filterBtn {
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0px;
+    padding: 6px 10px;
+    font-weight: 500;
+    font-size: 13px;
+    color: #e0e0e0;
+}
+
+QPushButton#filterBtn:hover {
+    background-color: #4a4a4a;
+    color: #ffffff;
+}
+
+QPushButton#filterBtn:checked {
+    color: #ffffff;
+    border-bottom: 2px solid #018574;
+    font-weight: bold;
+}
+
+/* ============================================================
+   ПОЛЯ ВВОДА
+   ============================================================ */
+
+QLineEdit {
+    background-color: #373737;
+    border: 1px solid #808080;
+    padding: 8px;
+    color: #eaeaea;
+    selection-background-color: #018574;
+    border-radius: 3px;
+}
+
+QLineEdit:focus {
+    border-color: #018574;
+    background-color: #404040;
+}
+
+QLineEdit:hover {
+    border-color: #a0a0a0;
+}
+
+QLineEdit::placeholder {
+    color: #666666;
+}
+
+/* ============================================================
+   СПИСКИ
+   ============================================================ */
+
+QListWidget {
+    background-color: #373737;
+    border: 1px solid #808080;
+    padding: 5px;
+    outline: none;
+    /* Отключаем стандартную рамку фокуса */
+    show-decoration-selected: 0;
+    border-radius: 0px;
+}
+
+/* Убираем пунктирную рамку фокуса */
+QListWidget:focus {
+    outline: none;
+    border: 1px solid #018574;  /* Опционально: подсветка границы */
+}
+
+QListWidget::item {
+    padding: 5px;
+    border: none;
+}
+
+/* --- Обычное состояние --- */
+QListWidget::item {
+    background-color: transparent;
+    color: #e0e0e0;
+}
+
+/* --- Наведение --- */
+QListWidget::item:hover {
+    background-color: #4a4a4a;
+    color: #ffffff;
+    border-radius: 0px;
+}
+
+/* --- Выделение АКТИВНОЕ отключено --- */
+QListWidget::item:selected:active {
+    background-color: transparent;
+    color: #e0e0e0;
+    border-radius: 0px;
+}
+
+/* --- Выделение НЕАКТИВНОЕ отключено --- */
+QListWidget::item:selected:!active {
+    background-color: transparent;
+    color: #e0e0e0;
+    border-radius: 0px;
+}
+
+/* --- Наведение на выделенный (оставляем hover) --- */
+QListWidget::item:selected:hover {
+    background-color: #4a4a4a;
+    color: #ffffff;
+    border-radius: 0px;
+}
+
+/* --- Отключённый элемент --- */
+QListWidget::item:disabled {
+    background-color: transparent;
+    color: #666666;
+}
+
+/* ============================================================
+   ДЕРЕВЬЯ
+   ============================================================ */
+
+/* QTreeWidget — выделение отключено, только hover */
+QTreeWidget {
+    background-color: #373737;
+    border: 1px solid #808080;
+    padding: 5px;
+    outline: none;
+    show-decoration-selected: 0;
+    border-radius: 0px;
+}
+
+/* Нормальное состояние */
+QTreeWidget::item {
+    padding: 5px;
+    background-color: transparent;
+    color: #e0e0e0;
+}
+
+/* Hover */
+QTreeWidget::item:hover {
+    background-color: #4a4a4a;
+    color: #ffffff;
+    border-radius: 0px;
+}
+
+/* СИСТЕМНОЕ выделение АКТИВНОЕ отключено */
+QTreeWidget::item:selected:active {
+    background-color: transparent;
+    color: #e0e0e0;
+}
+
+/* СИСТЕМНОЕ выделение НЕАКТИВНОЕ отключено */
+QTreeWidget::item:selected:!active {
+    background-color: transparent;
+    color: #e0e0e0;
+}
+
+/* Hover на выделенном элементе */
+QTreeWidget::item:selected:hover {
+    background-color: #4a4a4a;
+    color: #ffffff;
+    border-radius: 0px;
+}
+
+/* Программное выделение (текущая книга) — приоритет */
+QTreeWidget::item[playing="true"] {
+    background-color: #018574 !important;
+    color: #ffffff !important;
+    border-radius: 0px;
+}
+
+
+/* ============================================================
+   СЛАЙДЕРЫ
+   ============================================================ */
+
+QSlider::groove:horizontal {
+    background: #808080;
+    height: 10px;
+    border-radius: 0px;
+}
+
+QSlider::handle:horizontal {
+    background: #018574;
+    width: 16px;
+    height: 16px;
+    margin: -5px 0;
+    border: 2px solid #373737;
+    border-radius: 0px;
+}
+
+QSlider::handle:horizontal:hover {
+    background: #02a58a;
+}
+
+QSlider::handle:horizontal:pressed {
+    background: #00634d;
+}
+
+QSlider::sub-page:horizontal {
+    background-color: #018574;
+    border-radius: 0px;
+}
+
+QSlider::add-page:horizontal {
+    background: #808080;
+    border-radius: 0px;
+}
+
+QSlider#speedSlider::sub-page:horizontal {
+    background-color: #808080;
+}
+
+/* ============================================================
+   ПРОГРЕСС-БАРЫ
+   ============================================================ */
+
+QProgressBar {
+    background-color: #808080;
+    border: none;
+    border-radius: 3px;
+}
+
+QProgressBar::chunk {
+    background-color: #018574;
+    border-radius: 3px;
+}
+
+#scanProgressBar {
+    height: 25px;
+    font-size: 13px;
+    qproperty-alignment: 'AlignCenter';
+}
+
+#scanConsole {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    border: 1px solid #444;
+}
+
+#scanStatusLabel {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* ============================================================
+   МЕТКИ (LABELS)
+   ============================================================ */
+
+QLabel {
+    color: #eaeaea;
+}
+
+QLabel#titleLabel {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+QLabel#subtitleLabel {
+    font-size: 14px;
+    color: #a0a0a0;
+}
+
+QLabel#timeLabel {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    color: #a0a0a0;
+}
+
+QLabel#bigTimeLabel {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 15px;
+    font-weight: bold;
+    color: #018574;
+}
+
+QLabel#statusOk {
+    color: #4ecca3;
+    font-weight: bold;
+}
+
+QLabel#statusError {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+QLabel#statusWarning {
+    color: #f9ca24;
+    font-weight: bold;
+}
+
+QLabel#sectionLabel {
+    font-weight: bold;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ============================================================
+   СПЛИТТЕР
+   ============================================================ */
+
+QSplitter::handle {
+    background-color: #808080;
+    width: 2px;
+}
+
+QSplitter::handle:horizontal {
+    width: 2px;
+}
+
+QSplitter::handle:vertical {
+    height: 2px;
+}
+
+QSplitter::handle:hover {
+    background-color: #018574;
+}
+
+QSplitter::handle:pressed {
+    background-color: #02a58a;
+}
+
+/* ============================================================
+   СКРОЛЛБАРЫ
+   ============================================================ */
+
+/* Вертикальный скроллбар */
+QScrollBar:vertical {
+    background-color: #373737;
+    width: 12px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #808080;
+    min-height: 30px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #018574;
+}
+
+QScrollBar::handle:vertical:pressed {
+    background-color: #02a58a;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+    border: none;
+    background: none;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* Горизонтальный скроллбар */
+QScrollBar:horizontal {
+    background-color: #373737;
+    height: 12px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #808080;
+    min-width: 30px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: #018574;
+}
+
+QScrollBar::handle:horizontal:pressed {
+    background-color: #02a58a;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+    border: none;
+    background: none;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+/* ============================================================
+   ФРЕЙМЫ
+   ============================================================ */
+
+QFrame {
+    border: none;
+}
+
+QFrame#separator {
+    background-color: #808080;
+    max-height: 2px;
+    min-height: 2px;
+}
+
+/* ============================================================
+   МЕНЮ
+   ============================================================ */
+/* Цвет верхней панели (меню-бар) */
+QMenuBar {
+    background-color: #373737;  /* основной фон панели */
+    color: #eaeaea;             /* цвет текста пунктов меню */
+    font-size: 13px;
+}
+
+QMenu {
+    background-color: #373737;
+    border: 1px solid #444444;
+    padding: 2px;
+    margin: 3px;
+    border-radius: 3px;
+}
+
+QMenu::item {
+    padding: 2px 2px;
+    color: #eaeaea;
+
+}
+
+QMenu::item:selected {
+    background-color: #018574;
+    color: #ffffff;
+
+}
+
+QMenu::item:pressed {
+    background-color: #00634d;
+
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: #808080;
+    margin: 5px 10px;
+}
+
+QMenu::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+/* ============================================================
+   ОКНО НАСТРОЕК
+   ============================================================ */
+/* Фон диалогового окна */
+QDialog {
+    background-color: #373737;  /* тёмно-серый фон */
+    color: #eaeaea;             /* цвет текста внутри диалога */
+    border-radius: 3px;
+}
+
+/* Фон всего виджета вкладок */
+QTabWidget {
+    background-color: #373737; /* фон контента вкладки */
+}
+
+/* Вкладки сверху */
+QTabBar {
+    background-color: #2c2c2c; /* фон полоски с вкладками */
+}
+
+QTabBar::tab {
+    background-color: #444444;  /* фон вкладки */
+    color: #eaeaea;             /* цвет текста */
+    padding: 8px 20px;
+    border: 1px solid #808080;  /* рамка вокруг вкладки */
+    border-bottom: none;         /* чтобы была "связанная" с контентом */
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    margin-right: 2px;
+}
+
+/* Вкладка при наведении мыши */
+QTabBar::tab:hover {
+    background-color: #018574;
+    color: #ffffff;
+}
+
+/* Активная вкладка */
+QTabBar::tab:selected {
+    background-color: #018574;
+    color: #ffffff;
+    border-bottom: 1px solid #018574; /* чтобы визуально сливалась с контентом */
+}
+
+/* Вкладки слева/справа/снизу — если используешь */
+QTabBar::tab:!selected {
+    margin-top: 2px;  /* отделяем неактивные от активной */
+}
+
+/* ========================================
+   ДЕЛЕГАТ АУДИОКНИГИ - СТИЛИЗАЦИЯ СТРОК
+   ======================================== */
+
+/* Автор книги */
+QLabel#delegate_author {
+    font-size: 14px;
+    color: #CCCCCC;
+}
+
+/* Название книги */
+QLabel#delegate_title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #CCCCCC;
+}
+
+/* Рассказчик */
+QLabel#delegate_narrator {
+    font-size: 14px;
+    color: #CCCCCC;
+}
+
+/* Общая информация */
+QLabel#delegate_info {
+    font-size: 14px;
+    font-weight: bold;
+    color: #CCCCCC;
+}
+
+/* Папка */
+QLabel#delegate_folder {
+    font-size: 14px;
+    font-weight: bold;
+    color: #CCCCCC;
+}
+
+/* Прогресс прослушивания */
+QLabel#delegate_progress {
+    font-size: 12px;
+    font-weight: bold;
+    color: #CCCCCC;
+}
+
+/* Длительность */
+QLabel#delegate_duration {
+    font-size: 12px;
+    font-weight: bold;
+    color: #CCCCCC;
+}
+
+/* Количество файлов */
+QLabel#delegate_file_count {
+    font-size: 12px;
+    font-weight: bold;
+    color: #CCCCCC;
+}
+
+/* ============================================================
+   TOOLTIP (всплывающие подсказки)
+   ============================================================ */
+
+QToolTip {
+    color: #eaeaea;              /* цвет текста */
+    border: 1px solid #018574;  /* рамка */
+    padding: 3px;
+    border-radius: 3px;
+}
+
+/* ============================================================
+   ОКНО О ПРОГРАММЕ
+   ============================================================ */
+
+QFrame#aboutContainer {
+    background-color: #2b2b2b;
+    border: 1px solid #444;
+    border-radius: 3px;
+}
+
+#aboutContainer QLabel {
+    color: #ccc;
+}
+
+QLabel#aboutTitle {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+QLabel#aboutVersion {
+    font-size: 14px;
+    color: #888;
+}
+
+QFrame#aboutLine {
+    background-color: #444;
+    max-height: 1px;
+}
+
+QLabel#aboutDesc {
+    font-size: 13px;
+}
+
+QPushButton#aboutCloseBtn {
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+QPushButton#aboutCloseBtn:hover {
+    background-color: #555;
+}
+
+QPushButton#aboutCloseBtn:pressed {
+    background-color: #333;
+}
+

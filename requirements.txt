@@ -1,0 +1,5 @@
+PyQt6>=6.6.0
+comtypes>=1.4.0
+pyinstaller>=6.0.0
+pillow>=10.0.0 
+mutagen>=1.47.0 

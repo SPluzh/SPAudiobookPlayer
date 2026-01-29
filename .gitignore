@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# Build artifacts (PyInstaller)
+build/
+dist/
+
+# Application Data
+data/
+*.log
+settings.ini
+
+# Binaries
+ffmpeg.exe
+ffprobe.exe
+
+# Archives
+*.zip
