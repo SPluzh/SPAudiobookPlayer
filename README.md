@@ -99,11 +99,11 @@ Your audiobooks should be organized in folders, with each audiobook in its own d
 **Simple structure:**
 ```
 Audiobooks/
-├── Author Name - Book Title/
+├── Author - Book Title [Narrator]/
 │   ├── 01 - Chapter 1.mp3
 │   ├── 02 - Chapter 2.mp3
 │   └── cover.jpg
-└── Another Author - Another Book/
+└── Another Author - Another Book [Narrator]/
     ├── Part 01.m4b
     └── Part 02.m4b
 ```
@@ -113,11 +113,11 @@ Audiobooks/
 Audiobooks/
 ├── Author Name/
 │   ├── Series Name/
-│   │   ├── Book 1 - Title [Narrator]/
+│   │   ├── Author - Book Title [Narrator]/
 │   │   │   ├── 01 - Chapter 1.mp3
 │   │   │   ├── 02 - Chapter 2.mp3
 │   │   │   └── cover.jpg
-│   │   └── Book 2 - Title [Narrator]/
+│   │   └── Author - Book 2 Title [Narrator]/
 │   │       └── audiobook.m4b
 │   └── Standalone Book/
 │       └── Part 01.mp3
@@ -249,16 +249,12 @@ https://github.com/user-attachments/assets/0217de3d-64f2-4932-9604-54cc257d59d7
 - Ваш прогресс **автоматически сохраняется** при переключении книг или закрытии приложения
 
 ### Организация библиотеки
-Ваши аудиокниги должны быть организованы в папках, каждая аудиокнига в своей директории. Плеер **поддерживает любую иерархию папок** - вы можете организовать книги по авторам, сериям или любой вложенной структуре:
-
-**Простая структура:**
-```
 Audiobooks/
-├── Автор - Название книги/
+├── Автор - Название книги [Чтец]/
 │   ├── 01 - Глава 1.mp3
 │   ├── 02 - Глава 2.mp3
 │   └── cover.jpg
-└── Другой автор - Другая книга/
+└── Другой автор - Другая книга [Чтец]/
     ├── Часть 01.m4b
     └── Часть 02.m4b
 ```
@@ -268,11 +264,11 @@ Audiobooks/
 Audiobooks/
 ├── Имя автора/
 │   ├── Название цикла/
-│   │   ├── Книга 1 - Название [Чтец]/
+│   │   ├── Автор - Название [Чтец]/
 │   │   │   ├── 01 - Глава 1.mp3
 │   │   │   ├── 02 - Глава 2.mp3
 │   │   │   └── cover.jpg
-│   │   └── Книга 2 - Название [Чтец]/
+│   │   └── Автор - Название [Чтец]/
 │   │       └── audiobook.m4b
 │   └── Отдельная книга/
 │       └── Часть 01.mp3
