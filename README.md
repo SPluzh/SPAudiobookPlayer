@@ -143,21 +143,7 @@ To create a standalone executable:
 
 3. The executable will be created in `_build_/dist/`
 
-## 🌐 Localization
 
-The application is fully localized in:
-- **English** (`en.json`)
-- **Русский** (`ru.json`)
-
-Switch languages via **Menu → Language**
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -310,21 +296,7 @@ Audiobooks/
 
 3. Исполняемый файл будет создан в `_build_/dist/`
 
-## 🌐 Локализация
 
-Приложение полностью локализовано на:
-- **English** (`en.json`)
-- **Русский** (`ru.json`)
-
-Переключайте языки через **Меню → Язык**
-
-## 🤝 Участие в разработке
-
-Приветствуется участие в разработке! Не стесняйтесь отправлять Pull Request.
-
-## 📄 Лицензия
-
-Этот проект распространяется под лицензией MIT - подробности см. в файле [LICENSE](LICENSE).
 
 ## 🙏 Благодарности
 
