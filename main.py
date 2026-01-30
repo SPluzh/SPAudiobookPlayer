@@ -31,6 +31,7 @@ from taskbar_progress import TaskbarProgress, TaskbarThumbnailButtons
 import ctypes
 from ctypes import wintypes
 from translations import tr, trf, set_language, get_language, Language
+from hotkeys import HotKeyManager
 
 
 def format_duration(seconds):
@@ -2211,6 +2212,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.setup_menu()
         self.connect_signals()
         
+        # Initialize hotkey manager for keyboard shortcuts and multimedia keys
+        self.hotkey_manager = HotKeyManager(self)
+        
         # Data hydration and session recovery
         self.library_widget.load_audiobooks()
         self.restore_last_session()
@@ -3004,6 +3008,11 @@ class AudiobookPlayerWindow(QMainWindow):
         self.playback_controller.save_current_progress()
         self.save_last_session()
         self.taskbar_progress.clear()
+        
+        # Unregister global hotkeys
+        if hasattr(self, 'hotkey_manager'):
+            self.hotkey_manager.unregister_all()
+            
         self.player.free()
         event.accept()
 
@@ -3022,6 +3031,11 @@ class TaskbarEventFilter(QAbstractNativeEventFilter):
                 msg_ptr = int(message)
                 if msg_ptr:
                     msg = wintypes.MSG.from_address(msg_ptr)
+                    
+                    # Handle multimedia keys and other global hotkeys via HotKeyManager
+                    if self.window.hotkey_manager.handle_native_event(msg):
+                        return True, 0
+
                     if msg.message == 0x0111:  # WM_COMMAND
                         if (msg.wParam >> 16) & 0xFFFF == 0x1800:  # THBN_CLICKED
                             button_id = msg.wParam & 0xFFFF
