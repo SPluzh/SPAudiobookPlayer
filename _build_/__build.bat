@@ -24,13 +24,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM --- check UPX ---
-where upx >nul 2>&1
-if errorlevel 1 (
-    echo [WARNING] UPX not found in PATH. Exe size will be larger.
-    echo Download UPX from https://upx.github.io/ and add to PATH for better compression.
-    pause
-)
 
 REM --- clean previous builds ---
 if exist build (
