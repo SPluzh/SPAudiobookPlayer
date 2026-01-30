@@ -2228,6 +2228,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.setGeometry(self.window_x, self.window_y, self.window_width, self.window_height)
         self.setMinimumSize(450, 450)
         self.statusBar().showMessage(tr("status.load_library"))
+        
+        # Set initial focus to the library tree to avoid search field grabbing 'Space' key
+        self.library_widget.tree.setFocus()
     
     def load_language_preference(self):
         """Retrieve and apply the user's preferred application language from the configuration file"""
