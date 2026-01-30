@@ -2,11 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2]
+- **Auto-Rewind**: Added "AR" button to toggle automatic 10-30s rewind after pauses and 30s rewind on application close. State is persisted in settings.
+
 ## [1.0.1]
-- **Inverted Folder Logic**: Folders are now hidden by default (flat view). The "Show Folders" toggle button restores the hierarchy.
-- **Persistence**: The state of the "Show Folders" toggle is saved and restored from `settings.ini`.
-- **UI Improvements**:
-    - "Show Folders" button is now icon-only with a tooltip.
-    - Added tooltips to all library filter buttons ("All", "New", "Started", "Finished").
-    - Filter buttons are now adaptive: text labels are hidden when the library panel is too narrow (< 450px).
-    - Improved button sizing to dynamic widths to correctly fit translated text
+- **Folders**: Flat view by default; state persisted. Toggle converted to icon-only.
+- **UI**: Adaptive filter buttons (icon-only < 450px) with tooltips. Optimized button widths for translations.

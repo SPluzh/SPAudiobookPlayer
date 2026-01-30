@@ -1184,6 +1184,7 @@ class PlayerWidget(QWidget):
     speed_changed = pyqtSignal(int)
     file_selected = pyqtSignal(int)
     id3_toggled_signal = pyqtSignal(bool)
+    auto_rewind_toggled_signal = pyqtSignal(bool)
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
@@ -1223,6 +1224,15 @@ class PlayerWidget(QWidget):
         self.id3_btn.setToolTip(tr("player.show_id3"))
         self.id3_btn.toggled.connect(self.on_id3_toggled)
         vol_box.addWidget(self.id3_btn)
+        
+        # Auto-rewind Toggle
+        self.auto_rewind_btn = QPushButton("AR")
+        self.auto_rewind_btn.setCheckable(True)
+        self.auto_rewind_btn.setFixedWidth(40)
+        self.auto_rewind_btn.setObjectName("autoRewindBtn")
+        self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
+        self.auto_rewind_btn.toggled.connect(self.on_auto_rewind_toggled)
+        vol_box.addWidget(self.auto_rewind_btn)
         
         self.volume_slider = QSlider(Qt.Orientation.Horizontal)
         self.volume_slider.setObjectName("volumeSlider")
@@ -1460,6 +1470,10 @@ class PlayerWidget(QWidget):
         # Notify the application about the preference change
         self.id3_toggled_signal.emit(checked)
     
+    def on_auto_rewind_toggled(self, checked):
+        """Handle the toggle of auto-rewind feature"""
+        self.auto_rewind_toggled_signal.emit(checked)
+    
     def load_files(self, files_list: list, current_index: int = 0):
         """Populate the track list widget with file information and highlight the active track"""
         self.last_files_list = files_list
@@ -1542,6 +1556,7 @@ class PlayerWidget(QWidget):
         self.btn_ff60.setToolTip(tr("player.forward_60"))
         self.play_btn.setToolTip(tr("player.play"))
         self.id3_btn.setToolTip(tr("player.show_id3"))
+        self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
 
 
 class LibraryTree(QTreeWidget):
@@ -2161,6 +2176,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.config_dir.mkdir(exist_ok=True)
         self.data_dir.mkdir(exist_ok=True)
         
+        # Auto-rewind state tracking
+        self.last_pause_time = None
+        
         # Load user configurations and localization settings
         self.load_settings()
         self.load_language_preference()
@@ -2267,6 +2285,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.id3_btn.setChecked(self.show_id3)
         self.player_widget.on_id3_toggled(self.show_id3)
         self.player_widget.id3_toggled_signal.connect(self.on_id3_state_toggled)
+        
+        self.player_widget.auto_rewind_btn.setChecked(self.auto_rewind)
+        self.player_widget.auto_rewind_toggled_signal.connect(self.on_auto_rewind_state_toggled)
+        
         self.splitter.addWidget(self.player_widget)
         
         main_layout.addWidget(self.splitter, 1)
@@ -2434,6 +2456,7 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # Player Functional Preferences
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
+        self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
         self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
         
         # Synchronize library root with controller if active
@@ -2472,7 +2495,8 @@ class AudiobookPlayerWindow(QMainWindow):
             'splitter_state': ''
         }
         config['Player'] = {
-            'show_id3': 'False'
+            'show_id3': 'True',
+            'auto_rewind': 'True'
         }
         config['Library'] = {
             'show_folders': 'False'
@@ -2515,6 +2539,7 @@ class AudiobookPlayerWindow(QMainWindow):
         if 'Player' not in config: config['Player'] = {}
         if hasattr(self, 'player_widget'):
             config['Player']['show_id3'] = str(self.player_widget.show_id3)
+            config['Player']['auto_rewind'] = str(self.auto_rewind)
         
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
@@ -2618,6 +2643,11 @@ class AudiobookPlayerWindow(QMainWindow):
                 state
             )
 
+    def on_auto_rewind_state_toggled(self, state: bool):
+        """Update and persist the auto-rewind preference"""
+        self.auto_rewind = state
+        self.save_settings()
+
     def on_show_folders_toggled(self, checked):
         """Update and persist the folder visibility preference"""
         self.show_folders = checked
@@ -2670,9 +2700,19 @@ class AudiobookPlayerWindow(QMainWindow):
         """Toggle between active playback and paused states, updating UI indicators and background controllers accordingly"""
         if self.player.is_playing():
             self.player.pause()
+            self.last_pause_time = __import__('time').time()
             self.taskbar_progress.set_paused()
         else:
+            if self.auto_rewind and self.last_pause_time:
+                pause_duration = __import__('time').time() - self.last_pause_time
+                if pause_duration > 10: # Only rewind if pause was longer than 10 seconds
+                    # Rewind logic: base 10s + 1s per 30s of pause, up to 30s total
+                    # So: 1min pause -> 10 + 2 = 12s, 10min pause -> 10 + 20 = 30s
+                    rewind_amount = min(30, 10 + (pause_duration / 30.0))
+                    self.player.rewind(-rewind_amount)
+            
             self.player.play()
+            self.last_pause_time = None
             self.taskbar_progress.set_normal()
         
         # Sync the session delegate for visual consistency in the library
@@ -2958,6 +2998,9 @@ class AudiobookPlayerWindow(QMainWindow):
     
     def closeEvent(self, event):
         """Perform cleanup operations upon application termination, including session saving and engine release"""
+        if self.auto_rewind:
+            self.player.rewind(-30)
+            
         self.playback_controller.save_current_progress()
         self.save_last_session()
         self.taskbar_progress.clear()

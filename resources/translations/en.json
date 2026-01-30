@@ -52,6 +52,8 @@
     "time_left": "Remaining: {time}",
     "time_left_unknown": "Remaining: --:--:--",
     "show_id3": "Show ID3 Title",
+    "auto_rewind": "Auto-rewind",
+    "tooltip_auto_rewind": "Auto-rewind from 10 to 30 seconds according to the length of the pause",
     "of": "of"
   },
   "status": {

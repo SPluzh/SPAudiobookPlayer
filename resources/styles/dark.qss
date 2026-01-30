@@ -72,7 +72,31 @@ QPushButton#id3Btn:hover {
 QPushButton#id3Btn:checked {
     background-color: #018574;
     border-color: #018574;
+    font-weight: bold;
+}
+
+/* Auto-rewind Toggle Button */
+QPushButton#autoRewindBtn {
+    background-color: #373737;
+    border: 1px solid #808080;
+    color: #eaeaea;
+    padding: 2px 5px;
+    font-weight: 500;
+    font-size: 11px;
+    min-height: 18px;
+    margin-top: 2px;
+    border-radius: 3px;
+}
+
+QPushButton#autoRewindBtn:hover {
+    background-color: #018574;
+    border-color: #018574;
     color: #ffffff;
+}
+
+QPushButton#autoRewindBtn:checked {
+    background-color: #018574;
+    border-color: #018574;
     font-weight: bold;
 }
 
@@ -94,7 +118,6 @@ QPushButton#filterBtn:hover {
 }
 
 QPushButton#filterBtn:checked {
-    color: #ffffff;
     border-bottom: 2px solid #018574;
     font-weight: bold;
 }
@@ -570,7 +593,6 @@ QTabBar::tab:hover {
 /* Active tab */
 QTabBar::tab:selected {
     background-color: #018574;
-    color: #ffffff;
     border-bottom: 1px solid #018574; /* to visually merge with content */
 }
 
