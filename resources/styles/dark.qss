@@ -159,13 +159,13 @@ QListWidget {
     outline: none;
     /* Disable standard selection decoration */
     show-decoration-selected: 0;
-    border-radius: 0px;
+    border-radius: 3px;
 }
 
-/* Remove dotted focus rectangle */
+/* Remove dotted focus rectangle and highlighted border */
 QListWidget:focus {
     outline: none;
-    border: 1px solid #018574;  /* Optional: border highlight */
+    border: 1px solid #808080;
 }
 
 QListWidget::item {
@@ -224,7 +224,12 @@ QTreeWidget {
     padding: 5px;
     outline: none;
     show-decoration-selected: 0;
-    border-radius: 0px;
+    border-radius: 3px;
+}
+
+QTreeWidget:focus {
+    outline: none;
+    border: 1px solid #808080;
 }
 
 /* Normal state */

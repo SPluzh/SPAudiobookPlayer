@@ -1372,6 +1372,7 @@ class PlayerWidget(QWidget):
         self.file_list = QListWidget()
         self.file_list.setObjectName("fileList")
         self.file_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        self.file_list.setFocusPolicy(Qt.FocusPolicy.NoFocus) # Disable focus to avoid intercepting hotkeys
         self.file_list.itemDoubleClicked.connect(self.on_file_double_clicked)
         layout.addWidget(self.file_list)
     
@@ -1723,6 +1724,7 @@ class LibraryWidget(QWidget):
         # Дерево аудиокниг
         self.tree = LibraryTree()
         self.tree.setHeaderHidden(True)
+        self.tree.setFocusPolicy(Qt.FocusPolicy.NoFocus) # Disable focus to avoid intercepting hotkeys
         self.tree.setIconSize(QSize(
             self.config.get('audiobook_icon_size', 100),
             self.config.get('audiobook_icon_size', 100)
@@ -2229,8 +2231,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.setMinimumSize(450, 450)
         self.statusBar().showMessage(tr("status.load_library"))
         
-        # Set initial focus to the library tree to avoid search field grabbing 'Space' key
-        self.library_widget.tree.setFocus()
+        # Ensure the main window has focus so hotkeys work correctly
+        self.setFocus()
     
     def load_language_preference(self):
         """Retrieve and apply the user's preferred application language from the configuration file"""
