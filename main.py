@@ -534,8 +534,6 @@ class SettingsDialog(QDialog):
         save_button.setObjectName("saveBtn")
         save_button.setMinimumHeight(40)
         save_button.clicked.connect(self.on_save)
-        # Убедимся, что кнопка растягивается
-        save_button.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
         )
