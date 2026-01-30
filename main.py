@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSignal, QRect, QRectF, QPoint, QPointF, QThread
 from PyQt6.QtGui import (
     QIcon, QAction, QPixmap, QBrush, QColor, QFont, QPen, QPainter, QPolygon,
-    QTextCursor, QPainterPath
+    QTextCursor, QPainterPath, QFontMetrics
 )
 
 from bass_player import BassPlayer
@@ -1663,7 +1663,7 @@ class LibraryWidget(QWidget):
         layout.addLayout(search_layout)
 
         filter_layout = QHBoxLayout()
-        filter_layout.setSpacing(2)
+        filter_layout.setSpacing(10)
         
         # Show Folders Toggle
         self.btn_show_folders = QPushButton("")
@@ -1697,9 +1697,11 @@ class LibraryWidget(QWidget):
             self.filter_buttons[filter_id] = btn
             filter_layout.addWidget(btn)
             
-            if filter_id == self.current_filter:
-                btn.setChecked(True)
-        
+        last_btn = self.filter_buttons[self.current_filter]
+        if last_btn:
+             last_btn.setChecked(True)
+
+        filter_layout.addStretch(1)
         layout.addLayout(filter_layout)
         
         # Дерево аудиокниг
@@ -1720,6 +1722,41 @@ class LibraryWidget(QWidget):
             self.tree.setItemDelegate(self.delegate)
         
         layout.addWidget(self.tree)
+
+    def resizeEvent(self, event):
+        """Update button labels when the widget is resized to avoid layout overflow"""
+        super().resizeEvent(event)
+        self.update_filter_labels()
+
+    def update_filter_labels(self):
+        """Toggle text visibility on filter buttons based on current widget width"""
+        if not hasattr(self, 'filter_buttons'):
+            return
+            
+        # Threshold for hiding text (only icons shown below this width)
+        show_text = self.width() >= 450
+        
+        for filter_id, config in self.FILTER_CONFIG.items():
+            if filter_id in self.filter_buttons:
+                btn = self.filter_buttons[filter_id]
+                if show_text:
+                    label = tr(config['label'])
+                    btn.setText(label)
+                    
+                    # Calculate required width using BOLD metrics to prevent truncation when active
+                    font = btn.font()
+                    font.setBold(True)
+                    metrics = QFontMetrics(font)
+                    
+                    text_width = metrics.horizontalAdvance(label)
+                    icon_width = btn.iconSize().width() if not btn.icon().isNull() else 0
+                    
+                    # Buffer: icon + text + horizontal padding (10+10) + icon spacing + requested 15px
+                    required_width = text_width + icon_width + 20 + 5 + 15
+                    btn.setMinimumWidth(required_width)
+                else:
+                    btn.setText("")
+                    btn.setMinimumWidth(0) # Reset min width allow shrinking to icon size (or rely on style)
     
     def load_icons(self):
         """Load and scale standard icons for folders and audiobook covers from resources"""
@@ -2094,10 +2131,12 @@ class LibraryWidget(QWidget):
         if hasattr(self, 'btn_show_folders'):
             self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
             
-        # Update visibility for localized filter names
+        # Refresh adaptive filter button labels
+        self.update_filter_labels()
+        
+        # Update tooltips for localized filter names
         for filter_id, config in self.FILTER_CONFIG.items():
             if filter_id in self.filter_buttons:
-                self.filter_buttons[filter_id].setText(tr(config['label']))
                 self.filter_buttons[filter_id].setToolTip(tr(f"library.tooltip_filter_{filter_id}"))
         
         # Revise search field hint
