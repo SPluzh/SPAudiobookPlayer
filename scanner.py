@@ -8,7 +8,7 @@ import hashlib
 
 from database import init_database
 
-# Обеспечиваем корректный вывод UTF-8 в консоль Windows
+# Ensure correct UTF-8 output in Windows console
 if hasattr(sys.stdout, 'reconfigure'):
     try:
         sys.stdout.reconfigure(encoding='utf-8')
@@ -17,14 +17,17 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 
 class AudiobookScanner:
+    """Library scanner for processing audiobook directories and metadata"""
+    
     def __init__(self, config_file='settings.ini'):
+        """Initialize scanner and load configurations"""
         self.script_dir = Path(__file__).parent
         self.config_file = self.script_dir / 'resources' / config_file
         
-        # Загрузка настроек
+        # Load settings
         self._load_settings()
         
-        # Пути
+        # Paths
         self.db_file = self.script_dir / 'data' / 'audiobooks.db'
         
         covers_dir_str = self.config.get('Paths', 'covers_dir', fallback='data/extracted_covers')
@@ -32,14 +35,14 @@ class AudiobookScanner:
         if not self.covers_dir.is_absolute():
             self.covers_dir = self.script_dir / self.covers_dir
         
-        # Загрузка локализации
+        # Load translations
         self._load_translations()
         
         print("\n" + "=" * 70)
         print(self.tr("scanner.init_title"))
         print("=" * 70)
         
-        # Путь к ffprobe
+        # ffprobe path
         path_str = self.config.get('Paths', 'ffprobe_path', fallback=str(self.script_dir / 'resources' / 'bin' / 'ffprobe.exe'))
         self.ffprobe_path = Path(path_str)
         if not self.ffprobe_path.is_absolute():
@@ -62,7 +65,7 @@ class AudiobookScanner:
         self._init_database()
 
     def _load_translations(self):
-        """Загрузка файла перевода"""
+        """Load translation file based on configuration"""
         lang = self.config.get('Display', 'language', fallback='ru')
         trans_file = self.script_dir / 'resources' / 'translations' / f'{lang}.json'
         
@@ -75,14 +78,14 @@ class AudiobookScanner:
                 print(f"Error loading translations: {e}")
                 
     def tr(self, key: str, **kwargs) -> str:
-        """Перевод строки по ключу"""
+        """Translate string by key"""
         parts = key.split('.')
         data = self.translations
         for p in parts:
             if isinstance(data, dict) and p in data:
                 data = data[p]
             else:
-                return key  # Возвращаем ключ если не нашли
+                return key  # Return key if translation not found
         
         if isinstance(data, str):
             try:
@@ -91,18 +94,12 @@ class AudiobookScanner:
                 return data
         return key
 
-    # ------------------------------------------------------------------
-    # SETTINGS
-    # ------------------------------------------------------------------
-    
+
     def _load_settings(self):
+        """Load scanner settings from config file"""
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding='utf-8')
         self.config = config
-        
-        # Мы вызываем это ДО того как загружены переводы в __init__, 
-        # но в _load_settings принты идут ПОТОМ в оригинале.
-        # Перенесем принты в метод который гарантированно имеет переводы.
         
         extensions = config.get(
             'Audio',
@@ -119,6 +116,7 @@ class AudiobookScanner:
         self.cover_names = [c.strip() for c in covers.split(',') if c.strip()]
 
     def _print_settings_summary(self):
+        """Print summary of loaded settings"""
         print("\n" + "-" * 70)
         print(self.tr("scanner.loading_settings"))
         print("-" * 70)
@@ -130,11 +128,9 @@ class AudiobookScanner:
         for name in self.cover_names:
             print(f"  - {name}")
 
-    # ------------------------------------------------------------------
-    # DATABASE
-    # ------------------------------------------------------------------
-    
+
     def _init_database(self):
+        """Initialize database schema"""
         print("\n" + "-" * 70)
         print(self.tr("scanner.db_init"))
         print("-" * 70)
@@ -145,28 +141,21 @@ class AudiobookScanner:
         print(self.tr("scanner.db_indexes_ready"))
         print(self.tr("scanner.db_cascade_on"))
 
-    # ------------------------------------------------------------------
-    # UTILS
-    # ------------------------------------------------------------------
-    
+
     @staticmethod
     def _fix_encoding(text):
-        """
-        Исправляет кодировку текста, если он был неверно прочитан (например, CP1251 как Latin-1).
-        Частая проблема в ID3 тегах с кириллицей.
-        """
+        """Correct text encoding issues (e.g., CP1251 read as Latin-1)"""
         if not text or not isinstance(text, str):
             return text
             
         try:
-            # Если в строке есть символы из расширенной латиницы (128-255),
-            # которые часто появляются при неверном чтении CP1251 как Latin-1
-            # "Ìàêñ Ôðàé" -> 0xCC 0xE0 0xEA 0xF1 ...
+            # Check for characters from extended Latin (128-255) often appearing 
+            # if CP1251 is incorrectly read as Latin-1
             if any(128 <= ord(c) <= 255 for c in text):
-                # Пробуем перекодировать из Latin-1 обратно в байты и декодировать как CP1251
+                # Attempt to re-encode from Latin-1 and decode as CP1251
                 fixed = text.encode('latin-1').decode('cp1251')
-                # Если в результате появились русские буквы - значит мы угадали
-                if any(1040 <= ord(c) <= 1103 for c in fixed): # А-я в Юникоде
+                # If Cyrillic characters appear, correction was likely successful
+                if any(1040 <= ord(c) <= 1103 for c in fixed): # A-я in Unicode
                     return fixed
         except (UnicodeEncodeError, UnicodeDecodeError):
             pass
@@ -175,49 +164,37 @@ class AudiobookScanner:
 
     @staticmethod
     def _parse_audiobook_name(folder_name):
-        """
-        Парсинг названия папки аудиокниги
-        
-        Поддерживаемые форматы:
-        1. Автор - Название [Чтец]
-        2. Автор - Название (Чтец)
-        3. Автор - Название [Чтец (Псевдоним)]
-        4. Автор - Название [Чтец (Студия), год, битрейт, формат]
-        5. Автор - Название [чит. Чтец]
-        """
+        """Parse audiobook folder name into author, title, and narrator"""
         narrator = ''
         folder_name_clean = folder_name.strip()
         
-        # Ищем квадратные скобки или круглые в конце
+        # Look for square or round brackets at the end
         m = re.search(r'[\[\(](.+?)[\]\)]$', folder_name_clean)
         if m:
             bracket_content = m.group(1).strip()
             folder_name_clean = folder_name_clean[:m.start()].strip()
             
-            # Разбиваем по запятым
+            # Split by commas
             parts = [p.strip() for p in bracket_content.split(',')]
             
             if parts:
                 first_part = parts[0]
                 
-                # Проверяем, что это НЕ техническая информация
+                # Check if it's NOT technical info
                 is_technical = (
-                    re.match(r'^\d{4}$', first_part) or  # Год
+                    re.match(r'^\d{4}$', first_part) or  # Year
                     any(kw in first_part.lower() for kw in ['kbps', 'mp3', 'm4b', 'flac', 'ogg', 'wav'])
                 )
                 
                 if not is_technical:
-                    # Убираем префикс "чит." или "читает"
+                    # Remove "narrated by" or equivalent prefixes
                     narrator = re.sub(r'^(чит\.|читает)\s+', '', first_part, flags=re.IGNORECASE).strip()
                     
-                    # Если внутри есть скобки с одиночной аббревиатурой (ЛИ, ГИТР)
-                    # - удаляем их. Иначе сохраняем (псевдоним)
+                    # Remove studio abbreviations in brackets if present
                     if re.search(r'\([А-ЯA-Z]{2,5}\)$', narrator):
-                        # Студия/Аббревиатура - удаляем
                         narrator = re.sub(r'\s*\([А-ЯA-Z]{2,5}\)$', '', narrator).strip()
-                    # Иначе оставляем скобки как есть (псевдоним чтеца)
         
-        # Разделяем автора и название по тире/дефису
+        # Split author and title by dash/hyphen
         m2 = re.split(r'\s*[–—-]\s*', folder_name_clean, maxsplit=1)
         if len(m2) == 2:
             author, title = m2
@@ -229,10 +206,7 @@ class AudiobookScanner:
     
     
     def _extract_file_tags(self, file_path):
-        """
-        Извлечение тегов из конкретного файла.
-        Возвращает словарь с тегами.
-        """
+        """Extract metadata tags from a specific audio file"""
         tags = {
             'title': '',
             'author': '',
@@ -266,7 +240,7 @@ class AudiobookScanner:
                     tags['year'] = self._fix_encoding(str(id3.get('TDRC', ''))).strip()
                     tags['genre'] = self._fix_encoding(str(id3.get('TCON', ''))).strip()
                     
-                    # Чтец: TPE2 (Band/Artist) или TOPE (Original performer)
+                    # Narrator tags (TPE2 or TOPE)
                     narrator = id3.get('TPE2') or id3.get('TOPE')
                     if not narrator:
                         for tag in id3.values():
@@ -276,16 +250,16 @@ class AudiobookScanner:
                     if narrator:
                         tags['narrator'] = self._fix_encoding(str(narrator)).strip()
                     
-                    # Комментарий
+                    # Comment
                     comm = id3.get('COMM::eng') or id3.get('COMM')
                     if comm:
                         tags['comment'] = self._fix_encoding(str(comm)).strip()
                         
-                    # Номер трека
+                    # Track number
                     trck = str(id3.get('TRCK', ''))
                     if trck:
                         try:
-                            # Часто бывает в формате "1/10"
+                            # Handle "1/10" format
                             tags['track'] = int(trck.split('/')[0])
                         except:
                             pass
@@ -313,7 +287,7 @@ class AudiobookScanner:
                 t_narrator = audio.get('\xa9nrt') or audio.get('composer') or audio.get('aART')
                 if t_narrator: tags['narrator'] = self._fix_encoding(str(t_narrator[0])).strip()
                 
-                # Номер трека
+                # Track number
                 trkn = audio.get('trkn')
                 if trkn and isinstance(trkn, list) and len(trkn[0]) > 0:
                     tags['track'] = trkn[0][0]
@@ -321,7 +295,7 @@ class AudiobookScanner:
         except Exception:
             pass
             
-        # Очистка
+        # Cleanup values
         for key in tags:
             if isinstance(tags[key], str) and tags[key].lower() in ('none', '[none]', 'unknown', ''):
                 tags[key] = ''
@@ -329,10 +303,7 @@ class AudiobookScanner:
         return tags
 
     def _extract_metadata(self, directory, files):
-        """
-        Извлечение метаданных для книги в целом.
-        Проверяем первые 3 файла и объединяем данные.
-        """
+        """Extract metadata for the audiobook by checking first few files"""
         metadata = {'author': '', 'title': '', 'narrator': '', 'year': ''}
         if not files:
             return metadata
@@ -345,13 +316,14 @@ class AudiobookScanner:
             if not metadata['narrator']: metadata['narrator'] = tags['narrator']
             if not metadata['year']: metadata['year'] = tags['year']
             
-            # Если всё нашли - выходим
+            # Exit if all metadata found
             if all(metadata.values()):
                 break
                 
         return metadata
 
     def _has_audio_files(self, directory):
+        """Check if directory contains supported audio files"""
         try:
             for f in directory.iterdir():
                 if f.is_file() and f.suffix.lower() in self.audio_extensions:
@@ -361,8 +333,8 @@ class AudiobookScanner:
             return False
     
     def _get_audio_duration(self, path, verbose=False):
-        """Получение длительности аудио с несколькими методами"""
-        # Метод 1: Mutagen с явным типом
+        """Get audio duration using Mutagen or ffprobe"""
+        # Method 1: Mutagen
         try:
             from mutagen.mp3 import MP3
             from mutagen.mp4 import MP4
@@ -392,12 +364,12 @@ class AudiobookScanner:
             if verbose:
                 print(self.tr("scanner.log_mutagen_error", error=type(e).__name__))
         
-        # Метод 2: ffprobe (если найден)
+        # Method 2: ffprobe
         if self.has_ffprobe:
             try:
                 import subprocess
                 
-                # Скрываем консольное окно на Windows
+                # Hide console window on Windows
                 startupinfo = None
                 if hasattr(subprocess, 'STARTUPINFO'):
                     startupinfo = subprocess.STARTUPINFO()
@@ -431,11 +403,9 @@ class AudiobookScanner:
             print(self.tr("scanner.log_duration_failed"))
         return 0
 
-    # ------------------------------------------------------------------
-    # COVERS
-    # ------------------------------------------------------------------
-    
+
     def _extract_embedded_cover(self, directory, key):
+        """Extract embedded cover image from audio files"""
         try:
             from mutagen.id3 import ID3, APIC
             from mutagen.mp4 import MP4
@@ -450,8 +420,7 @@ class AudiobookScanner:
         
         for f in audio_files[:3]:
             try:
-                # Используем стабильный хеш от пути (key), чтобы имя файла не менялось при каждом скане
-                # Встроенный hash() в Python нестабилен между запусками
+                # Use MD5 hash of the key (path) to ensure stable cover filename
                 safe_name = hashlib.md5(key.encode()).hexdigest()
                 cover_path = self.covers_dir / f"{safe_name}.jpg"
                 
@@ -479,6 +448,7 @@ class AudiobookScanner:
         return None
     
     def _find_cover(self, directory, key):
+        """Find cover image (file or embedded) for the audiobook"""
         for name in self.cover_names:
             p = directory / name
             if p.exists():
@@ -491,15 +461,11 @@ class AudiobookScanner:
         return self._extract_embedded_cover(directory, key)
 
     def _calculate_state_hash(self, files):
-        """
-        Вычисляет хеш состояния файлов (имена, размеры, время изменения).
-        Используется для быстрого определения, изменилось ли содержимое папки.
-        """
+        """Calculate a hash based on file names, sizes, and modification times"""
         state_info = []
         for f in files:
             try:
                 stat = f.stat()
-                # Берем имя, размер и время изменения
                 state_info.append(f"{f.name}|{stat.st_size}|{stat.st_mtime}")
             except Exception:
                 continue
@@ -507,11 +473,9 @@ class AudiobookScanner:
         state_str = "\n".join(state_info)
         return hashlib.md5(state_str.encode('utf-8')).hexdigest()
 
-    # ------------------------------------------------------------------
-    # SCAN
-    # ------------------------------------------------------------------
-    
+
     def scan_directory(self, root_path, verbose=False):
+        """Perform recursive directory scanning for audiobooks"""
         print("\n" + "=" * 70)
         print(self.tr("scanner.scan_start"))
         print("=" * 70)
@@ -527,7 +491,7 @@ class AudiobookScanner:
             c = conn.cursor()
             c.execute("PRAGMA foreign_keys = ON")
             
-            # Сохранение состояния
+            # Save current progress state to temp table
             print("\n" + "-" * 70)
             print(self.tr("scanner.saving_state"))
             print("-" * 70)
@@ -547,14 +511,14 @@ class AudiobookScanner:
                 WHERE is_folder = 0
             """)
             
-            # Сбрасываем доступность всех книг перед сканированием
+            # Reset availability for all books before scanning
             c.execute("UPDATE audiobooks SET is_available = 0")
             
             c.execute("SELECT COUNT(*) FROM temp_state")
             saved_count = c.fetchone()[0]
             print(self.tr("scanner.saved_progress_count", count=saved_count))
             
-            # Поиск папок
+            # Searching for folders
             print("\n" + "-" * 70)
             print(self.tr("scanner.searching_books"))
             print("-" * 70)
@@ -566,7 +530,7 @@ class AudiobookScanner:
             
             print("\n" + self.tr("scanner.found_folders", count=len(folders)))
             
-            # Обработка каждой папки
+            # Processing each folder
             print("\n" + "-" * 70)
             print(self.tr("scanner.processing_books"))
             print("-" * 70)
@@ -575,41 +539,37 @@ class AudiobookScanner:
                 rel = folder.relative_to(root)
                 parent = rel.parent if str(rel.parent) != '.' else ''
                 
-                # Сначала получаем список файлов
+                # Get file list
                 files = sorted(
                     f for f in folder.iterdir()
                     if f.is_file() and f.suffix.lower() in self.audio_extensions
                 )
                 
-                # Вычисляем текущий хеш состояния
+                # Calculate current state hash
                 current_state_hash = self._calculate_state_hash(files)
                 
-                # Проверяем, есть ли уже такая запись и совпадает ли хеш
+                # Check for existing record and state hash
                 c.execute("SELECT id, state_hash FROM audiobooks WHERE path = ?", (str(rel),))
                 existing_row_data = c.fetchone()
                 
                 if existing_row_data and existing_row_data[1] == current_state_hash:
-                    # Хеш совпадает - пропускаем глубокое сканирование
+                    # Hash matches - skip deep scan and update availability
                     c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing_row_data[0],))
                     if verbose:
                         print(f"  {self.tr('scanner.skip_existing', path=rel)}")
-                    else:
-                        # Если не verbose, хотя бы точку или краткое инфо, но тут лучше не спамить
-                        pass
                     continue
                 
-                # Извлекаем метаданные из тегов
+                # Extract metadata from tags
                 metadata = self._extract_metadata(folder, files)
                 t_author = metadata.get('author', '')
                 t_title = metadata.get('title', '')
                 t_narrator = metadata.get('narrator', '')
                 t_year = metadata.get('year', '')
                 
-                # Парсим имя папки
+                # Parse folder name
                 f_author, f_title, f_narrator = self._parse_audiobook_name(folder.name)
                 
-                # В основные поля сохраняем данные из папки (они стабильнее для отображения)
-                # но если в папке пусто - берем из тегов
+                # Prioritize folder name info (usually more reliable for display)
                 author = f_author or t_author
                 title = f_title or t_title
                 narrator = f_narrator or t_narrator
@@ -623,7 +583,7 @@ class AudiobookScanner:
                 if t_author or t_title:
                     print(f"  Tags: Author='{t_author}', Title='{t_title}', Narrator='{t_narrator}'")
                 
-                # Подсчет файлов и длительности
+                # Count files and calculate total duration
                 file_count = len(files)
                 duration = 0
                 failed_count = 0
@@ -643,13 +603,13 @@ class AudiobookScanner:
                 else:
                     print(self.tr("scanner.files_stats", count=file_count, hours=hours, minutes=minutes))
                 
-                # Поиск обложки
+                # Search for cover image
                 cover = self._find_cover(folder, str(rel))
                 if cover:
                     cover_name = Path(cover).name
                     print(self.tr("scanner.cover_found", name=cover_name))
                 
-                # Восстановление состояния
+                # Restore state from temp table if possible
                 c.execute("""
                     SELECT
                         listened_duration,
@@ -677,12 +637,12 @@ class AudiobookScanner:
                     is_started = 0
                     is_completed = 0
                 
-                # Проверяем существование записи
+                # Check if record already exists
                 c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
                 existing_row = c.fetchone()
                 
                 if existing_row:
-                    # Обновляем ТОЛЬКО метаданные, НЕ ТРОГАЕМ прогресс и статусы
+                    # Update metadata only, preserve progress and status
                     c.execute("""
                         UPDATE audiobooks
                         SET parent_path = ?,
@@ -718,7 +678,7 @@ class AudiobookScanner:
                     ))
                     book_id = existing_row[0]
                 else:
-                    # Новая запись - создаём с сохранёнными статусами
+                    # Insert new record with restored status if present
                     c.execute("""
                         INSERT INTO audiobooks
                         (
@@ -764,16 +724,14 @@ class AudiobookScanner:
                     ))
                     c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
                     book_id = c.fetchone()[0]
-                # Удаление старых файлов и добавление новых
+
+                # Update files list: remove old and insert current files
                 c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
                 
                 for i, f in enumerate(files, 1):
-                    # Извлекаем теги для каждого файла
                     f_tags = self._extract_file_tags(f)
-                    
-                    # Если в тегах есть номер трека - используем его, иначе порядковый номер
+                    # Use track number from tag if available, otherwise sequential index
                     track_no = f_tags['track'] if f_tags['track'] is not None else i
-                    
                     file_duration = self._get_audio_duration(f)
                     
                     c.execute("""
@@ -796,7 +754,7 @@ class AudiobookScanner:
                         f_tags['comment']
                     ))
             
-            # Создание промежуточных папок
+            # Recreate intermediate folder structure
             print("\n" + "-" * 70)
             print(self.tr("scanner.creating_structure"))
             print("-" * 70)
@@ -804,6 +762,7 @@ class AudiobookScanner:
             saved_folders = set()
             
             def save_folder(path_str):
+                """Recursively save parent folders in database"""
                 if path_str in saved_folders or path_str == '':
                     return
                 saved_folders.add(path_str)
@@ -814,6 +773,7 @@ class AudiobookScanner:
                 if parent:
                     save_folder(parent)
                 
+                # Check for folder existence as audiobook (file_count=0)
                 c.execute(
                     "SELECT id FROM audiobooks WHERE path = ? AND is_folder = 0",
                     (path_str,)
@@ -829,7 +789,7 @@ class AudiobookScanner:
                     VALUES (?, ?, ?, '', '', '', NULL, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
                 """, (path_str, parent, path_obj.name))
                 
-                # Если папка уже была, помечаем её как доступную
+                # Mark existing folder as available
                 c.execute(
                     "UPDATE audiobooks SET is_available = 1 WHERE path = ? AND is_folder = 1",
                     (path_str,)
@@ -843,11 +803,11 @@ class AudiobookScanner:
             
             print(self.tr("scanner.created_folders", count=len(saved_folders)))
             
-            # Завершение
+            # Finalize: cleanup temp table and commit
             c.execute("DROP TABLE temp_state")
             conn.commit()
         
-        # Итоговая статистика
+        # Result statistics
         print("\n" + "=" * 70)
         print(self.tr("scanner.scan_complete"))
         print("=" * 70)
@@ -858,11 +818,8 @@ class AudiobookScanner:
         return len(folders)
 
 
-# ----------------------------------------------------------------------
-# CLI
-# ----------------------------------------------------------------------
-
 def main():
+    """Command-line entry point for scanning library"""
     scanner = AudiobookScanner()
     
     config = configparser.ConfigParser()

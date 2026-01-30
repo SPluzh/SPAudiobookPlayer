@@ -60,7 +60,8 @@
     "save_error": "❌ Ошибка сохранения: {error}",
     "audiobook_complete": "✅ Аудиокнига прослушана полностью",
     "styles_reloaded": "✅ Стили перезагружены",
-    "styles_error": "❌ Ошибка стилей: {error}"
+    "styles_error": "❌ Ошибка стилей: {error}",
+    "reset_success": "✅ Библиотека успешно очищена"
   },
   "delegate": {
     "narrator_prefix": "🎙",
@@ -189,7 +190,8 @@
     "settings_btn": "Проверить/Обновить ffprobe",
     "settings_btn_installed": "✅ ffprobe установлен",
     "settings_info": "Скачивает последний ffprobe.exe из сборки gyan.dev",
-    "dialog_title": "Обновление ffprobe"
+    "dialog_title": "Обновление ffprobe",
+    "missing_ffprobe_scanning": "ffprobe не найден. Начинаю загрузку..."
   },
   "about": {
     "version": "Версия: {version}",

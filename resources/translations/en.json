@@ -60,7 +60,8 @@
     "save_error": "❌ Save error: {error}",
     "audiobook_complete": "✅ Audiobook completed",
     "styles_reloaded": "✅ Styles reloaded",
-    "styles_error": "❌ Styles error: {error}"
+    "styles_error": "❌ Styles error: {error}",
+    "reset_success": "✅ Library successfully purged"
   },
   "delegate": {
     "narrator_prefix": "🎙",
@@ -189,7 +190,8 @@
     "settings_btn": "Check/Update ffprobe",
     "settings_btn_installed": "✅ ffprobe installed",
     "settings_info": "Downloads latest ffprobe.exe from gyan.dev build",
-    "dialog_title": "ffprobe Update"
+    "dialog_title": "ffprobe Update",
+    "missing_ffprobe_scanning": "ffprobe not found. Starting download..."
   },
   "about": {
     "version": "Version: {version}",

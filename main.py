@@ -1,7 +1,3 @@
-# Merged main.py file
-# Contains: utils, settings_dialog, multiline_delegate,
-# playback_controller, player_widget, library_widget, main
-
 import sys
 import os
 import io
@@ -36,12 +32,9 @@ import ctypes
 from ctypes import wintypes
 from translations import tr, trf, set_language, get_language, Language
 
-# ======================================================================
-# UTILITY FUNCTIONS
-# ======================================================================
 
 def format_duration(seconds):
-    """Форматирование длительности для отображения в дереве"""
+    """Format duration in seconds to a human readable string for tree display"""
     if not seconds:
         return ""
     hours, remainder = divmod(int(seconds), 3600)
@@ -51,7 +44,7 @@ def format_duration(seconds):
     return trf("formats.duration_minutes", minutes=minutes) if minutes else trf("formats.duration_seconds", seconds=secs)
 
 def format_time(seconds):
-    """Форматирование времени HH:MM:SS"""
+    """Format time in seconds to HH:MM:SS string"""
     if seconds < 0:
         seconds = 0
     hours = int(seconds // 3600)
@@ -60,7 +53,7 @@ def format_time(seconds):
     return trf("formats.time_hms", hours=hours, minutes=minutes, seconds=secs)
 
 def format_time_short(seconds):
-    """Форматирование времени MM:SS"""
+    """Format time in seconds to MM:SS string"""
     if seconds < 0:
         seconds = 0
     minutes = int(seconds // 60)
@@ -68,7 +61,7 @@ def format_time_short(seconds):
     return trf("formats.time_ms", minutes=minutes, seconds=secs)
 
 def load_icon(file_path: Path, target_size: int) -> QIcon:
-    """Загрузка и масштабирование иконки"""
+    """Load, scale and return a QIcon from a file path"""
     if file_path.exists() and file_path.is_file():
         pixmap = QPixmap(str(file_path))
         if not pixmap.isNull():
@@ -84,13 +77,12 @@ def load_icon(file_path: Path, target_size: int) -> QIcon:
     return None
 
 def resize_icon(icon: QIcon, size: int) -> QIcon:
-    """Изменение размера иконки"""
+    """Resize an existing QIcon to the specified size"""
     return QIcon(icon.pixmap(QSize(size, size)))
 
 def get_base_path():
-    """Возвращает базовый путь к ресурсам приложения"""
+    """Return the base path for application resources (handles frozen exe and dev modes)"""
     if getattr(sys, 'frozen', False):
-        # Если запущено как exe
         if hasattr(sys, '_MEIPASS'):
             # One-file mode
             return Path(sys._MEIPASS)
@@ -101,76 +93,105 @@ def get_base_path():
 
 def get_icon(name: str, icons_dir: Path = None) -> QIcon:
     """
-    Загружает иконку по имени
+    Load an icon by name from the specified or default icons directory
     
     Args:
-        name: Имя иконки (без расширения)
-        icons_dir: Путь к папке с иконками (по умолчанию ./icons)
+        name: Icon name (without extension)
+        icons_dir: Path to the icons folder (defaults to ./resources/icons)
     
     Returns:
-        QIcon или пустая иконка если файл не найден
+        QIcon or an empty icon if not found
     """
     if icons_dir is None:
         icons_dir = get_base_path() / "resources" / "icons"
     
-    # Поддержка разных форматов
+    # Try different formats
     for ext in ['.png', '.svg', '.ico']:
         path = icons_dir / f"{name}{ext}"
         if path.exists():
             return QIcon(str(path))
     
-    # Возвращаем пустую иконку если не найдено
     return QIcon()
     
 class OutputCapture(io.StringIO):
-    """Перехватывает вывод print и отправляет его через сигналы"""
+    """Intercepts print output and sends it via signals"""
     def __init__(self, signal):
+        """Initialize the capture with a Qt signal"""
         super().__init__()
         self.signal = signal
         self._real_stdout = sys.__stdout__
     
     def write(self, text):
+        """Write text to the signal and original stdout"""
         if text:
-            # Отправляем в сигнал
+            # Send to signal
             self.signal.emit(text)
-            # Также дублируем в настоящий stdout для отладки
+            # Duplicate to real stdout for debugging
             if self._real_stdout:
                 try:
                     self._real_stdout.write(text)
                 except UnicodeEncodeError:
-                    # Если консоль не поддерживает кодировку (например, Windows 1251/1252)
-                    # Пишем в безопасном режиме
+                    # Handle cases where console doesn't support the encoding
                     try:
                         safe_text = text.encode(self._real_stdout.encoding or 'utf-8', errors='replace').decode(self._real_stdout.encoding or 'utf-8')
                         self._real_stdout.write(safe_text)
                     except Exception:
-                        pass # Если совсем всё плохо, просто не пишем в консоль
+                        pass
     
     def flush(self):
+        """Flush the original stdout"""
         if self._real_stdout:
             self._real_stdout.flush()
 
 
 class ScannerThread(QThread):
-    """Фоновый поток для сканирования директории"""
-    progress = pyqtSignal(str)          # Сообщение лога
-    finished_scan = pyqtSignal(int)     # Количество найденных аудиокниг
+    """Background thread for scanning a directory for audiobooks"""
+    progress = pyqtSignal(str)          # Log message signal
+    finished_scan = pyqtSignal(int)     # Number of audiobooks found signal
     
-    def __init__(self, root_path):
+    def __init__(self, root_path, ffprobe_path=None):
+        """Initialize the scanner thread with target path and optional ffprobe path"""
         super().__init__()
         self.root_path = root_path
+        self.ffprobe_path = ffprobe_path
     
     def run(self):
+        """Execute the scan process"""
         try:
-            # Перенаправляем stdout
+            # Redirect stdout to capture logs
             old_stdout = sys.stdout
             sys.stdout = OutputCapture(self.progress)
+            
+            # Check for ffprobe before scanning
+            ffprobe_path = self.ffprobe_path
+            
+            # Fallback if ffprobe_path was not passed
+            if not ffprobe_path:
+                import configparser
+                script_dir = Path(__file__).parent
+                config_file = script_dir / 'resources' / 'settings.ini'
+                config = configparser.ConfigParser()
+                if config_file.exists():
+                    config.read(config_file, encoding='utf-8')
+                ffprobe_path_str = config.get('Paths', 'ffprobe_path', fallback='resources/bin/ffprobe.exe')
+                ffprobe_path = Path(ffprobe_path_str)
+                if not ffprobe_path.is_absolute():
+                    ffprobe_path = script_dir / ffprobe_path
+            
+            # Download ffprobe if missing
+            if not ffprobe_path.exists():
+                print("\n" + "=" * 70)
+                print(tr("ffmpeg_updater.missing_ffprobe_scanning"))
+                print("=" * 70 + "\n")
+                
+                import update_ffmpeg
+                update_ffmpeg.download_ffmpeg()
             
             from scanner import AudiobookScanner
             scanner = AudiobookScanner('settings.ini') # AudiobookScanner handles resources/ internally
             count = scanner.scan_directory(self.root_path)
             
-            # Возвращаем stdout
+            # Restore stdout
             sys.stdout = old_stdout
             self.finished_scan.emit(count)
         except Exception as e:
@@ -179,8 +200,9 @@ class ScannerThread(QThread):
 
 
 class ScanProgressDialog(QDialog):
-    """Диалог сканирования с консольным выводом"""
+    """Dialog showing scan progress with console output"""
     def __init__(self, parent=None):
+        """Initialize the scan progress dialog components"""
         super().__init__(parent)
         self.setWindowTitle(tr("scan_dialog.title"))
         self.setMinimumSize(700, 500)
@@ -188,29 +210,29 @@ class ScanProgressDialog(QDialog):
         
         layout = QVBoxLayout(self)
         
-        # Статус
+        # Status Label
         self.status_label = QLabel(tr("scan_dialog.scanning"))
         self.status_label.setObjectName("scanStatusLabel")
         layout.addWidget(self.status_label)
         
-        # Прогресс бар
+        # Progress Bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setObjectName("scanProgressBar")
-        self.progress_bar.setRange(0, 0) # Indeterminate
+        self.progress_bar.setRange(0, 0) # Indeterminate state
         self.progress_bar.setTextVisible(False)
         layout.addWidget(self.progress_bar)
         
-        # Консоль
+        # Console Output
         self.console = QTextEdit()
         self.console.setObjectName("scanConsole")
         self.console.setReadOnly(True)
-        # Устанавливаем моноширинный шрифт программно на всякий случай
+        # Use monospaced font for console
         font = QFont("Consolas", 10)
         if font.exactMatch():
             self.console.setFont(font)
         layout.addWidget(self.console, 1)
         
-        # Кнопка закрытия
+        # Close Button
         self.close_btn = QPushButton(tr("scan_dialog.close"))
         self.close_btn.setEnabled(False)
         self.close_btn.clicked.connect(self.accept)
@@ -218,20 +240,40 @@ class ScanProgressDialog(QDialog):
         
         self.thread = None
     
-    def start_scan(self, root_path):
-        self.thread = ScannerThread(root_path)
+    def start_scan(self, root_path, ffprobe_path=None):
+        """Start the background scanning thread"""
+        self.thread = ScannerThread(root_path, ffprobe_path)
         self.thread.progress.connect(self.append_log)
         self.thread.finished_scan.connect(self.on_finished)
         self.thread.start()
     
     def append_log(self, text):
-        self.console.insertPlainText(text)
-        # Авто-скролл
+        """Append log text to the console, handling carriage returns for in-place updates"""
+        from PyQt6.QtGui import QTextCursor
+        cursor = self.console.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        
+        # Handle \r (carriage return) by overwriting the current line
+        if '\r' in text:
+            parts = text.split('\r')
+            for i, part in enumerate(parts):
+                if i > 0: # Part after \r
+                    # Select current block/line and remove it
+                    cursor.movePosition(QTextCursor.MoveOperation.StartOfBlock, QTextCursor.MoveMode.KeepAnchor)
+                    cursor.removeSelectedText()
+                
+                cursor.insertText(part)
+        else:
+            cursor.insertText(text)
+            
+        self.console.setTextCursor(cursor)
+        # Auto-scroll to bottom
         self.console.verticalScrollBar().setValue(
             self.console.verticalScrollBar().maximum()
         )
     
     def on_finished(self, count):
+        """Update UI when scanning is finished"""
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(100)
         self.progress_bar.setTextVisible(True)
@@ -240,6 +282,7 @@ class ScanProgressDialog(QDialog):
         self.close_btn.setEnabled(True)
 
     def closeEvent(self, event):
+        """Prevent closing the dialog while the scan thread is running"""
         if self.thread and self.thread.isRunning():
             event.ignore()
         else:
@@ -248,18 +291,19 @@ class ScanProgressDialog(QDialog):
 
 
 class UpdateThread(QThread):
+    """Background thread for downloading FFmpeg/ffprobe updates"""
     progress = pyqtSignal(str)
     finished_update = pyqtSignal(bool)
 
     def run(self):
+        """Execute the update process"""
         capture = OutputCapture(self.progress)
-        # capture.text_written.connect(self.progress.emit) - OutputCapture emits to signal directly
         original_stdout = sys.stdout
         sys.stdout = capture
         
         success = False
         try:
-            # Force update to ensure we get the latest
+            # Force update to ensure latest version
             success = update_ffmpeg.download_ffmpeg(force=True)
         except Exception as e:
             print(f"UpdateThread Error: {e}")
@@ -268,7 +312,9 @@ class UpdateThread(QThread):
             self.finished_update.emit(success)
 
 class UpdateProgressDialog(QDialog):
+    """Dialog showing FFmpeg update progress with console output"""
     def __init__(self, parent=None):
+        """Initialize update dialog UI components"""
         super().__init__(parent)
         self.setWindowTitle(tr("ffmpeg_updater.dialog_title"))
         self.setMinimumSize(600, 400)
@@ -276,6 +322,7 @@ class UpdateProgressDialog(QDialog):
         self.thread = None
         
     def setup_ui(self):
+        """Setup layout and widgets for the update dialog"""
         layout = QVBoxLayout(self)
         
         self.status_label = QLabel(tr("ffmpeg_updater.check_dir"))
@@ -285,8 +332,8 @@ class UpdateProgressDialog(QDialog):
         self.console = QTextEdit()
         self.console.setReadOnly(True)
         self.console.setObjectName("scanConsole")
-        # Reuse scan console font
-        from PyQt6.QtGui import QFont # Ensure import or use exiting
+        # Reuse monospaced font
+        from PyQt6.QtGui import QFont
         font = QFont("Consolas", 10)
         if not font.exactMatch():
             font = QFont("Courier New", 10)
@@ -299,23 +346,23 @@ class UpdateProgressDialog(QDialog):
         layout.addWidget(self.close_btn)
         
     def start_update(self):
+        """Start the background update thread"""
         self.thread = UpdateThread()
         self.thread.progress.connect(self.update_console)
         self.thread.finished_update.connect(self.on_finished)
         self.thread.start()
         
     def update_console(self, text):
+        """Handle console output updates including carriage returns"""
         from PyQt6.QtGui import QTextCursor
         cursor = self.console.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         
-        # Если пришел \r, обрабатываем
         if '\r' in text:
             parts = text.split('\r')
             
             for i, part in enumerate(parts):
-                if i > 0: # Это часть после \r
-                    # Выделяем всё от начала текущего блока (строки)
+                if i > 0: # Part after \r
                     cursor.movePosition(QTextCursor.MoveOperation.StartOfBlock, QTextCursor.MoveMode.KeepAnchor)
                     cursor.removeSelectedText()
                 
@@ -329,34 +376,34 @@ class UpdateProgressDialog(QDialog):
         )
         
     def on_finished(self, success):
+        """Update status when update is complete"""
         self.status_label.setText(tr("ffmpeg_updater.success") if success else tr("ffmpeg_updater.error"))
         self.close_btn.setEnabled(True)
 
     def closeEvent(self, event):
+        """Prevent closing while update is in progress"""
         if self.thread and self.thread.isRunning():
             event.ignore()
         else:
             super().closeEvent(event)
 
-
-# ======================================================================
-# DIALOGS
-# ======================================================================
-
 class AboutDialog(QDialog):
-    """Custom About Dialog with dark theme"""
+    """Custom themed About Dialog for the application"""
     def __init__(self, parent=None):
+        """Initialize the frameless about dialog"""
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setup_ui()
 
     def showEvent(self, event):
+        """Ensure window is centered and sized correctly on show"""
         self.adjustSize()
         self.center_window()
         super().showEvent(event)
 
     def get_app_version(self):
+        """Load application version from version.txt"""
         try:
             version_file = get_base_path() / "resources" / "version.txt"
             if version_file.exists():
@@ -366,6 +413,7 @@ class AboutDialog(QDialog):
         return "1.0.0"
 
     def setup_ui(self):
+        """Build the about dialog interface"""
         # Main layout with dark background
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -417,29 +465,31 @@ class AboutDialog(QDialog):
         layout.addWidget(self.container)
 
     def center_window(self):
+        """Center the dialog relative to its parent or screen"""
         if self.parent():
             parent_geo = self.parent().frameGeometry()
             self_geo = self.frameGeometry()
             self_geo.moveCenter(parent_geo.center())
             self.move(self_geo.topLeft())
         else:
-            # Если родителя нет, центрируем по экрану
+            # Center on primary screen if no parent
             screen = QApplication.primaryScreen().geometry()
             self_geo = self.frameGeometry()
             self_geo.moveCenter(screen.center())
             self.move(self_geo.topLeft())
 
 class SettingsDialog(QDialog):
-    """Диалог настроек аудиокнижного плеера"""
+    """Dialogue for configuring application settings"""
     
-    # Сигналы
-    path_saved = pyqtSignal(str)  # Путь сохранён
-    scan_requested = pyqtSignal(str)  # Сканирование с новым путём
-    data_reset_requested = pyqtSignal()  # Запрос на полный сброс данных
-    closed = pyqtSignal()  # Диалог закрыт
+    # Signals
+    path_saved = pyqtSignal(str)       # Library path was updated
+    scan_requested = pyqtSignal(str)   # Scan process triggered with specific path
+    data_reset_requested = pyqtSignal()# Request to wipe all local database and covers
+    closed = pyqtSignal()              # Dialog closed
     
     def __init__(self, parent=None, current_path="", ffprobe_path=None):
-        super().__init__(parent)  # ← Только parent
+        """Initialize settings dialog with current configuration values"""
+        super().__init__(parent)
         self.setWindowTitle(tr("settings.title"))
         self.setMinimumSize(720, 300)
         self.current_path = current_path
@@ -448,19 +498,16 @@ class SettingsDialog(QDialog):
         self.init_ui()
     
     def init_ui(self):
-        # Главный вертикальный слой
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(20)
 
-        # Горизонтальный слой для контента (настройки и инструменты)
         content_layout = QHBoxLayout()
         content_layout.setSpacing(20)
 
-        # --- Левая колонка: Основные настройки ---
         left_layout = QVBoxLayout()
         left_layout.setSpacing(20)
 
-        # Путь к библиотеке
+        # Library Path Configuration
         path_group = QGroupBox(tr("settings.library_path_group"))
         path_layout = QVBoxLayout(path_group)
         
@@ -477,7 +524,7 @@ class SettingsDialog(QDialog):
         path_layout.addLayout(path_edit_layout)
         left_layout.addWidget(path_group)
 
-        # Обновление библиотеки
+        # Library Scan Group
         scan_group = QGroupBox(tr("settings.scan_group"))
         scan_layout = QVBoxLayout(scan_group)
         
@@ -495,7 +542,7 @@ class SettingsDialog(QDialog):
         
         content_layout.addLayout(left_layout, 3)
 
-        # --- Правая колонка: Инструменты ---
+        # Utilities and Tools
         tools_group = QGroupBox(tr("settings.tools_group"))
         tools_layout = QVBoxLayout(tools_group)
         
@@ -508,8 +555,7 @@ class SettingsDialog(QDialog):
         tools_info.setStyleSheet("color: #888; font-size: 11px;")
         tools_layout.addWidget(tools_info)
         
-        # Сброс данных
-        tools_layout.addSpacing(10)
+        # Data Reset Configuration
         reset_btn = QPushButton(tr("settings.reset_data_btn"))
         reset_btn.setObjectName("resetBtn")
         reset_btn.clicked.connect(self.on_reset_data)
@@ -526,23 +572,25 @@ class SettingsDialog(QDialog):
         
         main_layout.addLayout(content_layout)
 
-        # Проверка статуса ffprobe при открытии
         self.update_ffprobe_status()
 
-        # --- Кнопка "Сохранить" снизу во всю ширину ---
+        # Save Action
         save_button = QPushButton(tr("settings.save"))
         save_button.setObjectName("saveBtn")
         save_button.setMinimumHeight(40)
         save_button.clicked.connect(self.on_save)
+        save_button.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
         )
         main_layout.addWidget(save_button)
     
     def get_path(self):
+        """Return the trimmed current library path from the input field"""
         return self.settings_path_edit.text().strip()
     
     def browse_directory(self):
+        """Open a directory browser and update the path input if a directory is selected"""
         directory = QFileDialog.getExistingDirectory(
             self, 
             tr("settings.choose_directory"), 
@@ -552,18 +600,20 @@ class SettingsDialog(QDialog):
             self.settings_path_edit.setText(directory)
     
     def on_save(self):
+        """Emit save signal with the current path and accept the dialog"""
         new_path = self.get_path()
         if new_path:
             self.path_saved.emit(new_path)
         self.accept()
     
     def on_scan_requested(self):
+        """Emit scan requested signal with the current path"""
         new_path = self.get_path()
         if new_path:
             self.scan_requested.emit(new_path)
-
+ 
     def update_ffprobe_status(self):
-        """Проверяет наличие ffprobe и обновляет текст кнопки"""
+        """Check for ffprobe presence and update the button label accordingly"""
         ffprobe_exe = self.ffprobe_path
         
         if ffprobe_exe.exists():
@@ -572,14 +622,14 @@ class SettingsDialog(QDialog):
             self.update_btn.setText(tr("ffmpeg_updater.settings_btn"))
 
     def on_update_ffmpeg(self):
+        """Open the update dialog and refresh ffprobe status after closure"""
         dialog = UpdateProgressDialog(self)
         dialog.start_update()
         dialog.exec()
-        # Обновляем статус после закрытия диалога
         self.update_ffprobe_status()
 
     def on_reset_data(self):
-        """Сброс всей базы данных и обложек"""
+        """Handle library data reset with user confirmation"""
         reply = QMessageBox.question(
             self,
             tr("settings.reset_confirm_title"),
@@ -593,15 +643,17 @@ class SettingsDialog(QDialog):
             self.accept()
 
 class StyleLabel(QLabel):
-    """Вспомогательный виджет для получения стилей из QSS"""
+    """Helper widget to extract styles from QSS for custom painting"""
     def __init__(self, object_name: str, parent: QWidget = None):
+        """Initialize the style label with an object name, ensuring it is hidden"""
         super().__init__(parent)
         self.setObjectName(object_name)
         self.setVisible(False)
 
 class MultiLineDelegate(QStyledItemDelegate):
-    """Делегат с поддержкой стилизации через QSS и локализации"""
+    """Custom item delegate for library tree items with styling and localization support"""
     
+    # QSS object names for various item components
     STYLE_NAMES = [
         'delegate_author',
         'delegate_title', 
@@ -614,6 +666,7 @@ class MultiLineDelegate(QStyledItemDelegate):
     ]
     
     def __init__(self, parent: QWidget = None):
+        """Initialize the delegate and setup internal style properties"""
         super().__init__(parent)
         
         self.audiobook_row_height = 120
@@ -623,11 +676,11 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.vertical_padding = 8
         self.line_spacing = 4
         
-        # Состояние воспроизведения
+        # Playback state
         self.playing_path = None
         self.is_paused = True
         
-        # Состояние мыши для кнопки Play
+        # UI state for interaction
         self.hovered_index = None
         self.mouse_pos = None
         
@@ -637,13 +690,13 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.format_duration = self._default_format_duration
 
     def _create_style_widgets(self, parent: QWidget):
-        """Создаёт скрытые виджеты для чтения стилей из QSS"""
+        """Initialize hidden widgets used to read formatting from the stylesheet"""
         for name in self.STYLE_NAMES:
             label = StyleLabel(name, parent)
             self._style_labels[name] = label
     
     def _get_style(self, style_name: str) -> tuple[QFont, QColor]:
-        """Получает шрифт и цвет из QSS для указанного стиля"""
+        """Fetch font and color settings from a style label mapped to the given name"""
         label = self._style_labels.get(style_name)
         if label:
             label.ensurePolished()
@@ -653,17 +706,18 @@ class MultiLineDelegate(QStyledItemDelegate):
         return QFont(), QColor(Qt.GlobalColor.white)
     
     def _default_format_duration(self, seconds: int) -> str:
-        """Форматирование длительности по умолчанию"""
+        """Fallback 시간 formatting when no specific formatter is provided"""
         return format_time(seconds)
     
     def update_styles(self):
-        """Обновляет стили (вызывать после изменения QSS)"""
+        """Force a refresh of style properties from the loaded QSS"""
         for label in self._style_labels.values():
             label.style().unpolish(label)
             label.style().polish(label)
             label.update()
     
     def sizeHint(self, option, index) -> QSize:
+        """Determine item size based on type (folder vs audiobook)"""
         size = super().sizeHint(option, index)
         item_type = index.data(Qt.ItemDataRole.UserRole + 1)
         
@@ -675,6 +729,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         return size
     
     def paint(self, painter, option, index):
+        """Orchestrate custom painting logic for different tree item types"""
         item_type = index.data(Qt.ItemDataRole.UserRole + 1)
         
         if item_type == 'folder':
@@ -685,7 +740,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             super().paint(painter, option, index)
     
     def _paint_folder(self, painter, option, index):
-        """Отрисовка папки"""
+        """Draw a folder item with icon and display name"""
         painter.save()
         
         font, color = self._get_style('delegate_folder')
@@ -714,7 +769,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         painter.restore()
     
     def get_play_button_rect(self, icon_rect: QRectF) -> QRectF:
-        """Возвращает область кнопки Play в центре иконки (высокая точность)"""
+        """Calculate the rect for the play button overlay in high precision"""
         btn_size = 40.0
         center = icon_rect.center()
         return QRectF(
@@ -725,7 +780,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         )
 
     def _paint_audiobook(self, painter, option, index):
-        """Отрисовка аудиокниги"""
+        """Render detailed audiobook item with cover, progress, and metadata"""
         painter.save()
         
         icon = index.data(Qt.ItemDataRole.DecorationRole)
@@ -743,17 +798,16 @@ class MultiLineDelegate(QStyledItemDelegate):
         author, title, narrator, file_count, duration, listened_duration, progress_percent = data
         
         if icon:
-            # --- ОБЛАСТЬ ОБЛОЖКИ (с общим скруглением 3px) ---
             painter.save()
             path = QPainterPath()
             path.addRoundedRect(QRectF(icon_rect), 3.0, 3.0)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             painter.setClipPath(path)
             
-            # 1. Сама иконка
+            # 1. Main Cover
             icon.paint(painter, icon_rect)
             
-            # 2. Прогрессбар (теперь автоматически обрезается по углам)
+            # 2. In-cover Progress Indicator
             if progress_percent > 0:
                 pb_h = 5
                 pb_margin = 0
@@ -762,16 +816,16 @@ class MultiLineDelegate(QStyledItemDelegate):
                                 icon_rect.width() - pb_margin * 2, 
                                 pb_h)
                 
-                # Фон
+                # Background
                 painter.fillRect(pb_rect, QColor(0, 0, 0, 150))
                 
-                # Заполнение
+                # Fill
                 fill_w = int(pb_rect.width() * progress_percent / 100)
                 if fill_w > 0:
                     fill_rect = QRect(pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height())
-                    painter.fillRect(fill_rect, QColor("#018574")) # Тот же зеленый
+                    painter.fillRect(fill_rect, QColor("#018574")) # Theme primary
             
-            # 3. Полупрозрачный фон при наведении (теперь тоже по клипу)
+            # 3. Hover Background
             playing_file = index.data(Qt.ItemDataRole.UserRole)
             is_playing_this = (self.playing_path and playing_file == self.playing_path)
             
@@ -779,23 +833,20 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.fillRect(icon_rect, QColor(0, 0, 0, 100))
             
             painter.restore()
-            # --- КОНЕЦ ОБЛАСТИ ОБЛОЖКИ ---
             
-            # 4. Отрисовка рамки для текущей книги (поверх или вокруг)
+            # 4. Currently Playing Highlight Border
             if is_playing_this:
-                # Зеленая рамка 8px для запущенной книги.
-                # Чтобы внутренний радиус был 3px при толщине пера 8px (4px внутрь),
-                # радиус отрисовки должен быть 3 + 4 = 7px.
+                # Dense green border for active book
                 pen = QPen(QColor("#018574"), 8)
                 painter.setPen(pen)
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 painter.drawRoundedRect(QRectF(icon_rect).adjusted(-4, -4, 4, 4), 7, 7)
-
-            # 5. Отрисовка кнопки Play/Pause
+ 
+            # 5. Play/Pause Button Overlay Logic
             if self.hovered_index == index or is_playing_this:
                 play_btn_rect = self.get_play_button_rect(QRectF(icon_rect))
                 
-                # Проверяем наведение конкретно на кнопку
+                # Precise mouse hover check
                 is_over_btn = False
                 if self.mouse_pos and play_btn_rect.contains(QPointF(self.mouse_pos)):
                     is_over_btn = True
@@ -803,8 +854,8 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.save()
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 
-                # Сама кнопка
-                btn_color = QColor(1, 133, 116) # Тот же зеленый
+                # Button circle
+                btn_color = QColor(1, 133, 116)
                 if not is_over_btn:
                     btn_color.setAlpha(200)
                 else:
@@ -814,10 +865,10 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(play_btn_rect)
                 
-                # Иконка Play или Pause
+                # Play/Pause Icon shapes
                 painter.setBrush(Qt.GlobalColor.white)
                 if is_playing_this and not self.is_paused:
-                    # Рисуем две полоски паузы
+                    # Draw Pause bars
                     w = play_btn_rect.width() // 5
                     h = play_btn_rect.height() // 2
                     gap = w // 2
@@ -829,16 +880,14 @@ class MultiLineDelegate(QStyledItemDelegate):
                     painter.drawRect(QRectF(start_x, start_y, w, h))
                     painter.drawRect(QRectF(start_x + w + gap, start_y, w, h))
                 else:
-                    # Рисуем треугольник Play
+                    # Draw Play triangle
                     side = play_btn_rect.width() // 2
-                    # Используем QPointF для субпиксельной точности
                     center_f = QPointF(play_btn_rect.center())
                     
-                    # Для оптического баланса по горизонтали треугольник должен быть чуть правее центра круга
+                    # Optical balancing adjustment
                     h_offset = play_btn_rect.width() / 20.0
                     
                     tri_path = QPainterPath()
-                    # Вертикально центрируем по center_f.y()
                     tri_path.moveTo(center_f.x() - side / 3.0 + h_offset, center_f.y() - side / 2.0)
                     tri_path.lineTo(center_f.x() - side / 3.0 + h_offset, center_f.y() + side / 2.0)
                     tri_path.lineTo(center_f.x() + side / 2.0 + h_offset, center_f.y())
@@ -852,7 +901,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         text_y = option.rect.top() + self.vertical_padding
         available_width = option.rect.right() - text_x - self.horizontal_padding
         
-        # АВТОР
+        # Author field
         if author:
             font, color = self._get_style('delegate_author')
             painter.setFont(font)
@@ -863,7 +912,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             painter.drawText(rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, author)
             text_y += line_height + self.line_spacing
         
-        # НАЗВАНИЕ
+        # Title field
         font, color = self._get_style('delegate_title')
         painter.setFont(font)
         painter.setPen(color)
@@ -879,7 +928,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         painter.drawText(rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, elided_title)
         text_y += line_height + self.line_spacing
         
-        # РАССКАЗЧИК
+        # NARRATOR Metadata
         if narrator:
             font, color = self._get_style('delegate_narrator')
             painter.setFont(font)
@@ -891,27 +940,27 @@ class MultiLineDelegate(QStyledItemDelegate):
             painter.drawText(rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, narrator_text)
             text_y += line_height + self.line_spacing
         
-        # ИНФОРМАЦИОННАЯ СТРОКА
+        # STATUS INFO LINE (Files, Duration, Progress)
         info_parts = []
         
-        # Количество файлов
+        # File list count
         if file_count:
             font_fc, color_fc = self._get_style('delegate_file_count')
             files_text = f"{tr('delegate.files_prefix')} {file_count}"
             info_parts.append((files_text, font_fc, color_fc))
         
-        # Длительность
+        # Overall duration
         if duration:
             font_dur, color_dur = self._get_style('delegate_duration')
             duration_text = f"{tr('delegate.duration_prefix')} {self.format_duration(duration)}"
             info_parts.append((duration_text, font_dur, color_dur))
         
-        # Прогресс
+        # Listening progress percentage
         font_prog, color_prog = self._get_style('delegate_progress')
         progress_text = trf("delegate.progress", percent=int(progress_percent))
         info_parts.append((progress_text, font_prog, color_prog))
         
-        # Рисуем информационную строку
+        # Draw consolidated info line with custom formatting/spacing
         if info_parts:
             current_x = text_x
             for i, (text, font, color) in enumerate(info_parts):
@@ -926,7 +975,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 
                 current_x += text_width + 15
                 
-                # Разделитель
+                # Inline separator dot
                 if i < len(info_parts) - 1:
                     painter.setPen(QColor(100, 100, 100))
                     painter.drawText(QRect(current_x - 10, text_y, 10, line_height),
@@ -934,32 +983,34 @@ class MultiLineDelegate(QStyledItemDelegate):
         
         painter.restore()
 class PlaybackController:
+    """Manages playback logic, including file switching, progress tracking, and session persistence"""
     def __init__(self, player: BassPlayer, db_manager: DatabaseManager):
+        """Initialize the controller with audio player and database manager"""
         self.player = player
         self.db = db_manager
         self.library_root: Optional[Path] = None
         
-        # Состояние воспроизведения
+        # Playback state
         self.current_audiobook_id: Optional[int] = None
-        self.current_audiobook_path: str = "" # Относительный путь (как в БД)
+        self.current_audiobook_path: str = "" # Relative path as stored in database
         self.current_file_index: int = 0
         self.files_list: List[Dict] = []
         self.global_position: float = 0.0
         self.total_duration: float = 0.0
-        self.use_id3_tags: bool = True # Добавлено
+        self.use_id3_tags: bool = True
         
-        # Сохранённые значения для восстановления
+        # Saved state for session restoration
         self.saved_file_index: Optional[int] = None
         self.saved_position: Optional[float] = None
     
     def load_audiobook(self, audiobook_path: str) -> bool:
-        """Загрузка аудиокниги"""
+        """Load audiobook data from the database and prepare the player for playback"""
         self.player.pause()
         
-        # Сохраняем прогресс предыдущей книги
+        # Always save current progress before switching books
         self.save_current_progress()
         
-        # Получаем информацию об аудиокниге
+        # Retrieve audiobook metadata
         audiobook_info = self.db.get_audiobook_info(audiobook_path)
         if not audiobook_info:
             return False
@@ -967,7 +1018,7 @@ class PlaybackController:
         audiobook_id, abook_name, author, title, saved_file_index, \
         saved_position, total_dur, saved_speed, use_id3_tags = audiobook_info
         
-        # Обновляем состояние
+        # Update internal state with database values
         self.current_audiobook_id = audiobook_id
         self.current_audiobook_path = audiobook_path
         self.total_duration = total_dur or 0
@@ -975,7 +1026,7 @@ class PlaybackController:
         self.saved_position = saved_position
         self.use_id3_tags = bool(use_id3_tags)
         
-        # Загружаем файлы
+        # Load audiobook file list
         files = self.db.get_audiobook_files(audiobook_id)
         self.files_list = []
         
@@ -987,15 +1038,15 @@ class PlaybackController:
                 'duration': duration or 0
             })
         
-        # Устанавливаем скорость
+        # Restore saved playback speed
         self.player.set_speed(int(saved_speed * 10))
         
-        # Загружаем первый (или сохранённый) файл
+        # Initialize with the last played (or first) file
         if self.files_list:
             self.current_file_index = max(0, min(saved_file_index or 0, len(self.files_list) - 1))
             self.calculate_global_position()
             
-            # Разрешаем путь относительно корня библиотеки
+            # Resolve path relative to library root
             rel_file_path = self.files_list[self.current_file_index]['path']
             if self.library_root:
                 abs_file_path = str(self.library_root / rel_file_path)
@@ -1010,7 +1061,7 @@ class PlaybackController:
         return False
     
     def play_file_at_index(self, index: int, start_playing: bool = True) -> bool:
-        """Воспроизведение файла по индексу"""
+        """Load and optionally start playback of a file at the specified index"""
         if not (0 <= index < len(self.files_list)):
             return False
         
@@ -1019,7 +1070,7 @@ class PlaybackController:
         self.calculate_global_position()
         
         file_info = self.files_list[index]
-        # Разрешаем путь относительно корня библиотеки
+        # Resolve absolute file path
         if self.library_root:
             abs_file_path = str(self.library_root / file_info['path'])
         else:
@@ -1032,7 +1083,7 @@ class PlaybackController:
         return False
     
     def next_file(self, auto_next: bool = True) -> bool:
-        """Переход к следующему файлу"""
+        """Switch to the next sequential file in the collection"""
         if self.current_file_index < len(self.files_list) - 1:
             self.play_file_at_index(
                 self.current_file_index + 1, 
@@ -1041,7 +1092,7 @@ class PlaybackController:
             self.save_current_progress()
             return True
         else:
-            # Последний файл - аудиокнига завершена
+            # End of collection reached
             self.player.stop()
             
             if self.current_audiobook_id and self.total_duration > 0:
@@ -1052,13 +1103,13 @@ class PlaybackController:
             return False
     
     def prev_file(self) -> bool:
-        """Переход к предыдущему файлу"""
+        """Switch to the previous file or restart the current one based on position"""
         if self.player.get_position() > 3:
-            # Если прошло больше 3 секунд - перематываем в начало текущего
+            # If more than 3 seconds in, just restart the current file
             self.player.set_position(0)
             return True
         elif self.current_file_index > 0:
-            # Иначе переходим к предыдущему
+            # Otherwise, go back to the previous file
             self.play_file_at_index(
                 self.current_file_index - 1, 
                 self.player.is_playing()
@@ -1068,29 +1119,30 @@ class PlaybackController:
         return False
     
     def calculate_global_position(self):
-        """Расчёт глобальной позиции в аудиокниге"""
+        """Update the aggregate duration of all files preceding the current one"""
         self.global_position = sum(
             f['duration'] for f in self.files_list[:self.current_file_index]
         )
     
     def get_current_position(self) -> float:
-        """Получение текущей позиции в аудиокниге"""
+        """Calculate the total elapsed time across the entire audiobook"""
         return self.global_position + self.player.get_position()
     
     def get_progress_percent(self) -> int:
-        """Получение процента прогресса"""
+        """Calculate the current playback progress as a percentage (0-100)"""
         if self.total_duration <= 0:
             return 0
             
         current = self.get_current_position()
         
+        # Consider finished if within 1 second of total duration
         if current >= self.total_duration - 1:
             return 100
         
         return int((current / self.total_duration) * 100)
     
     def save_current_progress(self):
-        """Сохранение текущего прогресса"""
+        """Commit current playback state and accumulated metrics to the database"""
         if not self.current_audiobook_id:
             return
         
@@ -1109,20 +1161,20 @@ class PlaybackController:
         )
     
     def get_audiobook_title(self) -> str:
-        """Получение названия текущей аудиокниги"""
+        """Fetch the displayable name for the currently playing audiobook"""
         if not self.current_audiobook_path:
             return "Audiobook Player"
             
         info = self.db.get_audiobook_info(self.current_audiobook_path)
         if info:
-            # info теперь содержит 9 полей (добавлено use_id3_tags)
+            # info contains 9 fields (including use_id3_tags)
             _, name, author, title, _, _, _, _, _ = info
             return name
         return "Audiobook Player"
 class PlayerWidget(QWidget):
-    """Виджет плеера с элементами управления"""
+    """UI widget containing playback controls, progress sliders, and the file list"""
     
-    # Сигналы
+    # Navigation and setting update signals
     play_clicked = pyqtSignal()
     next_clicked = pyqtSignal()
     prev_clicked = pyqtSignal()
@@ -1134,11 +1186,12 @@ class PlayerWidget(QWidget):
     id3_toggled_signal = pyqtSignal(bool)
     
     def __init__(self):
+        """Initialize widget state and prepare basic icon properties"""
         super().__init__()
         self.show_id3 = False
         self.slider_dragging = False
         
-        # Иконки
+        # Icon resources
         self.play_icon = None
         self.pause_icon = None
         
@@ -1146,24 +1199,23 @@ class PlayerWidget(QWidget):
         self.load_icons()
     
     def setup_ui(self):
-        """Создание интерфейса плеера"""
+        """Build the player user interface using stylized frames and layouts"""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 0, 0, 0)
         layout.setSpacing(15)
         
-        # Frame для плеера
+        # Primary player container
         player_frame = QFrame()
         player_layout = QVBoxLayout(player_frame)
         
-        # === Громкость и скорость ===
         settings_layout = QHBoxLayout()
         settings_layout.setSpacing(10)
         
-        # Громкость
+        # Volume and ID3 management section
         vol_box = QHBoxLayout()
         vol_box.setSpacing(5)
         
-        # ID3 Toggle
+        # ID3 Meta-tag Toggle
         self.id3_btn = QPushButton("ID3")
         self.id3_btn.setCheckable(True)
         self.id3_btn.setFixedWidth(40)
@@ -1189,7 +1241,7 @@ class PlayerWidget(QWidget):
         
         settings_layout.addStretch()
         
-        # Скорость
+        # Playback Speed Control
         speed_widget = QWidget()
         speed_layout = QHBoxLayout(speed_widget)
         speed_layout.setContentsMargins(0, 0, 0, 0)
@@ -1212,14 +1264,12 @@ class PlayerWidget(QWidget):
         
         player_layout.addLayout(settings_layout)
         
-        # === Кнопки управления ===
+        # Main Navigation Controls
         controls = QHBoxLayout()
         controls.setSpacing(5)
 
-        
         icon_size = QSize(24, 24)
         
-        # Кнопки управления
         self.btn_prev = self.create_button("navBtn", tr("player.prev_track"), icon_size)
         self.btn_prev.clicked.connect(self.prev_clicked)
         controls.addWidget(self.btn_prev)
@@ -1232,7 +1282,7 @@ class PlayerWidget(QWidget):
         self.btn_rw10.clicked.connect(lambda: self.rewind_clicked.emit(-10))
         controls.addWidget(self.btn_rw10)
         
-        # Play/Pause - главная кнопка
+        # Core Play/Pause Action
         self.play_btn = self.create_button("playBtn", tr("player.play"), QSize(32, 32))
         self.play_btn.clicked.connect(self.play_clicked)
         self.play_btn.setSizePolicy(
@@ -1253,10 +1303,9 @@ class PlayerWidget(QWidget):
         self.btn_next.clicked.connect(self.next_clicked)
         controls.addWidget(self.btn_next)
         
-
         player_layout.addLayout(controls)
         
-        # === Позиция в файле ===
+        # File/Track Progress Section
         file_box = QVBoxLayout()
         
         file_times = QHBoxLayout()
@@ -1278,7 +1327,7 @@ class PlayerWidget(QWidget):
         
         player_layout.addLayout(file_box)
         
-        # === Общий прогресс ===
+
         total_box = QVBoxLayout()
         total_box.setSpacing(8)
         
@@ -1308,7 +1357,7 @@ class PlayerWidget(QWidget):
         player_layout.addLayout(total_box)
         layout.addWidget(player_frame)
         
-        # === Список файлов ===
+
         self.file_list = QListWidget()
         self.file_list.setObjectName("fileList")
         self.file_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
@@ -1316,7 +1365,7 @@ class PlayerWidget(QWidget):
         layout.addWidget(self.file_list)
     
     def create_button(self, object_name: str, tooltip: str, icon_size: QSize) -> QPushButton:
-        """Создание кнопки"""
+        """Utility to create a standardized player control button with designated styles and tooltips"""
         btn = QPushButton()
         btn.setObjectName(object_name)
         btn.setToolTip(tooltip)
@@ -1324,12 +1373,10 @@ class PlayerWidget(QWidget):
         return btn
     
     def load_icons(self):
-        """Загрузка иконок"""
-        # Загрузка иконок
+        """Fetch and apply themed icons to all navigation and control buttons from resources"""
         self.play_icon = get_icon("play")
         self.pause_icon = get_icon("pause")
         
-        # Установка иконок на кнопки
         self.play_btn.setIcon(self.play_icon)
         self.btn_prev.setIcon(get_icon("prev"))
         self.btn_next.setIcon(get_icon("next"))
@@ -1339,41 +1386,40 @@ class PlayerWidget(QWidget):
         self.btn_ff60.setIcon(get_icon("forward_60"))
     
     def on_volume_changed(self, value: int):
-        """Изменение громкости"""
+        """Update volume display label and emit signal for external processing"""
         self.volume_label.setText(trf("formats.percent", value=value))
         self.volume_changed.emit(value)
     
     def on_speed_changed(self, value: int):
-        """Изменение скорости"""
+        """Update speed display label and emit signal for playback adjustment"""
         self.speed_label.setText(trf("formats.speed", value=value/10))
         self.speed_changed.emit(value)
     
     def on_position_pressed(self):
-        """Начало перетаскивания позиции"""
+        """Suspend progress updates while the user is dragging the position slider"""
         self.slider_dragging = True
     
     def on_position_released(self):
-        """Окончание перетаскивания позиции"""
+        """Seek to the new position upon slider release and resume temporal updates"""
         self.slider_dragging = False
         self.position_changed.emit(self.position_slider.value() / 1000.0)
     
     def on_position_moved(self, value: int):
-        """Перетаскивание позиции"""
-        # Можно обновить отображение времени
+        """Hook for optional real-time handling of position slider movements"""
+        # Could be used to update preview time labels during drag
         pass
     
     def on_file_double_clicked(self, item):
-        """Двойной клик по файлу"""
+        """Emit file selected signal with the index of the double-clicked list item"""
         index = self.file_list.row(item)
         self.file_selected.emit(index)
     
     def set_playing(self, is_playing: bool):
-        """Установка состояния воспроизведения"""
         self.play_btn.setIcon(self.pause_icon if is_playing else self.play_icon)
         self.play_btn.setToolTip(tr("player.pause") if is_playing else tr("player.play"))
     
     def update_file_progress(self, position: float, duration: float):
-        """Обновление прогресса файла"""
+        """Update the time labels and slider position for the currently playing track"""
         if not self.slider_dragging:
             if duration >= 3600:
                 self.time_current.setText(format_time(position))
@@ -1389,7 +1435,6 @@ class PlayerWidget(QWidget):
             self.time_duration.setText(format_time_short(duration))
     
     def update_total_progress(self, current: float, total: float, speed: float = 1.0):
-        """Обновление общего прогресса"""
         self.total_time_label.setText(format_time(current))
         self.total_duration_label.setText(format_time(total))
         
@@ -1404,19 +1449,19 @@ class PlayerWidget(QWidget):
             self.time_left_label.setText(tr("player.time_left_unknown"))
     
     def on_id3_toggled(self, checked):
-        """Переключение отображения ID3 тегов"""
+        """Handle the visibility change of ID3 tags in the track list and refresh the display"""
         self.show_id3 = checked
         
-        # Перезагружаем список файлов если он есть
+        # Reload the file list to apply the new naming scheme
         if hasattr(self, 'last_files_list') and self.last_files_list:
             current_row = self.file_list.currentRow()
             self.load_files(self.last_files_list, current_row)
             
-        # Испускаем сигнал для сохранения
+        # Notify the application about the preference change
         self.id3_toggled_signal.emit(checked)
     
     def load_files(self, files_list: list, current_index: int = 0):
-        """Загрузка списка файлов"""
+        """Populate the track list widget with file information and highlight the active track"""
         self.last_files_list = files_list
         self.file_list.clear()
         
@@ -1472,23 +1517,23 @@ class PlayerWidget(QWidget):
                 item.setFont(font)
     
     def set_speed(self, value: int):
-        """Установка скорости"""
+        """Programmatically update the speed slider and its corresponding display label"""
         self.speed_slider.setValue(value)
         self.speed_label.setText(trf("formats.speed", value=value/10))
     
     def set_volume(self, value: int):
-        """Установка громкости"""
+        """Programmatically update the volume slider and its corresponding display label"""
         self.volume_slider.setValue(value)
         self.volume_label.setText(trf("formats.percent", value=value))
     
     def update_texts(self):
-        """Обновление текстов после смены языка"""
-        # Обновляем метки
+        """Synchronize all UI labels, tooltips, and formatters after a language change event"""
+        # Update speed and volume labels with current localized formatters
         speed_value = self.speed_slider.value() / 10
         self.speed_label.setText(trf("formats.speed", value=speed_value))
         self.volume_label.setText(trf("formats.percent", value=self.volume_slider.value()))
         
-        # Обновляем tooltips кнопок
+        # Refresh all control button tooltips
         self.btn_prev.setToolTip(tr("player.prev_track"))
         self.btn_next.setToolTip(tr("player.next_track"))
         self.btn_rw60.setToolTip(tr("player.rewind_60"))
@@ -1500,14 +1545,16 @@ class PlayerWidget(QWidget):
 
 
 class LibraryTree(QTreeWidget):
-    """Кастомное дерево для обработки наведения и кликов по кнопке Play"""
-    play_button_clicked = pyqtSignal(str) # Передает путь к аудиокниге
+    """Customized tree widget that handles hover detection and direct interaction with audiobook 'Play' buttons"""
+    play_button_clicked = pyqtSignal(str) # Emits the relative path to the selected audiobook
 
     def __init__(self, parent=None):
+        """Enable mouse tracking for fine-grained hover effects on custom-painted items"""
         super().__init__(parent)
         self.setMouseTracking(True)
 
     def leaveEvent(self, event):
+        """Clear hover state in the delegate when the mouse leaves the widget viewport"""
         delegate = self.itemDelegate()
         if delegate and hasattr(delegate, 'hovered_index'):
             delegate.hovered_index = None
@@ -1516,6 +1563,7 @@ class LibraryTree(QTreeWidget):
         super().leaveEvent(event)
 
     def mouseMoveEvent(self, event):
+        """Track mouse position to detect hover over specialized UI elements like playback buttons"""
         super().mouseMoveEvent(event)
         index = self.indexAt(event.pos())
         
@@ -1543,6 +1591,7 @@ class LibraryTree(QTreeWidget):
         self.setCursor(Qt.CursorShape.ArrowCursor)
 
     def mousePressEvent(self, event):
+        """Identify clicks on the custom 'Play' button to initiate playback without selecting the item"""
         if event.button() == Qt.MouseButton.LeftButton:
             index = self.indexAt(event.pos())
             if index.isValid():
@@ -1566,10 +1615,11 @@ class LibraryTree(QTreeWidget):
 
 
 class LibraryWidget(QWidget):
-    """Виджет библиотеки аудиокниг"""
+    """Container for the audiobook tree, search filters, and status-based navigation buttons"""
     
-    audiobook_selected = pyqtSignal(str)
+    audiobook_selected = pyqtSignal(str) # Emits the relative path of the selected audiobook
     
+    # Internal configuration for status filtering
     FILTER_CONFIG = {
         'all': {'label': "library.filter_all", 'icon': "filter_all"},
         'not_started': {'label': "library.filter_not_started", 'icon': "filter_not_started"},
@@ -1578,6 +1628,7 @@ class LibraryWidget(QWidget):
     }
     
     def __init__(self, db_manager: DatabaseManager, config: dict, delegate=None):
+        """Initialize library managers, styling preferences, and default state"""
         super().__init__()
         self.db = db_manager
         self.config = config
@@ -1587,17 +1638,17 @@ class LibraryWidget(QWidget):
         self.current_playing_item = None
         self.highlight_color = QColor(1, 133, 116)
         self.highlight_text_color = QColor(255, 255, 255)
-        self.current_filter = 'all'  # Текущий фильтр
+        self.current_filter = 'all'
         self.setup_ui()
         self.load_icons()
     
     def setup_ui(self):
-        """Создание интерфейса"""
+        """Assemble the search bar, filter buttons, and the main library tree widget"""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 10, 0)
         layout.setSpacing(10)
         
-        # Поле поиска
+        # Search Entry Area
         search_layout = QHBoxLayout()
         search_layout.setSpacing(5)
         
@@ -1609,7 +1660,7 @@ class LibraryWidget(QWidget):
         
         layout.addLayout(search_layout)
 
-        # Кнопки фильтров
+        # Status Filter Buttons
         filter_layout = QHBoxLayout()
         filter_layout.setSpacing(2)
         
@@ -1623,7 +1674,6 @@ class LibraryWidget(QWidget):
             btn.setCheckable(True)
             btn.setProperty('filter_type', filter_id)
             
-            # Установка иконки
             if 'icon' in config:
                 btn.setIcon(get_icon(config['icon']))
                 
@@ -1657,10 +1707,10 @@ class LibraryWidget(QWidget):
         layout.addWidget(self.tree)
     
     def load_icons(self):
-        """Загрузка иконок"""
+        """Load and scale standard icons for folders and audiobook covers from resources"""
         script_dir = Path(__file__).parent
         
-        # Иконка по умолчанию для аудиокниги
+        # Determine the default cover icon
         default_cover = self.config.get('default_cover_file', 'resources/icons/default_cover.png')
         self.default_audiobook_icon = load_icon(
             get_base_path() / default_cover,
@@ -1672,7 +1722,7 @@ class LibraryWidget(QWidget):
                 QStyle.StandardPixmap.SP_FileIcon
             )
         
-        # Иконка папки
+        # Determine the folder representation icon
         folder_cover = self.config.get('folder_cover_file', 'resources/icons/folder_cover.png')
         self.folder_icon = load_icon(
             get_base_path() / folder_cover,
@@ -1686,21 +1736,21 @@ class LibraryWidget(QWidget):
             )
     
     def apply_filter(self, filter_type: str):
-        """Применение фильтра к библиотеке"""
+        """Switch the current library view filter and refresh the audiobook listing"""
         self.current_filter = filter_type
-        self.search_edit.clear()  # Сброс поиска при смене фильтра
+        self.search_edit.clear()  # Reset search results when changing filter categories
         self.current_playing_item = None
         self.load_audiobooks()
     
     def load_audiobooks(self):
-        """Загрузка аудиокниг из БД с применением текущего фильтра"""
+        """Retrieve and display audiobooks from the database according to the active filter"""
         self.current_playing_item = None
         self.tree.clear()
         data_by_parent = self.db.load_audiobooks_from_db(self.current_filter)
         self.add_items_from_db(self.tree, '', data_by_parent)
     
     def add_items_from_db(self, parent_item, parent_path: str, data_by_parent: dict):
-        """Рекурсивное добавление элементов в дерево"""
+        """Recursively populate the tree widget with folders and audiobooks from the database map"""
         if parent_path not in data_by_parent:
             return
         
@@ -1712,12 +1762,12 @@ class LibraryWidget(QWidget):
                 item.setText(0, data['name'])
                 item.setData(0, Qt.ItemDataRole.UserRole + 1, 'folder')
                 item.setIcon(0, self.folder_icon)
-                # Восстанавливаем состояние развернутости
+                # Restore the expansion state of the folder from previous sessions
                 if data.get('is_expanded'):
                     item.setExpanded(True)
             else:
-                # Для аудиокниг делегат сам отрисует всю информацию
-                # Устанавливаем пустой текст, чтобы делегат полностью контролировал отрисовку
+                # Audiobooks are custom-painted by the delegate
+                # Set text to empty so the delegate has full control over the item's visual area
                 item.setText(0, "")
                 item.setData(0, Qt.ItemDataRole.UserRole + 1, 'audiobook')
                 item.setData(0, Qt.ItemDataRole.UserRole + 2, (
@@ -1730,11 +1780,11 @@ class LibraryWidget(QWidget):
                     data['progress_percent']
                 ))
                 
-                # Загрузка обложки
+                # Fetch and scale the audiobook cover
                 cover_icon = None
                 if data['cover_path']:
                     cover_p = Path(data['cover_path'])
-                    # Если путь относительный, разрешаем его от корня библиотеки
+                    # For relative paths, resolve them against the library's root directory
                     if not cover_p.is_absolute() and self.config.get('default_path'):
                         cover_p = Path(self.config.get('default_path')) / cover_p
                         
@@ -1744,11 +1794,11 @@ class LibraryWidget(QWidget):
                     )
                 item.setIcon(0, cover_icon or self.default_audiobook_icon)
             
-            # Рекурсивно добавляем детей
+            # Sub-items traversal
             self.add_items_from_db(item, data['path'], data_by_parent)
     
     def filter_audiobooks(self):
-        """Фильтрация аудиокниг по поисковому запросу"""
+        """Handle real-time search queries by filtering tree items based on text matching"""
         search_text = self.search_edit.text().lower().strip()
         
         if not search_text:
@@ -1758,14 +1808,14 @@ class LibraryWidget(QWidget):
         self.filter_tree_items(self.tree.invisibleRootItem(), search_text)
     
     def show_all_items(self, parent_item):
-        """Показать все элементы дерева"""
+        """Reset the visibility of all items within the tree to visible"""
         for i in range(parent_item.childCount()):
             child = parent_item.child(i)
             child.setHidden(False)
             self.show_all_items(child)
     
     def filter_tree_items(self, parent_item, search_text: str) -> bool:
-        """Рекурсивная фильтрация элементов"""
+        """Recursively evaluate visibility for each item based on metadata matches and child presence"""
         has_visible = False
         
         for i in range(parent_item.childCount()):
@@ -1801,32 +1851,32 @@ class LibraryWidget(QWidget):
 
     
     def on_item_expanded(self, item):
-        """Обработка разворачивания папки"""
+        """Persist the folder expansion state to the database when a branch is opened"""
         if item.data(0, Qt.ItemDataRole.UserRole + 1) == 'folder':
             path = item.data(0, Qt.ItemDataRole.UserRole)
             if path:
                 self.db.update_folder_expanded_state(path, True)
     
     def on_item_collapsed(self, item):
-        """Обработка сворачивания папки"""
+        """Persist the folder collapse state to the database when a branch is closed"""
         if item.data(0, Qt.ItemDataRole.UserRole + 1) == 'folder':
             path = item.data(0, Qt.ItemDataRole.UserRole)
             if path:
                 self.db.update_folder_expanded_state(path, False)
 
     def show_context_menu(self, pos):
-        """Контекстное меню"""
+        """Construct and display a context menu for audiobook items with actions for playback, status updates, and file explorating"""
         item = self.tree.itemAt(pos)
         if not item or item.data(0, Qt.ItemDataRole.UserRole + 1) != 'audiobook':
             return
         
         path = item.data(0, Qt.ItemDataRole.UserRole)
-        # Получаем ID книги
+        # Retrieve audiobook details for context actions
         info = self.db.get_audiobook_info(path)
         if not info:
             return
         audiobook_id = info[0]
-        duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4] # Индекс 4 это duration
+        duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4] # Index 4 corresponds to total duration
 
         menu = QMenu()
         play_action = QAction(tr("library.context_play"), self)
@@ -1836,13 +1886,13 @@ class LibraryWidget(QWidget):
         
         menu.addSeparator()
 
-        # Отметить прочитанной
+        # Mark as Completed
         mark_read_action = QAction(tr("library.menu_mark_read"), self)
         mark_read_action.setIcon(get_icon("context_mark_read"))
         mark_read_action.triggered.connect(lambda _: self.mark_as_read(audiobook_id, duration, path))
         menu.addAction(mark_read_action)
 
-        # Отметить не начатой (сброс)
+        # Mark as Not Started (Reset Progress)
         mark_unread_action = QAction(tr("library.menu_mark_unread"), self)
         mark_unread_action.setIcon(get_icon("context_mark_unread"))
         mark_unread_action.triggered.connect(lambda _: self.mark_as_unread(audiobook_id, path))
@@ -1858,32 +1908,32 @@ class LibraryWidget(QWidget):
         menu.exec(self.tree.viewport().mapToGlobal(pos))
 
     def mark_as_read(self, audiobook_id, duration, path):
-        """Отметить книгу как прочитанную"""
+        """Update audiobook status to completed and refresh the library and active player UI if necessary"""
         self.db.mark_audiobook_completed(audiobook_id, duration)
         self.load_audiobooks()
-        # Если эта книга сейчас играет или загружена - обновим UI
+        # Synchronize UI if the modified book is currently loaded in the player
         window = self.window()
         if hasattr(window, 'playback_controller') and window.playback_controller.current_audiobook_id == audiobook_id:
             window.update_ui_for_audiobook()
 
     def mark_as_unread(self, audiobook_id, path):
-        """Отметить книгу как не начатую"""
+        """Reset audiobook progress to 0% and synchronize the library and active player UI"""
         self.db.reset_audiobook_status(audiobook_id)
         self.load_audiobooks()
         window = self.window()
         if hasattr(window, 'playback_controller') and window.playback_controller.current_audiobook_id == audiobook_id:
-            # Сбрасываем и в контроллере
+            # Revert controller session state
             window.playback_controller.saved_file_index = 0
             window.playback_controller.saved_position = 0
             window.update_ui_for_audiobook()
     
     def open_folder(self, path: str):
-        """Открыть папку в проводнике"""
+        """Open the target directory in the system's native file explorer (supports Win32, macOS, Linux)"""
         if not path:
             return
             
         try:
-            # Разрешаем путь относительно корня библиотеки
+            # Resolve the absolute path relative to the library's root
             default_path = self.config.get('default_path', '')
             
             if default_path:
@@ -1891,8 +1941,7 @@ class LibraryWidget(QWidget):
             else:
                 abs_path = Path(path)
                 
-            # Если это файл, берем родительскую папку. 
-            # Если это уже папка, открываем её саму.
+            # If the path points to a file, target its parent directory
             if abs_path.exists() and abs_path.is_file():
                 folder_path = abs_path.parent
             else:
@@ -1903,8 +1952,8 @@ class LibraryWidget(QWidget):
                 
                 if sys.platform == 'win32':
                     import ctypes
-                    # ShellExecuteW: (hwnd, operation, file, parameters, directory, show)
-                    # 1 = SW_SHOWNORMAL
+                    # Use ShellExecuteW for standardized Explorer behavior on Windows
+                    # SW_SHOWNORMAL = 1
                     ctypes.windll.shell32.ShellExecuteW(None, "open", folder_path_str, None, None, 1)
                 elif sys.platform == 'darwin':
                     subprocess.run(['open', folder_path_str], check=False)
@@ -1916,43 +1965,43 @@ class LibraryWidget(QWidget):
             QMessageBox.critical(self, tr("window.title"), f"Error opening folder: {e}")
     
     def on_item_double_clicked(self, item, column):
-        """Обработка двойного клика"""
+        """Notify the application when an audiobook item is double-clicked for playback"""
         if item.data(0, Qt.ItemDataRole.UserRole + 1) == 'audiobook':
             path = item.data(0, Qt.ItemDataRole.UserRole)
             self.audiobook_selected.emit(path)
     
     def highlight_audiobook(self, audiobook_path: str):
-        """Выделение текущей аудиокниги"""
-        # Сброс предыдущего выделения
+        """Apply active styling (colors, bold font) to the currently playing audiobook in the tree widget"""
+        # Clear previous selection styling
         if self.current_playing_item:
             try:
-                # Проверяем, существует ли элемент
+                # Ensure the item still exists in the widget's model
                 self.current_playing_item.text(0)
                 self.reset_item_colors(self.current_playing_item)
             except RuntimeError:
-                # Элемент был удалён при перезагрузке дерева
+                # Item was purged during a tree reload
                 self.current_playing_item = None
         
-        # Поиск элемента
+        # Locate the new item to highlight
         item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
         if item:
             self.current_playing_item = item
             
-            # Выделяем цветом
+            # Apply themed highlight colors
             item.setBackground(0, QBrush(self.highlight_color))
             item.setForeground(0, QBrush(self.highlight_text_color))
             
-            # Делаем жирным
+            # Apply bold font weight
             font = item.font(0)
             font.setBold(True)
             item.setFont(0, font)
             
-            # Прокручиваем к элементу
+            # Scroll the viewport to ensure the item is visible
             self.tree.scrollToItem(item)
 
     
     def find_item_by_path(self, parent_item, path: str):
-        """Поиск элемента по пути"""
+        """Recursively search for an item in the tree whose metadata matches the specified relative path"""
         for i in range(parent_item.childCount()):
             child = parent_item.child(i)
             if child.data(0, Qt.ItemDataRole.UserRole) == path:
@@ -1963,24 +2012,24 @@ class LibraryWidget(QWidget):
         return None
     
     def reset_item_colors(self, item):
-        """Сброс цветов элемента"""
+        """Restore an item's visual appearance to the default state (transparency and normal font)"""
         try:
             item.setBackground(0, QBrush(Qt.GlobalColor.transparent))
             font = item.font(0)
             font.setBold(False)
             item.setFont(0, font)
         except RuntimeError:
-            # Элемент уже удалён
+            # Item has already been dissociated from the widget
             pass
 
     
     def refresh_audiobook_item(self, audiobook_path: str):
-        """Обновление данных элемента после изменения прогресса (из БД)"""
+        """Update an item's metadata by re-querying the database (typically used after major status changes)"""
         item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
         if not item:
             return
         
-        # Загружаем свежие данные
+        # Load fresh record from DB
         data = self.db.get_audiobook_by_path(audiobook_path)
         if data:
             item.setData(0, Qt.ItemDataRole.UserRole + 2, (
@@ -1992,43 +2041,43 @@ class LibraryWidget(QWidget):
                 data['listened_duration'],
                 data['progress_percent']
             ))
-            # Триггерим перерисовку
+            # Trigger a repaint by updating text (standard behavior for delegates)
             item.setText(0, item.text(0))
 
     def update_item_progress(self, audiobook_path: str, listened_duration: float, progress_percent: int):
-        """Живое обновление прогресса без обращения к БД"""
+        """Perform a low-latency UI update for an item's progress without database interaction"""
         item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
         if not item:
             return
             
         data = item.data(0, Qt.ItemDataRole.UserRole + 2)
         if data and len(data) >= 7:
-            # Создаем новый кортеж с обновленным прогрессом
+            # Create a shallow copy and update progress metrics
             new_data = list(data)
             new_data[5] = listened_duration
             new_data[6] = progress_percent
             
             item.setData(0, Qt.ItemDataRole.UserRole + 2, tuple(new_data))
-            # Триггерим перерисовку только вьюпорта, чтобы не дергать дерево целиком
+            # Request viewport repaint only to maintain performance
             self.tree.viewport().update()
     
     def update_texts(self):
-        """Обновление текстов после смены языка"""
-        # Обновляем кнопки фильтров
-        # Обновляем кнопки фильтров
+        """Refynchronize filter button labels and search placeholders following a language preference change"""
+        # Update visibility for localized filter names
         for filter_id, config in self.FILTER_CONFIG.items():
             if filter_id in self.filter_buttons:
                 self.filter_buttons[filter_id].setText(tr(config['label']))
         
-        # Обновляем placeholder поиска
+        # Revise search field hint
         self.search_edit.setPlaceholderText(tr("library.search_placeholder"))
 
 
 class AudiobookPlayerWindow(QMainWindow):
     def __init__(self):
+        """Initialize the main application window, establishing directory structures, loading configurations, and assembling core components"""
         super().__init__()
         
-        # Пути и файлы
+        # Filesystem path orchestration
         self.script_dir = get_base_path()
         self.config_dir = self.script_dir / 'resources'
         self.data_dir = self.script_dir / 'data'
@@ -2037,19 +2086,19 @@ class AudiobookPlayerWindow(QMainWindow):
         self.db_file = self.data_dir / 'audiobooks.db'
         self.icons_dir = self.config_dir / "icons"
         
-        # Создаем папки если их нет
+        # Ensure requisite directories exist for persistent storage
         self.config_dir.mkdir(exist_ok=True)
         self.data_dir.mkdir(exist_ok=True)
         
-        # Загрузка настроек и языка
+        # Load user configurations and localization settings
         self.load_settings()
         self.load_language_preference()
         
-        # Установка заголовка и иконки
+        # Configure window aesthetics
         self.setWindowTitle(tr("window.title"))
         self.setWindowIcon(get_icon("app_icon", self.icons_dir))
         
-        # Инициализация компонентов
+        # Dependency Injection and Component Instantiation
         self.db_manager = DatabaseManager(self.db_file)
         self.player = BassPlayer()
         self.playback_controller = PlaybackController(self.player, self.db_manager)
@@ -2058,7 +2107,7 @@ class AudiobookPlayerWindow(QMainWindow):
             
         self.taskbar_progress = TaskbarProgress()
         
-        # Делегат для дерева
+        # UI Presentation Delegate Initialization
         self.delegate = None
         try:
             self.delegate = MultiLineDelegate(self)
@@ -2068,27 +2117,27 @@ class AudiobookPlayerWindow(QMainWindow):
         except Exception as e:
             print(f"Failed to create delegate: {e}")
         
-        # Создание UI
+        # Interface assembly and event mapping
         self.setup_ui()
         self.setup_menu()
         self.connect_signals()
         
-        # Инициализация
+        # Data hydration and session recovery
         self.library_widget.load_audiobooks()
         self.restore_last_session()
         
-        # Таймер обновления
+        # Periodic UI synchronization timer (e.g., for playback position)
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_ui)
         self.timer.start(100)
         
-        # Установка геометрии окна
+        # Window geometry restoration
         self.setGeometry(self.window_x, self.window_y, self.window_width, self.window_height)
         self.setMinimumSize(450, 450)
         self.statusBar().showMessage(tr("status.load_library"))
     
     def load_language_preference(self):
-        """Загрузка сохранённого языка"""
+        """Retrieve and apply the user's preferred application language from the configuration file"""
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding='utf-8')
         
@@ -2097,10 +2146,11 @@ class AudiobookPlayerWindow(QMainWindow):
             language = Language(lang_code)
             set_language(language)
         except ValueError:
+            # Revert to default language if the preference is invalid
             set_language(Language.RUSSIAN)
     
     def save_language_preference(self):
-        """Сохранение выбранного языка"""
+        """Commit the current language setting to the persistent configuration file"""
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding='utf-8')
         
@@ -2113,17 +2163,17 @@ class AudiobookPlayerWindow(QMainWindow):
             config.write(f)
     
     def setup_ui(self):
-        """Создание интерфейса"""
+        """Build the top-level interface structure using a splitter to contain the library and player widgets"""
         central = QWidget()
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
         main_layout.setContentsMargins(5, 5, 5, 5)
         
-        # Разделитель
+        # Horizontal Splitter for layout flexibility
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.setChildrenCollapsible(True)
         
-        # Библиотека
+        # Audiobook Library Component
         self.library_widget = LibraryWidget(
             self.db_manager,
             {
@@ -2139,7 +2189,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.library_widget.setMinimumWidth(200)
         self.splitter.addWidget(self.library_widget)
         
-        # Плеер
+        # Playback Controls Component
         self.player_widget = PlayerWidget()
         self.player_widget.setMinimumWidth(400)
         self.player_widget.id3_btn.setChecked(self.show_id3)
@@ -2147,17 +2197,16 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.id3_toggled_signal.connect(self.on_id3_state_toggled)
         self.splitter.addWidget(self.player_widget)
         
-        #self.splitter.setSizes([700, 300])
         main_layout.addWidget(self.splitter, 1)
     
     def setup_menu(self):
-        """Создание меню"""
+        """Construct the main application menu bar, including Library, View, and Help menus with localized actions"""
         menubar = self.menuBar()
         
-        # --- Меню "Библиотека" ---
+
         library_menu = menubar.addMenu(tr("menu.library"))
         
-        # Настройки
+        # Global Settings Context
         settings_action = QAction(tr("menu.settings"), self)
         settings_action.setIcon(get_icon("menu_settings"))
         settings_action.setShortcut("Ctrl+,")
@@ -2166,27 +2215,27 @@ class AudiobookPlayerWindow(QMainWindow):
 
         library_menu.addSeparator()
         
-        # Сканирование
+        # Directory Synchronization
         scan_action = QAction(tr("menu.scan"), self)
         scan_action.setIcon(get_icon("menu_scan"))
         scan_action.setShortcut("Ctrl+R")
         scan_action.triggered.connect(self.rescan_directory)
         library_menu.addAction(scan_action)
         
-        # --- Меню "Вид" ---
+
         view_menu = menubar.addMenu(tr("menu.view"))
         
-        # Меню языка (подменю)
+        # Language Selection Nested Menu
         language_menu = view_menu.addMenu(tr("menu.language"))
         
-        # Русский
+        # Russian Localization Toggle
         russian_action = QAction(tr("menu.russian"), self)
         russian_action.setCheckable(True)
         russian_action.setChecked(get_language() == Language.RUSSIAN)
         russian_action.triggered.connect(lambda _: self.change_language(Language.RUSSIAN))
         language_menu.addAction(russian_action)
         
-        # Английский
+        # English Localization Toggle
         english_action = QAction(tr("menu.english"), self)
         english_action.setCheckable(True)
         english_action.setChecked(get_language() == Language.ENGLISH)
@@ -2200,71 +2249,69 @@ class AudiobookPlayerWindow(QMainWindow):
         
         view_menu.addSeparator()
         
-        # Перезагрузка стилей
+        # CSS Refresh Action
         reload_styles_action = QAction(tr("menu.reload_styles"), self)
         reload_styles_action.setIcon(get_icon("menu_reload"))
         reload_styles_action.setShortcut("Ctrl+Q")
         reload_styles_action.triggered.connect(self.reload_styles)
         view_menu.addAction(reload_styles_action)
         
-        # --- Меню "Справка" ---
+
         help_menu = menubar.addMenu(tr("menu.help"))
         
-        # О программе
+        # About Dialog Trigger
         about_action = QAction(tr("menu.about"), self)
         about_action.setIcon(get_icon("menu_about"))
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
     
     def change_language(self, language: Language):
-        """Изменение языка интерфейса без перезапуска"""
+        """Update the application's language preference and immediately refresh all UI components without requiring a restart"""
         if get_language() == language:
             return
         
         set_language(language)
         self.save_language_preference()
         
-        # Обновляем галочки в меню
+        # Synchronize checkmarks in the language menu
         for lang, action in self.language_actions.items():
             action.setChecked(lang == language)
         
-        # Обновляем все тексты в интерфейсе
+        # Propagate translation updates across the entire interface
         self.update_all_texts()
     
-    
     def update_all_texts(self):
-        """Обновление всех текстов в интерфейсе после смены языка"""
-        # Обновляем заголовок окна
+        """Synchronize window titles, menus, and sub-widget labels after a language change event"""
+        # Revise window title with localized formatting
         if hasattr(self, 'playback_controller') and self.playback_controller.current_audiobook_path:
             book_title = self.playback_controller.get_audiobook_title()
             self.setWindowTitle(trf("window.title_with_book", title=book_title))
         else:
             self.setWindowTitle(tr("window.title"))
         
-        # Пересоздаем меню
+        # Reconstruct the menu bar to apply new translations
         self.menuBar().clear()
         self.setup_menu()
         
-        # Обновляем тексты в виджете плеера
+        # Refresh player controls
         if hasattr(self, 'player_widget'):
             self.player_widget.update_texts()
         
-        # Обновляем тексты в библиотеке (кнопки фильтров и поиск)
+        # Refresh library filters and search fields
         if hasattr(self, 'library_widget'):
             self.library_widget.update_texts()
         
-        # Перезагружаем библиотеку для обновления делегата
+        # Reload the library tree to apply new delegate formatting
         if hasattr(self, 'library_widget'):
             self.library_widget.load_audiobooks()
     
     def connect_signals(self):
-        """Подключение сигналов"""
-        # Сигналы библиотеки
+        """Map signals from sub-widgets (Library and Player) to their respective handler methods in the main window"""
+        # Library Navigation Signals
         self.library_widget.audiobook_selected.connect(self.on_audiobook_selected)
         self.library_widget.tree.play_button_clicked.connect(self.on_library_play_clicked)
 
-        
-        # Сигналы плеера
+        # Playback Control Signals
         self.player_widget.play_clicked.connect(self.toggle_play)
         self.player_widget.next_clicked.connect(self.on_next_clicked)
         self.player_widget.prev_clicked.connect(self.on_prev_clicked)
@@ -2275,20 +2322,20 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.file_selected.connect(self.on_file_selected)
     
     def load_settings(self):
-        """Загрузка настроек из файла"""
+        """Retrieve and initialize application state (paths, window geometry, styles) from the 'settings.ini' file"""
         if not self.config_file.exists():
             self.create_default_settings()
         
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding='utf-8')
         
-        # Чтение размеров и позиции окна
+        # Window Geometry Persistence
         self.window_x = config.getint('Display', 'window_x', fallback=100)
         self.window_y = config.getint('Display', 'window_y', fallback=100)
         self.window_width = config.getint('Display', 'window_width', fallback=1200)
         self.window_height = config.getint('Display', 'window_height', fallback=800)
         
-        # Пути
+        # Filesystem Path Configurations
         self.default_path = config.get('Paths', 'default_path', fallback="")
         ff_path_str = config.get('Paths', 'ffprobe_path', fallback=str(self.script_dir / 'resources' / 'bin' / 'ffprobe.exe'))
         self.ffprobe_path = Path(ff_path_str)
@@ -2303,19 +2350,19 @@ class AudiobookPlayerWindow(QMainWindow):
         self.default_cover_file = config.get('Paths', 'default_cover_file', fallback='resources/icons/default_cover.png')
         self.folder_cover_file = config.get('Paths', 'folder_cover_file', fallback='resources/icons/folder_cover.png')
         
-        # Стили отображения
+        # Visual Style Metrics
         self.audiobook_icon_size = config.getint('Audiobook_Style', 'icon_size', fallback=100)
         self.audiobook_row_height = config.getint('Audiobook_Style', 'row_height', fallback=120)
         self.folder_icon_size = config.getint('Folder_Style', 'icon_size', fallback=35)
         self.folder_row_height = config.getint('Folder_Style', 'row_height', fallback=45)
         
-        # Размеры сплиттера
+        # Splitter Layout State
         self.splitter_state = config.get('Layout', 'splitter_state', fallback="")
         
-        # Настройки плеера
+        # Player Functional Preferences
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
         
-        # Обновляем корень библиотеки в контроллере если он уже создан
+        # Synchronize library root with controller if active
         if hasattr(self, 'playback_controller'):
             if self.default_path:
                 self.playback_controller.library_root = Path(self.default_path)
@@ -2323,7 +2370,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.playback_controller.library_root = None
 
     def create_default_settings(self):
-        """Создание файла настроек по умолчанию"""
+        """Generate a fresh 'settings.ini' file with standard defaults for first-time application launch"""
         config = configparser.ConfigParser()
         config['Paths'] = {
             'default_path': '',
@@ -2362,13 +2409,13 @@ class AudiobookPlayerWindow(QMainWindow):
             config.write(f)
 
     def save_settings(self):
-        """Сохранение всех настроек"""
+        """Commit all current application settings (window state, paths, layout, styles) to the 'settings.ini' file"""
         config = configparser.ConfigParser()
-        # Читаем текущий файл, чтобы не потерять другие секции (например, LastSession)
+        # Read the existing file first to preserve non-managed sections like 'LastSession'
         if self.config_file.exists():
             config.read(self.config_file, encoding='utf-8')
         
-        # Размеры и позиция окна
+        # Serialized Window Geometry
         rect = self.geometry()
         if 'Display' not in config: config['Display'] = {}
         config['Display']['window_x'] = str(rect.x())
@@ -2376,23 +2423,23 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Display']['window_width'] = str(rect.width())
         config['Display']['window_height'] = str(rect.height())
         
-        # Пути
+        # Filesystem Path Configs
         if 'Paths' not in config: config['Paths'] = {}
         config['Paths']['default_path'] = self.default_path
         config['Paths']['default_cover_file'] = self.default_cover_file
         config['Paths']['folder_cover_file'] = self.folder_cover_file
         
-        # Layout
+        # Serialized Layout State
         if 'Layout' not in config: config['Layout'] = {}
         if hasattr(self, 'splitter'):
             config['Layout']['splitter_state'] = self.splitter.saveState().toHex().data().decode()
         
-        # Настройки плеера
+        # Player Functional Preferences
         if 'Player' not in config: config['Player'] = {}
         if hasattr(self, 'player_widget'):
             config['Player']['show_id3'] = str(self.player_widget.show_id3)
         
-        # Стили (сохраняем текущие значения в объекте)
+        # Visual Style Persistence
         if 'Audiobook_Style' not in config: config['Audiobook_Style'] = {}
         config['Audiobook_Style']['icon_size'] = str(self.audiobook_icon_size)
         config['Audiobook_Style']['row_height'] = str(self.audiobook_row_height)
@@ -2405,7 +2452,7 @@ class AudiobookPlayerWindow(QMainWindow):
             config.write(f)
     
     def save_last_session(self):
-        """Сохранение последней сессии"""
+        """Encapsulate the current playback state (active book, file, and position) into the configuration for future restoration"""
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding='utf-8')
         
@@ -2424,7 +2471,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Display']['window_x'] = str(self.x())
         config['Display']['window_y'] = str(self.y())
         
-        # Сохранение положения разделителя
+        # Persist the relative sizes of layout panes
         if hasattr(self, 'splitter'):
             sizes = self.splitter.sizes()
             config['Display']['splitter_sizes'] = ",".join(map(str, sizes))
@@ -2433,7 +2480,7 @@ class AudiobookPlayerWindow(QMainWindow):
             config.write(f)
     
     def restore_last_session(self):
-        """Восстановление последней сессии"""
+        """Re-establish the application's previous state by reloading playback meta-data and layout preferences"""
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding='utf-8')
         
@@ -2441,7 +2488,7 @@ class AudiobookPlayerWindow(QMainWindow):
         file_index = config.getint('LastSession', 'last_file_index', fallback=0)
         position = config.getfloat('LastSession', 'last_position', fallback=0.0)
         
-        # Восстановление положения разделителя
+        # Restore layout splitter proportions
         splitter_sizes_str = config.get('Display', 'splitter_sizes', fallback='')
         if splitter_sizes_str and hasattr(self, 'splitter'):
             try:
@@ -2449,12 +2496,13 @@ class AudiobookPlayerWindow(QMainWindow):
                 if len(sizes) == 2:
                     self.splitter.setSizes(sizes)
             except (ValueError, TypeError):
+                # Silently ignore malformed layout data
                 pass
         
         if audiobook_id <= 0:
             return
         
-        # Получаем путь аудиокниги по ID
+        # Lookup audiobook relative path by unique identifier
         import sqlite3
         connection = sqlite3.connect(self.db_file)
         cursor = connection.cursor()
@@ -2465,25 +2513,25 @@ class AudiobookPlayerWindow(QMainWindow):
         if row:
             audiobook_path = row[0]
             if self.playback_controller.load_audiobook(audiobook_path):
-                # Обновляем состояние делегата
+                # Inform the delegate of the active playback path for visual feedback
                 if self.delegate:
                     self.delegate.playing_path = audiobook_path
                 
-                # Восстанавливаем позицию
+                # Re-establish saved playback progress
                 self.playback_controller.current_file_index = file_index
                 self.playback_controller.play_file_at_index(file_index, False)
                 if position > 0:
                     self.player.set_position(position)
                 
-                # Обновляем UI
+                # Synchronize UI states
                 self.update_ui_for_audiobook()
                 
-                # Принудительная перерисовка библиотеки
+                # Force library refresh to reflect session state
                 self.library_widget.tree.viewport().update()
                 self.statusBar().showMessage(tr("status.restored_session"))
     
     def on_id3_state_toggled(self, state: bool):
-        """Сохранение состояния ID3 тегов для текущей книги"""
+        """Persist the preference for ID3 tag visibility for the currently active audiobook"""
         if self.playback_controller.current_audiobook_id:
             self.db_manager.update_audiobook_id3_state(
                 self.playback_controller.current_audiobook_id,
@@ -2491,50 +2539,50 @@ class AudiobookPlayerWindow(QMainWindow):
             )
 
     def on_audiobook_selected(self, audiobook_path: str):
-        """Обработка выбора аудиокниги"""
+        """Handle the user's selection of an audiobook from the library, initiating playback and updating status"""
         if self.playback_controller.load_audiobook(audiobook_path):
-            # Отмечаем книгу как начатую
+            # Update database status to mark the book as currently reading
             if self.playback_controller.current_audiobook_id:
                 self.db_manager.mark_audiobook_started(
                     self.playback_controller.current_audiobook_id
                 )
             
-            # Обновляем состояние делегата
+            # Sync the delegate with the newly active track
             if self.delegate:
                 self.delegate.playing_path = audiobook_path
             
             self.update_ui_for_audiobook()
             self.toggle_play()
             
-            # Обновляем библиотеку (чтобы книга перешла в "В процессе")
+            # Refresh library categories if necessary
             self.library_widget.load_audiobooks()
 
     
     def update_ui_for_audiobook(self):
-        """Обновление UI для загруженной аудиокниги"""
-        # Обновляем заголовок окна
+        """Synchronize various UI elements to reflect the metadata and state of the currently loaded audiobook"""
+        # Revise window title to include the book's title
         title = self.playback_controller.get_audiobook_title()
         self.setWindowTitle(trf("window.title_with_book", title=title))
         
-        # Загружаем файлы в список
+        # Populate the playlist widget with the book's file list
         self.player_widget.load_files(
             self.playback_controller.files_list,
             self.playback_controller.current_file_index
         )
         
-        # Устанавливаем положение переключателя ID3
+        # Restore the persistent ID3 visibility preference
         self.player_widget.id3_btn.setChecked(self.playback_controller.use_id3_tags)
         
-        # Выделяем в дереве
+        # Apply visual focus to the book in the library tree
         self.library_widget.highlight_audiobook(
             self.playback_controller.current_audiobook_path
         )
         
-        # Устанавливаем скорость
+        # Synchronize speed control slider
         self.player_widget.set_speed(self.player.speed_pos)
     
     def toggle_play(self):
-        """Переключение воспроизведения"""
+        """Toggle between active playback and paused states, updating UI indicators and background controllers accordingly"""
         if self.player.is_playing():
             self.player.pause()
             self.taskbar_progress.set_paused()
@@ -2542,14 +2590,14 @@ class AudiobookPlayerWindow(QMainWindow):
             self.player.play()
             self.taskbar_progress.set_normal()
         
-        # Обновляем состояние делегата
+        # Sync the session delegate for visual consistency in the library
         if self.delegate:
             self.delegate.is_paused = not self.player.is_playing()
             self.library_widget.tree.viewport().update()
             
         self.player_widget.set_playing(self.player.is_playing())
         
-        # Обновляем иконку в таскбаре
+        # Synchronize taskbar thumbnail buttons
         if hasattr(self, 'thumbnail_buttons'):
             self.thumbnail_buttons.update_play_state(self.player.is_playing())
             
@@ -2557,7 +2605,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.save_last_session()
     
     def on_next_clicked(self):
-        """Следующий файл"""
+        """Transition playback to the subsequent file in the audiobook sequence"""
         if self.playback_controller.next_file():
             self.player_widget.highlight_current_file(
                 self.playback_controller.current_file_index
@@ -2568,7 +2616,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.refresh_audiobook_in_tree()
     
     def on_prev_clicked(self):
-        """Предыдущий файл"""
+        """Transition playback to the preceding file in the audiobook sequence"""
         if self.playback_controller.prev_file():
             self.player_widget.highlight_current_file(
                 self.playback_controller.current_file_index
@@ -2577,13 +2625,13 @@ class AudiobookPlayerWindow(QMainWindow):
             self.refresh_audiobook_in_tree()
 
     def on_rewind_10_clicked(self):
-        """Перемотка назад на 10 сек"""
+        """Rewind playback by a fixed 10-second interval within the current file"""
         pos = self.player.get_position()
         self.player.set_position(max(0, pos - 10))
         self.playback_controller.save_current_progress()
         
     def on_forward_10_clicked(self):
-        """Перемотка вперед на 10 сек"""
+        """Advance playback by a fixed 10-second interval within the current file"""
         pos = self.player.get_position()
         duration = self.player.get_duration()
         if duration > 0:
@@ -2591,21 +2639,21 @@ class AudiobookPlayerWindow(QMainWindow):
         self.playback_controller.save_current_progress()
     
     def on_file_selected(self, index: int):
-        """Выбор файла из списка"""
+        """Handle manual file selection from the track list, initiating playback for the chosen segment"""
         self.playback_controller.play_file_at_index(index)
         self.player_widget.highlight_current_file(index)
         self.save_last_session()
         self.refresh_audiobook_in_tree()
     
     def on_position_changed(self, normalized: float):
-        """Изменение позиции"""
+        """Seek to a specific temporal position within the active file based on normalized slider input"""
         duration = self.player.get_duration()
         if duration > 0:
             self.player.set_position(normalized * duration)
             self.playback_controller.save_current_progress()
     
     def on_speed_changed(self, value: int):
-        """Изменение скорости"""
+        """Adjust the audio playback speed and persist the new preference to the database for the active book"""
         self.player.set_speed(value)
         if self.playback_controller.current_audiobook_id:
             self.db_manager.update_audiobook_speed(
@@ -2614,59 +2662,59 @@ class AudiobookPlayerWindow(QMainWindow):
             )
 
     def on_library_play_clicked(self, audiobook_path: str):
-        """Обработка клика по кнопке Play в библиотеке"""
+        """Initiate or resume playback from the library view via the 'Play' overlay button"""
         if self.playback_controller.current_audiobook_path == audiobook_path:
             self.toggle_play()
         else:
-            # Если кликнули на другую книгу - загружаем и играем сразу
+            # If a different book is targeted, load its session and begin playback immediately
             self.on_audiobook_selected(audiobook_path)
             if not self.player.is_playing():
                 self.toggle_play()
         
-        # Принудительная перерисовка чтобы иконка сменилась сразу
+        # Trigger an immediate viewport update to reflect the changed play/pause status in the overlay
         self.library_widget.tree.viewport().update()
     
     def showEvent(self, event):
-        """Инициализация при показе окна"""
+        """Integrate with the Windows shell upon window display, configuring taskbar progress and thumbnail control buttons"""
         super().showEvent(event)
         
-        # Устанавливаем HWND для taskbar progress
+        # Link the system window handle to the taskbar progress manager
         hwnd = int(self.winId())
         self.taskbar_progress.set_hwnd(hwnd)
         
-        # Инициализируем кнопки
+        # Initialize taskbar overlay controls
         if self.taskbar_progress.taskbar:
             self.thumbnail_buttons = TaskbarThumbnailButtons(
                 self.taskbar_progress.taskbar,
                 hwnd,
                 self.icons_dir
             )
-            # Добавляем кнопки с задержкой, чтобы окно успело зарегистрироваться в таскбаре
+            # Defer button addition to ensure the window is fully registered with the taskbar
             QTimer.singleShot(1000, self.thumbnail_buttons.add_buttons)
             
-            # Устанавливаем текущее состояние
+            # Synchronize initial visual state
             self.thumbnail_buttons.update_play_state(self.player.is_playing())
 
 
 
     def refresh_audiobook_in_tree(self):
-        """Обновление элемента в дереве"""
+        """Trigger a metadata refresh for the active audiobook's visual representation in the library tree"""
         self.library_widget.refresh_audiobook_item(
             self.playback_controller.current_audiobook_path
         )
     
     def update_ui(self):
-        """Обновление интерфейса (вызывается по таймеру)"""
+        """Perform periodic synchronization of all UI components (sliders, labels, taskbar) with the current engine state"""
         if self.player.chan == 0:
             return
         
         pos = self.player.get_position()
         duration = self.player.get_duration()
         
-        # Обновляем прогресс файла
+        # Synchronize individual track progress indicators
         self.player_widget.update_file_progress(pos, duration)
         
-        # Обновляем общий прогресс
+        # Synchronize aggregate audiobook progress indicators
         total_pos = self.playback_controller.get_current_position()
         self.player_widget.update_total_progress(
             total_pos,
@@ -2674,12 +2722,12 @@ class AudiobookPlayerWindow(QMainWindow):
             self.player.speed_pos / 10.0
         )
         
-        # Живое обновление в библиотеке (раз в секунду для экономии ресурсов)
+        # Perform low-priority library viewport updates (throttled to 1Hz)
         if not hasattr(self, '_library_update_counter'):
             self._library_update_counter = 0
             
         self._library_update_counter += 1
-        if self._library_update_counter >= 10: # Таймер срабатывает каждые 100мс, 10 * 100 = 1000мс
+        if self._library_update_counter >= 10: # 100ms * 10 = 1000ms
             self._library_update_counter = 0
             if self.playback_controller.current_audiobook_path:
                 progress_percent = self.playback_controller.get_progress_percent()
@@ -2689,10 +2737,10 @@ class AudiobookPlayerWindow(QMainWindow):
                     progress_percent
                 )
         
-        # Обновляем состояние кнопки
+        # Synchronize play/pause button aesthetics
         self.player_widget.set_playing(self.player.is_playing())
         
-        # Обновляем таскбар
+        # Synchronize Windows taskbar progress metrics
         if self.playback_controller.total_duration > 0:
             self.taskbar_progress.update_for_playback(
                 is_playing=self.player.is_playing(),
@@ -2700,12 +2748,12 @@ class AudiobookPlayerWindow(QMainWindow):
                 total=self.playback_controller.total_duration
             )
         
-        # Проверка окончания файла
+        # Automate track transition upon reaching the end of the current file
         if duration > 0 and pos >= duration - 0.5 and not self.player.is_playing():
             self.on_next_clicked()
     
     def rescan_directory(self):
-        """Сканирование директории с выводом в диалог"""
+        """Initiate a comprehensive scan of the configured media directory with progress feedback via a dialog"""
         if not self.default_path:
             QMessageBox.warning(self, tr("settings.title"), tr("settings.specify_path"))
             return
@@ -2713,48 +2761,25 @@ class AudiobookPlayerWindow(QMainWindow):
         def start_scanning_process():
             dialog = ScanProgressDialog(self)
             
-            # Когда сканирование закончится, обновляем библиотеку
+            # Refresh the library view and status bar metrics upon scan completion
             def on_finished():
                 self.library_widget.load_audiobooks()
-                # Обновляем счётчик в статусе
                 total_count = self.db_manager.get_audiobook_count()
                 self.statusBar().showMessage(trf("status.library_count", count=total_count))
                 
             dialog.finished.connect(on_finished)
             dialog.show()
-            dialog.start_scan(self.default_path)
+            dialog.start_scan(self.default_path, self.ffprobe_path)
 
-        # Check for ffprobe
-        ffprobe_exe = self.ffprobe_path
-        
-        if not ffprobe_exe.exists():
-            update_dialog = UpdateProgressDialog(self)
-            
-            def on_update_finished():
-                if ffprobe_exe.exists():
-                    start_scanning_process()
-            
-            # Connect to finished signal of dialog (works when dialog closes)
-            # But we want to auto-proceed?
-            # UpdateProgressDialog keeps open until user closes.
-            # User wants "launch download, and AFTER scanning".
-            # If we wait for user close, it is fine.
-            # If we want auto-close, we need to modify UpdateProgressDialog.
-            # Let's assume user closes it.
-            
-            update_dialog.finished.connect(on_update_finished)
-            update_dialog.show()
-            update_dialog.start_update()
-        else:
-            start_scanning_process()
+        start_scanning_process()
     
     def reload_styles(self):
-        """Перезагрузка стилей"""
+        """Immediately re-apply global CSS styles and update presentation delegates to reflect theme changes"""
         try:
             from styles import StyleManager, DARK_QSS_PATH
             StyleManager.apply_style(QApplication.instance(), path=DARK_QSS_PATH)
             
-            # Обновляем делегат
+            # Synchronize item rendering delegates
             if self.delegate:
                 self.delegate.update_styles()
             
@@ -2763,20 +2788,22 @@ class AudiobookPlayerWindow(QMainWindow):
             self.statusBar().showMessage(trf("status.styles_error", error=str(e)))
     
     def show_settings(self):
-        """Показ диалога настроек"""
+        """Display the configuration dialog for managing library paths, system binaries, and data preferences"""
         dialog = SettingsDialog(self, self.default_path, self.ffprobe_path)
         
         def on_path_saved(new_path):
+            """Commit new root path and initiate a library refresh if the configuration has changed"""
             if new_path != self.default_path:
                 self.default_path = new_path
-                self.save_settings() # save_settings already handles everything
-                # Синхронизируем коренную папку в контроллере
+                self.save_settings()
+                # Synchronize root path in the playback controller
                 if hasattr(self, 'playback_controller'):
                     self.playback_controller.library_root = Path(new_path)
                 self.library_widget.load_audiobooks()
                 self.statusBar().showMessage(tr("status.path_saved"))
         
         def on_scan_requested(new_path):
+            """Apply the new path and immediately trigger a directory scan"""
             if new_path != self.default_path:
                 self.default_path = new_path
                 self.save_settings()
@@ -2790,49 +2817,49 @@ class AudiobookPlayerWindow(QMainWindow):
         dialog.exec()
 
     def perform_full_reset(self):
-        """Полный сброс данных библиотеки без закрытия приложения"""
+        """Execute a comprehensive wipe of all library metadata, database records, and extracted cover assets while the application remains active"""
         try:
-            # 1. Останавливаем плеер
+            # 1. Stop active playback to release locks
             self.player.pause()
             
-            # 2. Очищаем состояние контроллера
+            # 2. Reset the internal state of the playback controller
             self.playback_controller.current_audiobook_id = None
             self.playback_controller.current_audiobook_path = None
             self.playback_controller.files_list = []
             self.playback_controller.saved_file_index = 0
             self.playback_controller.saved_position = 0
             
-            # 3. Очищаем дерево (важно для снятия блокировок с файлов обложек)
+            # 3. Clear the tree widget (crucial for unlocking cover image assets)
             self.library_widget.tree.clear()
             
-            # 4. Очищаем БД (через SQL, так как файл может быть занят)
+            # 4. Wipe all database tables
             self.db_manager.clear_all_data()
             
-            # 5. Удаляем обложки
+            # 5. Delete the extracted covers repository
             if self.covers_dir.exists():
                 try:
                     shutil.rmtree(self.covers_dir)
                 except Exception as e:
                     print(f"Could not delete covers dir: {e}")
                 
-            # 6. Обновляем UI
-            self.update_ui_for_audiobook() # Очистит подписи и прогресс плеера
+            # 6. Synchronize UI components to the empty state
+            self.update_ui_for_audiobook() # Resets labels and progress sliders
             if self.delegate:
-                self.delegate.playing_path = None # Сбрасываем подсветку в дереве
-            self.library_widget.load_audiobooks() # Загрузит пустое дерево
+                self.delegate.playing_path = None # Remove tree highlighting
+            self.library_widget.load_audiobooks() # Populate empty tree
             
-            self.statusBar().showMessage("✅ Библиотека успешно очищена")
+            self.statusBar().showMessage(tr("status.reset_success"))
             
         except Exception as e:
-            QMessageBox.critical(self, "Ошибка", f"Не удалось полностью очистить данные: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to completely clear library data: {e}")
 
     def show_about(self):
-        """Показ диалога О программе"""
+        """Display the application information dialog, including versioning and credit details"""
         dialog = AboutDialog(self)
         dialog.exec()
     
     def save_setting(self, section: str, key: str, value: str):
-        """Сохранение настройки"""
+        """Update a specific configuration entry in 'settings.ini' without overwriting other existing sections"""
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding='utf-8')
         
@@ -2844,9 +2871,8 @@ class AudiobookPlayerWindow(QMainWindow):
         with open(self.config_file, 'w', encoding='utf-8') as f:
             config.write(f)
     
-    
     def closeEvent(self, event):
-        """При закрытии окна"""
+        """Perform cleanup operations upon application termination, including session saving and engine release"""
         self.playback_controller.save_current_progress()
         self.save_last_session()
         self.taskbar_progress.clear()
@@ -2856,11 +2882,13 @@ class AudiobookPlayerWindow(QMainWindow):
 from PyQt6.QtCore import QAbstractNativeEventFilter
 
 class TaskbarEventFilter(QAbstractNativeEventFilter):
+    """Custom event filter for intercepting Windows-native messages specifically for taskbar thumbnail button interactions"""
     def __init__(self, window):
         super().__init__()
         self.window = window
 
     def nativeEventFilter(self, eventType, message):
+        """Monitor for WM_COMMAND messages originating from taskbar thumbnail clicks to trigger corresponding playback actions"""
         if eventType == b"windows_generic_MSG" and message:
             try:
                 msg_ptr = int(message)
@@ -2885,18 +2913,19 @@ class TaskbarEventFilter(QAbstractNativeEventFilter):
                                 self.window.on_forward_10_clicked()
                                 return True, 0
             except Exception:
+                # Silently fail on malformed Windows messages
                 pass
         return False, 0
 
 def main():
-    """Точка входа"""
+    """Application entry point: initializes the Qt application context, registers native event filters, and launches the main window"""
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
     app.setStyleSheet(DARK_STYLE)
     
     window = AudiobookPlayerWindow()
     
-    # Регистрация фильтра нативных событий для кнопок таскбара
+    # Register the native event filter for taskbar button interaction
     event_filter = TaskbarEventFilter(window)
     app.installNativeEventFilter(event_filter)
     

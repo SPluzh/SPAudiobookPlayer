@@ -11,8 +11,8 @@ import configparser
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-# --- Localization Support ---
 def load_translations():
+    """Load translation strings for the updater based on app settings"""
     script_dir = Path(__file__).parent
     config_file = script_dir / 'resources' / 'settings.ini'
     lang = 'en'
@@ -38,6 +38,7 @@ def load_translations():
 _translations = None
 
 def tr(key, **kwargs):
+    """Local translation function for the standalone updater script"""
     global _translations
     if _translations is None:
         _translations = load_translations()
@@ -56,14 +57,13 @@ def tr(key, **kwargs):
         except:
             return data
     return key
-# -----------------------------
 
 def format_size(size_bytes):
-    """Formats bytes into human readable MB."""
+    """Format bytes into human readable MB string"""
     return f"{size_bytes / (1024 * 1024):.1f} MB"
 
 def safe_unlink(path, retries=5, delay=0.5):
-    """Attempts to delete a file with retries for Windows permission issues."""
+    """Safely delete a file with retries for Windows permission issues"""
     for i in range(retries):
         try:
             if path.exists():
@@ -81,7 +81,10 @@ def safe_unlink(path, retries=5, delay=0.5):
     return False
 
 class Downloader:
+    """Multi-threaded file downloader with progress reporting"""
+    
     def __init__(self, url, target_path, num_threads=8):
+        """Initialize downloader with URL and target path"""
         self.url = url
         self.target_path = target_path
         self.num_threads = num_threads
@@ -94,6 +97,7 @@ class Downloader:
         }
 
     def _download_chunk(self, start, end):
+        """Download a specific byte range of the file"""
         req = urllib.request.Request(self.url, headers=self.headers)
         req.add_header('Range', f'bytes={start}-{end}')
         
@@ -111,6 +115,7 @@ class Downloader:
                         self._report_progress()
 
     def _report_progress(self):
+        """Calculate and print download progress, speed, and ETA"""
         elapsed_time = time.time() - self.start_time
         if elapsed_time > 0:
             speed_val = self.read_so_far / elapsed_time
@@ -137,6 +142,7 @@ class Downloader:
             sys.stdout.flush()
 
     def download(self):
+        """Execute the multi-threaded download process"""
         # Initial request to get file size and check range support
         req = urllib.request.Request(self.url, headers=self.headers, method='HEAD')
         with urllib.request.urlopen(req) as response:
@@ -166,6 +172,7 @@ class Downloader:
         return time.time() - self.start_time
 
 def download_ffmpeg(force=False):
+    """Orchestrate downloading, extracting, and installing FFmpeg/ffprobe"""
     # URL for FFmpeg release essentials (Windows builds by gyan.dev)
     url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
     script_dir = Path(__file__).parent

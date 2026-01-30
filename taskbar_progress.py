@@ -1,6 +1,6 @@
 """
-Модуль для отображения прогресса в кнопке таскбара Windows
-Требует: pip install comtypes
+Module for displaying progress on the Windows taskbar button
+Requires: pip install comtypes
 """
 import sys
 from translations import tr
@@ -17,11 +17,11 @@ if sys.platform == 'win32':
         import comtypes.client
         COMTYPES_AVAILABLE = True
     except ImportError:
-        print("comtypes не установлен. Установите: pip install comtypes")
+        print("comtypes is not installed. Install it with: pip install comtypes")
 
 
 if COMTYPES_AVAILABLE:
-    # Определяем интерфейс ITaskbarList3
+    # Define ITaskbarList3 interface using comtypes
     class ITaskbarList(IUnknown):
         _iid_ = GUID('{56FDF342-FD6D-11d0-958A-006097C9A090}')
         _methods_ = [
@@ -40,7 +40,7 @@ if COMTYPES_AVAILABLE:
                       (['in'], ctypes.c_int, 'fFullscreen')),
         ]
 
-    # Структуры для кнопок
+    # Structure for thumbnail toolbar buttons
     class THUMBBUTTON(ctypes.Structure):
         _fields_ = [
             ('dwMask', ctypes.c_uint),
@@ -51,7 +51,7 @@ if COMTYPES_AVAILABLE:
             ('dwFlags', ctypes.c_uint),
         ]
 
-    # Константы для кнопок
+    # Thumbnail button constants
     THB_BITMAP = 0x1
     THB_ICON = 0x2
     THB_TOOLTIP = 0x4
@@ -63,7 +63,7 @@ if COMTYPES_AVAILABLE:
     THBF_NOBACKGROUND = 0x4
     THBF_HIDDEN = 0x8
     
-    # ID кнопок
+    # Custom button IDs
     THUMBBUTTON_PREV = 0
     THUMBBUTTON_PLAYPAUSE = 1
     THUMBBUTTON_NEXT = 2
@@ -115,16 +115,14 @@ if COMTYPES_AVAILABLE:
                       (['in'], ctypes.c_void_p, 'prcClip')),
         ]
 
-    # CLSID TaskbarList
+    # TaskbarList CLSID
     CLSID_TaskbarList = GUID('{56FDF344-FD6D-11d0-958A-006097C9A090}')
 
 
 class TaskbarProgress:
-    """
-    Класс для отображения прогресса в кнопке таскбара Windows.
-    """
+    """Manages progress bar display on the Windows taskbar button"""
     
-    # Константы состояний
+    # Progress states
     TBPF_NOPROGRESS = 0x0
     TBPF_INDETERMINATE = 0x1
     TBPF_NORMAL = 0x2
@@ -132,6 +130,7 @@ class TaskbarProgress:
     TBPF_PAUSED = 0x8
     
     def __init__(self):
+        """Initialize taskbar interface"""
         self.hwnd = None
         self.taskbar = None
         self._initialized = False
@@ -141,45 +140,40 @@ class TaskbarProgress:
             self._init_taskbar()
     
     def _init_taskbar(self):
-        """Инициализация COM-интерфейса ITaskbarList3"""
+        """Internal initialization of the COM interface"""
         try:
-            # Создаём COM-объект и получаем интерфейс ITaskbarList3
             taskbar = comtypes.client.CreateObject(
                 CLSID_TaskbarList,
                 interface=ITaskbarList3
             )
             
-            # Инициализируем
             taskbar.HrInit()
             
             self.taskbar = taskbar
             self._initialized = True
             
         except Exception as e:
-            print(f"Не удалось инициализировать TaskbarProgress: {e}")
+            print(f"Failed to initialize TaskbarProgress: {e}")
             self._initialized = False
     
     @property
     def is_available(self) -> bool:
-        """Проверяет, доступен ли функционал таскбара"""
+        """Check if taskbar functionality is available for current window"""
         return self._initialized and self.hwnd is not None
     
     def set_hwnd(self, hwnd: int):
-        """
-        Устанавливает дескриптор окна.
-        Вызывайте после показа окна (в showEvent).
-        """
+        """Register the window handle for taskbar updates"""
         self.hwnd = hwnd
     
     def set_progress(self, current: float, total: float):
-        """Устанавливает значение прогресса"""
+        """Set numerical progress value"""
         if not self.is_available:
             return
         
         try:
-            # Преобразуем в целые числа для API
+            # Convert to integers for API
             current_int = max(0, int(current))
-            total_int = max(1, int(total))  # Избегаем деления на 0
+            total_int = max(1, int(total))
             
             self.taskbar.SetProgressValue(self.hwnd, current_int, total_int)
             
@@ -187,14 +181,11 @@ class TaskbarProgress:
             pass
     
     def set_progress_percent(self, percent: int):
-        """Устанавливает прогресс в процентах (0-100)"""
+        """Set progress as percentage (0-100)"""
         self.set_progress(percent, 100)
     
     def set_state(self, state: int):
-        """
-        Устанавливает состояние прогресс-бара.
-        state: Одна из констант TBPF_*
-        """
+        """Set progress bar visual state (normal, paused, error, etc.)"""
         if not self.is_available:
             return
         
@@ -205,59 +196,61 @@ class TaskbarProgress:
             pass
     
     def set_normal(self):
+        """Set progress bar to normal (green) state"""
         self.set_state(self.TBPF_NORMAL)
     
     def set_paused(self):
+        """Set progress bar to paused (yellow) state"""
         self.set_state(self.TBPF_PAUSED)
     
     def set_error(self):
+        """Set progress bar to error (red) state"""
         self.set_state(self.TBPF_ERROR)
     
     def set_indeterminate(self):
+        """Set progress bar to indeterminate (pulsing) state"""
         self.set_state(self.TBPF_INDETERMINATE)
     
     def clear(self):
-        """Скрывает прогресс-бар в таскбаре"""
+        """Hide the progress bar from the taskbar button"""
         self.set_state(self.TBPF_NOPROGRESS)
     
     def update_for_playback(self, is_playing: bool, current: float, total: float):
-        """
-        Комплексное обновление для аудиоплеера.
-        """
+        """Sync taskbar progress and state with playback status"""
         if not self.is_available:
             return
         
-        # Устанавливаем состояние в зависимости от воспроизведения
+        # Set state based on playing status
         new_state = self.TBPF_NORMAL if is_playing else self.TBPF_PAUSED
         
         if new_state != self._current_state:
             self.set_state(new_state)
         
-        # Обновляем прогресс
         self.set_progress(current, total)
 
 
 class TaskbarThumbnailButtons:
-    """Управление кнопками в превью панели задач Windows"""
+    """Manages playback control buttons in the Windows taskbar thumbnail preview"""
     
     def __init__(self, taskbar_interface, hwnd: int, icons_dir):
+        """Initialize thumbnail buttons with taskbar interface and window handle"""
         self.taskbar = taskbar_interface
         self.hwnd = hwnd
         self.icons_dir = icons_dir
         self._buttons_added = False
         self._is_playing = False
-        self._buttons_cache = None  # Ссылка на массив кнопок чтобы не удалил GC
+        self._buttons_cache = None  # Cache buttons array to prevent GC collection
         
     def _get_hicon(self, name: str):
-        """Пытается загрузить иконку и вернуть HICON"""
-        # Сначала пробуем ICO
+        """Load icon file and return Windows HICON handle"""
+        # Try Loading ICO first
         ico_path = self.icons_dir / f"{name}.ico"
         if ico_path.exists():
             return ctypes.windll.user32.LoadImageW(
                 0, str(ico_path), 1, 64, 64, 0x10
             )
         
-        # Если нет ICO, пробуем PNG (может не сработать через LoadImageW)
+        # Fallback to PNG (limited support via LoadImageW)
         png_path = self.icons_dir / f"{name}.png"
         if png_path.exists():
             return ctypes.windll.user32.LoadImageW(
@@ -267,51 +260,49 @@ class TaskbarThumbnailButtons:
         return None
 
     def add_buttons(self):
-        """Добавляет кнопки при первом показе окна"""
+        """Add playback control buttons to the thumbnail toolbar"""
         if not COMTYPES_AVAILABLE or not self.taskbar or self._buttons_added:
             return
             
         try:
-            # Создаём массив из 5 кнопок
             buttons = (THUMBBUTTON * 5)()
-            self._buttons_cache = buttons  # Keep reference
+            self._buttons_cache = buttons
             
-            # 1. Кнопка Previous (ID=0)
+            # 1. Previous Button
             buttons[0].dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS
             buttons[0].iId = THUMBBUTTON_PREV
             buttons[0].hIcon = self._get_hicon('prev')
             buttons[0].szTip = tr('taskbar.prev')
             buttons[0].dwFlags = THBF_ENABLED
             
-            # 2. Кнопка Rewind (ID=3)
+            # 2. Rewind Button
             buttons[1].dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS
             buttons[1].iId = THUMBBUTTON_REWIND
             buttons[1].hIcon = self._get_hicon('rewind_10')
             buttons[1].szTip = tr('taskbar.rewind')
             buttons[1].dwFlags = THBF_ENABLED
             
-            # 3. Кнопка Play/Pause (ID=1)
+            # 3. Play/Pause Button
             buttons[2].dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS
             buttons[2].iId = THUMBBUTTON_PLAYPAUSE
             buttons[2].hIcon = self._get_hicon('play')
             buttons[2].szTip = tr('taskbar.play')
             buttons[2].dwFlags = THBF_ENABLED
             
-            # 4. Кнопка Forward (ID=4)
+            # 4. Forward Button
             buttons[3].dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS
             buttons[3].iId = THUMBBUTTON_FORWARD
             buttons[3].hIcon = self._get_hicon('forward_10')
             buttons[3].szTip = tr('taskbar.forward')
             buttons[3].dwFlags = THBF_ENABLED
             
-            # 5. Кнопка Next (ID=2)
+            # 5. Next Button
             buttons[4].dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS
             buttons[4].iId = THUMBBUTTON_NEXT
             buttons[4].hIcon = self._get_hicon('next')
             buttons[4].szTip = tr('taskbar.next')
             buttons[4].dwFlags = THBF_ENABLED
             
-            # Добавляем кнопки. Важно: используем ctypes.cast для получения правильного указателя
             buttons_ptr = ctypes.cast(buttons, POINTER(THUMBBUTTON))
             
             hr = self.taskbar.ThumbBarAddButtons(self.hwnd, 5, buttons_ptr)
@@ -320,12 +311,12 @@ class TaskbarThumbnailButtons:
                 self._buttons_added = True
             
         except Exception as e:
-            print(f"Ошибка добавления кнопок: {e}")
+            print(f"Error adding thumbnail buttons: {e}")
             import traceback
             traceback.print_exc()
     
     def update_play_state(self, is_playing: bool):
-        """Обновляет иконку play/pause"""
+        """Update the central play/pause button icon and tooltip"""
         if not COMTYPES_AVAILABLE or not self._buttons_added or not self.taskbar:
             return
             
@@ -345,4 +336,4 @@ class TaskbarThumbnailButtons:
             self.taskbar.ThumbBarUpdateButtons(self.hwnd, 1, buttons_ptr)
             
         except Exception as e:
-            print(f"Ошибка обновления кнопки: {e}")
+            print(f"Error updating thumbnail button: {e}")

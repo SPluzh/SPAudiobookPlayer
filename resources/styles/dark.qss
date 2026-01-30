@@ -1,5 +1,5 @@
 /* ============================================================
-   ОСНОВНОЕ ОКНО И ВИДЖЕТЫ
+   MAIN WINDOW AND WIDGETS
    ============================================================ */
 
 QMainWindow {
@@ -13,7 +13,7 @@ QWidget {
 }
 
 /* ============================================================
-   КНОПКИ
+   BUTTONS
    ============================================================ */
 
 QStatusBar {
@@ -45,12 +45,12 @@ QPushButton:disabled {
     color: #666666;
 }
 
-/* Кнопка Play/Pause */
+/* Play/Pause Button */
 QPushButton#playBtn {
     /* min-width removed to allow stretching */
 }
 
-/* Кнопка ID3 Toggle */
+/* ID3 Toggle Button */
 QPushButton#id3Btn {
     background-color: #373737;
     border: 1px solid #808080;
@@ -76,7 +76,7 @@ QPushButton#id3Btn:checked {
     font-weight: bold;
 }
 
-/* Кнопки фильтров в стиле вкладок */
+/* Filter buttons in tab style */
 QPushButton#filterBtn {
     background-color: transparent;
     border: none;
@@ -100,7 +100,7 @@ QPushButton#filterBtn:checked {
 }
 
 /* ============================================================
-   ПОЛЯ ВВОДА
+   INPUT FIELDS
    ============================================================ */
 
 QLineEdit {
@@ -126,7 +126,7 @@ QLineEdit::placeholder {
 }
 
 /* ============================================================
-   СПИСКИ
+   LISTS
    ============================================================ */
 
 QListWidget {
@@ -134,15 +134,15 @@ QListWidget {
     border: 1px solid #808080;
     padding: 5px;
     outline: none;
-    /* Отключаем стандартную рамку фокуса */
+    /* Disable standard selection decoration */
     show-decoration-selected: 0;
     border-radius: 0px;
 }
 
-/* Убираем пунктирную рамку фокуса */
+/* Remove dotted focus rectangle */
 QListWidget:focus {
     outline: none;
-    border: 1px solid #018574;  /* Опционально: подсветка границы */
+    border: 1px solid #018574;  /* Optional: border highlight */
 }
 
 QListWidget::item {
@@ -150,51 +150,51 @@ QListWidget::item {
     border: none;
 }
 
-/* --- Обычное состояние --- */
+/* --- Normal state --- */
 QListWidget::item {
     background-color: transparent;
     color: #e0e0e0;
 }
 
-/* --- Наведение --- */
+/* --- Hover --- */
 QListWidget::item:hover {
     background-color: #4a4a4a;
     color: #ffffff;
     border-radius: 0px;
 }
 
-/* --- Выделение АКТИВНОЕ отключено --- */
+/* --- ACTIVE selection disabled --- */
 QListWidget::item:selected:active {
     background-color: transparent;
     color: #e0e0e0;
     border-radius: 0px;
 }
 
-/* --- Выделение НЕАКТИВНОЕ отключено --- */
+/* --- INACTIVE selection disabled --- */
 QListWidget::item:selected:!active {
     background-color: transparent;
     color: #e0e0e0;
     border-radius: 0px;
 }
 
-/* --- Наведение на выделенный (оставляем hover) --- */
+/* --- Hover on selected (keep hover) --- */
 QListWidget::item:selected:hover {
     background-color: #4a4a4a;
     color: #ffffff;
     border-radius: 0px;
 }
 
-/* --- Отключённый элемент --- */
+/* --- Disabled item --- */
 QListWidget::item:disabled {
     background-color: transparent;
     color: #666666;
 }
 
 /* ============================================================
-   ДЕРЕВЬЯ
+   TREES
    ============================================================ */
 
-/* QTreeWidget — выделение отключено, только hover */
+/* QTreeWidget — selection disabled, hover only */
 QTreeWidget {
     background-color: #373737;
     border: 1px solid #808080;
@@ -204,7 +204,7 @@ QTreeWidget {
     border-radius: 0px;
 }
 
-/* Нормальное состояние */
+/* Normal state */
 QTreeWidget::item {
     padding: 5px;
     background-color: transparent;
@@ -218,26 +218,26 @@ QTreeWidget::item:hover {
     border-radius: 0px;
 }
 
-/* СИСТЕМНОЕ выделение АКТИВНОЕ отключено */
+/* SYSTEM ACTIVE selection disabled */
 QTreeWidget::item:selected:active {
     background-color: transparent;
     color: #e0e0e0;
 }
 
-/* СИСТЕМНОЕ выделение НЕАКТИВНОЕ отключено */
+/* SYSTEM INACTIVE selection disabled */
 QTreeWidget::item:selected:!active {
     background-color: transparent;
     color: #e0e0e0;
 }
 
-/* Hover на выделенном элементе */
+/* Hover on selected item */
 QTreeWidget::item:selected:hover {
     background-color: #4a4a4a;
     color: #ffffff;
     border-radius: 0px;
 }
 
-/* Программное выделение (текущая книга) — приоритет */
+/* Programmatic selection (active book) — priority */
 QTreeWidget::item[playing="true"] {
     background-color: #018574 !important;
     color: #ffffff !important;
@@ -246,7 +246,7 @@ QTreeWidget::item[playing="true"] {
 
 
 /* ============================================================
-   СЛАЙДЕРЫ
+   SLIDERS
    ============================================================ */
 
 QSlider::groove:horizontal {
@@ -287,7 +287,7 @@ QSlider#speedSlider::sub-page:horizontal {
 }
 
 /* ============================================================
-   ПРОГРЕСС-БАРЫ
+   PROGRESS BARS
    ============================================================ */
 
 QProgressBar {
@@ -322,7 +322,7 @@ QProgressBar::chunk {
 }
 
 /* ============================================================
-   МЕТКИ (LABELS)
+   LABELS
    ============================================================ */
 
 QLabel {
@@ -376,7 +376,7 @@ QLabel#sectionLabel {
 }
 
 /* ============================================================
-   СПЛИТТЕР
+   SPLITTER
    ============================================================ */
 
 QSplitter::handle {
@@ -401,10 +401,10 @@ QSplitter::handle:pressed {
 }
 
 /* ============================================================
-   СКРОЛЛБАРЫ
+   SCROLLBARS
    ============================================================ */
 
-/* Вертикальный скроллбар */
+/* Vertical scrollbar */
 QScrollBar:vertical {
     background-color: #373737;
     width: 12px;
@@ -437,7 +437,7 @@ QScrollBar::sub-page:vertical {
     background: none;
 }
 
-/* Горизонтальный скроллбар */
+/* Horizontal scrollbar */
 QScrollBar:horizontal {
     background-color: #373737;
     height: 12px;
@@ -471,7 +471,7 @@ QScrollBar::sub-page:horizontal {
 }
 
 /* ============================================================
-   ФРЕЙМЫ
+   FRAMES
    ============================================================ */
 
 QFrame {
@@ -485,12 +485,12 @@ QFrame#separator {
 }
 
 /* ============================================================
-   МЕНЮ
+   MENU
    ============================================================ */
-/* Цвет верхней панели (меню-бар) */
+/* Top menu bar color */
 QMenuBar {
-    background-color: #373737;  /* основной фон панели */
-    color: #eaeaea;             /* цвет текста пунктов меню */
+    background-color: #373737;  /* main bar background */
+    color: #eaeaea;             /* menu item text color */
     font-size: 13px;
 }
 
@@ -531,106 +531,106 @@ QMenu::indicator {
 }
 
 /* ============================================================
-   ОКНО НАСТРОЕК
+   SETTINGS WINDOW
    ============================================================ */
-/* Фон диалогового окна */
+/* Dialog window background */
 QDialog {
-    background-color: #373737;  /* тёмно-серый фон */
-    color: #eaeaea;             /* цвет текста внутри диалога */
+    background-color: #373737;  /* dark grey background */
+    color: #eaeaea;             /* text color inside dialog */
     border-radius: 3px;
 }
 
-/* Фон всего виджета вкладок */
+/* Background of entire tab widget */
 QTabWidget {
-    background-color: #373737; /* фон контента вкладки */
+    background-color: #373737; /* tab content background */
 }
 
-/* Вкладки сверху */
+/* Tabs on top */
 QTabBar {
-    background-color: #2c2c2c; /* фон полоски с вкладками */
+    background-color: #2c2c2c; /* background of the strip with tabs */
 }
 
 QTabBar::tab {
-    background-color: #444444;  /* фон вкладки */
-    color: #eaeaea;             /* цвет текста */
+    background-color: #444444;  /* tab background */
+    color: #eaeaea;             /* text color */
     padding: 8px 20px;
-    border: 1px solid #808080;  /* рамка вокруг вкладки */
-    border-bottom: none;         /* чтобы была "связанная" с контентом */
+    border: 1px solid #808080;  /* border around tab */
+    border-bottom: none;         /* to be "connected" with content */
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
     margin-right: 2px;
 }
 
-/* Вкладка при наведении мыши */
+/* Tab on hover */
 QTabBar::tab:hover {
     background-color: #018574;
     color: #ffffff;
 }
 
-/* Активная вкладка */
+/* Active tab */
 QTabBar::tab:selected {
     background-color: #018574;
     color: #ffffff;
-    border-bottom: 1px solid #018574; /* чтобы визуально сливалась с контентом */
+    border-bottom: 1px solid #018574; /* to visually merge with content */
 }
 
-/* Вкладки слева/справа/снизу — если используешь */
+/* Inactive tabs */
 QTabBar::tab:!selected {
-    margin-top: 2px;  /* отделяем неактивные от активной */
+    margin-top: 2px;  /* separate inactive from active */
 }
 
 /* ========================================
-   ДЕЛЕГАТ АУДИОКНИГИ - СТИЛИЗАЦИЯ СТРОК
+   AUDIOBOOK DELEGATE - ROW STYLING
    ======================================== */
 
-/* Автор книги */
+/* Author of the book */
 QLabel#delegate_author {
     font-size: 14px;
     color: #CCCCCC;
 }
 
-/* Название книги */
+/* Title of the book */
 QLabel#delegate_title {
     font-size: 14px;
     font-weight: bold;
     color: #CCCCCC;
 }
 
-/* Рассказчик */
+/* Narrator */
 QLabel#delegate_narrator {
     font-size: 14px;
     color: #CCCCCC;
 }
 
-/* Общая информация */
+/* Overall info */
 QLabel#delegate_info {
     font-size: 14px;
     font-weight: bold;
     color: #CCCCCC;
 }
 
-/* Папка */
+/* Folder */
 QLabel#delegate_folder {
     font-size: 14px;
     font-weight: bold;
     color: #CCCCCC;
 }
 
-/* Прогресс прослушивания */
+/* Listening progress */
 QLabel#delegate_progress {
     font-size: 12px;
     font-weight: bold;
     color: #CCCCCC;
 }
 
-/* Длительность */
+/* Duration */
 QLabel#delegate_duration {
     font-size: 12px;
     font-weight: bold;
     color: #CCCCCC;
 }
 
-/* Количество файлов */
+/* File count */
 QLabel#delegate_file_count {
     font-size: 12px;
     font-weight: bold;
@@ -638,18 +638,18 @@ QLabel#delegate_file_count {
 }
 
 /* ============================================================
-   TOOLTIP (всплывающие подсказки)
+   TOOLTIP
    ============================================================ */
 
 QToolTip {
-    color: #eaeaea;              /* цвет текста */
-    border: 1px solid #018574;  /* рамка */
+    color: #eaeaea;              /* text color */
+    border: 1px solid #018574;  /* border */
     padding: 3px;
     border-radius: 3px;
 }
 
 /* ============================================================
-   ОКНО О ПРОГРАММЕ
+   ABOUT WINDOW
    ============================================================ */
 
 QFrame#aboutContainer {
@@ -698,4 +698,3 @@ QPushButton#aboutCloseBtn:hover {
 QPushButton#aboutCloseBtn:pressed {
     background-color: #333;
 }
-

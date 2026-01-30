@@ -10,18 +10,18 @@ from typing import Dict, List, Optional, Tuple, Callable
 
 def init_database(db_file: Path, log_func: Callable[[str], None] = print):
     """
-    Инициализация базы данных - создание таблиц и индексов.
-    Вызывается из scanner.py при сканировании библиотеки.
+    Initialize the database - create tables and indexes.
+    Called from scanner.py during library scanning.
     
     Args:
-        db_file: Путь к файлу базы данных
-        log_func: Функция для вывода логов (по умолчанию print)
+        db_file: Path to the database file
+        log_func: Function for logging output (default is print)
     """
     with sqlite3.connect(db_file) as conn:
         c = conn.cursor()
         c.execute("PRAGMA foreign_keys = ON")
         
-        # Таблица аудиокниг
+        # Audiobooks table
         c.execute("""
             CREATE TABLE IF NOT EXISTS audiobooks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,7 +54,7 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             )
         """)
         
-        # Таблица файлов аудиокниг
+        # Audiobook files table
         c.execute("""
             CREATE TABLE IF NOT EXISTS audiobook_files (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,26 +73,26 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             )
         """)
         
-        # Индексы
+        # Indexes
         c.execute("CREATE INDEX IF NOT EXISTS idx_parent_path ON audiobooks(parent_path)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_is_folder ON audiobooks(is_folder)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_is_started ON audiobooks(is_started)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_is_completed ON audiobooks(is_completed)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_audiobook_id ON audiobook_files(audiobook_id)")
 
-        # Миграция: добавляем колонку is_expanded если её нет
+        # Migration: add is_expanded column if it doesn't exist
         try:
             c.execute("ALTER TABLE audiobooks ADD COLUMN is_expanded INTEGER DEFAULT 0")
             if log_func:
                 log_func("scanner.db_added_expanded")
         except sqlite3.OperationalError:
-            pass # Колонка уже существует
+            pass # Column already exists
 
-        # Миграция: добавляем колонку state_hash если её нет
+        # Migration: add state_hash column if it doesn't exist
         try:
             c.execute("ALTER TABLE audiobooks ADD COLUMN state_hash TEXT")
         except sqlite3.OperationalError:
-            pass # Колонка уже существует
+            pass # Column already exists
         
         conn.commit()
 
@@ -101,10 +101,11 @@ class DatabaseManager:
     """Manager for audiobook database operations"""
     
     def __init__(self, db_file: Path):
+        """Initialize with database file path"""
         self.db_file = db_file
 
     def clear_all_data(self):
-        """Полная очистка всех таблиц базы данных"""
+        """Completely clear all database tables"""
         if not self.db_file.exists():
             return
             
@@ -122,7 +123,7 @@ class DatabaseManager:
             conn.close()
     
     def load_audiobooks_from_db(self, filter_type: str = 'all') -> Dict:
-        """Загрузка аудиокниг из БД с применением фильтра"""
+        """Load audiobooks from database with specified filter"""
         if not self.db_file.exists():
             return {}
         
@@ -147,7 +148,7 @@ class DatabaseManager:
                 cursor.execute(query)
                 
             else:
-                # Условие фильтра для аудиокниг (не папок)
+                # Filter condition for audiobooks (not folders)
                 filter_condition = 'is_folder = 0'
                 
                 if filter_type == 'completed':
@@ -162,21 +163,21 @@ class DatabaseManager:
                 elif filter_type == 'not_started':
                     filter_condition += ' AND is_started = 0'
                 
-                # Всегда фильтруем по доступности
+                # Always filter by availability
                 filter_condition += ' AND is_available = 1'
                 
-                # Рекурсивный запрос для получения всех уровней родительских папок
+                # Recursive query to get all levels of parent folders
                 query = f'''
                     WITH RECURSIVE 
-                    -- 1. Отфильтрованные аудиокниги
+                    -- 1. Filtered audiobooks
                     filtered_audiobooks AS (
                         SELECT {columns} 
                         FROM audiobooks 
                         WHERE {filter_condition}
                     ),
-                    -- 2. Рекурсивный поиск ВСЕХ родительских папок
+                    -- 2. Recursive search for ALL parent folders
                     all_parent_folders AS (
-                        -- Базовый случай: прямые родители отфильтрованных аудиокниг
+                        -- Base case: direct parents of filtered audiobooks
                         SELECT {columns_with_prefix}
                         FROM audiobooks p
                         WHERE p.is_folder = 1 
@@ -184,13 +185,13 @@ class DatabaseManager:
                         
                         UNION
                         
-                        -- Рекурсия: родители родителей
+                        -- Recursion: parents of parents
                         SELECT {columns_with_prefix}
                         FROM audiobooks p
                         INNER JOIN all_parent_folders apf ON p.path = apf.parent_path
                         WHERE p.is_folder = 1
                     )
-                    -- 3. Объединяем аудиокниги и ВСЕ их родительские папки
+                    -- 3. Combine audiobooks and ALL their parent folders
                     SELECT * FROM filtered_audiobooks
                     UNION
                     SELECT * FROM all_parent_folders
@@ -233,7 +234,7 @@ class DatabaseManager:
             conn.close()
 
     def mark_audiobook_started(self, audiobook_id: int):
-        """Отметка аудиокниги как начатой"""
+        """Mark an audiobook as started"""
         if not audiobook_id:
             return
         
@@ -254,7 +255,7 @@ class DatabaseManager:
             conn.close()
 
     def get_audiobook_info(self, audiobook_path: str) -> Optional[Tuple]:
-        """Получение информации об аудиокниге"""
+        """Get information about a specific audiobook by path"""
         conn = sqlite3.connect(self.db_file)
         try:
             cursor = conn.cursor()
@@ -271,7 +272,7 @@ class DatabaseManager:
             conn.close()
     
     def get_audiobook_files(self, audiobook_id: int) -> List[Tuple]:
-        """Получение списка файлов аудиокниги"""
+        """Get list of files for a specific audiobook by ID"""
         conn = sqlite3.connect(self.db_file)
         try:
             cursor = conn.cursor()
@@ -289,7 +290,7 @@ class DatabaseManager:
     
     def save_progress(self, audiobook_id: int, file_index: int, position: float,
                       speed: float, listened_duration: float, progress_percent: int):
-        """Сохранение прогресса воспроизведения"""
+        """Save playback progress for an audiobook"""
         if not audiobook_id:
             return
         
@@ -297,8 +298,8 @@ class DatabaseManager:
         cursor = conn.cursor()
         
         try:
-            # Определяем статусы
-            # Не сбрасываем is_started в 0, если он уже 1
+            # Determine status
+            # Do not reset is_started to 0 if it's already 1
             cursor.execute("SELECT is_started FROM audiobooks WHERE id = ?", (audiobook_id,))
             row = cursor.fetchone()
             old_is_started = row[0] if row else 0
@@ -322,7 +323,7 @@ class DatabaseManager:
             conn.close()
 
     def update_audiobook_speed(self, audiobook_id: int, speed: float):
-        """Обновление скорости воспроизведения"""
+        """Update playback speed for an audiobook"""
         if not audiobook_id:
             return
             
@@ -341,7 +342,7 @@ class DatabaseManager:
             conn.close()
     
     def mark_audiobook_completed(self, audiobook_id: int, total_duration: float):
-        """Отметка аудиокниги как прослушанной"""
+        """Mark an audiobook as completely listened"""
         conn = sqlite3.connect(self.db_file)
         try:
             cursor = conn.cursor()
@@ -358,7 +359,7 @@ class DatabaseManager:
             conn.close()
 
     def reset_audiobook_status(self, audiobook_id: int):
-        """Сброс статуса аудиокниги (не начата)"""
+        """Reset audiobook status to 'not started'"""
         if not audiobook_id:
             return
             
@@ -379,7 +380,7 @@ class DatabaseManager:
             conn.close()
 
     def update_audiobook_id3_state(self, audiobook_id: int, state: bool):
-        """Обновление состояния ID3 тегов для книги"""
+        """Update ID3 tags usage state for an audiobook"""
         if not audiobook_id:
             return
             
@@ -398,7 +399,7 @@ class DatabaseManager:
             conn.close()
     
     def get_audiobook_count(self) -> int:
-        """Получение количества аудиокниг"""
+        """Get total number of audiobooks in the library"""
         if not self.db_file.exists():
             return 0
             
@@ -414,7 +415,7 @@ class DatabaseManager:
             conn.close()
     
     def get_audiobook_by_path(self, path: str) -> Optional[Dict]:
-        """Получение данных аудиокниги по пути для обновления дерева"""
+        """Get audiobook data by its path for tree updates"""
         conn = sqlite3.connect(self.db_file)
         try:
             cursor = conn.cursor()
@@ -444,8 +445,8 @@ class DatabaseManager:
             conn.close()
 
     def update_folder_expanded_state(self, path: str, is_expanded: bool):
-        """Обновление состояния развернутости папки"""
-        # Работаем только с папками (is_folder=1)
+        """Update the expanded/collapsed state of a folder in the library tree"""
+        # Only work with folders (is_folder=1)
         conn = sqlite3.connect(self.db_file)
         try:
             cursor = conn.cursor()

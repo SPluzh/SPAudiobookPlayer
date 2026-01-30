@@ -7,7 +7,7 @@ echo ==================================================
 echo  SPAudiobookPlayer - BUILD
 echo ==================================================
 
-REM --- проверка python ---
+REM --- check python ---
 where python >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python not found in PATH
@@ -15,7 +15,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM --- проверка pyinstaller ---
+REM --- check pyinstaller ---
 python -m PyInstaller --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] PyInstaller not installed
@@ -24,7 +24,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM --- проверка UPX ---
+REM --- check UPX ---
 where upx >nul 2>&1
 if errorlevel 1 (
     echo [WARNING] UPX not found in PATH. Exe size will be larger.
@@ -32,7 +32,7 @@ if errorlevel 1 (
     pause
 )
 
-REM --- очистка предыдущих сборок ---
+REM --- clean previous builds ---
 if exist build (
     echo Cleaning build/
     rmdir /s /q build
@@ -53,7 +53,7 @@ if exist dist (
     )
 )
 
-REM --- сборка ---
+REM --- build ---
 echo.
 echo Building...
 echo.
