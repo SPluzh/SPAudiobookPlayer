@@ -28,6 +28,12 @@
     "filter_in_progress": "Started",
     "filter_completed": "Finished",
     "filter_not_started": "New",
+    "show_folders": "",
+    "tooltip_show_folders": "Show folder hierarchy",
+    "tooltip_filter_all": "Show all books",
+    "tooltip_filter_not_started": "Show only new books",
+    "tooltip_filter_in_progress": "Show books in progress",
+    "tooltip_filter_completed": "Show finished books",
     "tooltip_last_played": "Last played: {date}",
     "tooltip_progress": "Progress: {percent}%",
     "tooltip_duration": "Duration"

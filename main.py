@@ -1618,6 +1618,7 @@ class LibraryWidget(QWidget):
     """Container for the audiobook tree, search filters, and status-based navigation buttons"""
     
     audiobook_selected = pyqtSignal(str) # Emits the relative path of the selected audiobook
+    show_folders_toggled = pyqtSignal(bool) # Emits the new state of the folders toggle
     
     # Internal configuration for status filtering
     FILTER_CONFIG = {
@@ -1627,7 +1628,7 @@ class LibraryWidget(QWidget):
         'completed': {'label': "library.filter_completed", 'icon': "filter_completed"},
     }
     
-    def __init__(self, db_manager: DatabaseManager, config: dict, delegate=None):
+    def __init__(self, db_manager: DatabaseManager, config: dict, delegate=None, show_folders: bool = False):
         """Initialize library managers, styling preferences, and default state"""
         super().__init__()
         self.db = db_manager
@@ -1639,6 +1640,7 @@ class LibraryWidget(QWidget):
         self.highlight_color = QColor(1, 133, 116)
         self.highlight_text_color = QColor(255, 255, 255)
         self.current_filter = 'all'
+        self.show_folders = show_folders
         self.setup_ui()
         self.load_icons()
     
@@ -1660,9 +1662,21 @@ class LibraryWidget(QWidget):
         
         layout.addLayout(search_layout)
 
-        # Status Filter Buttons
         filter_layout = QHBoxLayout()
         filter_layout.setSpacing(2)
+        
+        # Show Folders Toggle
+        self.btn_show_folders = QPushButton("")
+        self.btn_show_folders.setObjectName("filterBtn")
+        self.btn_show_folders.setCheckable(True)
+        self.btn_show_folders.setChecked(self.show_folders)
+        self.btn_show_folders.setIcon(get_icon("folder_cover"))
+        self.btn_show_folders.setFixedWidth(40)
+        self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
+        self.btn_show_folders.clicked.connect(self.on_show_folders_toggled)
+        filter_layout.addWidget(self.btn_show_folders)
+        
+        filter_layout.addSpacing(5)
         
         self.filter_group = QButtonGroup(self)
         self.filter_group.setExclusive(True)
@@ -1677,6 +1691,7 @@ class LibraryWidget(QWidget):
             if 'icon' in config:
                 btn.setIcon(get_icon(config['icon']))
                 
+            btn.setToolTip(tr(f"library.tooltip_filter_{filter_id}"))
             btn.clicked.connect(lambda checked, f=filter_id: self.apply_filter(f))
             self.filter_group.addButton(btn)
             self.filter_buttons[filter_id] = btn
@@ -1742,6 +1757,12 @@ class LibraryWidget(QWidget):
         self.current_playing_item = None
         self.load_audiobooks()
     
+    def on_show_folders_toggled(self, checked):
+        """Toggle folder visibility and refresh the library"""
+        self.show_folders = checked
+        self.show_folders_toggled.emit(checked)
+        self.load_audiobooks()
+
     def load_audiobooks(self):
         """Retrieve and display audiobooks from the database according to the active filter"""
         self.current_playing_item = None
@@ -1755,10 +1776,14 @@ class LibraryWidget(QWidget):
             return
         
         for data in data_by_parent[parent_path]:
-            item = QTreeWidgetItem(parent_item)
-            item.setData(0, Qt.ItemDataRole.UserRole, data['path'])
-            
             if data['is_folder']:
+                if not self.show_folders:
+                    # If folders are hidden by default, recursively add children to the SAME parent
+                    self.add_items_from_db(parent_item, data['path'], data_by_parent)
+                    continue
+                
+                item = QTreeWidgetItem(parent_item)
+                item.setData(0, Qt.ItemDataRole.UserRole, data['path'])
                 item.setText(0, data['name'])
                 item.setData(0, Qt.ItemDataRole.UserRole + 1, 'folder')
                 item.setIcon(0, self.folder_icon)
@@ -1766,6 +1791,8 @@ class LibraryWidget(QWidget):
                 if data.get('is_expanded'):
                     item.setExpanded(True)
             else:
+                item = QTreeWidgetItem(parent_item)
+                item.setData(0, Qt.ItemDataRole.UserRole, data['path'])
                 # Audiobooks are custom-painted by the delegate
                 # Set text to empty so the delegate has full control over the item's visual area
                 item.setText(0, "")
@@ -2063,10 +2090,15 @@ class LibraryWidget(QWidget):
     
     def update_texts(self):
         """Refynchronize filter button labels and search placeholders following a language preference change"""
+        # Update show folders button tooltip
+        if hasattr(self, 'btn_show_folders'):
+            self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
+            
         # Update visibility for localized filter names
         for filter_id, config in self.FILTER_CONFIG.items():
             if filter_id in self.filter_buttons:
                 self.filter_buttons[filter_id].setText(tr(config['label']))
+                self.filter_buttons[filter_id].setToolTip(tr(f"library.tooltip_filter_{filter_id}"))
         
         # Revise search field hint
         self.search_edit.setPlaceholderText(tr("library.search_placeholder"))
@@ -2184,7 +2216,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 'default_path': self.default_path,
                 'ffprobe_path': self.ffprobe_path
             },
-            self.delegate
+            self.delegate,
+            show_folders=self.show_folders
         )
         self.library_widget.setMinimumWidth(200)
         self.splitter.addWidget(self.library_widget)
@@ -2310,6 +2343,7 @@ class AudiobookPlayerWindow(QMainWindow):
         # Library Navigation Signals
         self.library_widget.audiobook_selected.connect(self.on_audiobook_selected)
         self.library_widget.tree.play_button_clicked.connect(self.on_library_play_clicked)
+        self.library_widget.show_folders_toggled.connect(self.on_show_folders_toggled)
 
         # Playback Control Signals
         self.player_widget.play_clicked.connect(self.toggle_play)
@@ -2361,6 +2395,7 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # Player Functional Preferences
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
+        self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
         
         # Synchronize library root with controller if active
         if hasattr(self, 'playback_controller'):
@@ -2400,6 +2435,9 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Player'] = {
             'show_id3': 'False'
         }
+        config['Library'] = {
+            'show_folders': 'False'
+        }
         config['LastSession'] = {
             'last_audiobook_id': '0',
             'last_file_index': '0',
@@ -2438,6 +2476,9 @@ class AudiobookPlayerWindow(QMainWindow):
         if 'Player' not in config: config['Player'] = {}
         if hasattr(self, 'player_widget'):
             config['Player']['show_id3'] = str(self.player_widget.show_id3)
+        
+        if 'Library' not in config: config['Library'] = {}
+        config['Library']['show_folders'] = str(self.show_folders)
         
         # Visual Style Persistence
         if 'Audiobook_Style' not in config: config['Audiobook_Style'] = {}
@@ -2537,6 +2578,11 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.playback_controller.current_audiobook_id,
                 state
             )
+
+    def on_show_folders_toggled(self, checked):
+        """Update and persist the folder visibility preference"""
+        self.show_folders = checked
+        self.save_settings()
 
     def on_audiobook_selected(self, audiobook_path: str):
         """Handle the user's selection of an audiobook from the library, initiating playback and updating status"""
