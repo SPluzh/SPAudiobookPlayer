@@ -9,6 +9,9 @@ __pycache__/
 # PyCharm
 .idea/
 
+# Serena
+.serena/
+
 # Virtual Environments
 venv/
 env/
@@ -29,3 +32,6 @@ ffprobe.exe
 
 # Archives
 *.zip
+
+# Documentation
+gemini.md
