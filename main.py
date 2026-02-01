@@ -521,6 +521,7 @@ class SettingsDialog(QDialog):
         
         browse_btn = QPushButton(tr("settings.browse"))
         browse_btn.setObjectName("browseBtn")
+        browse_btn.setIcon(get_icon("context_open_folder"))
         browse_btn.clicked.connect(self.browse_directory)
         path_edit_layout.addWidget(browse_btn)
         
@@ -533,6 +534,7 @@ class SettingsDialog(QDialog):
         
         rescan_btn = QPushButton(tr("settings.scan_button"))
         rescan_btn.setObjectName("scanBtn")
+        rescan_btn.setIcon(get_icon("scan"))
         rescan_btn.clicked.connect(self.on_scan_requested)
         scan_layout.addWidget(rescan_btn)
         
@@ -561,6 +563,7 @@ class SettingsDialog(QDialog):
         # Data Reset Configuration
         reset_btn = QPushButton(tr("settings.reset_data_btn"))
         reset_btn.setObjectName("resetBtn")
+        reset_btn.setIcon(get_icon("delete"))
         reset_btn.clicked.connect(self.on_reset_data)
         tools_layout.addWidget(reset_btn)
         
@@ -580,6 +583,7 @@ class SettingsDialog(QDialog):
         # Save Action
         save_button = QPushButton(tr("settings.save"))
         save_button.setObjectName("saveBtn")
+        save_button.setIcon(get_icon("save"))
         save_button.setMinimumHeight(40)
         save_button.clicked.connect(self.on_save)
         save_button.setSizePolicy(
@@ -621,8 +625,10 @@ class SettingsDialog(QDialog):
         
         if ffprobe_exe.exists():
             self.update_btn.setText(tr("ffmpeg_updater.settings_btn_installed"))
+            self.update_btn.setIcon(get_icon("check"))
         else:
             self.update_btn.setText(tr("ffmpeg_updater.settings_btn"))
+            self.update_btn.setIcon(get_icon("download"))
 
     def on_update_ffmpeg(self):
         """Open the update dialog and refresh ffprobe status after closure"""
