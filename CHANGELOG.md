@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4]
+- **Performance**: instant switching between library filters (`All`, `In Progress`, `Completed`) by implementing client-side filtering. No more database reloads on filter change.
+- **Performance**: instant toggling of "Show Folders" view by caching library data structure.
+- **Performance**: implemented LRU cache for cover icons to eliminate disk I/O and image scaling during library rendering.
+- **UI**: Added high-quality antialiasing (`SmoothPixmapTransform`) for all cover and icon rendering.
+
 ## [1.0.3]
 - **Hotkeys**: Added comprehensive keyboard support:
     - `Space` — Play/Pause.

@@ -32,6 +32,7 @@ import ctypes
 from ctypes import wintypes
 from translations import tr, trf, set_language, get_language, Language
 from hotkeys import HotKeyManager
+from functools import lru_cache
 
 
 def format_duration(seconds):
@@ -61,6 +62,7 @@ def format_time_short(seconds):
     secs = int(seconds % 60)
     return trf("formats.time_ms", minutes=minutes, seconds=secs)
 
+@lru_cache(maxsize=512)
 def load_icon(file_path: Path, target_size: int) -> QIcon:
     """Load, scale and return a QIcon from a file path"""
     if file_path.exists() and file_path.is_file():
@@ -756,6 +758,8 @@ class MultiLineDelegate(QStyledItemDelegate):
             icon_size, icon_size
         )
         if icon:
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             icon.paint(painter, icon_rect)
         
         text = index.data(Qt.ItemDataRole.DisplayRole)
@@ -803,6 +807,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             path = QPainterPath()
             path.addRoundedRect(QRectF(icon_rect), 3.0, 3.0)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             painter.setClipPath(path)
             
             # 1. Main Cover
@@ -1658,6 +1663,7 @@ class LibraryWidget(QWidget):
         self.highlight_text_color = QColor(255, 255, 255)
         self.current_filter = 'all'
         self.show_folders = show_folders
+        self.cached_library_data = None  # Cache for fast reconstruction
         self.setup_ui()
         self.load_icons()
     
@@ -1808,22 +1814,41 @@ class LibraryWidget(QWidget):
     def apply_filter(self, filter_type: str):
         """Switch the current library view filter and refresh the audiobook listing"""
         self.current_filter = filter_type
-        self.search_edit.clear()  # Reset search results when changing filter categories
-        self.current_playing_item = None
-        self.load_audiobooks()
+        # self.search_edit.clear()  # Reset search results when changing filter categories
+        # self.current_playing_item = None
+        self.filter_audiobooks()
     
     def on_show_folders_toggled(self, checked):
         """Toggle folder visibility and refresh the library"""
         self.show_folders = checked
         self.show_folders_toggled.emit(checked)
-        self.load_audiobooks()
+        self.load_audiobooks(use_cache=True)
 
-    def load_audiobooks(self):
+    def refresh_library(self):
+        """Force a database reload and refresh the UI"""
+        self.load_audiobooks(use_cache=False)
+
+    def load_audiobooks(self, use_cache: bool = True):
         """Retrieve and display audiobooks from the database according to the active filter"""
         self.current_playing_item = None
         self.tree.clear()
-        data_by_parent = self.db.load_audiobooks_from_db(self.current_filter)
-        self.add_items_from_db(self.tree, '', data_by_parent)
+        
+        # Check cache or force reload
+        # Always load all audiobooks to enable fast client-side filtering
+        if not use_cache or self.cached_library_data is None:
+             self.cached_library_data = self.db.load_audiobooks_from_db('all')
+        
+        # Optimize tree population by disabling repaints and sorting
+        self.tree.setUpdatesEnabled(False)
+        self.tree.blockSignals(True)
+        try:
+            self.add_items_from_db(self.tree, '', self.cached_library_data)
+        finally:
+            self.tree.blockSignals(False)
+            self.tree.setUpdatesEnabled(True)
+            
+        # Apply current filter immediately after loading
+        self.filter_audiobooks()
     
     def add_items_from_db(self, parent_item, parent_path: str, data_by_parent: dict):
         """Recursively populate the tree widget with folders and audiobooks from the database map"""
@@ -1861,6 +1886,11 @@ class LibraryWidget(QWidget):
                     data['listened_duration'],
                     data['progress_percent']
                 ))
+                # Store status flags for client-side filtering
+                item.setData(0, Qt.ItemDataRole.UserRole + 3, (
+                    data['is_started'],
+                    data['is_completed']
+                ))
                 
                 # Fetch and scale the audiobook cover
                 cover_icon = None
@@ -1883,7 +1913,7 @@ class LibraryWidget(QWidget):
         """Handle real-time search queries by filtering tree items based on text matching"""
         search_text = self.search_edit.text().lower().strip()
         
-        if not search_text:
+        if not search_text and self.current_filter == 'all':
             self.show_all_items(self.tree.invisibleRootItem())
             return
         
@@ -1905,26 +1935,49 @@ class LibraryWidget(QWidget):
             item_type = child.data(0, Qt.ItemDataRole.UserRole + 1)
             
             if item_type == 'folder':
-                has_children = self.filter_tree_items(child, search_text)
+                has_visible_children = self.filter_tree_items(child, search_text)
                 folder_name = child.text(0).lower()
-                matches = search_text in folder_name
-                child.setHidden(not (matches or has_children))
+                
+                # Folder logic: 
+                # If searching text: show if name matches OR has visible children
+                # If filtering status: show ONLY if has visible children containing matching books
+                if search_text:
+                    fn_matches = search_text in folder_name
+                    child.setHidden(not (fn_matches or has_visible_children))
+                else:
+                    child.setHidden(not has_visible_children)
+
                 if not child.isHidden():
                     has_visible = True
                     
             elif item_type == 'audiobook':
-                data = child.data(0, Qt.ItemDataRole.UserRole + 2)
-                matches = False
-                if data:
-                    author, title, narrator, _, _, _, _ = data
-                    if author and search_text in author.lower():
-                        matches = True
-                    if title and search_text in title.lower():
-                        matches = True
-                    if narrator and search_text in narrator.lower():
-                        matches = True
+                # 1. Check Status Filter
+                status_data = child.data(0, Qt.ItemDataRole.UserRole + 3)
+                status_match = True
+                if status_data:
+                    is_started, is_completed = status_data
+                    if self.current_filter == 'not_started':
+                        status_match = not is_started
+                    elif self.current_filter == 'in_progress':
+                        status_match = is_started and not is_completed
+                    elif self.current_filter == 'completed':
+                        status_match = is_completed
                 
-                child.setHidden(not matches)
+                # 2. Check Text Search
+                text_match = True
+                if search_text:
+                    data = child.data(0, Qt.ItemDataRole.UserRole + 2)
+                    text_match = False
+                    if data:
+                        author, title, narrator, _, _, _, _ = data
+                        if author and search_text in author.lower():
+                            text_match = True
+                        if title and search_text in title.lower():
+                            text_match = True
+                        if narrator and search_text in narrator.lower():
+                            text_match = True
+                
+                child.setHidden(not (status_match and text_match))
                 if not child.isHidden():
                     has_visible = True
         
@@ -1992,7 +2045,21 @@ class LibraryWidget(QWidget):
     def mark_as_read(self, audiobook_id, duration, path):
         """Update audiobook status to completed and refresh the library and active player UI if necessary"""
         self.db.mark_audiobook_completed(audiobook_id, duration)
-        self.load_audiobooks()
+        
+        # Update cache
+        self.update_cache_item_status(path, is_started=True, is_completed=True)
+        
+        # Update UI item directly
+        item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
+        if item:
+            # is_started=True, is_completed=True
+            item.setData(0, Qt.ItemDataRole.UserRole + 3, (True, True))
+            # Also update progress data
+            self.refresh_audiobook_item(path)
+            
+        # Re-apply filter
+        self.filter_audiobooks()
+
         # Synchronize UI if the modified book is currently loaded in the player
         window = self.window()
         if hasattr(window, 'playback_controller') and window.playback_controller.current_audiobook_id == audiobook_id:
@@ -2001,7 +2068,21 @@ class LibraryWidget(QWidget):
     def mark_as_unread(self, audiobook_id, path):
         """Reset audiobook progress to 0% and synchronize the library and active player UI"""
         self.db.reset_audiobook_status(audiobook_id)
-        self.load_audiobooks()
+        
+        # Update cache
+        self.update_cache_item_status(path, is_started=False, is_completed=False)
+        
+        # Update UI item directly
+        item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
+        if item:
+            # is_started=False, is_completed=False
+            item.setData(0, Qt.ItemDataRole.UserRole + 3, (False, False))
+            # Also update progress data
+            self.refresh_audiobook_item(path)
+
+        # Re-apply filter
+        self.filter_audiobooks()
+
         window = self.window()
         if hasattr(window, 'playback_controller') and window.playback_controller.current_audiobook_id == audiobook_id:
             # Revert controller session state
@@ -2123,6 +2204,12 @@ class LibraryWidget(QWidget):
                 data['listened_duration'],
                 data['progress_percent']
             ))
+            # Update status flags
+            if 'is_started' in data and 'is_completed' in data:
+                item.setData(0, Qt.ItemDataRole.UserRole + 3, (
+                    data['is_started'],
+                    data['is_completed']
+                ))
             # Trigger a repaint by updating text (standard behavior for delegates)
             item.setText(0, item.text(0))
 
@@ -2141,7 +2228,28 @@ class LibraryWidget(QWidget):
             
             item.setData(0, Qt.ItemDataRole.UserRole + 2, tuple(new_data))
             # Request viewport repaint only to maintain performance
+            item.setData(0, Qt.ItemDataRole.UserRole + 2, tuple(new_data))
+            # Request viewport repaint only to maintain performance
             self.tree.viewport().update()
+    
+    def update_cache_item_status(self, path: str, is_started: bool, is_completed: bool):
+        """Update the status flags of a specific item in the cache to maintain consistency without reloading"""
+        if not self.cached_library_data:
+            return
+
+        # Find the item in the cache structure (dict by parent_path)
+        # We need to iterate because we don't know the parent path immediately from the 'path' argument without filesystem ops,
+        # but technically we could guess. However, searching is safer.
+        found = False
+        for parent, items in self.cached_library_data.items():
+            for item in items:
+                if item['path'] == path:
+                    item['is_started'] = is_started
+                    item['is_completed'] = is_completed
+                    found = True
+                    break
+            if found:
+                break
     
     def update_texts(self):
         """Refynchronize filter button labels and search placeholders following a language preference change"""
@@ -2897,7 +3005,7 @@ class AudiobookPlayerWindow(QMainWindow):
             
             # Refresh the library view and status bar metrics upon scan completion
             def on_finished():
-                self.library_widget.load_audiobooks()
+                self.library_widget.refresh_library()
                 total_count = self.db_manager.get_audiobook_count()
                 self.statusBar().showMessage(trf("status.library_count", count=total_count))
                 

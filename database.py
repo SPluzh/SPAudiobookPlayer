@@ -421,7 +421,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT author, title, narrator, file_count, duration, 
-                       listened_duration, progress_percent
+                       listened_duration, progress_percent, is_started, is_completed
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -435,7 +435,9 @@ class DatabaseManager:
                     'file_count': row[3],
                     'duration': row[4],
                     'listened_duration': row[5],
-                    'progress_percent': row[6]
+                    'progress_percent': row[6],
+                    'is_started': bool(row[7]),
+                    'is_completed': bool(row[8])
                 }
             return None
         except sqlite3.Error as e:
