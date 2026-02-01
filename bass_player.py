@@ -14,6 +14,10 @@ BASS_ACTIVE_PLAYING = 1
 BASS_FX_BFX_PEAKEQ = 0x10004
 BASS_FX_BFX_COMPRESSOR2 = 0x10011
 BASS_BFX_CHANALL = -1
+BASS_UNICODE = 0x80000000
+
+# Plugin flags
+BASS_PLUGIN_UNICODE = 0x80000000
 
 def load_library(name):
     """Load BASS shared library from resources or system path"""
@@ -85,6 +89,10 @@ if bass:
     bass.BASS_ChannelRemoveFX.restype = c_bool
     bass.BASS_FXSetParameters.argtypes = [c_int, c_void_p]
     bass.BASS_FXSetParameters.restype = c_bool
+    bass.BASS_PluginLoad.argtypes = [c_void_p, c_int]
+    bass.BASS_PluginLoad.restype = c_int
+    bass.BASS_PluginFree.argtypes = [c_int]
+    bass.BASS_PluginFree.restype = c_bool
 
 if bass_fx:
     bass_fx.BASS_FX_TempoCreate.argtypes = [c_int, c_int]
@@ -109,6 +117,14 @@ class BassPlayer:
 
         if bass and bass.BASS_Init(-1, 44100, 0, 0, None):
             self.initialized = True
+            
+            # Load OPUS plugin
+            plugin_path = os.path.join(os.path.dirname(__file__), "resources/bin/bassopus.dll")
+            if os.path.exists(plugin_path):
+                path_bytes = plugin_path.encode('utf-16le') + b'\x00\x00'
+                self.opus_plugin = bass.BASS_PluginLoad(path_bytes, BASS_PLUGIN_UNICODE)
+            else:
+                self.opus_plugin = 0
 
     def load(self, filepath: str) -> bool:
         """Load an audio file into the player"""
@@ -267,4 +283,7 @@ class BassPlayer:
         if self.chan != 0:
             bass.BASS_StreamFree(self.chan)
         if self.initialized:
+            # Free plugin if loaded
+            if hasattr(self, 'opus_plugin') and self.opus_plugin:
+                 bass.BASS_PluginFree(self.opus_plugin)
             bass.BASS_Free()
