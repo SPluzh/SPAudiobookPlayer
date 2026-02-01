@@ -100,6 +100,56 @@ QPushButton#autoRewindBtn:checked {
     font-weight: bold;
 }
 
+/* DeEsser Toggle Button */
+QPushButton#deesserBtn {
+    background-color: #373737;
+    border: 1px solid #808080;
+    color: #eaeaea;
+    padding: 2px 5px;
+    font-weight: 500;
+    font-size: 11px;
+    min-height: 18px;
+    margin-top: 2px;
+    border-radius: 3px;
+}
+
+QPushButton#deesserBtn:hover {
+    background-color: #018574;
+    border-color: #018574;
+    color: #ffffff;
+}
+
+QPushButton#deesserBtn:checked {
+    background-color: #018574;
+    border-color: #018574;
+    font-weight: bold;
+}
+
+/* Compressor Toggle Button */
+QPushButton#compressorBtn {
+    background-color: #373737;
+    border: 1px solid #808080;
+    color: #eaeaea;
+    padding: 2px 5px;
+    font-weight: 500;
+    font-size: 11px;
+    min-height: 18px;
+    margin-top: 2px;
+    border-radius: 3px;
+}
+
+QPushButton#compressorBtn:hover {
+    background-color: #018574;
+    border-color: #018574;
+    color: #ffffff;
+}
+
+QPushButton#compressorBtn:checked {
+    background-color: #018574;
+    border-color: #018574;
+    font-weight: bold;
+}
+
 /* Filter buttons in tab style */
 QPushButton#filterBtn {
     background-color: transparent;

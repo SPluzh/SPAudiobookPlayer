@@ -1197,6 +1197,8 @@ class PlayerWidget(QWidget):
     file_selected = pyqtSignal(int)
     id3_toggled_signal = pyqtSignal(bool)
     auto_rewind_toggled_signal = pyqtSignal(bool)
+    deesser_toggled_signal = pyqtSignal(bool)
+    compressor_toggled_signal = pyqtSignal(bool)
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
@@ -1214,19 +1216,20 @@ class PlayerWidget(QWidget):
     def setup_ui(self):
         """Build the player user interface using stylized frames and layouts"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 0, 0, 0)
-        layout.setSpacing(15)
+        layout.setContentsMargins(5, 0, 0, 0)
+        layout.setSpacing(0)
         
         # Primary player container
         player_frame = QFrame()
         player_layout = QVBoxLayout(player_frame)
         
-        settings_layout = QHBoxLayout()
+        settings_layout = QVBoxLayout()
         settings_layout.setSpacing(10)
         
         # Volume and ID3 management section
-        vol_box = QHBoxLayout()
-        vol_box.setSpacing(5)
+        # Audio Effect Buttons Row (Above Volume)
+        btns_row = QHBoxLayout()
+        btns_row.setSpacing(5)
         
         # ID3 Meta-tag Toggle
         self.id3_btn = QPushButton("ID3")
@@ -1235,7 +1238,7 @@ class PlayerWidget(QWidget):
         self.id3_btn.setObjectName("id3Btn")
         self.id3_btn.setToolTip(tr("player.show_id3"))
         self.id3_btn.toggled.connect(self.on_id3_toggled)
-        vol_box.addWidget(self.id3_btn)
+        btns_row.addWidget(self.id3_btn)
         
         # Auto-rewind Toggle
         self.auto_rewind_btn = QPushButton("AR")
@@ -1244,45 +1247,62 @@ class PlayerWidget(QWidget):
         self.auto_rewind_btn.setObjectName("autoRewindBtn")
         self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
         self.auto_rewind_btn.toggled.connect(self.on_auto_rewind_toggled)
-        vol_box.addWidget(self.auto_rewind_btn)
+        btns_row.addWidget(self.auto_rewind_btn)
+
+        # DeEsser Toggle
+        self.deesser_btn = QPushButton("DS")
+        self.deesser_btn.setCheckable(True)
+        self.deesser_btn.setFixedWidth(40)
+        self.deesser_btn.setObjectName("deesserBtn")
+        self.deesser_btn.setToolTip(tr("player.tooltip_deesser"))
+        self.deesser_btn.toggled.connect(self.on_deesser_toggled)
+        btns_row.addWidget(self.deesser_btn)
         
+        self.compressor_btn = QPushButton("C")
+        self.compressor_btn.setCheckable(True)
+        self.compressor_btn.setFixedWidth(40)
+        self.compressor_btn.setObjectName("compressorBtn")
+        self.compressor_btn.setToolTip(tr("player.tooltip_compressor"))
+        self.compressor_btn.toggled.connect(self.on_compressor_toggled)
+        btns_row.addWidget(self.compressor_btn)
+        btns_row.addStretch()
+        
+        settings_layout.addLayout(btns_row)
+
+        # Sliders Row (Volume + Speed)
+        sliders_row = QHBoxLayout()
+        sliders_row.setSpacing(5)
+        
+        # Volume
         self.volume_slider = QSlider(Qt.Orientation.Horizontal)
         self.volume_slider.setObjectName("volumeSlider")
         self.volume_slider.setRange(0, 100)
         self.volume_slider.setValue(100)
-        self.volume_slider.setMinimumWidth(80)
+        self.volume_slider.setMinimumWidth(100)
         self.volume_slider.setToolTip(tr("player.volume"))
         self.volume_slider.valueChanged.connect(self.on_volume_changed)
-        vol_box.addWidget(self.volume_slider)
+        sliders_row.addWidget(self.volume_slider)
         
         self.volume_label = QLabel(trf("formats.percent", value=100))
         self.volume_label.setMinimumWidth(45)
-        vol_box.addWidget(self.volume_label)
+        sliders_row.addWidget(self.volume_label)
         
-        settings_layout.addLayout(vol_box)
-        
-        settings_layout.addStretch()
-        
-        # Playback Speed Control
-        speed_widget = QWidget()
-        speed_layout = QHBoxLayout(speed_widget)
-        speed_layout.setContentsMargins(0, 0, 0, 0)
-        speed_layout.setSpacing(5)
-        
+        sliders_row.addStretch()
+
+        # Speed
         self.speed_label = QLabel(trf("formats.speed", value=1.0))
         self.speed_label.setFixedWidth(35)
-        speed_layout.addWidget(self.speed_label)
+        sliders_row.addWidget(self.speed_label)
         
         self.speed_slider = QSlider(Qt.Orientation.Horizontal)
         self.speed_slider.setRange(5, 30)
         self.speed_slider.setValue(10)
-        self.speed_slider.setMinimumWidth(80)
+        self.speed_slider.setMinimumWidth(100)
         self.speed_slider.setToolTip(tr("player.speed"))
         self.speed_slider.valueChanged.connect(self.on_speed_changed)
-        speed_layout.addWidget(self.speed_slider)
+        sliders_row.addWidget(self.speed_slider)
         
-        speed_widget.setMinimumWidth(120)
-        settings_layout.addWidget(speed_widget)
+        settings_layout.addLayout(sliders_row)
         
         player_layout.addLayout(settings_layout)
         
@@ -1486,6 +1506,14 @@ class PlayerWidget(QWidget):
     def on_auto_rewind_toggled(self, checked):
         """Handle the toggle of auto-rewind feature"""
         self.auto_rewind_toggled_signal.emit(checked)
+
+    def on_deesser_toggled(self, checked):
+        """Handle the toggle of DeEsser filter"""
+        self.deesser_toggled_signal.emit(checked)
+
+    def on_compressor_toggled(self, checked):
+        """Handle the toggle of Compressor filter"""
+        self.compressor_toggled_signal.emit(checked)
     
     def load_files(self, files_list: list, current_index: int = 0):
         """Populate the track list widget with file information and highlight the active track"""
@@ -1570,6 +1598,8 @@ class PlayerWidget(QWidget):
         self.play_btn.setToolTip(tr("player.play"))
         self.id3_btn.setToolTip(tr("player.show_id3"))
         self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
+        self.deesser_btn.setToolTip(tr("player.tooltip_deesser"))
+        self.compressor_btn.setToolTip(tr("player.tooltip_compressor"))
 
 
 class LibraryTree(QTreeWidget):
@@ -1676,8 +1706,8 @@ class LibraryWidget(QWidget):
     def setup_ui(self):
         """Assemble the search bar, filter buttons, and the main library tree widget"""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 10, 0)
-        layout.setSpacing(10)
+        layout.setContentsMargins(0, 0, 5, 0)
+        layout.setSpacing(3)
         
         # Search Entry Area
         search_layout = QHBoxLayout()
@@ -2294,9 +2324,15 @@ class AudiobookPlayerWindow(QMainWindow):
         self.data_dir.mkdir(exist_ok=True)
         
         # Auto-rewind state tracking
+        self.auto_rewind = False
+        self.deesser_enabled = False
+        self.compressor_enabled = False
         self.last_pause_time = None
         
         # Load user configurations and localization settings
+        self.db_manager = DatabaseManager(self.db_file)
+        self.player = BassPlayer()
+        
         self.load_settings()
         self.load_language_preference()
         
@@ -2305,8 +2341,6 @@ class AudiobookPlayerWindow(QMainWindow):
         self.setWindowIcon(get_icon("app_icon", self.icons_dir))
         
         # Dependency Injection and Component Instantiation
-        self.db_manager = DatabaseManager(self.db_file)
-        self.player = BassPlayer()
         self.playback_controller = PlaybackController(self.player, self.db_manager)
         if self.default_path:
             self.playback_controller.library_root = Path(self.default_path)
@@ -2411,6 +2445,12 @@ class AudiobookPlayerWindow(QMainWindow):
         
         self.player_widget.auto_rewind_btn.setChecked(self.auto_rewind)
         self.player_widget.auto_rewind_toggled_signal.connect(self.on_auto_rewind_state_toggled)
+        
+        self.player_widget.deesser_btn.setChecked(self.deesser_enabled)
+        self.player_widget.deesser_toggled_signal.connect(self.on_deesser_state_toggled)
+        
+        self.player_widget.compressor_btn.setChecked(self.compressor_enabled)
+        self.player_widget.compressor_toggled_signal.connect(self.on_compressor_state_toggled)
         
         self.splitter.addWidget(self.player_widget)
         
@@ -2580,6 +2620,10 @@ class AudiobookPlayerWindow(QMainWindow):
         # Player Functional Preferences
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
         self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
+        self.deesser_enabled = config.getboolean('Player', 'deesser_enabled', fallback=False)
+        self.compressor_enabled = config.getboolean('Player', 'compressor_enabled', fallback=False)
+        self.player.set_deesser(self.deesser_enabled)
+        self.player.set_compressor(self.compressor_enabled)
         self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
         
         # Synchronize library root with controller if active
@@ -2619,7 +2663,9 @@ class AudiobookPlayerWindow(QMainWindow):
         }
         config['Player'] = {
             'show_id3': 'True',
-            'auto_rewind': 'True'
+            'auto_rewind': 'True',
+            'deesser_enabled': 'False',
+            'compressor_enabled': 'False'
         }
         config['Library'] = {
             'show_folders': 'False'
@@ -2663,6 +2709,8 @@ class AudiobookPlayerWindow(QMainWindow):
         if hasattr(self, 'player_widget'):
             config['Player']['show_id3'] = str(self.player_widget.show_id3)
             config['Player']['auto_rewind'] = str(self.auto_rewind)
+            config['Player']['deesser_enabled'] = str(self.deesser_enabled)
+            config['Player']['compressor_enabled'] = str(self.compressor_enabled)
         
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
@@ -2769,6 +2817,18 @@ class AudiobookPlayerWindow(QMainWindow):
     def on_auto_rewind_state_toggled(self, state: bool):
         """Update and persist the auto-rewind preference"""
         self.auto_rewind = state
+        self.save_settings()
+
+    def on_deesser_state_toggled(self, state: bool):
+        """Update and persist the DeEsser preference"""
+        self.deesser_enabled = state
+        self.player.set_deesser(state)
+        self.save_settings()
+
+    def on_compressor_state_toggled(self, state: bool):
+        """Update and persist the Compressor preference"""
+        self.compressor_enabled = state
+        self.player.set_compressor(state)
         self.save_settings()
 
     def on_show_folders_toggled(self, checked):

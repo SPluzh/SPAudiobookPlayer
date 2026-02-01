@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6]
+- **Audio**: Added **Compressor** effect (Toggle "C") with "Hard" preset for consistent volume in audiobooks.
+- **Audio**: Switched effects engine to **BASS_FX (BFX)** plugin (`COMPRESSOR2`, `PEAKEQ`), eliminating echo artifacts.
+- **Audio**: Refined **De-Esser** ("DS") to be softer (-6dB) and more natural.
+- **UI**: Redesigned player controls layout:
+    - Effects buttons (ID3, AR, DS, C) moved to a dedicated top row.
+    - Volume and Speed sliders combined into a single compact row.
+    - Reduced margins and spacing for a streamlined interface.
+
 ## [1.0.5]
 - **UI**: Added icons to the Settings dialog buttons for better visual clarity (Save, Scan, Reset, Update, Browse).
 

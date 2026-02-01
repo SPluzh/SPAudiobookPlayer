@@ -11,6 +11,9 @@ BASS_ATTRIB_VOL = 2
 BASS_ATTRIB_TEMPO = 0x10000
 BASS_POS_BYTE = 0
 BASS_ACTIVE_PLAYING = 1
+BASS_FX_BFX_PEAKEQ = 0x10004
+BASS_FX_BFX_COMPRESSOR2 = 0x10011
+BASS_BFX_CHANALL = -1
 
 def load_library(name):
     """Load BASS shared library from resources or system path"""
@@ -25,6 +28,26 @@ def load_library(name):
 # Load libraries
 bass = load_library("resources/bin/bass.dll")
 bass_fx = load_library("resources/bin/bass_fx.dll")
+
+class BASS_BFX_PEAKEQ(ctypes.Structure):
+    _fields_ = [
+        ("lBand", c_int),
+        ("fBandwidth", c_float),
+        ("fQ", c_float),
+        ("fCenter", c_float),
+        ("fGain", c_float),
+        ("lChannel", c_int),
+    ]
+
+class BASS_BFX_COMPRESSOR2(ctypes.Structure):
+    _fields_ = [
+        ("fGain", c_float),
+        ("fThreshold", c_float),
+        ("fRatio", c_float),
+        ("fAttack", c_float),
+        ("fRelease", c_float),
+        ("lChannel", c_int),
+    ]
 
 # Define BASS functions if library is loaded
 if bass:
@@ -56,6 +79,12 @@ if bass:
     bass.BASS_Free.restype = c_bool
     bass.BASS_StreamFree.argtypes = [c_int]
     bass.BASS_StreamFree.restype = c_bool
+    bass.BASS_ChannelSetFX.argtypes = [c_int, c_int, c_int]
+    bass.BASS_ChannelSetFX.restype = c_int
+    bass.BASS_ChannelRemoveFX.argtypes = [c_int, c_int]
+    bass.BASS_ChannelRemoveFX.restype = c_bool
+    bass.BASS_FXSetParameters.argtypes = [c_int, c_void_p]
+    bass.BASS_FXSetParameters.restype = c_bool
 
 if bass_fx:
     bass_fx.BASS_FX_TempoCreate.argtypes = [c_int, c_int]
@@ -73,6 +102,10 @@ class BassPlayer:
         self.initialized = False
         self.has_fx = bass_fx is not None
         self.current_file = ""
+        self.deesser_handle = 0
+        self.deesser_enabled = False
+        self.compressor_handle = 0
+        self.compressor_enabled = False
 
         if bass and bass.BASS_Init(-1, 44100, 0, 0, None):
             self.initialized = True
@@ -86,6 +119,8 @@ class BassPlayer:
             bass.BASS_StreamFree(self.chan)
             self.chan = 0
             self.chan0 = 0
+            self.deesser_handle = 0
+            self.compressor_handle = 0
 
         # Encode path for BASS (UTF-16LE with null terminator)
         path_bytes = filepath.encode('utf-16le') + b'\x00\x00'
@@ -160,6 +195,54 @@ class BassPlayer:
         self.speed_pos = max(5, min(20, value))
         self.apply_attributes()
 
+    def set_deesser(self, enabled: bool):
+        """Toggle DeEsser (parametric EQ filter at 6kHz)"""
+        self.deesser_enabled = enabled
+        self.apply_deesser()
+
+    def apply_deesser(self):
+        """Apply or remove the DeEsser effect on the current channel"""
+        if self.chan == 0 or not self.initialized:
+            return
+
+        # Remove existing effect if any
+        if self.deesser_handle != 0:
+            bass.BASS_ChannelRemoveFX(self.chan, self.deesser_handle)
+            self.deesser_handle = 0
+
+        if self.deesser_enabled:
+            # Set BASS_FX Peaking EQ at 6000Hz, -6dB, 4.5 bandwidth (Softer)
+            # Using BASS_FX_BFX_PEAKEQ instead of DX8 to avoid constant conflicts
+            self.deesser_handle = bass.BASS_ChannelSetFX(self.chan, BASS_FX_BFX_PEAKEQ, 0)
+            if self.deesser_handle != 0:
+                # lBand=0, fBandwidth=4.5, fQ=0, fCenter=6000.0, fGain=-6.0, lChannel=BASS_BFX_CHANALL
+                params = BASS_BFX_PEAKEQ(0, 4.5, 0.0, 6000.0, -6.0, BASS_BFX_CHANALL)
+                bass.BASS_FXSetParameters(self.deesser_handle, ctypes.byref(params))
+
+    def set_compressor(self, enabled: bool):
+        """Toggle Compressor (DX8 Compressor filter)"""
+        self.compressor_enabled = enabled
+        self.apply_compressor()
+
+    def apply_compressor(self):
+        """Apply or remove the Compressor effect on the current channel"""
+        if self.chan == 0 or not self.initialized:
+            return
+
+        # Remove existing effect if any
+        if self.compressor_handle != 0:
+            bass.BASS_ChannelRemoveFX(self.chan, self.compressor_handle)
+            self.compressor_handle = 0
+
+        if self.compressor_enabled:
+            # Set BASS_FX Compressor 2 (Hard Preset)
+            # Using BASS_FX_BFX_COMPRESSOR2 ($10011) to avoid echo issue ($10001 is ECHO)
+            # Parameters: fGain(5.0), fThreshold(-20.0), fRatio(4.0), fAttack(10.0), fRelease(300.0), lChannel(CHANALL)
+            self.compressor_handle = bass.BASS_ChannelSetFX(self.chan, BASS_FX_BFX_COMPRESSOR2, 0)
+            if self.compressor_handle != 0:
+                params = BASS_BFX_COMPRESSOR2(5.0, -20.0, 4.0, 10.0, 300.0, BASS_BFX_CHANALL)
+                bass.BASS_FXSetParameters(self.compressor_handle, ctypes.byref(params))
+
     def apply_attributes(self):
         """Apply volume and tempo attributes to the channel"""
         if self.chan == 0:
@@ -168,6 +251,10 @@ class BassPlayer:
         if self.has_fx:
             tempo_percent = (self.speed_pos * 10) - 100.0
             bass.BASS_ChannelSetAttribute(self.chan, BASS_ATTRIB_TEMPO, c_float(tempo_percent))
+        
+        # Always reapply DeEsser and Compressor when attributes are reapplied (e.g. on new track)
+        self.apply_deesser()
+        self.apply_compressor()
 
     def rewind(self, seconds: float):
         """Rewind or fast forward by specified seconds"""
