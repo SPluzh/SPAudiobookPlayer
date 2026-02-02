@@ -3025,10 +3025,10 @@ class AudiobookPlayerWindow(QMainWindow):
         else:
             if self.auto_rewind and self.last_pause_time:
                 pause_duration = __import__('time').time() - self.last_pause_time
-                if pause_duration > 10: # Only rewind if pause was longer than 10 seconds
-                    # Rewind logic: base 10s + 1s per 30s of pause, up to 30s total
-                    # So: 1min pause -> 10 + 2 = 12s, 10min pause -> 10 + 20 = 30s
-                    rewind_amount = min(30, 10 + (pause_duration / 30.0))
+                if pause_duration > 1: # Only rewind if pause was longer than 1 seconds
+                    # Rewind logic: base 1s + 1s per 30s of pause, up to 30s total
+                    # So: 1min pause -> 5 + 2 = 7s, 10min pause -> 5 + 20 = 25s
+                    rewind_amount = min(30, 5 + (pause_duration / 30.0))
                     self.player.rewind(-rewind_amount)
             
             self.player.play()
