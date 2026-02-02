@@ -188,7 +188,9 @@ class DatabaseManager:
                     order_by = 'is_folder DESC, time_finished DESC, name'
                 elif filter_type == 'in_progress':
                     filter_condition += ' AND is_started = 1 AND is_completed = 0'
-                    order_by = 'is_folder DESC, last_updated DESC, name'
+                    # Sort primarily by recency, so active books (and their folders) jump to top
+                    # is_folder DESC is removed from primary sort so folders don't artificially float to top
+                    order_by = 'last_updated DESC, is_folder DESC, name'
                 elif filter_type == 'not_started':
                     # "New" filter: Not started, sorted by time_added
                     filter_condition += ' AND is_started = 0'
@@ -289,6 +291,10 @@ class DatabaseManager:
                 SET last_updated = CURRENT_TIMESTAMP
                 WHERE id = ?
             ''', (audiobook_id,))
+            
+            # Propagate update to parents
+            self._propagate_last_updated(cursor, audiobook_id)
+            
             conn.commit()
         except sqlite3.Error as e:
             print(f"Database error in update_last_updated: {e}")
@@ -299,23 +305,105 @@ class DatabaseManager:
         """Mark an audiobook as started"""
         if not audiobook_id:
             return
-        
+            
         conn = sqlite3.connect(self.db_file)
-        cursor = conn.cursor()
-        
         try:
+            cursor = conn.cursor()
             cursor.execute('''
                 UPDATE audiobooks
                 SET is_started = 1, is_completed = 0,
-                    time_started = COALESCE(time_started, CURRENT_TIMESTAMP)
+                    time_started = COALESCE(time_started, CURRENT_TIMESTAMP),
+                    last_updated = CURRENT_TIMESTAMP
                 WHERE id = ?
             ''', (audiobook_id,))
+            
+            # Propagate update to parents
+            self._propagate_last_updated(cursor, audiobook_id)
             
             conn.commit()
         except sqlite3.Error as e:
             print(f"Database error in mark_audiobook_started: {e}")
         finally:
             conn.close()
+
+    def mark_audiobook_completed(self, audiobook_id: int, total_duration: float):
+        """Mark an audiobook as completely listened"""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE audiobooks
+                SET listened_duration = ?, progress_percent = 100,
+                    is_completed = 1, is_started = 1,
+                    time_started = COALESCE(time_started, CURRENT_TIMESTAMP),
+                    time_finished = COALESCE(time_finished, CURRENT_TIMESTAMP),
+                    last_updated = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (total_duration, audiobook_id))
+            
+            # Propagate update to parents
+            self._propagate_last_updated(cursor, audiobook_id)
+            
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in mark_audiobook_completed: {e}")
+        finally:
+            conn.close()
+
+    def reset_audiobook_status(self, audiobook_id: int):
+        """Reset audiobook status to 'not started'"""
+        if not audiobook_id:
+            return
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE audiobooks
+                SET listened_duration = 0, progress_percent = 0,
+                    current_file_index = 0, current_position = 0,
+                    is_started = 0, is_completed = 0,
+                    time_started = NULL, time_finished = NULL,
+                    last_updated = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (audiobook_id,))
+            
+            # Propagate update to parents
+            self._propagate_last_updated(cursor, audiobook_id)
+            
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in reset_audiobook_status: {e}")
+        finally:
+            conn.close()
+
+    def _propagate_last_updated(self, cursor, audiobook_id):
+        """Helper to recursively update last_updated for parent folders"""
+        cursor.execute("SELECT path FROM audiobooks WHERE id = ?", (audiobook_id,))
+        row = cursor.fetchone()
+        if not row:
+            return
+        current_path = row[0]
+        
+        from pathlib import Path
+        path_obj = Path(current_path)
+        
+        while True:
+            parent = path_obj.parent
+            if str(parent) == '.' or str(parent) == str(path_obj):
+                break
+                
+            path_obj = parent
+            parent_str = str(path_obj).replace('\\', '/')
+            
+            cursor.execute('''
+                UPDATE audiobooks 
+                SET last_updated = CURRENT_TIMESTAMP 
+                WHERE path = ? AND is_folder = 1
+            ''', (parent_str,))
+            
+            if cursor.rowcount == 0:
+                 pass
 
     def get_audiobook_info(self, audiobook_path: str) -> Optional[Tuple]:
         """Get information about a specific audiobook by path"""
@@ -352,7 +440,8 @@ class DatabaseManager:
             conn.close()
     
     def save_progress(self, audiobook_id: int, file_index: int, position: float,
-                      speed: float, listened_duration: float, progress_percent: int):
+                      speed: float, listened_duration: float, progress_percent: int,
+                      update_timestamp: bool = True):
         """Save playback progress for an audiobook"""
         if not audiobook_id:
             return
@@ -370,16 +459,29 @@ class DatabaseManager:
             is_started = 1 if (old_is_started or progress_percent > 0) else 0
             is_completed = 1 if progress_percent >= 100 else 0
             
-            cursor.execute('''
+            update_sql = '''
                 UPDATE audiobooks
                 SET current_file_index = ?, current_position = ?, playback_speed = ?,
                     listened_duration = ?, progress_percent = ?,
                     is_started = ?, is_completed = ?,
                     time_started = CASE WHEN ? = 1 AND time_started IS NULL THEN CURRENT_TIMESTAMP ELSE time_started END,
                     time_finished = CASE WHEN ? = 1 AND time_finished IS NULL THEN CURRENT_TIMESTAMP ELSE time_finished END
-                WHERE id = ?
-            ''', (file_index, position, speed, listened_duration, progress_percent,
-                  is_started, is_completed, is_started, is_completed, audiobook_id))
+            '''
+            
+            params = [file_index, position, speed, listened_duration, progress_percent,
+                      is_started, is_completed, is_started, is_completed]
+            
+            if update_timestamp:
+                update_sql += ", last_updated = CURRENT_TIMESTAMP "
+            
+            update_sql += " WHERE id = ?"
+            params.append(audiobook_id)
+            
+            cursor.execute(update_sql, tuple(params))
+            
+            if update_timestamp:
+                # Recursively update last_updated for all parent folders
+                self._propagate_last_updated(cursor, audiobook_id)
             
             conn.commit()
         except sqlite3.Error as e:
@@ -406,47 +508,6 @@ class DatabaseManager:
         finally:
             conn.close()
     
-    def mark_audiobook_completed(self, audiobook_id: int, total_duration: float):
-        """Mark an audiobook as completely listened"""
-        conn = sqlite3.connect(self.db_file)
-        try:
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE audiobooks
-                SET listened_duration = ?, progress_percent = 100,
-                    is_completed = 1, is_started = 1,
-                    time_started = COALESCE(time_started, CURRENT_TIMESTAMP),
-                    time_finished = COALESCE(time_finished, CURRENT_TIMESTAMP)
-                WHERE id = ?
-            ''', (total_duration, audiobook_id))
-            conn.commit()
-        except sqlite3.Error as e:
-            print(f"Database error in mark_audiobook_completed: {e}")
-        finally:
-            conn.close()
-
-    def reset_audiobook_status(self, audiobook_id: int):
-        """Reset audiobook status to 'not started'"""
-        if not audiobook_id:
-            return
-            
-        conn = sqlite3.connect(self.db_file)
-        try:
-            cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE audiobooks
-                SET listened_duration = 0, progress_percent = 0,
-                    current_file_index = 0, current_position = 0,
-                    is_started = 0, is_completed = 0,
-                    time_started = NULL, time_finished = NULL
-                WHERE id = ?
-            ''', (audiobook_id,))
-            conn.commit()
-        except sqlite3.Error as e:
-            print(f"Database error in reset_audiobook_status: {e}")
-        finally:
-            conn.close()
-
     def update_audiobook_id3_state(self, audiobook_id: int, state: bool):
         """Update ID3 tags usage state for an audiobook"""
         if not audiobook_id:

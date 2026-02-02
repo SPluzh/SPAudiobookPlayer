@@ -38,8 +38,9 @@ class PlaybackController:
         """Load audiobook data from the database and prepare the player for playback"""
         self.player.pause()
         
-        # Always save current progress before switching books
-        self.save_current_progress()
+        # Save current progress before switching, but DO NOT update the timestamp
+        # for the book we are leaving (to keep it below the new one in recency)
+        self.save_current_progress(update_timestamp=False)
         
         # Retrieve audiobook metadata
         audiobook_info = self.db.get_audiobook_info(audiobook_path)
@@ -192,7 +193,7 @@ class PlaybackController:
         
         return int((current / self.total_duration) * 100)
     
-    def save_current_progress(self):
+    def save_current_progress(self, update_timestamp: bool = True):
         """Commit current playback state and accumulated metrics to the database"""
         if not self.current_audiobook_id:
             return
@@ -208,8 +209,14 @@ class PlaybackController:
             position,
             speed,
             listened_duration,
-            progress_percent
+            progress_percent,
+            update_timestamp=update_timestamp
         )
+        
+        # Update library if we are in a recency-sensitive view
+        if hasattr(self, 'parent_app') and hasattr(self.parent_app, 'library_widget') and \
+           self.parent_app.library_widget.current_filter == 'in_progress':
+            self.parent_app.library_widget.refresh_audiobook_item(self.current_audiobook_path)
     
     def get_audiobook_title(self) -> str:
         """Fetch the displayable name for the currently playing audiobook"""

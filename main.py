@@ -555,6 +555,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 
                 # Force library refresh to reflect session state
                 self.library_widget.tree.viewport().update()
+                self.library_widget.load_audiobooks()
                 self.statusBar().showMessage(tr("status.restored_session"))
     
     def on_id3_state_toggled(self, state: bool):
@@ -733,6 +734,9 @@ class AudiobookPlayerWindow(QMainWindow):
             self.on_audiobook_selected(audiobook_path)
             if not self.player.is_playing():
                 self.toggle_play()
+        
+        # Force a refresh to reflect progress/started status changes immediately
+        self.refresh_audiobook_in_tree()
         
         # Trigger an immediate viewport update to reflect the changed play/pause status in the overlay
         self.library_widget.tree.viewport().update()

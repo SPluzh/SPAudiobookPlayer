@@ -824,7 +824,28 @@ class LibraryWidget(QWidget):
         self.tree.setUpdatesEnabled(False)
         self.tree.blockSignals(True)
         try:
-            self.add_items_from_db(self.tree, '', self.cached_library_data)
+            # If folders are hidden and we are in a non-'all' filter,
+            # we should populate as a flat list to guarantee the SQL sort order
+            # is visually preserved across the entire library.
+            if not self.show_folders and self.current_filter != 'all':
+                all_items = []
+                for parent_path, items in self.cached_library_data.items():
+                    for item_data in items:
+                        if not item_data['is_folder']:
+                            all_items.append(item_data)
+                
+                # Re-sort at client side to ensure absolute order (SQL order might be fragmented in the map)
+                sort_key = 'name'
+                if self.current_filter == 'in_progress': sort_key = 'last_updated'
+                elif self.current_filter == 'completed': sort_key = 'time_finished'
+                elif self.current_filter == 'not_started': sort_key = 'time_added'
+                
+                all_items.sort(key=lambda x: (x.get(sort_key) or '', x.get('name') or ''), reverse=(sort_key != 'name'))
+                
+                # Batch add to avoid recursion overhead
+                self.add_flat_items(self.tree, all_items)
+            else:
+                self.add_items_from_db(self.tree, '', self.cached_library_data)
         finally:
             self.tree.blockSignals(False)
             self.tree.setUpdatesEnabled(True)
@@ -832,6 +853,11 @@ class LibraryWidget(QWidget):
         # Apply current filter immediately after loading
         self.filter_audiobooks()
     
+    def add_flat_items(self, parent_item, items_list: list):
+        """Populate the tree with a flat list of audiobooks, ignoring hierarchy"""
+        for data in items_list:
+            self._create_item_from_data(parent_item, data)
+
     def add_items_from_db(self, parent_item, parent_path: str, data_by_parent: dict):
         """Recursively populate the tree widget with folders and audiobooks from the database map"""
         if parent_path not in data_by_parent:
@@ -852,50 +878,56 @@ class LibraryWidget(QWidget):
                 # Restore the expansion state of the folder from previous sessions
                 if data.get('is_expanded'):
                     item.setExpanded(True)
-            else:
-                item = QTreeWidgetItem(parent_item)
-                item.setData(0, Qt.ItemDataRole.UserRole, data['path'])
-                # Audiobooks are custom-painted by the delegate
-                # Set text to empty so the delegate has full control over the item's visual area
-                item.setText(0, "")
-                item.setData(0, Qt.ItemDataRole.UserRole + 1, 'audiobook')
-                item.setData(0, Qt.ItemDataRole.UserRole + 2, (
-                    data['author'],
-                    data['title'],
-                    data['narrator'],
-                    data['file_count'],
-                    data['duration'],
-                    data['listened_duration'],
-                    data['progress_percent'],
-                    data['codec'],
-                    data['bitrate_min'],
-                    data['bitrate_max'],
-                    data['bitrate_mode'],
-                    data['container']
-                ))
-                # Store status flags for client-side filtering
-                item.setData(0, Qt.ItemDataRole.UserRole + 3, (
-                    data['is_started'],
-                    data['is_completed']
-                ))
                 
-                # Fetch and scale the audiobook cover
-                cover_icon = None
-                if data['cover_path']:
-                    cover_p = Path(data['cover_path'])
-                    # For relative paths, resolve them against the library's root directory
-                    if not cover_p.is_absolute() and self.config.get('default_path'):
-                        cover_p = Path(self.config.get('default_path')) / cover_p
-                        
-                    cover_icon = load_icon(
-                        cover_p,
-                        self.config.get('audiobook_icon_size', 100),
-                        force_square=True
-                    )
-                item.setIcon(0, cover_icon or self.default_audiobook_icon)
-            
-            # Sub-items traversal
-            self.add_items_from_db(item, data['path'], data_by_parent)
+                # Sub-items traversal
+                self.add_items_from_db(item, data['path'], data_by_parent)
+            else:
+                self._create_item_from_data(parent_item, data)
+
+    def _create_item_from_data(self, parent_item, data):
+        """Shared helper to create a tree item for an audiobook with all its metadata and icons"""
+        item = QTreeWidgetItem(parent_item)
+        item.setData(0, Qt.ItemDataRole.UserRole, data['path'])
+        # Audiobooks are custom-painted by the delegate
+        # Set text to empty so the delegate has full control over the item's visual area
+        item.setText(0, "")
+        item.setData(0, Qt.ItemDataRole.UserRole + 1, 'audiobook')
+        item.setData(0, Qt.ItemDataRole.UserRole + 2, (
+            data['author'],
+            data['title'],
+            data['narrator'],
+            data['file_count'],
+            data['duration'],
+            data['listened_duration'],
+            data['progress_percent'],
+            data['codec'],
+            data['bitrate_min'],
+            data['bitrate_max'],
+            data['bitrate_mode'],
+            data['container']
+        ))
+        # Store status flags for client-side filtering
+        item.setData(0, Qt.ItemDataRole.UserRole + 3, (
+            data['is_started'],
+            data['is_completed']
+        ))
+        
+        # Fetch and scale the audiobook cover
+        cover_icon = None
+        if data['cover_path']:
+            cover_p = Path(data['cover_path'])
+            # For relative paths, resolve them against the library's root directory
+            if not cover_p.is_absolute() and self.config.get('default_path'):
+                cover_p = Path(self.config.get('default_path')) / cover_p
+                
+            cover_icon = load_icon(
+                cover_p,
+                self.config.get('audiobook_icon_size', 100),
+                force_square=True
+            )
+        item.setIcon(0, cover_icon or self.default_audiobook_icon)
+        return item
+
     
     def filter_audiobooks(self):
         """Handle real-time search queries by filtering tree items based on text matching"""
@@ -1136,6 +1168,13 @@ class LibraryWidget(QWidget):
             pass
 
     def refresh_audiobook_item(self, audiobook_path: str):
+        # If we are in "In Progress" mode, a metadata update (like track change)
+        # implies a timestamp update, which affects sorting order.
+        # We must reload the list to ensure the active book/folder jumps to the top.
+        if self.current_filter == 'in_progress':
+            self.load_audiobooks(use_cache=False)
+            return
+
         item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
         if not item:
             return
@@ -1162,6 +1201,7 @@ class LibraryWidget(QWidget):
                 ))
             item.setText(0, item.text(0))
             self.update_cache_item_status(audiobook_path, data['is_started'], data['is_completed'])
+            self.tree.viewport().update()
 
     def update_item_progress(self, audiobook_path: str, listened_duration: float, progress_percent: int):
         item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)

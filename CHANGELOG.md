@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.9]
+- **Library Sorting**: Implemented reliable chronological sorting for the 'Started' filter
+
 ## [1.1.8]
 - **M4B Chapter Support**: Implemented comprehensive support for embedded chapters in M4B/MP4/M4A files
 
