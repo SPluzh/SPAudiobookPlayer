@@ -63,17 +63,84 @@ def format_time_short(seconds):
     return trf("formats.time_ms", minutes=minutes, seconds=secs)
 
 @lru_cache(maxsize=512)
-def load_icon(file_path: Path, target_size: int) -> QIcon:
+def load_icon(file_path: Path, target_size: int, force_square: bool = False) -> QIcon:
     """Load, scale and return a QIcon from a file path"""
     if file_path.exists() and file_path.is_file():
         pixmap = QPixmap(str(file_path))
         if not pixmap.isNull():
-            pixmap = pixmap.scaled(
-                int(target_size * 1.5), 
-                int(target_size * 1.5),
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            )
+            size_px = int(target_size * 1.5)
+            
+            # 1. Scale original image once (Foreground)
+            fg = pixmap.scaled(size_px, size_px, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            
+            if force_square and (fg.width() < size_px or fg.height() < size_px):
+                # Create a square canvas
+                result = QPixmap(size_px, size_px)
+                result.fill(Qt.GlobalColor.black)
+                
+                painter = QPainter(result)
+                try:
+                    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+                    
+                    # Logic to fill gaps by stretching edges
+                    blur_factor = 0.05 # Strong blur for the background
+                    
+                    if fg.height() < size_px: # Landscape
+                        y_offset = (size_px - fg.height()) // 2
+                        
+                        # Top
+                        if y_offset > 0:
+                            top_strip = fg.copy(0, 0, fg.width(), 1)
+                            top_bg = top_strip.scaled(size_px, y_offset, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            # Blur
+                            small = top_bg.scaled(int(size_px * blur_factor), int(y_offset * blur_factor) or 1, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            blurred = small.scaled(size_px, y_offset, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            painter.drawPixmap(0, 0, blurred)
+                        
+                        # Bottom
+                        if size_px - (y_offset + fg.height()) > 0:
+                            bot_h = size_px - (y_offset + fg.height())
+                            bot_strip = fg.copy(0, fg.height()-1, fg.width(), 1)
+                            bot_bg = bot_strip.scaled(size_px, bot_h, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            # Blur
+                            small = bot_bg.scaled(int(size_px * blur_factor), int(bot_h * blur_factor) or 1, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            blurred = small.scaled(size_px, bot_h, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            painter.drawPixmap(0, y_offset + fg.height(), blurred)
+
+                    elif fg.width() < size_px: # Portrait
+                        x_offset = (size_px - fg.width()) // 2
+                        
+                        # Left
+                        if x_offset > 0:
+                            left_strip = fg.copy(0, 0, 1, fg.height())
+                            left_bg = left_strip.scaled(x_offset, size_px, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            # Blur
+                            small = left_bg.scaled(int(x_offset * blur_factor) or 1, int(size_px * blur_factor), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            blurred = small.scaled(x_offset, size_px, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            painter.drawPixmap(0, 0, blurred)
+
+                        # Right
+                        if size_px - (x_offset + fg.width()) > 0:
+                            right_w = size_px - (x_offset + fg.width())
+                            right_strip = fg.copy(fg.width()-1, 0, 1, fg.height())
+                            right_bg = right_strip.scaled(right_w, size_px, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            # Blur
+                            small = right_bg.scaled(int(right_w * blur_factor) or 1, int(size_px * blur_factor), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            blurred = small.scaled(right_w, size_px, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                            painter.drawPixmap(x_offset + fg.width(), 0, blurred)
+
+                    # 2. Draw original image in center
+                    x = (size_px - fg.width()) // 2
+                    y = (size_px - fg.height()) // 2
+                    painter.drawPixmap(x, y, fg)
+                finally:
+                    painter.end()
+                
+                pixmap = result
+            else:
+                 pixmap = fg
+            
             icon = QIcon()
             icon.addPixmap(pixmap)
             return icon
@@ -1938,7 +2005,8 @@ class LibraryWidget(QWidget):
                         
                     cover_icon = load_icon(
                         cover_p,
-                        self.config.get('audiobook_icon_size', 100)
+                        self.config.get('audiobook_icon_size', 100),
+                        force_square=True
                     )
                 item.setIcon(0, cover_icon or self.default_audiobook_icon)
             
