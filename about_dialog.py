@@ -3,17 +3,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QFrame, QLabel, QPushButton, QApplication
 from PyQt6.QtCore import Qt
 from translations import tr, trf
-
-def get_base_path():
-    """Return the base path for application resources (handles frozen exe and dev modes)"""
-    if getattr(sys, 'frozen', False):
-        if hasattr(sys, '_MEIPASS'):
-            # One-file mode
-            return Path(sys._MEIPASS)
-        # One-dir mode
-        return Path(sys.executable).parent
-    # Dev mode
-    return Path(__file__).parent
+from utils import get_base_path
 
 class AboutDialog(QDialog):
     """Custom themed About Dialog for the application"""
