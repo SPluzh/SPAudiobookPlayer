@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.8]
+- **M4B Chapter Support**: Implemented comprehensive support for embedded chapters in M4B/MP4/M4A files
+
 ## [1.1.7]
 - **Audio Engine**: Added support for **FLAC** audio format:
     - Integrated `bassflac` plugin for seamless FLAC playback.
