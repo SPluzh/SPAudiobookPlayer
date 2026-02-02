@@ -2,13 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1]
+- **Audio**: Added support for **M4B** and **AAC** files via `bass_aac` plugin.
+
 ## [1.1.0]
 - **Audio Engine**: Added support for OPUS audio format via `bassopus` plugin integration.
 
 ## [1.0.6]
 - **Audio**: Added **Compressor** effect (Toggle "C") with "Hard" preset for consistent volume in audiobooks.
-- **Audio**: Switched effects engine to **BASS_FX (BFX)** plugin (`COMPRESSOR2`, `PEAKEQ`), eliminating echo artifacts.
-- **Audio**: Refined **De-Esser** ("DS") to be softer (-6dB) and more natural.
+- **Audio**: Added **De-Esser** effect (Toggle "DS") with "Soft" (-6dB) preset for more natural sound.
 - **UI**: Redesigned player controls layout:
     - Effects buttons (ID3, AR, DS, C) moved to a dedicated top row.
     - Volume and Speed sliders combined into a single compact row.

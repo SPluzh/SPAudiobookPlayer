@@ -118,13 +118,19 @@ class BassPlayer:
         if bass and bass.BASS_Init(-1, 44100, 0, 0, None):
             self.initialized = True
             
-            # Load OPUS plugin
-            plugin_path = os.path.join(os.path.dirname(__file__), "resources/bin/bassopus.dll")
-            if os.path.exists(plugin_path):
-                path_bytes = plugin_path.encode('utf-16le') + b'\x00\x00'
-                self.opus_plugin = bass.BASS_PluginLoad(path_bytes, BASS_PLUGIN_UNICODE)
-            else:
-                self.opus_plugin = 0
+            # Load plugins (OPUS and AAC/M4B)
+            self.plugins = {}
+            for plugin in ["bassopus.dll", "bass_aac.dll"]:
+                self._load_plugin(plugin)
+
+    def _load_plugin(self, filename: str):
+        """Helper to load a BASS plugin"""
+        plugin_path = os.path.join(os.path.dirname(__file__), "resources/bin", filename)
+        if os.path.exists(plugin_path):
+            path_bytes = plugin_path.encode('utf-16le') + b'\x00\x00'
+            hplugin = bass.BASS_PluginLoad(path_bytes, BASS_PLUGIN_UNICODE)
+            if hplugin:
+                self.plugins[filename] = hplugin
 
     def load(self, filepath: str) -> bool:
         """Load an audio file into the player"""
@@ -283,7 +289,14 @@ class BassPlayer:
         if self.chan != 0:
             bass.BASS_StreamFree(self.chan)
         if self.initialized:
-            # Free plugin if loaded
+            # Free plugins
+            if hasattr(self, 'plugins'):
+                for hplugin in self.plugins.values():
+                    bass.BASS_PluginFree(hplugin)
+                self.plugins.clear()
+            
+            # Legacy cleanup (safe to keep for safety if switching versions)
             if hasattr(self, 'opus_plugin') and self.opus_plugin:
                  bass.BASS_PluginFree(self.opus_plugin)
+                 
             bass.BASS_Free()
