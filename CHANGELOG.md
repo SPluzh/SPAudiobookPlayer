@@ -3,11 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.1.10]
-- **UI**: Implemented a sophisticated background blur effect for modal dialogs:
-    - Main window (including menu bar and status bar) is now blurred when "About", "Settings", or "Scan" dialogs are active.
-    - Developed a **blur stacking** mechanism with counter logic to ensure background remains blurred through nested sequences (e.g., Settings → FFMPEG Update).
-    - Refined aesthetics with a subtle blur radius and smooth transitions.
-- **Fix**: Resolved a critical application crash occurring when reopening modal dialogs by properly managing the lifecycle of the `QGraphicsBlurEffect` object.
+- **UI**: Implemented a sophisticated background blur effect for modal dialogs
 
 ## [1.1.9]
 - **Library Sorting**: Implemented reliable chronological sorting for the 'Started' filter
@@ -29,7 +25,6 @@ All notable changes to this project will be documented in this file.
     - Updated scanning logic to recognize `.mp4` extensions and extract metadata/covers.
     - Enhanced file analysis for duration and bitrate detection for MP4 containers.
 
-
 ## [1.1.4]
 - **Technical Metadata**: Added extraction and library-wide display of audio technical info.
     - Implemented storage for `codec`, `bitrate`, `bitrate_mode`, and `container`.
@@ -39,7 +34,6 @@ All notable changes to this project will be documented in this file.
     - Accurate identification of Opus/AAC in M4B containers and Opus/Vorbis in OGG.
 - **Search**: Extended library filtering to support searching by codec name and bitrate.
 - **Fix**: Resolved critical application crash on launch caused by a translation typo and missing database columns.
-
 
 ## [1.1.3]
 - **Audio**: Added support for M4B/MP4 files with **Opus** codec by implementing 
