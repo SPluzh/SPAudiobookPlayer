@@ -79,6 +79,9 @@
     "narrator_prefix": "🎙",
     "files_prefix": "🎵",
     "duration_prefix": "⏱",
+    "codec_prefix": "💽",
+    "bitrate_prefix": "📊",
+    "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "No title",
     "separator": "•"
@@ -115,6 +118,9 @@
     "speed": "{value:.1f}×",
     "file_number": "  {number:02d}.  {name}   [{duration}]",
     "playing_indicator": "▶  {text}"
+  },
+  "units": {
+    "kbps": "kbps"
   },
   "scan_dialog": {
     "title": "Scanning...",

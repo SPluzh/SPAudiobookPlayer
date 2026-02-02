@@ -93,7 +93,24 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             c.execute("ALTER TABLE audiobooks ADD COLUMN state_hash TEXT")
         except sqlite3.OperationalError:
             pass # Column already exists
+
+        # Migration: add technical info columns
+        new_columns = {
+            'codec': 'TEXT',
+            'bitrate_min': 'INTEGER',
+            'bitrate_max': 'INTEGER',
+            'bitrate_mode': 'TEXT',
+            'container': 'TEXT'
+        }
         
+        for col, type_ in new_columns.items():
+            try:
+                c.execute(f"ALTER TABLE audiobooks ADD COLUMN {col} {type_}")
+                if log_func:
+                    log_func(f"scanner.db_added_{col}")
+            except sqlite3.OperationalError:
+                pass
+
         conn.commit()
 
 
@@ -134,13 +151,15 @@ class DatabaseManager:
             columns = '''
                 path, parent_path, name, author, title, narrator, cover_path,
                 is_folder, file_count, duration, listened_duration, progress_percent,
-                is_started, is_completed, is_available, is_expanded, last_updated
+                is_started, is_completed, is_available, is_expanded, last_updated,
+                codec, bitrate_min, bitrate_max, bitrate_mode, container
             '''
             
             columns_with_prefix = '''
                 p.path, p.parent_path, p.name, p.author, p.title, p.narrator, p.cover_path,
                 p.is_folder, p.file_count, p.duration, p.listened_duration, p.progress_percent,
-                p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated
+                p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
+                p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container
             '''
             
             if filter_type == 'all':
@@ -205,7 +224,8 @@ class DatabaseManager:
             for row in rows:
                 path, parent_path, name, author, title, narrator, cover_path, \
                 is_folder, file_count, duration, listened_duration, progress_percent, \
-                is_started, is_completed, is_available, is_expanded, last_updated = row
+                is_started, is_completed, is_available, is_expanded, last_updated, \
+                codec, bitrate_min, bitrate_max, bitrate_mode, container = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -223,7 +243,12 @@ class DatabaseManager:
                     'is_completed': bool(is_completed),
                     'is_available': bool(is_available),
                     'is_expanded': bool(is_expanded),
-                    'last_updated': last_updated
+                    'last_updated': last_updated,
+                    'codec': codec,
+                    'bitrate_min': bitrate_min,
+                    'bitrate_max': bitrate_max,
+                    'bitrate_mode': bitrate_mode,
+                    'container': container
                 })
             
             return data_by_parent
@@ -421,7 +446,8 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT author, title, narrator, file_count, duration, 
-                       listened_duration, progress_percent, is_started, is_completed
+                       listened_duration, progress_percent, is_started, is_completed,
+                       codec, bitrate_min, bitrate_max, bitrate_mode, container
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -437,7 +463,12 @@ class DatabaseManager:
                     'listened_duration': row[5],
                     'progress_percent': row[6],
                     'is_started': bool(row[7]),
-                    'is_completed': bool(row[8])
+                    'is_completed': bool(row[8]),
+                    'codec': row[9],
+                    'bitrate_min': row[10],
+                    'bitrate_max': row[11],
+                    'bitrate_mode': row[12],
+                    'container': row[13]
                 }
             return None
         except sqlite3.Error as e:

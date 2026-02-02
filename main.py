@@ -873,7 +873,8 @@ class MultiLineDelegate(QStyledItemDelegate):
             painter.restore()
             return
             
-        author, title, narrator, file_count, duration, listened_duration, progress_percent = data
+        author, title, narrator, file_count, duration, listened_duration, \
+        progress_percent, codec, b_min, b_max, b_mode, container = data
         
         if icon:
             painter.save()
@@ -1038,6 +1039,44 @@ class MultiLineDelegate(QStyledItemDelegate):
         font_prog, color_prog = self._get_style('delegate_progress')
         progress_text = trf("delegate.progress", percent=int(progress_percent))
         info_parts.append((progress_text, font_prog, color_prog))
+        
+        # Technical Metadata (Bitrate, Mode, Codec/Container)
+        if b_min or codec or container:
+            # Format: [icon] [bitrate] [units] [mode] [codec]/[container]
+            tech_line = []
+            
+            # 1. Bitrate range
+            if b_min:
+                # Safe conversion for old/new bitrate values (bps vs kbps)
+                calc_min = b_min // 1000 if b_min > 5000 else b_min
+                calc_max = b_max // 1000 if b_max > 5000 else b_max
+                
+                if calc_min == calc_max:
+                    br_str = f"{calc_min}"
+                else:
+                    br_str = f"{calc_min}-{calc_max}"
+                
+                tech_line.append(f"{br_str} {tr('units.kbps', default='kbps')}")
+            
+            # 2. Bitrate Mode (VBR/CBR)
+            if b_mode:
+                tech_line.append(b_mode)
+            
+            # 3. Codec and Container
+            codec_info = []
+            if codec:
+                codec_info.append(codec.lower())
+            if container and container.lower() != codec.lower():
+                codec_info.append(container.lower())
+            
+            if codec_info:
+                tech_line.append("/".join(codec_info))
+                
+            if tech_line:
+                full_tech_text = f"{tr('delegate.codec_prefix')} {' '.join(tech_line)}"
+                # Use same style as narrator or file count for technical info
+                font_tech, color_tech = self._get_style('delegate_file_count')
+                info_parts.append((full_tech_text, font_tech, color_tech))
         
         # Draw consolidated info line with custom formatting/spacing
         if info_parts:
@@ -1987,7 +2026,12 @@ class LibraryWidget(QWidget):
                     data['file_count'],
                     data['duration'],
                     data['listened_duration'],
-                    data['progress_percent']
+                    data['progress_percent'],
+                    data['codec'],
+                    data['bitrate_min'],
+                    data['bitrate_max'],
+                    data['bitrate_mode'],
+                    data['container']
                 ))
                 # Store status flags for client-side filtering
                 item.setData(0, Qt.ItemDataRole.UserRole + 3, (
@@ -2073,12 +2117,30 @@ class LibraryWidget(QWidget):
                     data = child.data(0, Qt.ItemDataRole.UserRole + 2)
                     text_match = False
                     if data:
-                        author, title, narrator, _, _, _, _ = data
+                        # author, title, narrator, file_count, duration, listened_duration, progress_percent, codec, b_min, b_max, b_mode, container
+                        author, title, narrator = data[0:3]
+                        codec, b_min, b_max, b_mode, container = data[7:12]
+                        
                         if author and search_text in author.lower():
                             text_match = True
                         if title and search_text in title.lower():
                             text_match = True
                         if narrator and search_text in narrator.lower():
+                            text_match = True
+                        if codec and search_text in codec.lower():
+                            text_match = True
+                        if container and search_text in container.lower():
+                            text_match = True
+                        if b_mode and search_text in b_mode.lower():
+                            text_match = True
+                        
+                        # Bitrate search (convert to kbps for search if needed)
+                        search_min = b_min // 1000 if b_min > 5000 else b_min
+                        search_max = b_max // 1000 if b_max > 5000 else b_max
+                        
+                        if search_min and search_text in str(search_min):
+                            text_match = True
+                        if search_max and search_text in str(search_max):
                             text_match = True
                 
                 child.setHidden(not (status_match and text_match))
@@ -2306,7 +2368,12 @@ class LibraryWidget(QWidget):
                 data['file_count'],
                 data['duration'],
                 data['listened_duration'],
-                data['progress_percent']
+                data['progress_percent'],
+                data['codec'],
+                data['bitrate_min'],
+                data['bitrate_max'],
+                data['bitrate_mode'],
+                data['container']
             ))
             # Update status flags
             if 'is_started' in data and 'is_completed' in data:

@@ -332,11 +332,21 @@ class AudiobookScanner:
         except PermissionError:
             return False
     
-    def _get_audio_duration(self, path, verbose=False):
-        """Get audio duration using Mutagen or ffprobe"""
+    def _analyze_file(self, path, verbose=False):
+        """
+        Analyze audio file to extract duration and technical details.
+        Returns: {'duration': float, 'bitrate': int, 'codec': str, 'is_vbr': bool}
+        """
+        info = {
+            'duration': 0.0,
+            'bitrate': 0,
+            'codec': '',
+            'is_vbr': False
+        }
+        
         # Method 1: Mutagen
         try:
-            from mutagen.mp3 import MP3
+            from mutagen.mp3 import MP3, BitrateMode
             from mutagen.mp4 import MP4
             from mutagen.flac import FLAC
             from mutagen.oggvorbis import OggVorbis
@@ -347,25 +357,33 @@ class AudiobookScanner:
             
             if suffix == '.mp3':
                 audio = MP3(path)
+                info['codec'] = 'mp3'
+                if hasattr(audio.info, 'bitrate_mode'):
+                    info['is_vbr'] = (audio.info.bitrate_mode == BitrateMode.VBR)
             elif suffix in ('.m4a', '.m4b', '.aac'):
                 audio = MP4(path)
+                # Do NOT hardcode 'aac' here; let ffprobe or mutagen info determine it
             elif suffix == '.flac':
                 audio = FLAC(path)
+                info['codec'] = 'flac'
             elif suffix == '.ogg':
                 audio = OggVorbis(path)
+                # Let ffprobe or mutagen info determine codec (could be opus/vorbis/flac)
             elif suffix == '.wav':
                 audio = WAVE(path)
+                info['codec'] = 'pcm'
             
-            if audio and audio.info and hasattr(audio.info, 'length'):
-                duration = audio.info.length
-                if duration > 0:
-                    return duration
+            if audio and audio.info:
+                if hasattr(audio.info, 'length'):
+                    info['duration'] = audio.info.length
+                if hasattr(audio.info, 'bitrate') and audio.info.bitrate:
+                    info['bitrate'] = int(audio.info.bitrate)
         except Exception as e:
             if verbose:
                 print(self.tr("scanner.log_mutagen_error", error=type(e).__name__))
         
-        # Method 2: ffprobe
-        if self.has_ffprobe:
+        # Method 2: ffprobe (fallback if duration/bitrate missing or to identify codec)
+        if (info['duration'] == 0 or info['bitrate'] == 0 or not info['codec']) and self.has_ffprobe:
             try:
                 import subprocess
                 
@@ -375,14 +393,18 @@ class AudiobookScanner:
                     startupinfo = subprocess.STARTUPINFO()
                     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 
+                # Get streams and format info
+                cmd = [
+                    str(self.ffprobe_path),
+                    '-v', 'error',
+                    '-select_streams', 'a:0',
+                    '-show_entries', 'stream=codec_name:format=duration,bit_rate',
+                    '-of', 'default=noprint_wrappers=1:nokey=1',
+                    str(path)
+                ]
+                
                 result = subprocess.run(
-                    [
-                        str(self.ffprobe_path),
-                        '-v', 'error',
-                        '-show_entries', 'format=duration',
-                        '-of', 'default=noprint_wrappers=1:nokey=1',
-                        str(path)
-                    ],
+                    cmd,
                     capture_output=True,
                     text=True,
                     timeout=10,
@@ -390,18 +412,54 @@ class AudiobookScanner:
                 )
                 
                 if result.returncode == 0 and result.stdout.strip():
-                    duration = float(result.stdout.strip())
-                    if duration > 0:
-                        if verbose:
-                            print(self.tr("scanner.log_ffprobe_duration", duration=duration))
-                        return duration
+                    lines = result.stdout.strip().splitlines()
+                    # Output order depends on internal ffprobe loop, usually streams then format
+                    # But we requested specific entries. 
+                    # Safer to parse JSON if we want robust, but keeping it simple:
+                    # If we use json output it's safer. Let's switch to json for ffprobe?
+                    # sticking to simple for now matching existing style, but let's try to be robust.
+                    pass 
+                    
+                    # Retry with json for reliability
+                    cmd = [
+                        str(self.ffprobe_path),
+                        '-v', 'error',
+                        '-select_streams', 'a:0',
+                        '-show_entries', 'stream=codec_name:format=duration,bit_rate',
+                        '-of', 'json',
+                        str(path)
+                    ]
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10, startupinfo=startupinfo)
+                    
+                    if result.returncode == 0:
+                        data = json.loads(result.stdout)
+                        
+                        # Duration
+                        if info['duration'] == 0 and 'format' in data and 'duration' in data['format']:
+                            try:
+                                info['duration'] = float(data['format']['duration'])
+                            except: pass
+                            
+                        # Bitrate
+                        if info['bitrate'] == 0 and 'format' in data and 'bit_rate' in data['format']:
+                            try:
+                                info['bitrate'] = int(data['format']['bit_rate'])
+                            except: pass
+                            
+                        # Codec
+                        if not info['codec'] and 'streams' in data and len(data['streams']) > 0:
+                            info['codec'] = data['streams'][0].get('codec_name', '')
+
             except Exception as e:
                 if verbose:
                     print(self.tr("scanner.log_ffprobe_error", error=type(e).__name__))
         
-        if verbose:
+        if verbose and info['duration'] > 0:
+             print(self.tr("scanner.log_ffprobe_duration", duration=info['duration']))
+        elif verbose:
             print(self.tr("scanner.log_duration_failed"))
-        return 0
+            
+        return info
 
 
     def _extract_embedded_cover(self, directory, key):
@@ -549,15 +607,19 @@ class AudiobookScanner:
                 current_state_hash = self._calculate_state_hash(files)
                 
                 # Check for existing record and state hash
-                c.execute("SELECT id, state_hash FROM audiobooks WHERE path = ?", (str(rel),))
+                c.execute("SELECT id, state_hash, codec FROM audiobooks WHERE path = ?", (str(rel),))
                 existing_row_data = c.fetchone()
                 
-                if existing_row_data and existing_row_data[1] == current_state_hash:
-                    # Hash matches - skip deep scan and update availability
-                    c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing_row_data[0],))
-                    if verbose:
-                        print(f"  {self.tr('scanner.skip_existing', path=rel)}")
-                    continue
+                # Skip if valid existing record found and codec is populated
+                if existing_row_data:
+                    db_hash = existing_row_data[1]
+                    db_codec = existing_row_data[2]
+                    
+                    if db_hash == current_state_hash and db_codec is not None:
+                        c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing_row_data[0],))
+                        if verbose:
+                            print(f"  {self.tr('scanner.skip_existing', path=rel)}")
+                        continue
                 
                 # Extract metadata from tags
                 metadata = self._extract_metadata(folder, files)
@@ -583,25 +645,77 @@ class AudiobookScanner:
                 if t_author or t_title:
                     print(f"  Tags: Author='{t_author}', Title='{t_title}', Narrator='{t_narrator}'")
                 
-                # Count files and calculate total duration
+                # Analyze files
                 file_count = len(files)
                 duration = 0
                 failed_count = 0
                 
+                file_analyses = []
+                bitrates = []
+                codecs = []
+                
+                # VBR detection stats
+                vbr_detected = False
+                cbr_detected = False
+                
                 for f in files:
-                    file_duration = self._get_audio_duration(f, verbose=verbose)
+                    info = self._analyze_file(f, verbose=verbose)
+                    file_analyses.append(info)
+                    
+                    file_duration = info['duration']
                     duration += file_duration
+                    
                     if file_duration == 0:
                         failed_count += 1
+                        
+                    if info['bitrate'] > 0:
+                        bitrates.append(info['bitrate'])
+                        
+                    if info['codec']:
+                        codecs.append(info['codec'])
+                        
+                    if info['is_vbr']:
+                        vbr_detected = True
+                    elif info['bitrate'] > 0:
+                        cbr_detected = True
                 
+                # Calculate aggregated stats
                 hours = int(duration // 3600)
                 minutes = int((duration % 3600) // 60)
+                
+                bitrate_min = (min(bitrates) // 1000) if bitrates else 0
+                bitrate_max = (max(bitrates) // 1000) if bitrates else 0
+                
+                # Bitrate mode logic
+                if vbr_detected and cbr_detected:
+                    bitrate_mode = 'VBR/CBR'
+                elif vbr_detected:
+                    bitrate_mode = 'VBR'
+                elif cbr_detected:
+                   # Check if strict CBR (all bitrates same) or if it varies significantly
+                   # Common logic: if min != max it's likely VBR even if headers say CBR or we missed the VBR header
+                   # But user logic request: "if min != max -> VBR" (implied by previous context, but strictly user said "Logic: ...")
+                   # Actually user said: "if some files CBr and some VBR -> VBR/CBR"
+                   # If all are detected as CBR (not is_vbr):
+                   bitrate_mode = 'CBR'
+                else:
+                    bitrate_mode = ''
+                
+                # Common codec
+                from collections import Counter
+                common_codec = Counter(codecs).most_common(1)[0][0] if codecs else ''
+                
+                # Container (extension) - use first file or most common
+                extensions = [f.suffix.lstrip('.').lower() for f in files]
+                container = Counter(extensions).most_common(1)[0][0] if extensions else ''
                 
                 if failed_count > 0:
                     print(self.tr("scanner.files_stats_problem", count=file_count, failed=failed_count, hours=hours, minutes=minutes))
                     print(self.tr("scanner.duration_warn", count=failed_count))
                 else:
                     print(self.tr("scanner.files_stats", count=file_count, hours=hours, minutes=minutes))
+                    if bitrates:
+                        print(f"  Bitrate: {bitrate_min}-{bitrate_max} {self.tr('units.kbps', default='kbps')} ({bitrate_mode}) Codec: {common_codec}")
                 
                 # Search for cover image
                 cover = self._find_cover(folder, str(rel))
@@ -658,7 +772,12 @@ class AudiobookScanner:
                             file_count = ?,
                             duration = ?,
                             state_hash = ?,
-                            is_available = 1
+                            is_available = 1,
+                            codec = ?,
+                            bitrate_min = ?,
+                            bitrate_max = ?,
+                            bitrate_mode = ?,
+                            container = ?
                         WHERE path = ?
                     """, (
                         str(parent),
@@ -674,6 +793,11 @@ class AudiobookScanner:
                         file_count,
                         duration,
                         current_state_hash,
+                        common_codec,
+                        bitrate_min,
+                        bitrate_max,
+                        bitrate_mode,
+                        container,
                         str(rel)
                     ))
                     book_id = existing_row[0]
@@ -696,9 +820,10 @@ class AudiobookScanner:
                             is_started,
                             is_completed,
                             is_available,
-                            state_hash
+                            state_hash,
+                            codec, bitrate_min, bitrate_max, bitrate_mode, container
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)
                     """, (
                         str(rel),
                         str(parent),
@@ -720,7 +845,12 @@ class AudiobookScanner:
                         playback_speed,
                         is_started,
                         is_completed,
-                        current_state_hash
+                        current_state_hash,
+                        common_codec,
+                        bitrate_min,
+                        bitrate_max,
+                        bitrate_mode,
+                        container
                     ))
                     c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
                     book_id = c.fetchone()[0]
@@ -728,11 +858,11 @@ class AudiobookScanner:
                 # Update files list: remove old and insert current files
                 c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
                 
-                for i, f in enumerate(files, 1):
+                for i, (f, info) in enumerate(zip(files, file_analyses), 1):
                     f_tags = self._extract_file_tags(f)
                     # Use track number from tag if available, otherwise sequential index
                     track_no = f_tags['track'] if f_tags['track'] is not None else i
-                    file_duration = self._get_audio_duration(f)
+                    file_duration = info['duration']
                     
                     c.execute("""
                         INSERT INTO audiobook_files

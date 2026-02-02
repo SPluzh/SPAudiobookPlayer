@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.4]
+- **Technical Metadata**: Added extraction and library-wide display of audio technical info.
+    - Implemented storage for `codec`, `bitrate`, `bitrate_mode`, and `container`.
+    - Refined library UI with a compact tech info line: `💽 128 kbps CBR mp3`.
+    - Improved bitrate display with automatic conversion from bps to kbps and localized units.
+- **Scanner**: Enhanced codec detection by prioritizing real stream analysis via `ffprobe` over file extensions.
+    - Accurate identification of Opus/AAC in M4B containers and Opus/Vorbis in OGG.
+- **Search**: Extended library filtering to support searching by codec name and bitrate.
+- **Fix**: Resolved critical application crash on launch caused by a translation typo and missing database columns.
+
+
 ## [1.1.3]
 - **Audio**: Added support for M4B/MP4 files with **Opus** codec by implementing 
 
