@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 ## [1.1.2]
 - **UI**: Improved audiobook cover rendering:
     - Non-square covers now have their background extended using a blurred, edge-stretched version of the image to fill the square area seamlessly.
-    - Optimized rendering performance by avoiding unnecessary full-image scaling.
 
 ## [1.1.1]
 - **Audio**: Added support for **M4B** and **AAC** files via `bass_aac` plugin.
