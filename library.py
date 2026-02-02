@@ -1079,7 +1079,7 @@ class LibraryWidget(QWidget):
             menu.addSeparator()
             
             delete_action = QAction(tr("library.menu_delete"), self)
-            delete_action.setIcon(get_icon("context_delete"))
+            delete_action.setIcon(get_icon("delete"))
             delete_action.triggered.connect(lambda _: self.confirm_delete(audiobook_id, path))
             menu.addAction(delete_action)
             
@@ -1097,7 +1097,7 @@ class LibraryWidget(QWidget):
             menu.addSeparator()
             
             delete_action = QAction(tr("library.menu_delete_folder"), self)
-            delete_action.setIcon(get_icon("context_delete"))
+            delete_action.setIcon(get_icon("delete"))
             delete_action.triggered.connect(lambda _: self.confirm_delete_folder(path))
             menu.addAction(delete_action)
             
