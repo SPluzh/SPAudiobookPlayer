@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3]
+- **Audio**: Added support for M4B/MP4 files with **Opus** codec by implementing 
+
 ## [1.1.2]
 - **UI**: Improved audiobook cover rendering:
     - Non-square covers now have their background extended using a blurred, edge-stretched version of the image to fill the square area seamlessly.

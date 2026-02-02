@@ -1,5 +1,7 @@
 import os
 import ctypes
+import subprocess
+import tempfile
 from ctypes import c_float, c_int, c_void_p, c_bool
 
 # BASS constants
@@ -114,6 +116,7 @@ class BassPlayer:
         self.deesser_enabled = False
         self.compressor_handle = 0
         self.compressor_enabled = False
+        self.temp_file = None
 
         if bass and bass.BASS_Init(-1, 44100, 0, 0, None):
             self.initialized = True
@@ -144,10 +147,78 @@ class BassPlayer:
             self.deesser_handle = 0
             self.compressor_handle = 0
 
-        # Encode path for BASS (UTF-16LE with null terminator)
+        # Cleanup previous temp file
+        if self.temp_file and os.path.exists(self.temp_file):
+            try:
+                os.remove(self.temp_file)
+            except:
+                pass
+            self.temp_file = None
+
+        # Try to load file directly
         path_bytes = filepath.encode('utf-16le') + b'\x00\x00'
         flags0 = BASS_STREAM_DECODE | BASS_UNICODE
         self.chan0 = bass.BASS_StreamCreateFile(False, path_bytes, 0, 0, flags0)
+
+        # If loading failed, check for BASS_ERROR_FILEFORM (41) and try FFmpeg fallback
+        if self.chan0 == 0:
+            error_code = bass.BASS_ErrorGetCode()
+            if error_code == 41:  # BASS_ERROR_FILEFORM
+                # Check for ffmpeg from config or default
+                config_path = os.path.join(os.path.dirname(__file__), "resources", "settings.ini")
+                ffmpeg_path = os.path.join(os.path.dirname(__file__), "resources/bin/ffmpeg.exe") # Default
+                temp_dir = os.path.join(os.path.dirname(__file__), "data", "temp") # Default
+                
+                if os.path.exists(config_path):
+                    import configparser
+                    config = configparser.ConfigParser()
+                    try:
+                        config.read(config_path, encoding='utf-8')
+                        if 'Paths' in config:
+                            # Read temp_dir
+                            if 'temp_dir' in config['Paths']:
+                                configured_temp = config['Paths']['temp_dir']
+                                if not os.path.isabs(configured_temp):
+                                    temp_dir = os.path.join(os.path.dirname(__file__), configured_temp)
+                                else:
+                                    temp_dir = configured_temp
+                            
+                            # Read ffmpeg_path
+                            if 'ffmpeg_path' in config['Paths']:
+                                configured_ffmpeg = config['Paths']['ffmpeg_path']
+                                if not os.path.isabs(configured_ffmpeg):
+                                    ffmpeg_path = os.path.join(os.path.dirname(__file__), configured_ffmpeg)
+                                else:
+                                    ffmpeg_path = configured_ffmpeg
+                    except:
+                        pass
+
+                if os.path.exists(ffmpeg_path):
+                    try:
+                        os.makedirs(temp_dir, exist_ok=True)
+                        
+                        # Create temp file path
+                        fd, temp_path = tempfile.mkstemp(suffix=".opus", dir=temp_dir)
+                        os.close(fd)
+                        
+                        # Run ffmpeg to transmux
+                        subprocess.run([
+                            ffmpeg_path,
+                            '-y',
+                            '-v', 'error',
+                            '-i', filepath,
+                            '-c:a', 'copy',
+                            temp_path
+                        ], check=True, startupinfo=self._get_startupinfo())
+                        
+                        if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+                            self.temp_file = temp_path
+                            # Try loading the converted file
+                            temp_path_bytes = temp_path.encode('utf-16le') + b'\x00\x00'
+                            self.chan0 = bass.BASS_StreamCreateFile(False, temp_path_bytes, 0, 0, flags0)
+                    except Exception as e:
+                        print(f"FFmpeg fallback failed: {e}")
+                        pass
 
         if self.chan0 == 0:
             return False
@@ -158,7 +229,12 @@ class BassPlayer:
 
         if self.chan == 0:
             bass.BASS_StreamFree(self.chan0)
-            self.chan = bass.BASS_StreamCreateFile(False, path_bytes, 0, 0, BASS_UNICODE)
+            # Retry with original file if fallback wasn't used, or explicitly with what we have
+            target_bytes = path_bytes
+            if self.temp_file:
+                 target_bytes = self.temp_file.encode('utf-16le') + b'\x00\x00'
+            
+            self.chan = bass.BASS_StreamCreateFile(False, target_bytes, 0, 0, BASS_UNICODE)
             self.has_fx = False
 
         if self.chan != 0:
@@ -166,6 +242,14 @@ class BassPlayer:
             self.apply_attributes()
             return True
         return False
+
+    def _get_startupinfo(self):
+        """Get startupinfo to hide console window on Windows"""
+        if os.name == 'nt':
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            return startupinfo
+        return None
 
     def play(self):
         """Resume or start playback"""
@@ -288,6 +372,8 @@ class BassPlayer:
         """Free BASS resources"""
         if self.chan != 0:
             bass.BASS_StreamFree(self.chan)
+            self.chan = 0
+            
         if self.initialized:
             # Free plugins
             if hasattr(self, 'plugins'):
@@ -295,8 +381,18 @@ class BassPlayer:
                     bass.BASS_PluginFree(hplugin)
                 self.plugins.clear()
             
-            # Legacy cleanup (safe to keep for safety if switching versions)
+            # Legacy cleanup
             if hasattr(self, 'opus_plugin') and self.opus_plugin:
                  bass.BASS_PluginFree(self.opus_plugin)
                  
             bass.BASS_Free()
+            self.initialized = False
+
+        # Cleanup temporary file if it exists
+        if hasattr(self, 'temp_file') and self.temp_file and os.path.exists(self.temp_file):
+            try:
+                os.remove(self.temp_file)
+            except:
+                pass
+            self.temp_file = None
+

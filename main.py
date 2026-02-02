@@ -2707,7 +2707,9 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Paths'] = {
             'default_path': '',
             'ffprobe_path': 'resources/bin/ffprobe.exe',
+            'ffmpeg_path': 'resources/bin/ffmpeg.exe',
             'covers_dir': 'data/extracted_covers',
+            'temp_dir': 'data/temp',
             'default_cover_file': 'resources/icons/default_cover.png',
             'folder_cover_file': 'resources/icons/folder_cover.png'
         }
