@@ -1856,6 +1856,9 @@ class LibraryWidget(QWidget):
                 ))
             # Trigger a repaint by updating text (standard behavior for delegates)
             item.setText(0, item.text(0))
+            
+            # Synchronize the data cache to ensure filters work correctly
+            self.update_cache_item_status(audiobook_path, data['is_started'], data['is_completed'])
 
     def update_item_progress(self, audiobook_path: str, listened_duration: float, progress_percent: int):
         """Perform a low-latency UI update for an item's progress without database interaction"""
@@ -2462,8 +2465,8 @@ class AudiobookPlayerWindow(QMainWindow):
             self.update_ui_for_audiobook()
             self.toggle_play()
             
-            # Refresh library categories if necessary
-            self.library_widget.load_audiobooks()
+            # Refresh library categories to reflect "Started" status immediately
+            self.library_widget.load_audiobooks(use_cache=False)
 
     
     def update_ui_for_audiobook(self):
