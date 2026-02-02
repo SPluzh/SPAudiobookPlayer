@@ -324,6 +324,54 @@ class AudiobookScanner:
                 
         return tags
 
+    def _extract_chapters(self, file_path):
+        """Extract chapters from an audio file using ffprobe"""
+        chapters = []
+        if not self.has_ffprobe:
+            return chapters
+            
+        try:
+            import subprocess
+            startupinfo = None
+            if hasattr(subprocess, 'STARTUPINFO'):
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            
+            cmd = [
+                str(self.ffprobe_path),
+                '-v', 'error',
+                '-show_chapters',
+                '-of', 'json',
+                str(file_path)
+            ]
+            
+            result = subprocess.run(
+                cmd, 
+                capture_output=True, 
+                text=True, 
+                encoding='utf-8', 
+                timeout=10, 
+                startupinfo=startupinfo
+            )
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                for chap in data.get('chapters', []):
+                    # We need start_time, end_time, and tags (title)
+                    start = float(chap.get('start_time', 0))
+                    end = float(chap.get('end_time', 0))
+                    title = chap.get('tags', {}).get('title', '')
+                    
+                    if end > start:
+                        chapters.append({
+                            'title': title,
+                            'start': start,
+                            'duration': end - start
+                        })
+        except Exception:
+            pass
+            
+        return chapters
+
     def _extract_metadata(self, directory, files):
         """Extract metadata for the audiobook by checking first few files"""
         metadata = {'author': '', 'title': '', 'narrator': '', 'year': ''}
@@ -429,6 +477,7 @@ class AudiobookScanner:
                     cmd,
                     capture_output=True,
                     text=True,
+                    encoding='utf-8',
                     timeout=10,
                     startupinfo=startupinfo
                 )
@@ -451,7 +500,14 @@ class AudiobookScanner:
                         '-of', 'json',
                         str(path)
                     ]
-                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10, startupinfo=startupinfo)
+                    result = subprocess.run(
+                        cmd, 
+                        capture_output=True, 
+                        text=True, 
+                        encoding='utf-8', 
+                        timeout=10, 
+                        startupinfo=startupinfo
+                    )
                     
                     if result.returncode == 0:
                         data = json.loads(result.stdout)
@@ -882,31 +938,74 @@ class AudiobookScanner:
                 # Update files list: remove old and insert current files
                 c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
                 
+                virtual_file_index = 1
+                total_virtual_files = 0
+                
                 for i, (f, info) in enumerate(zip(files, file_analyses), 1):
                     f_tags = self._extract_file_tags(f)
-                    # Use track number from tag if available, otherwise sequential index
-                    track_no = f_tags['track'] if f_tags['track'] is not None else i
                     file_duration = info['duration']
                     
-                    c.execute("""
-                        INSERT INTO audiobook_files
-                        (
-                            audiobook_id, file_path, file_name, track_number, duration,
-                            tag_title, tag_artist, tag_album, tag_genre, tag_comment
-                        )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        book_id,
-                        str(f.relative_to(root)),
-                        f.name,
-                        track_no,
-                        file_duration,
-                        f_tags['title'],
-                        f_tags['author'],
-                        f_tags['album'],
-                        f_tags['genre'],
-                        f_tags['comment']
-                    ))
+                    # Check for chapters in M4B/MP4/M4A
+                    chapters = []
+                    if f.suffix.lower() in ('.m4b', '.mp4', '.m4a'):
+                        chapters = self._extract_chapters(f)
+                    
+                    if chapters:
+                        for chap in chapters:
+                            c.execute("""
+                                INSERT INTO audiobook_files
+                                (
+                                    audiobook_id, file_path, file_name, track_number, duration,
+                                    start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment
+                                )
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """, (
+                                book_id,
+                                str(f.relative_to(root)),
+                                f.name,
+                                virtual_file_index,
+                                chap['duration'],
+                                chap['start'],
+                                chap['title'] or f.name,
+                                f_tags['author'],
+                                f_tags['album'],
+                                f_tags['genre'],
+                                f_tags['comment']
+                            ))
+                            virtual_file_index += 1
+                            total_virtual_files += 1
+                    else:
+                        # No chapters or not M4B
+                        track_no = f_tags['track'] if f_tags['track'] is not None else virtual_file_index
+                        c.execute("""
+                            INSERT INTO audiobook_files
+                            (
+                                audiobook_id, file_path, file_name, track_number, duration,
+                                start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            book_id,
+                            str(f.relative_to(root)),
+                            f.name,
+                            track_no,
+                            file_duration,
+                            0.0,
+                            f_tags['title'],
+                            f_tags['author'],
+                            f_tags['album'],
+                            f_tags['genre'],
+                            f_tags['comment']
+                        ))
+                        # If the track_no was from tags, ensure virtual_file_index stays ahead
+                        if f_tags['track'] is not None:
+                            virtual_file_index = max(virtual_file_index, f_tags['track'] + 1)
+                        else:
+                            virtual_file_index += 1
+                        total_virtual_files += 1
+
+                # Update the file_count in audiobooks table to reflect virtual files (chapters)
+                c.execute("UPDATE audiobooks SET file_count = ? WHERE id = ?", (total_virtual_files, book_id))
             
             # Recreate intermediate folder structure
             print("\n" + "-" * 70)

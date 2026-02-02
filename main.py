@@ -705,10 +705,14 @@ class AudiobookPlayerWindow(QMainWindow):
         self.refresh_audiobook_in_tree()
     
     def on_position_changed(self, normalized: float):
-        """Seek to a specific temporal position within the active file based on normalized slider input"""
-        duration = self.player.get_duration()
-        if duration > 0:
-            self.player.set_position(normalized * duration)
+        """Seek to a specific temporal position within the active chapter based on normalized slider input"""
+        current_file_info = self.playback_controller.files_list[self.playback_controller.current_file_index]
+        start_offset = current_file_info.get('start_offset', 0)
+        chapter_duration = current_file_info.get('duration', self.player.get_duration())
+        
+        if chapter_duration > 0:
+            target_pos = start_offset + (normalized * chapter_duration)
+            self.player.set_position(target_pos)
             self.playback_controller.save_current_progress()
     
     def on_speed_changed(self, value: int):
@@ -770,8 +774,12 @@ class AudiobookPlayerWindow(QMainWindow):
         pos = self.player.get_position()
         duration = self.player.get_duration()
         
+        current_file_info = self.playback_controller.files_list[self.playback_controller.current_file_index]
+        start_offset = current_file_info.get('start_offset', 0)
+        chapter_duration = current_file_info.get('duration', duration)
+
         # Synchronize individual track progress indicators
-        self.player_widget.update_file_progress(pos, duration)
+        self.player_widget.update_file_progress(pos - start_offset, chapter_duration)
         
         # Synchronize aggregate audiobook progress indicators
         total_pos = self.playback_controller.get_current_position()
@@ -807,8 +815,11 @@ class AudiobookPlayerWindow(QMainWindow):
                 total=self.playback_controller.total_duration
             )
         
-        # Automate track transition upon reaching the end of the current file
-        if duration > 0 and pos >= duration - 0.5 and not self.player.is_playing():
+        # Automate track transition upon reaching the end of the current file or chapter
+        chapter_end = start_offset + chapter_duration
+        # If the file finished or we reached the end of the chapter
+        if (duration > 0 and pos >= duration - 0.5 and not self.player.is_playing()) or \
+           (pos >= chapter_end - 0.2): # Small buffer for chapter transition
             self.on_next_clicked()
     
     def rescan_directory(self):

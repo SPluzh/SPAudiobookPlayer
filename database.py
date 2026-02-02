@@ -63,6 +63,7 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 file_name TEXT,
                 track_number INTEGER,
                 duration REAL DEFAULT 0,
+                start_offset REAL DEFAULT 0,
                 tag_title TEXT,
                 tag_artist TEXT,
                 tag_album TEXT,
@@ -91,6 +92,12 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         # Migration: add state_hash column if it doesn't exist
         try:
             c.execute("ALTER TABLE audiobooks ADD COLUMN state_hash TEXT")
+        except sqlite3.OperationalError:
+            pass # Column already exists
+
+        # Migration: add start_offset column to audiobook_files if it doesn't exist
+        try:
+            c.execute("ALTER TABLE audiobook_files ADD COLUMN start_offset REAL DEFAULT 0")
         except sqlite3.OperationalError:
             pass # Column already exists
 
@@ -333,9 +340,9 @@ class DatabaseManager:
         try:
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT file_path, file_name, duration, track_number, tag_title
+                SELECT file_path, file_name, duration, track_number, tag_title, start_offset
                 FROM audiobook_files WHERE audiobook_id = ?
-                ORDER BY track_number, file_name
+                ORDER BY track_number, start_offset, file_name
             ''', (audiobook_id,))
             return cursor.fetchall()
         except sqlite3.Error as e:

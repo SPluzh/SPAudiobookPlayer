@@ -61,12 +61,13 @@ class PlaybackController:
         files = self.db.get_audiobook_files(audiobook_id)
         self.files_list = []
         
-        for file_path, file_name, duration, track_num, tag_title in files:
+        for file_path, file_name, duration, track_num, tag_title, start_offset in files:
             self.files_list.append({
                 'path': file_path,
                 'name': file_name,
                 'tag_title': tag_title or '',
-                'duration': duration or 0
+                'duration': duration or 0,
+                'start_offset': start_offset or 0
             })
         
         # Restore saved playback speed
@@ -85,8 +86,13 @@ class PlaybackController:
                 abs_file_path = rel_file_path
                 
             if self.player.load(abs_file_path):
-                if saved_position and saved_position > 0:
-                    self.player.set_position(saved_position)
+                # Seek to saved position if present, otherwise to chapter start
+                start_offset = self.files_list[self.current_file_index].get('start_offset', 0)
+                if saved_position is not None and saved_position > 0:
+                     # saved_position in DB is the absolute position in the physical file
+                     self.player.set_position(saved_position)
+                elif start_offset > 0:
+                    self.player.set_position(start_offset)
                 
                 # Update last_updated timestamp in database
                 self.db.update_last_updated(self.current_audiobook_id)
@@ -112,6 +118,10 @@ class PlaybackController:
             abs_file_path = file_info['path']
             
         if self.player.load(abs_file_path):
+            start_offset = file_info.get('start_offset', 0)
+            if start_offset > 0:
+                self.player.set_position(start_offset)
+                
             if start_playing or was_playing:
                 self.player.play()
             return True
@@ -139,9 +149,12 @@ class PlaybackController:
     
     def prev_file(self) -> bool:
         """Switch to the previous file or restart the current one based on position"""
-        if self.player.get_position() > 3:
-            # If more than 3 seconds in, just restart the current file
-            self.player.set_position(0)
+        current_file_info = self.files_list[self.current_file_index]
+        start_offset = current_file_info.get('start_offset', 0)
+        
+        if self.player.get_position() > start_offset + 3:
+            # If more than 3 seconds into the chapter, just restart it
+            self.player.set_position(start_offset)
             return True
         elif self.current_file_index > 0:
             # Otherwise, go back to the previous file
@@ -161,7 +174,10 @@ class PlaybackController:
     
     def get_current_position(self) -> float:
         """Calculate the total elapsed time across the entire audiobook"""
-        return self.global_position + self.player.get_position()
+        # total_pos = sum(durations of previous virtual files) + (current_physical_pos - chapter_start_offset)
+        current_file_info = self.files_list[self.current_file_index]
+        start_offset = current_file_info.get('start_offset', 0)
+        return self.global_position + max(0, self.player.get_position() - start_offset)
     
     def get_progress_percent(self) -> int:
         """Calculate the current playback progress as a percentage (0-100)"""
