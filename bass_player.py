@@ -267,6 +267,24 @@ class BassPlayer:
         if self.chan != 0:
             bass.BASS_ChannelStop(self.chan)
 
+    def unload(self):
+        """Stop playback and free the current stream and temporary files"""
+        if self.chan != 0:
+            bass.BASS_StreamFree(self.chan)
+            self.chan = 0
+            self.chan0 = 0
+            self.current_file = ""
+            self.deesser_handle = 0
+            self.compressor_handle = 0
+
+        if self.temp_file and os.path.exists(self.temp_file):
+            try:
+                os.remove(self.temp_file)
+            except:
+                pass
+            self.temp_file = None
+
+
     def is_playing(self) -> bool:
         """Check if currently playing"""
         return self.chan != 0 and bass.BASS_ChannelIsActive(self.chan) == BASS_ACTIVE_PLAYING

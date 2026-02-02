@@ -2737,18 +2737,21 @@ class AudiobookPlayerWindow(QMainWindow):
     def perform_full_reset(self):
         """Execute a comprehensive wipe of all library metadata, database records, and extracted cover assets while the application remains active"""
         try:
-            # 1. Stop active playback to release locks
-            self.player.pause()
+            # 1. Stop active playback and unload file to release locks
+            self.player.unload()
             
             # 2. Reset the internal state of the playback controller
             self.playback_controller.current_audiobook_id = None
-            self.playback_controller.current_audiobook_path = None
+            self.playback_controller.current_audiobook_path = ""
             self.playback_controller.files_list = []
             self.playback_controller.saved_file_index = 0
             self.playback_controller.saved_position = 0
             
-            # 3. Clear the tree widget (crucial for unlocking cover image assets)
+            # 3. Clear the tree and filter state
+            self.library_widget.search_edit.clear()
+            self.library_widget.cached_library_data = None
             self.library_widget.tree.clear()
+
             
             # 4. Wipe all database tables
             self.db_manager.clear_all_data()
@@ -2761,10 +2764,22 @@ class AudiobookPlayerWindow(QMainWindow):
                     print(f"Could not delete covers dir: {e}")
                 
             # 6. Synchronize UI components to the empty state
-            self.update_ui_for_audiobook() # Resets labels and progress sliders
+            self.update_ui_for_audiobook() # Resets labels and playlist
+            
+            # Reset player UI components specifically
+            self.player_widget.position_slider.setValue(0)
+            self.player_widget.total_progress_bar.setValue(0)
+            self.player_widget.time_current.setText("0:00")
+            self.player_widget.time_duration.setText("0:00")
+            self.player_widget.total_time_label.setText("0:00:00")
+            self.player_widget.total_duration_label.setText("0:00:00")
+            self.player_widget.total_percent_label.setText(trf("formats.percent", value=0))
+            self.player_widget.time_left_label.setText(tr("player.time_left_unknown"))
+
             if self.delegate:
                 self.delegate.playing_path = None # Remove tree highlighting
             self.library_widget.load_audiobooks() # Populate empty tree
+
             
             self.statusBar().showMessage(tr("status.reset_success"))
             
