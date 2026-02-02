@@ -100,7 +100,10 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             'bitrate_min': 'INTEGER',
             'bitrate_max': 'INTEGER',
             'bitrate_mode': 'TEXT',
-            'container': 'TEXT'
+            'container': 'TEXT',
+            'time_added': 'TIMESTAMP',
+            'time_started': 'TIMESTAMP',
+            'time_finished': 'TIMESTAMP'
         }
         
         for col, type_ in new_columns.items():
@@ -152,14 +155,16 @@ class DatabaseManager:
                 path, parent_path, name, author, title, narrator, cover_path,
                 is_folder, file_count, duration, listened_duration, progress_percent,
                 is_started, is_completed, is_available, is_expanded, last_updated,
-                codec, bitrate_min, bitrate_max, bitrate_mode, container
+                codec, bitrate_min, bitrate_max, bitrate_mode, container,
+                time_added, time_started, time_finished
             '''
             
             columns_with_prefix = '''
                 p.path, p.parent_path, p.name, p.author, p.title, p.narrator, p.cover_path,
                 p.is_folder, p.file_count, p.duration, p.listened_duration, p.progress_percent,
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
-                p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container
+                p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
+                p.time_added, p.time_started, p.time_finished
             '''
             
             if filter_type == 'all':
@@ -225,7 +230,8 @@ class DatabaseManager:
                 path, parent_path, name, author, title, narrator, cover_path, \
                 is_folder, file_count, duration, listened_duration, progress_percent, \
                 is_started, is_completed, is_available, is_expanded, last_updated, \
-                codec, bitrate_min, bitrate_max, bitrate_mode, container = row
+                codec, bitrate_min, bitrate_max, bitrate_mode, container, \
+                time_added, time_started, time_finished = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -248,7 +254,10 @@ class DatabaseManager:
                     'bitrate_min': bitrate_min,
                     'bitrate_max': bitrate_max,
                     'bitrate_mode': bitrate_mode,
-                    'container': container
+                    'container': container,
+                    'time_added': time_added,
+                    'time_started': time_started,
+                    'time_finished': time_finished
                 })
             
             return data_by_parent
@@ -269,7 +278,8 @@ class DatabaseManager:
         try:
             cursor.execute('''
                 UPDATE audiobooks
-                SET is_started = 1, is_completed = 0
+                SET is_started = 1, is_completed = 0,
+                    time_started = COALESCE(time_started, CURRENT_TIMESTAMP)
                 WHERE id = ?
             ''', (audiobook_id,))
             
@@ -336,10 +346,12 @@ class DatabaseManager:
                 UPDATE audiobooks
                 SET current_file_index = ?, current_position = ?, playback_speed = ?,
                     listened_duration = ?, progress_percent = ?,
-                    is_started = ?, is_completed = ?
+                    is_started = ?, is_completed = ?,
+                    time_started = CASE WHEN ? = 1 AND time_started IS NULL THEN CURRENT_TIMESTAMP ELSE time_started END,
+                    time_finished = CASE WHEN ? = 1 AND time_finished IS NULL THEN CURRENT_TIMESTAMP ELSE time_finished END
                 WHERE id = ?
             ''', (file_index, position, speed, listened_duration, progress_percent,
-                  is_started, is_completed, audiobook_id))
+                  is_started, is_completed, is_started, is_completed, audiobook_id))
             
             conn.commit()
         except sqlite3.Error as e:
@@ -374,7 +386,9 @@ class DatabaseManager:
             cursor.execute('''
                 UPDATE audiobooks
                 SET listened_duration = ?, progress_percent = 100,
-                    is_completed = 1, is_started = 1
+                    is_completed = 1, is_started = 1,
+                    time_started = COALESCE(time_started, CURRENT_TIMESTAMP),
+                    time_finished = COALESCE(time_finished, CURRENT_TIMESTAMP)
                 WHERE id = ?
             ''', (total_duration, audiobook_id))
             conn.commit()
@@ -395,7 +409,8 @@ class DatabaseManager:
                 UPDATE audiobooks
                 SET listened_duration = 0, progress_percent = 0,
                     current_file_index = 0, current_position = 0,
-                    is_started = 0, is_completed = 0
+                    is_started = 0, is_completed = 0,
+                    time_started = NULL, time_finished = NULL
                 WHERE id = ?
             ''', (audiobook_id,))
             conn.commit()
@@ -447,7 +462,8 @@ class DatabaseManager:
             cursor.execute('''
                 SELECT author, title, narrator, file_count, duration, 
                        listened_duration, progress_percent, is_started, is_completed,
-                       codec, bitrate_min, bitrate_max, bitrate_mode, container
+                       codec, bitrate_min, bitrate_max, bitrate_mode, container,
+                       time_added, time_started, time_finished
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -468,7 +484,10 @@ class DatabaseManager:
                     'bitrate_min': row[10],
                     'bitrate_max': row[11],
                     'bitrate_mode': row[12],
-                    'container': row[13]
+                    'container': row[13],
+                    'time_added': row[14],
+                    'time_started': row[15],
+                    'time_finished': row[16]
                 }
             return None
         except sqlite3.Error as e:

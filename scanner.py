@@ -759,25 +759,12 @@ class AudiobookScanner:
                     # Update metadata only, preserve progress and status
                     c.execute("""
                         UPDATE audiobooks
-                        SET parent_path = ?,
-                            name = ?,
-                            author = ?,
-                            title = ?,
-                            narrator = ?,
-                            tag_author = ?,
-                            tag_title = ?,
-                            tag_narrator = ?,
-                            tag_year = ?,
-                            cover_path = ?,
-                            file_count = ?,
-                            duration = ?,
-                            state_hash = ?,
-                            is_available = 1,
                             codec = ?,
                             bitrate_min = ?,
                             bitrate_max = ?,
                             bitrate_mode = ?,
-                            container = ?
+                            container = ?,
+                            time_added = COALESCE(time_added, CURRENT_TIMESTAMP)
                         WHERE path = ?
                     """, (
                         str(parent),
@@ -821,9 +808,10 @@ class AudiobookScanner:
                             is_completed,
                             is_available,
                             state_hash,
-                            codec, bitrate_min, bitrate_max, bitrate_mode, container
+                            codec, bitrate_min, bitrate_max, bitrate_mode, container,
+                            time_added
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                     """, (
                         str(rel),
                         str(parent),
