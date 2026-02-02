@@ -174,18 +174,18 @@ class DatabaseManager:
             else:
                 # Filter condition for audiobooks (not folders)
                 filter_condition = 'is_folder = 0'
+                order_by = 'is_folder DESC, name'
                 
                 if filter_type == 'completed':
                     filter_condition += ' AND is_completed = 1'
-                elif filter_type == 'recent_added':
-                    filter_condition += '''
-                        AND progress_percent = 0 
-                        AND datetime(last_updated) >= datetime('now', '-30 days')
-                    '''
+                    order_by = 'is_folder DESC, time_finished DESC, name'
                 elif filter_type == 'in_progress':
                     filter_condition += ' AND is_started = 1 AND is_completed = 0'
+                    order_by = 'is_folder DESC, last_updated DESC, name'
                 elif filter_type == 'not_started':
+                    # "New" filter: Not started, sorted by time_added
                     filter_condition += ' AND is_started = 0'
+                    order_by = 'is_folder DESC, time_added DESC, name'
                 
                 # Always filter by availability
                 filter_condition += ' AND is_available = 1'
@@ -216,10 +216,12 @@ class DatabaseManager:
                         WHERE p.is_folder = 1
                     )
                     -- 3. Combine audiobooks and ALL their parent folders
-                    SELECT * FROM filtered_audiobooks
-                    UNION
-                    SELECT * FROM all_parent_folders
-                    ORDER BY is_folder DESC, name
+                    SELECT * FROM (
+                        SELECT * FROM filtered_audiobooks
+                        UNION
+                        SELECT * FROM all_parent_folders
+                    )
+                    ORDER BY {order_by}
                 '''
                 cursor.execute(query)
             
@@ -264,6 +266,25 @@ class DatabaseManager:
         except sqlite3.Error as e:
             print(f"Database error in load_audiobooks_from_db: {e}")
             return {}
+        finally:
+            conn.close()
+
+    def update_last_updated(self, audiobook_id: int):
+        """Update the last_updated timestamp for an audiobook"""
+        if not audiobook_id:
+            return
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE audiobooks
+                SET last_updated = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (audiobook_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in update_last_updated: {e}")
         finally:
             conn.close()
 

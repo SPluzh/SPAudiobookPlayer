@@ -87,6 +87,10 @@ class PlaybackController:
             if self.player.load(abs_file_path):
                 if saved_position and saved_position > 0:
                     self.player.set_position(saved_position)
+                
+                # Update last_updated timestamp in database
+                self.db.update_last_updated(self.current_audiobook_id)
+                
                 return True
         
         return False

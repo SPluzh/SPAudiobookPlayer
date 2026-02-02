@@ -759,12 +759,26 @@ class AudiobookScanner:
                     # Update metadata only, preserve progress and status
                     c.execute("""
                         UPDATE audiobooks
+                        SET parent_path = ?,
+                            name = ?,
+                            author = ?,
+                            title = ?,
+                            narrator = ?,
+                            tag_author = ?,
+                            tag_title = ?,
+                            tag_narrator = ?,
+                            tag_year = ?,
+                            cover_path = ?,
+                            file_count = ?,
+                            duration = ?,
+                            state_hash = ?,
                             codec = ?,
                             bitrate_min = ?,
                             bitrate_max = ?,
                             bitrate_mode = ?,
                             container = ?,
-                            time_added = COALESCE(time_added, CURRENT_TIMESTAMP)
+                            time_added = COALESCE(time_added, CURRENT_TIMESTAMP),
+                            is_available = 1
                         WHERE path = ?
                     """, (
                         str(parent),
@@ -903,15 +917,18 @@ class AudiobookScanner:
                     INSERT OR IGNORE INTO audiobooks
                     (path, parent_path, name, author, title, narrator, cover_path,
                      file_count, duration, listened_duration, progress_percent, is_folder,
-                     current_file_index, current_position, is_started, is_completed, is_available)
-                    VALUES (?, ?, ?, '', '', '', NULL, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+                     current_file_index, current_position, is_started, is_completed, is_available,
+                     time_added)
+                    VALUES (?, ?, ?, '', '', '', NULL, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, CURRENT_TIMESTAMP)
                 """, (path_str, parent, path_obj.name))
                 
-                # Mark existing folder as available
-                c.execute(
-                    "UPDATE audiobooks SET is_available = 1 WHERE path = ? AND is_folder = 1",
-                    (path_str,)
-                )
+                # Mark existing folder as available and ensure time_added is set
+                c.execute("""
+                    UPDATE audiobooks 
+                    SET is_available = 1,
+                        time_added = COALESCE(time_added, CURRENT_TIMESTAMP)
+                    WHERE path = ? AND is_folder = 1
+                """, (path_str,))
             
             for folder in folders:
                 rel = folder.relative_to(root)

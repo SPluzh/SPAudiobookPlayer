@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.6]
+- **Library Sorting**: Implemented persistent and meaningful sorting for library filters
+
 ## [1.1.5]
 - **Scanner**: Added support for `.mp4` audio files.
     - Updated scanning logic to recognize `.mp4` extensions and extract metadata/covers.

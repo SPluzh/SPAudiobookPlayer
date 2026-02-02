@@ -797,7 +797,8 @@ class LibraryWidget(QWidget):
     def apply_filter(self, filter_type: str):
         """Switch the current library view filter and refresh the audiobook listing"""
         self.current_filter = filter_type
-        self.filter_audiobooks()
+        # When switching filters, reload from DB to apply correct sorting and subset
+        self.load_audiobooks(use_cache=False)
     
     def on_show_folders_toggled(self, checked):
         """Toggle folder visibility and refresh the library"""
@@ -817,7 +818,7 @@ class LibraryWidget(QWidget):
         # Check cache or force reload
         # Always load all audiobooks to enable fast client-side filtering
         if not use_cache or self.cached_library_data is None:
-             self.cached_library_data = self.db.load_audiobooks_from_db('all')
+             self.cached_library_data = self.db.load_audiobooks_from_db(self.current_filter)
         
         # Optimize tree population by disabling repaints and sorting
         self.tree.setUpdatesEnabled(False)
