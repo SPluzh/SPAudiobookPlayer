@@ -23,6 +23,14 @@
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Mark as Read",
     "menu_mark_unread": "Mark as Not Started",
+    "menu_delete": "Delete Book",
+    "menu_delete_folder": "Delete Folder",
+    "confirm_delete_title": "Delete Confirmation",
+    "confirm_delete_msg": "Are you sure you want to remove this audiobook from the library?\nFiles on disk will remain untouched.\n\n{path}",
+    "confirm_delete_folder_title": "Delete Folder Confirmation",
+    "confirm_delete_folder_msg": "Are you sure you want to remove this folder, ALL subfolders, and contained audiobooks from the library?\nFiles on disk will remain untouched.\n\n{path}{items}",
+    "delete_folder_contents_header": "Contents:",
+    "delete_error": "Delete error: {error}",
     "filter_all": "All",
     "filter_recent_added": "Recently added",
     "filter_in_progress": "Started",
@@ -73,7 +81,8 @@
     "audiobook_complete": "✅ Audiobook completed",
     "styles_reloaded": "✅ Styles reloaded",
     "styles_error": "❌ Styles error: {error}",
-    "reset_success": "✅ Library successfully purged"
+    "reset_success": "✅ Library successfully purged",
+    "delete_success": "✅ Audiobook successfully deleted"
   },
   "delegate": {
     "narrator_prefix": "🎙",

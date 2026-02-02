@@ -3,6 +3,7 @@ Database Manager Module
 Provides database operations for the audiobook player application.
 """
 
+import os
 import sqlite3
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Callable
@@ -486,6 +487,66 @@ class DatabaseManager:
             conn.commit()
         except sqlite3.Error as e:
             print(f"Database error in save_progress: {e}")
+        finally:
+            conn.close()
+
+    def delete_audiobook(self, audiobook_id: int):
+        """Delete an audiobook and its associated files from the database"""
+        if not audiobook_id:
+            return
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON")
+            cursor.execute("DELETE FROM audiobooks WHERE id = ?", (audiobook_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in delete_audiobook: {e}")
+            raise e
+        finally:
+            conn.close()
+
+    def delete_folder(self, folder_path: str):
+        """Recursively delete a folder and all its contents (audiobooks and subfolders) from the database"""
+        if not folder_path:
+            return
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON")
+            # Delete the folder itself and everything starting with 'folder_path\'
+            pattern = folder_path + os.sep + '%'
+            cursor.execute('''
+                DELETE FROM audiobooks 
+                WHERE path = ? OR path LIKE ?
+            ''', (folder_path, pattern))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in delete_folder: {e}")
+            raise e
+        finally:
+            conn.close()
+
+    def get_folder_contents(self, folder_path: str) -> List[Tuple[str, bool]]:
+        """Get names of all nested audiobooks and subfolders for a given folder path"""
+        if not folder_path:
+            return []
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            pattern = folder_path + os.sep + '%'
+            cursor.execute('''
+                SELECT name, is_folder FROM audiobooks 
+                WHERE path LIKE ?
+                ORDER BY is_folder DESC, name ASC
+            ''', (pattern,))
+            return cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Database error in get_folder_contents: {e}")
+            return []
         finally:
             conn.close()
 

@@ -322,6 +322,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.library_widget.audiobook_selected.connect(self.on_audiobook_selected)
         self.library_widget.tree.play_button_clicked.connect(self.on_library_play_clicked)
         self.library_widget.show_folders_toggled.connect(self.on_show_folders_toggled)
+        self.library_widget.delete_requested.connect(self.on_delete_requested)
+        self.library_widget.folder_delete_requested.connect(self.on_folder_delete_requested)
 
         # Playback Control Signals
         self.player_widget.play_clicked.connect(self.toggle_play)
@@ -955,6 +957,67 @@ class AudiobookPlayerWindow(QMainWindow):
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to completely clear library data: {e}")
+
+    def on_delete_requested(self, audiobook_id: int, rel_path: str):
+        """Coordinate the comprehensive removal of an audiobook from the filesystem, database, and UI"""
+        if not self.default_path:
+             return
+             
+        abs_path = Path(self.default_path) / rel_path
+        
+        # 1. Terminate active playback if the target book is currently loaded
+        if self.playback_controller.current_audiobook_id == audiobook_id:
+            self.player.unload()
+            # Clear internal playback state
+            self.playback_controller.current_audiobook_id = None
+            self.playback_controller.current_audiobook_path = ""
+            self.playback_controller.files_list = []
+            self.playback_controller.saved_file_index = 0
+            self.playback_controller.saved_position = 0
+            
+            # Reset UI elements to their baseline state
+            self.update_ui_for_audiobook()
+            if self.delegate:
+                self.delegate.playing_path = None
+        
+        # 2. Finalize data synchronization across database and view
+        try:
+            self.db_manager.delete_audiobook(audiobook_id)
+            self.library_widget.remove_audiobook_from_ui(rel_path)
+            self.statusBar().showMessage(tr("status.delete_success"))
+        except Exception as e:
+             QMessageBox.critical(self, tr("library.confirm_delete_title"), 
+                                trf("library.delete_error", error=str(e)))
+
+    def on_folder_delete_requested(self, rel_path: str):
+        """Recursively remove a folder and its contents from the player, database, and UI"""
+        # 1. Check if currently playing audiobook is inside this folder
+        current_book_path = self.playback_controller.current_audiobook_path
+        inside_folder = (
+            current_book_path == rel_path or 
+            current_book_path.startswith(rel_path + os.sep)
+        )
+        
+        if inside_folder:
+            self.player.unload()
+            self.playback_controller.current_audiobook_id = None
+            self.playback_controller.current_audiobook_path = ""
+            self.playback_controller.files_list = []
+            self.playback_controller.saved_file_index = 0
+            self.playback_controller.saved_position = 0
+            
+            self.update_ui_for_audiobook()
+            if self.delegate:
+                self.delegate.playing_path = None
+        
+        # 2. Database and UI synchronization
+        try:
+            self.db_manager.delete_folder(rel_path)
+            self.library_widget.remove_folder_from_ui(rel_path)
+            self.statusBar().showMessage(tr("status.delete_success"))
+        except Exception as e:
+             QMessageBox.critical(self, tr("library.confirm_delete_folder_title"), 
+                                trf("library.delete_error", error=str(e)))
 
     def apply_blur(self):
         """Increment blur request counter and apply graphics effect if necessary"""

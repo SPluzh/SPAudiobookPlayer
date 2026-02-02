@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.11]
+- **Library**: Added comprehensive "Delete" functionality for both audiobooks and folders
+
 ## [1.1.10]
 - **UI**: Implemented a sophisticated background blur effect for modal dialogs
 

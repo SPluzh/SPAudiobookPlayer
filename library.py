@@ -626,6 +626,8 @@ class LibraryWidget(QWidget):
     
     audiobook_selected = pyqtSignal(str) # Emits the relative path of the selected audiobook
     show_folders_toggled = pyqtSignal(bool) # Emits the new state of the folders toggle
+    delete_requested = pyqtSignal(int, str) # Emits (audiobook_id, rel_path)
+    folder_delete_requested = pyqtSignal(str) # Emits folder relative path
     
     # Internal configuration for status filtering
     FILTER_CONFIG = {
@@ -1033,44 +1035,73 @@ class LibraryWidget(QWidget):
                 self.db.update_folder_expanded_state(path, False)
 
     def show_context_menu(self, pos):
-        """Construct and display a context menu for audiobook items"""
+        """Construct and display a context menu for items in the library tree"""
         item = self.tree.itemAt(pos)
-        if not item or item.data(0, Qt.ItemDataRole.UserRole + 1) != 'audiobook':
+        if not item:
             return
-        
+            
+        role = item.data(0, Qt.ItemDataRole.UserRole + 1)
         path = item.data(0, Qt.ItemDataRole.UserRole)
-        info = self.db.get_audiobook_info(path)
-        if not info:
-            return
-        audiobook_id = info[0]
-        duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4]
+        
+        if role == 'audiobook':
+            # Audiobook context menu (existing logic)
+            info = self.db.get_audiobook_info(path)
+            if not info:
+                return
+            audiobook_id = info[0]
+            duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4]
 
-        menu = QMenu()
-        play_action = QAction(tr("library.context_play"), self)
-        play_action.setIcon(get_icon("context_play"))
-        play_action.triggered.connect(lambda _: self.on_item_double_clicked(item, 0))
-        menu.addAction(play_action)
-        
-        menu.addSeparator()
+            menu = QMenu()
+            play_action = QAction(tr("library.context_play"), self)
+            play_action.setIcon(get_icon("context_play"))
+            play_action.triggered.connect(lambda _: self.on_item_double_clicked(item, 0))
+            menu.addAction(play_action)
+            
+            menu.addSeparator()
 
-        mark_read_action = QAction(tr("library.menu_mark_read"), self)
-        mark_read_action.setIcon(get_icon("context_mark_read"))
-        mark_read_action.triggered.connect(lambda _: self.mark_as_read(audiobook_id, duration, path))
-        menu.addAction(mark_read_action)
+            mark_read_action = QAction(tr("library.menu_mark_read"), self)
+            mark_read_action.setIcon(get_icon("context_mark_read"))
+            mark_read_action.triggered.connect(lambda _: self.mark_as_read(audiobook_id, duration, path))
+            menu.addAction(mark_read_action)
 
-        mark_unread_action = QAction(tr("library.menu_mark_unread"), self)
-        mark_unread_action.setIcon(get_icon("context_mark_unread"))
-        mark_unread_action.triggered.connect(lambda _: self.mark_as_unread(audiobook_id, path))
-        menu.addAction(mark_unread_action)
-        
-        menu.addSeparator()
-        
-        open_folder_action = QAction(tr("library.menu_open_folder"), self)
-        open_folder_action.setIcon(get_icon("context_open_folder"))
-        open_folder_action.triggered.connect(lambda _: self.open_folder(path))
-        menu.addAction(open_folder_action)
-        
-        menu.exec(self.tree.viewport().mapToGlobal(pos))
+            mark_unread_action = QAction(tr("library.menu_mark_unread"), self)
+            mark_unread_action.setIcon(get_icon("context_mark_unread"))
+            mark_unread_action.triggered.connect(lambda _: self.mark_as_unread(audiobook_id, path))
+            menu.addAction(mark_unread_action)
+            
+            menu.addSeparator()
+            
+            open_folder_action = QAction(tr("library.menu_open_folder"), self)
+            open_folder_action.setIcon(get_icon("context_open_folder"))
+            open_folder_action.triggered.connect(lambda _: self.open_folder(path))
+            menu.addAction(open_folder_action)
+            
+            menu.addSeparator()
+            
+            delete_action = QAction(tr("library.menu_delete"), self)
+            delete_action.setIcon(get_icon("context_delete"))
+            delete_action.triggered.connect(lambda _: self.confirm_delete(audiobook_id, path))
+            menu.addAction(delete_action)
+            
+            menu.exec(self.tree.viewport().mapToGlobal(pos))
+            
+        elif role == 'folder':
+            # Folder context menu
+            menu = QMenu()
+            
+            open_folder_action = QAction(tr("library.menu_open_folder"), self)
+            open_folder_action.setIcon(get_icon("context_open_folder"))
+            open_folder_action.triggered.connect(lambda _: self.open_folder(path))
+            menu.addAction(open_folder_action)
+            
+            menu.addSeparator()
+            
+            delete_action = QAction(tr("library.menu_delete_folder"), self)
+            delete_action.setIcon(get_icon("context_delete"))
+            delete_action.triggered.connect(lambda _: self.confirm_delete_folder(path))
+            menu.addAction(delete_action)
+            
+            menu.exec(self.tree.viewport().mapToGlobal(pos))
 
     def mark_as_read(self, audiobook_id, duration, path):
         self.db.mark_audiobook_completed(audiobook_id, duration)
@@ -1097,6 +1128,112 @@ class LibraryWidget(QWidget):
             window.playback_controller.saved_file_index = 0
             window.playback_controller.saved_position = 0
             window.update_ui_for_audiobook()
+    
+    def confirm_delete(self, audiobook_id: int, path: str):
+        """Ask for user confirmation before proceeding with book deletion"""
+        display_path = os.path.basename(path)
+        reply = QMessageBox.question(
+            self, 
+            tr("library.confirm_delete_title"),
+            trf("library.confirm_delete_msg", path=display_path),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self.delete_requested.emit(audiobook_id, path)
+
+    def remove_audiobook_from_ui(self, path: str):
+        """Cleanly remove an audiobook from the library tree and internal cache"""
+        # 1. Synchronize the in-memory cache
+        if self.cached_library_data:
+            found = False
+            for parent, items in self.cached_library_data.items():
+                for i, item in enumerate(items):
+                    if item['path'] == path:
+                        items.pop(i)
+                        found = True
+                        break
+                if found:
+                    break
+        
+        # 2. Update the visual tree representation
+        item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
+        if item:
+            parent = item.parent() or self.tree.invisibleRootItem()
+            parent.removeChild(item)
+            
+        # 3. Refresh status metrics in the main window
+        window = self.window()
+        if hasattr(window, 'statusBar'):
+            total_count = self.db.get_audiobook_count()
+            window.statusBar().showMessage(trf("status.library_count", count=total_count))
+    
+    def confirm_delete_folder(self, path: str):
+        """Ask for user confirmation before proceeding with folder removal"""
+        display_path = os.path.basename(path)
+        
+        # Fetch nested items to warn the user about what else will be removed from the library
+        contents = self.db.get_folder_contents(path)
+        items_str = ""
+        if contents:
+            items_list = []
+            # Limit display to first 15 items to keep the dialog readable
+            for name, is_folder in contents[:15]:
+                items_list.append(f"  {name}")
+            
+            if len(contents) > 15:
+                items_list.append(f"  ... ({len(contents) - 15} more)")
+            
+            header = tr("library.delete_folder_contents_header")
+            items_str = f"\n\n{header}\n" + "\n".join(items_list)
+            
+        reply = QMessageBox.question(
+            self, 
+            tr("library.confirm_delete_folder_title"),
+            trf("library.confirm_delete_folder_msg", path=display_path, items=items_str),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self.folder_delete_requested.emit(path)
+
+    def remove_folder_from_ui(self, path: str):
+        """Recursively remove a folder and all its contents from the tree and internal cache"""
+        # 1. Purge from in-memory cache
+        if self.cached_library_data:
+            # Remove the folder itself
+            for parent, items in list(self.cached_library_data.items()):
+                if parent == path:
+                    del self.cached_library_data[parent]
+                else:
+                    self.cached_library_data[parent] = [
+                        item for item in items if item['path'] != path
+                    ]
+            
+            # Recursive removal of nested paths from cache
+            prefix = path + os.sep
+            for parent in list(self.cached_library_data.keys()):
+                if parent.startswith(prefix):
+                    del self.cached_library_data[parent]
+                else:
+                    self.cached_library_data[parent] = [
+                        item for item in self.cached_library_data[parent] 
+                        if not item['path'].startswith(prefix)
+                    ]
+
+        # 2. Prune the visual tree
+        item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
+        if item:
+            parent = item.parent() or self.tree.invisibleRootItem()
+            parent.removeChild(item)
+            
+        # 3. Synchronize status metrics
+        window = self.window()
+        if hasattr(window, 'statusBar'):
+            total_count = self.db.get_audiobook_count()
+            window.statusBar().showMessage(trf("status.library_count", count=total_count))
     
     def open_folder(self, path: str):
         if not path:
