@@ -257,13 +257,16 @@ class SettingsDialog(QDialog):
 
     def on_update_ffmpeg(self):
         """Open the update dialog and refresh ffprobe status after closure"""
+        self.apply_blur()
         dialog = UpdateProgressDialog(self)
         dialog.start_update()
         dialog.exec()
+        self.remove_blur()
         self.update_ffprobe_status()
 
     def on_reset_data(self):
         """Handle library data reset with user confirmation"""
+        self.apply_blur()
         reply = QMessageBox.question(
             self,
             tr("settings.reset_confirm_title"),
@@ -271,7 +274,18 @@ class SettingsDialog(QDialog):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
+        self.remove_blur()
         
         if reply == QMessageBox.StandardButton.Yes:
             self.data_reset_requested.emit()
             self.accept()
+
+    def apply_blur(self):
+        """Proxy blur request to parent window if supported"""
+        if self.parent() and hasattr(self.parent(), 'apply_blur'):
+            self.parent().apply_blur()
+
+    def remove_blur(self):
+        """Proxy blur remove request to parent window if supported"""
+        if self.parent() and hasattr(self.parent(), 'remove_blur'):
+            self.parent().remove_blur()

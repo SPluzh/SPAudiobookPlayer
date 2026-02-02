@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.10]
+- **UI**: Implemented a sophisticated background blur effect for modal dialogs:
+    - Main window (including menu bar and status bar) is now blurred when "About", "Settings", or "Scan" dialogs are active.
+    - Developed a **blur stacking** mechanism with counter logic to ensure background remains blurred through nested sequences (e.g., Settings → FFMPEG Update).
+    - Refined aesthetics with a subtle blur radius and smooth transitions.
+- **Fix**: Resolved a critical application crash occurring when reopening modal dialogs by properly managing the lifecycle of the `QGraphicsBlurEffect` object.
+
 ## [1.1.9]
 - **Library Sorting**: Implemented reliable chronological sorting for the 'Started' filter
 

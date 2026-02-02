@@ -15,7 +15,8 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QSplitter, QApplication, QMessageBox,
     QHBoxLayout, QLineEdit, QMenu, QStyle, QPushButton, QButtonGroup, 
     QDialog, QDialogButtonBox, QGroupBox, QLabel, QFileDialog, QSlider, 
-    QProgressBar, QListWidget, QListWidgetItem, QFrame, QTextEdit, QSizePolicy
+    QProgressBar, QListWidget, QListWidgetItem, QFrame, QTextEdit, QSizePolicy,
+    QGraphicsBlurEffect
 )
 from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSignal, QRect, QRectF, QPoint, QPointF, QThread
 from PyQt6.QtGui import (
@@ -127,6 +128,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.setGeometry(self.window_x, self.window_y, self.window_width, self.window_height)
         self.setMinimumSize(450, 450)
         self.statusBar().showMessage(tr("status.load_library"))
+        
+        # Blur Effect Stacking logic to handle nested modal dialogs
+        self._blur_count = 0
+        self._blur_effect = None
         
         # Ensure the main window has focus so hotkeys work correctly
         self.setFocus()
@@ -833,6 +838,9 @@ class AudiobookPlayerWindow(QMainWindow):
             return
 
         def start_scanning_process():
+            # Apply blur effect to central widget
+            self.apply_blur()
+            
             dialog = ScanProgressDialog(self)
             
             # Refresh the library view and status bar metrics upon scan completion
@@ -840,6 +848,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.library_widget.refresh_library()
                 total_count = self.db_manager.get_audiobook_count()
                 self.statusBar().showMessage(trf("status.library_count", count=total_count))
+                self.remove_blur()
                 
             dialog.finished.connect(on_finished)
             dialog.show()
@@ -863,6 +872,9 @@ class AudiobookPlayerWindow(QMainWindow):
     
     def show_settings(self):
         """Display the configuration dialog for managing library paths, system binaries, and data preferences"""
+        # Apply blur effect
+        self.apply_blur()
+        
         dialog = SettingsDialog(self, self.default_path, self.ffprobe_path)
         
         def on_path_saved(new_path):
@@ -888,7 +900,9 @@ class AudiobookPlayerWindow(QMainWindow):
         dialog.path_saved.connect(on_path_saved)
         dialog.scan_requested.connect(on_scan_requested)
         dialog.data_reset_requested.connect(self.perform_full_reset)
+        
         dialog.exec()
+        self.remove_blur()
 
     def perform_full_reset(self):
         """Execute a comprehensive wipe of all library metadata, database records, and extracted cover assets while the application remains active"""
@@ -942,10 +956,32 @@ class AudiobookPlayerWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to completely clear library data: {e}")
 
+    def apply_blur(self):
+        """Increment blur request counter and apply graphics effect if necessary"""
+        self._blur_count += 1
+        if self._blur_count == 1:
+            if not self._blur_effect:
+                self._blur_effect = QGraphicsBlurEffect()
+                self._blur_effect.setBlurRadius(5)
+            self.setGraphicsEffect(self._blur_effect)
+
+    def remove_blur(self):
+        """Decrement blur request counter and remove graphics effect if it reaches zero"""
+        self._blur_count = max(0, self._blur_count - 1)
+        if self._blur_count == 0:
+            self.setGraphicsEffect(None)
+            self._blur_effect = None
+
     def show_about(self):
         """Display the application information dialog, including versioning and credit details"""
+        # Apply blur effect
+        self.apply_blur()
+        
         dialog = AboutDialog(self)
         dialog.exec()
+        
+        # Remove blur effect
+        self.remove_blur()
     
     def save_setting(self, section: str, key: str, value: str):
         """Update a specific configuration entry in 'settings.ini' without overwriting other existing sections"""
