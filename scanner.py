@@ -292,6 +292,28 @@ class AudiobookScanner:
                 if trkn and isinstance(trkn, list) and len(trkn[0]) > 0:
                     tags['track'] = trkn[0][0]
 
+            elif suffix == '.flac':
+                # FLAC (Vorbis comments)
+                tags['title'] = self._fix_encoding(str(audio.get('title', [''])[0])).strip()
+                tags['author'] = self._fix_encoding(str(audio.get('artist', [''])[0])).strip()
+                tags['album'] = self._fix_encoding(str(audio.get('album', [''])[0])).strip()
+                tags['year'] = self._fix_encoding(str(audio.get('date', [''])[0])).strip()
+                tags['genre'] = self._fix_encoding(str(audio.get('genre', [''])[0])).strip()
+                tags['comment'] = self._fix_encoding(str(audio.get('comment', [''])[0])).strip()
+                
+                # Narrator (check common tags)
+                narrator = audio.get('narrator') or audio.get('composer') or audio.get('performer')
+                if narrator:
+                    tags['narrator'] = self._fix_encoding(str(narrator[0])).strip()
+                    
+                # Track number
+                track = audio.get('tracknumber')
+                if track:
+                    try:
+                        tags['track'] = int(str(track[0]).split('/')[0])
+                    except:
+                        pass
+
         except Exception:
             pass
             

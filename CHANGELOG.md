@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.7]
+- **Audio Engine**: Added support for **FLAC** audio format:
+    - Integrated `bassflac` plugin for seamless FLAC playback.
+    - Implemented comprehensive metadata extraction (Vorbis comments) for the library scanner.
+    - Added support for embedded cover art extraction from FLAC files.
+
 ## [1.1.6]
 - **Library Sorting**: Implemented persistent and meaningful sorting for library filters
 

@@ -121,9 +121,9 @@ class BassPlayer:
         if bass and bass.BASS_Init(-1, 44100, 0, 0, None):
             self.initialized = True
             
-            # Load plugins (OPUS and AAC/M4B)
+            # Load plugins (OPUS, AAC/M4B, FLAC)
             self.plugins = {}
-            for plugin in ["bassopus.dll", "bass_aac.dll"]:
+            for plugin in ["bassopus.dll", "bass_aac.dll", "bassflac.dll"]:
                 self._load_plugin(plugin)
 
     def _load_plugin(self, filename: str):
