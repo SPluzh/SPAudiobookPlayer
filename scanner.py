@@ -104,7 +104,7 @@ class AudiobookScanner:
         extensions = config.get(
             'Audio',
             'extensions',
-            fallback='.mp3,.m4a,.m4b,.ogg,.flac,.wav,.aac,.wma,.opus'
+            fallback='.mp3,.m4a,.m4b,.mp4,.ogg,.flac,.wav,.aac,.wma,.opus'
         )
         self.audio_extensions = {e.strip().lower() for e in extensions.split(',') if e.strip()}
         
@@ -264,7 +264,7 @@ class AudiobookScanner:
                         except:
                             pass
                             
-            elif suffix in ('.m4a', '.m4b'):
+            elif suffix in ('.m4a', '.m4b', '.mp4'):
                 # MP4/M4B
                 t_title = audio.get('\xa9nam')
                 if t_title: tags['title'] = self._fix_encoding(str(t_title[0])).strip()
@@ -360,7 +360,7 @@ class AudiobookScanner:
                 info['codec'] = 'mp3'
                 if hasattr(audio.info, 'bitrate_mode'):
                     info['is_vbr'] = (audio.info.bitrate_mode == BitrateMode.VBR)
-            elif suffix in ('.m4a', '.m4b', '.aac'):
+            elif suffix in ('.m4a', '.m4b', '.mp4', '.aac'):
                 audio = MP4(path)
                 # Do NOT hardcode 'aac' here; let ffprobe or mutagen info determine it
             elif suffix == '.flac':
@@ -489,7 +489,7 @@ class AudiobookScanner:
                             cover_path.write_bytes(tag.data)
                             return str(cover_path)
                 
-                elif f.suffix.lower() in ('.m4a', '.m4b'):
+                elif f.suffix.lower() in ('.m4a', '.m4b', '.mp4'):
                     audio = MP4(f)
                     if 'covr' in audio:
                         cover_path.write_bytes(audio['covr'][0])
