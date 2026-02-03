@@ -401,6 +401,9 @@ class AudiobookPlayerWindow(QMainWindow):
             'default_cover_file': 'resources/icons/default_cover.png',
             'folder_cover_file': 'resources/icons/folder_cover.png'
         }
+        config['Audio'] = {
+            'extensions': '.mp3,.m4a,.m4b,.mp4,.ogg,.flac,.wav,.aac,.wma,.opus,.ape'
+        }
         config['Display'] = {
             'window_width': '1200',
             'window_height': '800',

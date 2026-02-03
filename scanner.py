@@ -104,7 +104,7 @@ class AudiobookScanner:
         extensions = config.get(
             'Audio',
             'extensions',
-            fallback='.mp3,.m4a,.m4b,.mp4,.ogg,.flac,.wav,.aac,.wma,.opus'
+            fallback='.mp3,.m4a,.m4b,.mp4,.ogg,.flac,.wav,.aac,.wma,.opus,.ape'
         )
         self.audio_extensions = {e.strip().lower() for e in extensions.split(',') if e.strip()}
         
@@ -314,6 +314,28 @@ class AudiobookScanner:
                     except:
                         pass
 
+            elif suffix == '.ape':
+                # APE (APEv2)
+                tags['title'] = self._fix_encoding(str(audio.get('Title', [''])[0])).strip()
+                tags['author'] = self._fix_encoding(str(audio.get('Artist', [''])[0])).strip()
+                tags['album'] = self._fix_encoding(str(audio.get('Album', [''])[0])).strip()
+                tags['year'] = self._fix_encoding(str(audio.get('Year', [''])[0])).strip()
+                tags['genre'] = self._fix_encoding(str(audio.get('Genre', [''])[0])).strip()
+                tags['comment'] = self._fix_encoding(str(audio.get('Comment', [''])[0])).strip()
+                
+                # Narrator (check common tags)
+                narrator = audio.get('Reader') or audio.get('Narrator') or audio.get('Composer')
+                if narrator:
+                    tags['narrator'] = self._fix_encoding(str(narrator[0])).strip()
+                    
+                # Track number
+                track = audio.get('Track')
+                if track:
+                    try:
+                        tags['track'] = int(str(track[0]).split('/')[0])
+                    except:
+                        pass
+
         except Exception:
             pass
             
@@ -442,6 +464,14 @@ class AudiobookScanner:
             elif suffix == '.wav':
                 audio = WAVE(path)
                 info['codec'] = 'pcm'
+            elif suffix == '.ape':
+                try:
+                    from mutagen.apev2 import APEv2
+                    from mutagen.monkeysaudio import MonkeysAudio
+                    audio = MonkeysAudio(path)
+                    info['codec'] = 'ape'
+                except ImportError:
+                    pass
             
             if audio and audio.info:
                 if hasattr(audio.info, 'length'):
@@ -577,6 +607,12 @@ class AudiobookScanner:
                     audio = FLAC(f)
                     if audio.pictures:
                         cover_path.write_bytes(audio.pictures[0].data)
+                        return str(cover_path)
+                elif f.suffix.lower() == '.ape':
+                    from mutagen.monkeysaudio import MonkeysAudio
+                    audio = MonkeysAudio(f)
+                    if 'Cover Art (Front)' in audio:
+                        cover_path.write_bytes(audio['Cover Art (Front)'].value)
                         return str(cover_path)
             except Exception:
                 continue
