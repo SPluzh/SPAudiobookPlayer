@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import re
 from pathlib import Path
@@ -394,9 +395,99 @@ class AudiobookScanner:
             
         return chapters
 
+    def _parse_cue_file(self, cue_path):
+        """Parse a .cue file to extract metadata and chapters"""
+        metadata = {'author': '', 'title': '', 'year': '', 'narrator': ''}
+        chapters = []
+        
+        if not os.path.exists(cue_path):
+            return metadata, chapters
+            
+        try:
+            # Try different encodings
+            content = None
+            for enc in ['utf-8-sig', 'utf-8', 'cp1251', 'latin-1']:
+                try:
+                    with open(cue_path, 'r', encoding=enc) as f:
+                        content = f.read()
+                    break
+                except UnicodeDecodeError:
+                    continue
+            
+            if not content:
+                return metadata, chapters
+                
+            current_track = None
+            
+            for line in content.splitlines():
+                line = line.strip()
+                if not line: continue
+                
+                # Global metadata
+                if not current_track:
+                    if line.startswith('PERFORMER '):
+                        metadata['author'] = line[10:].strip('"')
+                    elif line.startswith('TITLE '):
+                        metadata['title'] = line[6:].strip('"')
+                    elif line.startswith('REM DATE '):
+                        metadata['year'] = line[9:].strip()
+                
+                # Tracks
+                if line.startswith('TRACK '):
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        current_track = {
+                            'index': parts[1],
+                            'title': '',
+                            'author': metadata['author'],
+                            'start': 0.0
+                        }
+                        chapters.append(current_track)
+                elif current_track:
+                    if line.startswith('TITLE '):
+                        current_track['title'] = line[6:].strip('"')
+                    elif line.startswith('PERFORMER '):
+                        current_track['author'] = line[10:].strip('"')
+                    elif line.startswith('INDEX 01 '):
+                        time_str = line[9:].strip()
+                        # format MM:SS:FF (FF is 1/75th of a second)
+                        time_parts = time_str.split(':')
+                        if len(time_parts) == 3:
+                            try:
+                                mins = int(time_parts[0])
+                                secs = int(time_parts[1])
+                                frames = int(time_parts[2])
+                                current_track['start'] = mins * 60 + secs + frames / 75.0
+                            except ValueError:
+                                pass
+            
+            # Calculate durations for chapters
+            for i in range(len(chapters)):
+                if i < len(chapters) - 1:
+                    chapters[i]['duration'] = chapters[i+1]['start'] - chapters[i]['start']
+                else:
+                    chapters[i]['duration'] = 0 # To be filled later with file duration if needed
+                    
+        except Exception as e:
+            print(f"Error parsing .cue file: {e}")
+            
+        return metadata, chapters
+
     def _extract_metadata(self, directory, files):
-        """Extract metadata for the audiobook by checking first few files"""
+        """Extract metadata for the audiobook by checking .cue files or first few audio files"""
         metadata = {'author': '', 'title': '', 'narrator': '', 'year': ''}
+        
+        # 1. Try .cue files first
+        cue_files = list(directory.glob('*.cue'))
+        if cue_files:
+            cue_meta, _ = self._parse_cue_file(cue_files[0])
+            if cue_meta['author']: metadata['author'] = cue_meta['author']
+            if cue_meta['title']: metadata['title'] = cue_meta['title']
+            if cue_meta['year']: metadata['year'] = cue_meta['year']
+            
+            if all(metadata.values()):
+                return metadata
+
         if not files:
             return metadata
             
@@ -836,7 +927,15 @@ class AudiobookScanner:
                 if cover:
                     cover_name = Path(cover).name
                     print(self.tr("scanner.cover_found", name=cover_name))
-                
+
+                # Check for .cue files in this folder
+                cue_files = list(folder.glob('*.cue'))
+                cue_data_chapters = []
+                if cue_files:
+                    _, cue_data_chapters = self._parse_cue_file(cue_files[0])
+                    if cue_data_chapters:
+                        print(f"  {self.tr('scanner.cue_found', count=len(cue_data_chapters))}")
+
                 # Restore state from temp table if possible
                 c.execute("""
                     SELECT
@@ -985,6 +1084,13 @@ class AudiobookScanner:
                     chapters = []
                     if f.suffix.lower() in ('.m4b', '.mp4', '.m4a'):
                         chapters = self._extract_chapters(f)
+                    
+                    # If no internal chapters, try CUE (primary for single-file albums)
+                    if not chapters and cue_data_chapters and len(files) == 1:
+                        chapters = cue_data_chapters
+                        # Fill in the duration for the last chapter if it's 0
+                        if chapters and chapters[-1].get('duration') == 0:
+                            chapters[-1]['duration'] = max(0, file_duration - chapters[-1]['start'])
                     
                     if chapters:
                         for chap in chapters:

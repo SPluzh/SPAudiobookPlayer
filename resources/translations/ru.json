@@ -179,6 +179,7 @@
     "cover_found": "  Обложка: {name}",
     "progress_restored": "  Прогресс: {percent}% (восстановлено)",
     "skip_existing": "  Пропущено (изменений не обнаружено): {path}",
+    "cue_found": "  Найден CUE-файл: {count} треков",
     "creating_structure": "Создание структуры каталогов...",
     "created_folders": "  Создано промежуточных папок: {count}",
     "scan_complete": "СКАНИРОВАНИЕ ЗАВЕРШЕНО",
