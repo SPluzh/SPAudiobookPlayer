@@ -712,15 +712,42 @@ class AudiobookScanner:
     
     def _find_cover(self, directory, key):
         """Find cover image (file or embedded) for the audiobook"""
+        # 1. Search in current directory (priority names)
         for name in self.cover_names:
             p = directory / name
-            if p.exists():
-                return str(p)
+            try:
+                if p.is_file():
+                    return str(p)
+            except (PermissionError, OSError):
+                continue
         
-        for f in directory.iterdir():
-            if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp'}:
-                return str(f)
+        # 2. Search in current directory (any image)
+        try:
+            for f in directory.iterdir():
+                if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp'}:
+                    return str(f)
+        except (PermissionError, OSError):
+            pass
         
+        # 3. Recursive search in subdirectories (priority names)
+        for name in self.cover_names:
+            try:
+                for p in directory.rglob(name):
+                    if p.is_file():
+                        return str(p)
+            except (PermissionError, OSError):
+                continue
+        
+        # 4. Recursive search in subdirectories (any image)
+        for ext in ('.jpg', '.jpeg', '.png', '.bmp'):
+            try:
+                for p in directory.rglob(f"*{ext}"):
+                    if p.is_file():
+                        return str(p)
+            except (PermissionError, OSError):
+                continue
+        
+        # 5. Fallback to embedded cover
         return self._extract_embedded_cover(directory, key)
 
     def _calculate_state_hash(self, files):

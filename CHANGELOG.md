@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.12]
+- **Audio Engine**: Added support for **APE** (Monkey's Audio) format:
+    - Integrated `bassape` plugin for high-quality lossless playback.
+    - Implemented **CUE Sheet** support for reading metadata (Performer, Title, Year) and splitting single-file audiobooks into chapters.
+    - Enhanced scanner to extract APEv2 tags and embedded cover art.
+    - Improved recursive cover search to find artwork in subdirectories.
+
 ## [1.1.11]
 - **Library**: Added comprehensive "Delete" functionality for both audiobooks and folders
 
