@@ -425,7 +425,7 @@ class AudiobookPlayerWindow(QMainWindow):
         }
         config['Library'] = {
             'show_folders': 'False',
-            'show_filter_labels': 'True'
+            'show_filter_labels': 'False'
         }
         config['LastSession'] = {
             'last_audiobook_id': '0',
