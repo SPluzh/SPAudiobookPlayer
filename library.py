@@ -1207,6 +1207,33 @@ class LibraryWidget(QWidget):
             tags_menu = menu.addMenu(tr("tags.menu_title"))
             tags_menu.setIcon(get_icon("context_tags")) # Ensure icon exists or fallback logic if needed
             
+            # Populate with existing tags
+            all_tags = self.db.get_all_tags()
+            current_tags = self.db.get_tags_for_audiobook(audiobook_id)
+            current_tag_ids = {t['id'] for t in current_tags}
+            
+            if all_tags:
+                for tag in all_tags:
+                    # Create checkable action for each tag
+                    tag_action = QAction(tag['name'], self)
+                    tag_action.setCheckable(True)
+                    tag_action.setChecked(tag['id'] in current_tag_ids)
+                    
+                    # Set color icon if available
+                    if tag.get('color'):
+                        pixmap = QPixmap(14, 14)
+                        pixmap.fill(QColor(tag['color']))
+                        tag_action.setIcon(QIcon(pixmap))
+                    
+                    # Connect signal
+                    tag_action.triggered.connect(
+                        lambda checked, tid=tag['id'], p=path: 
+                        self.toggle_tag_from_context_menu(audiobook_id, tid, p, checked)
+                    )
+                    tags_menu.addAction(tag_action)
+                
+                tags_menu.addSeparator()
+            
             assign_action = QAction(tr("tags.menu_assign"), self)
             assign_action.triggered.connect(lambda _: self.open_tag_assignment(audiobook_id, path))
             tags_menu.addAction(assign_action)
@@ -1314,6 +1341,16 @@ class LibraryWidget(QWidget):
         if dialog.exec():
             # Refresh this item to show new tags
             self.refresh_audiobook_item(path)
+            
+    def toggle_tag_from_context_menu(self, audiobook_id: int, tag_id: int, path: str, checked: bool):
+        """Handle toggling a tag directly from the context menu"""
+        if checked:
+            self.db.add_tag_to_audiobook(audiobook_id, tag_id)
+        else:
+            self.db.remove_tag_from_audiobook(audiobook_id, tag_id)
+        
+        # Refresh the UI for this item
+        self.refresh_audiobook_item(path)
             
     def open_tag_manager(self):
         """Open global tag manager"""
