@@ -796,8 +796,12 @@ QLabel#aboutSectionContent {
 /* ============================================================
    TAGS DIALOG
    ============================================================ */
+#tagsList {
+    border: 1px solid #808080;
+}
 #tagsList::item:selected,
 #tagsList::item:selected:active {
-    background-color: #018574;
+    background-color: #808080;
     color: white;
 }
+
