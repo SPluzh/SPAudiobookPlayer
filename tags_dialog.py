@@ -64,30 +64,46 @@ class TagEditDialog(QDialog):
         return self.name_edit.text().strip(), self.color
 
 class TagManagerDialog(QDialog):
-    """Dialog to manage all tags (add, edit, delete)"""
-    def __init__(self, db_manager, parent=None):
+    """Dialog to manage all tags (add, edit, delete) AND assign them to an optional audiobook"""
+    def __init__(self, db_manager, parent=None, audiobook_id=None):
         super().__init__(parent)
         self.db = db_manager
-        self.setWindowTitle(tr("tags.manager_title"))
+        self.audiobook_id = audiobook_id
+        
+        # Title depends on context
+        title = tr("tags.manager_title")
+        if self.audiobook_id:
+             title = tr("tags.assign_title") # Or a combined string like "Manage & Assign Tags"
+             
+        self.setWindowTitle(title)
         self.resize(400, 500)
+        self.setModal(True)
+        
         self.setup_ui()
         self.load_tags()
         
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
+        # Help label if in assignment mode
+        if self.audiobook_id:
+            lbl = QLabel(tr("tags.assign_help"))
+            lbl.setWordWrap(True)
+            layout.addWidget(lbl)
+        
         self.list_widget = QListWidget()
         layout.addWidget(self.list_widget)
         
+        # Management Controls (always visible)
         btn_layout = QHBoxLayout()
         
-        self.add_btn = QPushButton(tr("tags.add_btn"))
+        self.add_btn = QPushButton(get_icon("add"), tr("tags.add_btn"))
         self.add_btn.clicked.connect(self.add_tag)
         
-        self.edit_btn = QPushButton(tr("tags.edit_btn"))
+        self.edit_btn = QPushButton(get_icon("edit"), tr("tags.edit_btn"))
         self.edit_btn.clicked.connect(self.edit_tag)
         
-        self.del_btn = QPushButton(tr("tags.delete_btn"))
+        self.del_btn = QPushButton(get_icon("delete"), tr("tags.delete_btn"))
         self.del_btn.clicked.connect(self.delete_tag)
         
         btn_layout.addWidget(self.add_btn)
@@ -96,20 +112,49 @@ class TagManagerDialog(QDialog):
         
         layout.addLayout(btn_layout)
         
-        close_btn = QPushButton(tr("scan_dialog.close")) # Reuse existing string
-        close_btn.clicked.connect(self.accept)
-        layout.addWidget(close_btn)
+        layout.addSpacing(10)
+        
+        # Dialog Buttons
+        if self.audiobook_id:
+            # OK/Cancel for assignment confirmation
+            self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+            self.buttons.accepted.connect(self.save_selection)
+            self.buttons.rejected.connect(self.reject)
+        else:
+            # Just Close button for pure management
+            self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+            self.buttons.rejected.connect(self.accept) # Close is effectively cancel/accept
+            
+        layout.addWidget(self.buttons)
         
     def load_tags(self):
         self.list_widget.clear()
-        tags = self.db.get_all_tags()
-        for tag in tags:
+        
+        all_tags = self.db.get_all_tags()
+        
+        # If in assignment mode, get currently assigned tags
+        assigned_ids = set()
+        if self.audiobook_id:
+            assigned_tags = self.db.get_tags_for_audiobook(self.audiobook_id)
+            assigned_ids = {t['id'] for t in assigned_tags}
+        
+        for tag in all_tags:
             item = QListWidgetItem(tag['name'])
-            # Create a colored icon for the specific tag
+            
+            # Icon
             pixmap = QPixmap(16, 16)
             pixmap.fill(QColor(tag['color'] or "#FFFFFF"))
             item.setIcon(QIcon(pixmap))
-            item.setData(Qt.ItemDataRole.UserRole, tag) # Store full tag dict
+            
+            # Store full data
+            item.setData(Qt.ItemDataRole.UserRole, tag)
+            
+            # Checkbox logic
+            if self.audiobook_id:
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                check_state = Qt.CheckState.Checked if tag['id'] in assigned_ids else Qt.CheckState.Unchecked
+                item.setCheckState(check_state)
+            
             self.list_widget.addItem(item)
             
     def add_tag(self):
@@ -117,8 +162,12 @@ class TagManagerDialog(QDialog):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             name, color = dialog.get_data()
             if name:
-                if self.db.create_tag(name, color):
+                new_id = self.db.create_tag(name, color)
+                if new_id:
                     self.load_tags()
+                    
+                    # If we added a tag during assignment, maybe we want to select it automatically?
+                    # For now, let user select it.
                 else:
                     QMessageBox.warning(self, tr("error"), tr("tags.error_create"))
                     
@@ -146,66 +195,18 @@ class TagManagerDialog(QDialog):
             self.db.delete_tag(data['id'])
             self.load_tags()
 
-class TagSelectionDialog(QDialog):
-    """Dialog to assign tags to an audiobook"""
-    def __init__(self, db_manager, audiobook_id, parent=None):
-        super().__init__(parent)
-        self.db = db_manager
-        self.audiobook_id = audiobook_id
-        self.setWindowTitle(tr("tags.assign_title"))
-        self.resize(300, 400)
-        self.setup_ui()
-        self.load_tags()
-        
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
-        
-        self.list_widget = QListWidget()
-        layout.addWidget(self.list_widget)
-        
-        # Manage button shortcut
-        manage_btn = QPushButton(tr("tags.manage_link"))
-        manage_btn.setFlat(True)
-        manage_btn.setStyleSheet("text-align: left; color: #0078d7;")
-        manage_btn.clicked.connect(self.open_manager)
-        layout.addWidget(manage_btn)
-        
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(self.save_selection)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-        
-    def load_tags(self):
-        self.list_widget.clear()
-        all_tags = self.db.get_all_tags()
-        assigned_tags = self.db.get_tags_for_audiobook(self.audiobook_id)
-        assigned_ids = {t['id'] for t in assigned_tags}
-        
-        for tag in all_tags:
-            item = QListWidgetItem(tag['name'])
-            pixmap = QPixmap(16, 16)
-            pixmap.fill(QColor(tag['color'] or "#FFFFFF"))
-            item.setIcon(QIcon(pixmap))
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Checked if tag['id'] in assigned_ids else Qt.CheckState.Unchecked)
-            item.setData(Qt.ItemDataRole.UserRole, tag['id'])
-            self.list_widget.addItem(item)
-            
-    def open_manager(self):
-        manager = TagManagerDialog(self.db, self)
-        manager.exec()
-        self.load_tags() # Refresh list
-        
     def save_selection(self):
-        # We can implement smart sync (add missing, remove unselected)
-        # Or simplistic: remove all, add selected.
-        # Smart sync is better.
-        
+        if not self.audiobook_id:
+            self.accept()
+            return
+            
         current_assigned = {t['id'] for t in self.db.get_tags_for_audiobook(self.audiobook_id)}
         
         for i in range(self.list_widget.count()):
             item = self.list_widget.item(i)
-            tag_id = item.data(Qt.ItemDataRole.UserRole)
+            tag = item.data(Qt.ItemDataRole.UserRole)
+            tag_id = tag['id']
+            
             is_checked = item.checkState() == Qt.CheckState.Checked
             
             if is_checked and tag_id not in current_assigned:

@@ -23,7 +23,7 @@ from utils import (
     format_time, format_time_short, OutputCapture
 )
 from scanner import AudiobookScanner
-from tags_dialog import TagSelectionDialog, TagManagerDialog
+from tags_dialog import TagManagerDialog
 
 class ScannerThread(QThread):
     """Background thread for scanning a directory for audiobooks"""
@@ -1238,9 +1238,7 @@ class LibraryWidget(QWidget):
             assign_action.triggered.connect(lambda _: self.open_tag_assignment(audiobook_id, path))
             tags_menu.addAction(assign_action)
             
-            manage_action = QAction(tr("tags.menu_manage"), self)
-            manage_action.triggered.connect(lambda _: self.open_tag_manager())
-            tags_menu.addAction(manage_action)
+
             
             menu.addSeparator()
 
@@ -1337,7 +1335,8 @@ class LibraryWidget(QWidget):
             
     def open_tag_assignment(self, audiobook_id, path):
         """Open dialog to assign tags to audiobook"""
-        dialog = TagSelectionDialog(self.db, audiobook_id, self)
+        # Unified dialog handling both assignment and management
+        dialog = TagManagerDialog(self.db, self, audiobook_id)
         if dialog.exec():
             # Refresh this item to show new tags
             self.refresh_audiobook_item(path)
@@ -1352,13 +1351,7 @@ class LibraryWidget(QWidget):
         # Refresh the UI for this item
         self.refresh_audiobook_item(path)
             
-    def open_tag_manager(self):
-        """Open global tag manager"""
-        dialog = TagManagerDialog(self.db, self)
-        dialog.exec()
-        # We might need to refresh all items if colors/names changed, 
-        # but for now maybe just refresh current view
-        self.load_audiobooks(use_cache=False)
+
 
     def confirm_delete(self, audiobook_id: int, path: str):
         """Ask for user confirmation before proceeding with book deletion"""
