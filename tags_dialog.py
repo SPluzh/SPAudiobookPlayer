@@ -23,11 +23,24 @@ class TagEditDialog(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
-        form = QFormLayout()
-        self.name_edit = QLineEdit(self.name)
-        form.addRow(tr("tags.name_label"), self.name_edit)
+        # 1. Preview Area (Top)
+        preview_container = QHBoxLayout()
+        preview_container.addStretch()
+        self.preview_label = QLabel()
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        preview_container.addWidget(self.preview_label)
+        preview_container.addStretch()
+        layout.addLayout(preview_container)
         
-        # Color picker
+        layout.addSpacing(10)
+        
+        # 2. Name Edit
+        self.name_edit = QLineEdit(self.name)
+        self.name_edit.setPlaceholderText(tr("tags.name_label").replace(":", "")) # Remove colon if present
+        self.name_edit.textChanged.connect(self.update_tag_preview)
+        layout.addWidget(self.name_edit)
+        
+        # 3. Color Picker
         color_layout = QHBoxLayout()
         self.color_preview = QLabel()
         self.color_preview.setFixedSize(24, 24)
@@ -40,10 +53,14 @@ class TagEditDialog(QDialog):
         color_layout.addWidget(self.color_btn)
         color_layout.addStretch()
         
-        form.addRow(tr("tags.color_label"), color_layout)
-        layout.addLayout(form)
+        layout.addLayout(color_layout)
         
-        # Buttons
+        # Initialize preview
+        self.update_tag_preview()
+        
+        layout.addStretch()
+        
+        # 4. Buttons
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -54,11 +71,33 @@ class TagEditDialog(QDialog):
         pixmap.fill(QColor(self.color))
         self.color_preview.setPixmap(pixmap)
         
+    def update_tag_preview(self):
+        text = self.name_edit.text().strip() or tr("tags.preview_placeholder")
+        if text == "tags.preview_placeholder": # Fallback if translation missing
+             text = "Tag Preview"
+             
+        self.preview_label.setText(text)
+        
+        bg_color = QColor(self.color)
+        # Contrast logic matching library.py
+        text_color = "#FFFFFF" if bg_color.lightness() < 130 else "#000000"
+        
+        self.preview_label.setStyleSheet(f"""
+            background-color: {bg_color.name()};
+            color: {text_color};
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-family: "Segoe UI";
+            font-size: 12px;
+            font-weight: bold;
+        """)
+
     def select_color(self):
         color = QColorDialog.getColor(QColor(self.color), self, tr("tags.select_color"))
         if color.isValid():
             self.color = color.name()
             self.update_color_preview()
+            self.update_tag_preview()
             
     def get_data(self):
         return self.name_edit.text().strip(), self.color
