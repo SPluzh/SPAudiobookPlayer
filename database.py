@@ -51,7 +51,8 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 use_id3_tags INTEGER DEFAULT 1,
                 is_expanded INTEGER DEFAULT 0,
                 state_hash TEXT,
-                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_favorite INTEGER DEFAULT 0
             )
         """)
         
@@ -75,6 +76,27 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             )
         """)
         
+        
+        # Tags table
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS tags (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                color TEXT
+            )
+        """)
+        
+        # Audiobooks-Tags Link Table
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS audiobook_tags (
+                audiobook_id INTEGER,
+                tag_id INTEGER,
+                PRIMARY KEY (audiobook_id, tag_id),
+                FOREIGN KEY (audiobook_id) REFERENCES audiobooks(id) ON DELETE CASCADE,
+                FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+            )
+        """)
+
         # Indexes
         c.execute("CREATE INDEX IF NOT EXISTS idx_parent_path ON audiobooks(parent_path)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_is_folder ON audiobooks(is_folder)")
@@ -122,6 +144,16 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             except sqlite3.OperationalError:
                 pass
 
+        # Migration: add is_favorite column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN is_favorite INTEGER DEFAULT 0")
+            if log_func:
+                log_func("scanner.db_added_is_favorite")
+        except sqlite3.OperationalError:
+            pass # Column already exists
+            
+        # Migration: create tags tables if they don't exist (handled by CREATE TABLE IF NOT EXISTS above)
+
         conn.commit()
 
 
@@ -164,7 +196,7 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent,
                 is_started, is_completed, is_available, is_expanded, last_updated,
                 codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                time_added, time_started, time_finished
+                time_added, time_started, time_finished, is_favorite, id
             '''
             
             columns_with_prefix = '''
@@ -172,7 +204,7 @@ class DatabaseManager:
                 p.is_folder, p.file_count, p.duration, p.listened_duration, p.progress_percent,
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
                 p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
-                p.time_added, p.time_started, p.time_finished
+                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.id
             '''
             
             if filter_type == 'all':
@@ -196,6 +228,9 @@ class DatabaseManager:
                     # "New" filter: Not started, sorted by time_added
                     filter_condition += ' AND is_started = 0'
                     order_by = 'is_folder DESC, time_added DESC, name'
+                elif filter_type == 'favorites':
+                    filter_condition += ' AND is_favorite = 1'
+                    order_by = 'is_folder DESC, name'
                 
                 # Always filter by availability
                 filter_condition += ' AND is_available = 1'
@@ -243,7 +278,7 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent, \
                 is_started, is_completed, is_available, is_expanded, last_updated, \
                 codec, bitrate_min, bitrate_max, bitrate_mode, container, \
-                time_added, time_started, time_finished = row
+                time_added, time_started, time_finished, is_favorite, audiobook_id = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -269,7 +304,9 @@ class DatabaseManager:
                     'container': container,
                     'time_added': time_added,
                     'time_started': time_started,
-                    'time_finished': time_finished
+                    'time_finished': time_finished,
+                    'is_favorite': bool(is_favorite),
+                    'id': audiobook_id
                 })
             
             return data_by_parent
@@ -613,7 +650,7 @@ class DatabaseManager:
                 SELECT author, title, narrator, file_count, duration, 
                        listened_duration, progress_percent, is_started, is_completed,
                        codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                       time_added, time_started, time_finished
+                       time_added, time_started, time_finished, is_favorite
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -637,7 +674,8 @@ class DatabaseManager:
                     'container': row[13],
                     'time_added': row[14],
                     'time_started': row[15],
-                    'time_finished': row[16]
+                    'time_finished': row[16],
+                    'is_favorite': bool(row[17])
                 }
             return None
         except sqlite3.Error as e:
@@ -646,9 +684,9 @@ class DatabaseManager:
         finally:
             conn.close()
 
+
     def update_folder_expanded_state(self, path: str, is_expanded: bool):
-        """Update the expanded/collapsed state of a folder in the library tree"""
-        # Only work with folders (is_folder=1)
+        """Update the is_expanded state for a folder"""
         conn = sqlite3.connect(self.db_file)
         try:
             cursor = conn.cursor()
@@ -662,3 +700,161 @@ class DatabaseManager:
             print(f"Database error in update_folder_expanded_state: {e}")
         finally:
             conn.close()
+
+    # --- Favorites & Tags Methods ---
+
+    def toggle_favorite(self, audiobook_id: int) -> bool:
+        """Toggle the favorite status of an audiobook. Returns the new state."""
+        if not audiobook_id:
+            return False
+
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            # Get current state
+            cursor.execute("SELECT is_favorite FROM audiobooks WHERE id = ?", (audiobook_id,))
+            row = cursor.fetchone()
+            if not row:
+                return False
+                
+            new_state = 0 if row[0] else 1
+            
+            cursor.execute("UPDATE audiobooks SET is_favorite = ? WHERE id = ?", (new_state, audiobook_id))
+            conn.commit()
+            return bool(new_state)
+        except sqlite3.Error as e:
+            print(f"Database error in toggle_favorite: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def create_tag(self, name: str, color: str = None) -> Optional[int]:
+        """Create a new tag. Returns the tag ID or None if failed (e.g. duplicate)."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO tags (name, color) VALUES (?, ?)", (name, color))
+            tag_id = cursor.lastrowid
+            conn.commit()
+            return tag_id
+        except sqlite3.IntegrityError:
+            return None # Duplicate name
+        except sqlite3.Error as e:
+            print(f"Database error in create_tag: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def delete_tag(self, tag_id: int):
+        """Delete a tag."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON")
+            cursor.execute("DELETE FROM tags WHERE id = ?", (tag_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in delete_tag: {e}")
+        finally:
+            conn.close()
+            
+    def update_tag(self, tag_id: int, name: str, color: str):
+        """Update a tag's name and color."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE tags SET name = ?, color = ? WHERE id = ?", (name, color, tag_id))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in update_tag: {e}")
+        finally:
+            conn.close()
+
+    def add_tag_to_audiobook(self, audiobook_id: int, tag_id: int):
+        """Assign a tag to an audiobook."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("INSERT OR IGNORE INTO audiobook_tags (audiobook_id, tag_id) VALUES (?, ?)", 
+                           (audiobook_id, tag_id))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in add_tag_to_audiobook: {e}")
+        finally:
+            conn.close()
+
+    def remove_tag_from_audiobook(self, audiobook_id: int, tag_id: int):
+        """Remove a tag from an audiobook."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM audiobook_tags WHERE audiobook_id = ? AND tag_id = ?", 
+                           (audiobook_id, tag_id))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in remove_tag_from_audiobook: {e}")
+        finally:
+            conn.close()
+
+    def get_all_tags(self) -> List[Dict]:
+        """Get all defined tags."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, name, color FROM tags ORDER BY name")
+            return [{'id': row[0], 'name': row[1], 'color': row[2]} for row in cursor.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Database error in get_all_tags: {e}")
+            return []
+        finally:
+            conn.close()
+
+    def get_tags_for_audiobook(self, audiobook_id: int) -> List[Dict]:
+        """Get tags assigned to a specific audiobook."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            query = """
+                SELECT t.id, t.name, t.color 
+                FROM tags t
+                JOIN audiobook_tags at ON t.id = at.tag_id
+                WHERE at.audiobook_id = ?
+                ORDER BY t.name
+            """
+            cursor.execute(query, (audiobook_id,))
+            return [{'id': row[0], 'name': row[1], 'color': row[2]} for row in cursor.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Database error in get_tags_for_audiobook: {e}")
+            return []
+        finally:
+            conn.close()
+
+    def get_all_audiobook_tags(self) -> Dict[int, List[Dict]]:
+        """
+        Get a mapping of audiobook_id -> list of tags. 
+        Used for efficient bulk loading in the library view.
+        """
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            query = """
+                SELECT at.audiobook_id, t.id, t.name, t.color
+                FROM tags t
+                JOIN audiobook_tags at ON t.id = at.tag_id
+                ORDER BY t.color, t.name
+            """
+            cursor.execute(query)
+            
+            result = {}
+            for row in cursor.fetchall():
+                aid = row[0]
+                tag = {'id': row[1], 'name': row[2], 'color': row[3]}
+                result.setdefault(aid, []).append(tag)
+            return result
+        except sqlite3.Error as e:
+            print(f"Database error in get_all_audiobook_tags: {e}")
+            return {}
+        finally:
+            conn.close()
+

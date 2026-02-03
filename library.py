@@ -23,6 +23,7 @@ from utils import (
     format_time, format_time_short, OutputCapture
 )
 from scanner import AudiobookScanner
+from tags_dialog import TagSelectionDialog, TagManagerDialog
 
 class ScannerThread(QThread):
     """Background thread for scanning a directory for audiobooks"""
@@ -187,7 +188,8 @@ class MultiLineDelegate(QStyledItemDelegate):
         'delegate_folder',
         'delegate_progress',
         'delegate_duration',
-        'delegate_file_count'
+        'delegate_file_count',
+        'delegate_favorite'
     ]
     
     def __init__(self, parent: QWidget = None):
@@ -325,6 +327,12 @@ class MultiLineDelegate(QStyledItemDelegate):
         author, title, narrator, file_count, duration, listened_duration, \
         progress_percent, codec, b_min, b_max, b_mode, container = data
         
+        # Unpack status data for favorites
+        status_data = index.data(Qt.ItemDataRole.UserRole + 3)
+        is_favorite = False
+        if status_data and len(status_data) >= 3:
+            is_favorite = status_data[2]
+        
         if icon:
             painter.save()
             path = QPainterPath()
@@ -370,6 +378,36 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.setPen(pen)
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 painter.drawRoundedRect(QRectF(icon_rect).adjusted(-4, -4, 4, 4), 7, 7)
+
+            # Draw Favorite Heart
+            if is_favorite:
+                painter.save()
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                
+                heart_size = 20
+                # Position: Top-Right of icon
+                heart_rect = QRectF(
+                    float(icon_rect.right() - heart_size + 5), 
+                    float(icon_rect.top() - 5), 
+                    float(heart_size), float(heart_size)
+                )
+                
+                # Draw circle background
+                painter.setBrush(QColor(255, 255, 255, 200))
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawEllipse(heart_rect)
+                
+                # Draw Heart Shape
+                painter.setBrush(QColor("#E74C3C"))
+                hr = heart_rect.adjusted(3, 3, -3, -3)
+                
+                path = QPainterPath()
+                path.moveTo(hr.center().x(), hr.bottom())
+                path.cubicTo(hr.right(), hr.center().y(), hr.right(), hr.top(), hr.center().x(), hr.top() + hr.height()*0.2)
+                path.cubicTo(hr.left(), hr.top(), hr.left(), hr.center().y(), hr.center().x(), hr.bottom())
+                
+                painter.drawPath(path)
+                painter.restore()
  
             # 5. Play/Pause Button Overlay Logic
             if self.hovered_index == index or is_playing_this:
@@ -548,6 +586,47 @@ class MultiLineDelegate(QStyledItemDelegate):
                     painter.drawText(QRect(current_x - 10, text_y, 10, line_height),
                                    Qt.AlignmentFlag.AlignCenter, tr("delegate.separator"))
         
+        text_y += line_height + self.line_spacing
+        
+        # Tags rendering
+        tags = index.data(Qt.ItemDataRole.UserRole + 4)
+        if tags:
+            tag_x = text_x
+            
+            painter.save()
+            
+            for tag in tags:
+                tag_name = tag['name']
+                tag_color = QColor(tag['color'] or "#018574")
+                
+                # Dynamic text color based on brightness
+                text_color = Qt.GlobalColor.white if tag_color.lightness() < 130 else Qt.GlobalColor.black
+                
+                painter.setFont(QFont("Segoe UI", 8))
+                fm = painter.fontMetrics()
+                t_w = fm.horizontalAdvance(tag_name)
+                t_h = fm.height() + 4
+                
+                tag_rect = QRectF(float(tag_x), float(text_y), float(t_w + 12), float(t_h))
+                
+                # Check for overflow
+                if tag_rect.right() > option.rect.right() - 10:
+                    break
+                    
+                path = QPainterPath()
+                path.addRoundedRect(tag_rect, 4, 4)
+                
+                painter.setBrush(tag_color)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawPath(path)
+                
+                painter.setPen(text_color)
+                painter.drawText(tag_rect, Qt.AlignmentFlag.AlignCenter, tag_name)
+                
+                tag_x += tag_rect.width() + 6
+                
+            painter.restore()
+
         painter.restore()
 
 
@@ -632,6 +711,7 @@ class LibraryWidget(QWidget):
     # Internal configuration for status filtering
     FILTER_CONFIG = {
         'all': {'label': "library.filter_all", 'icon': "filter_all"},
+        'favorites': {'label': "library.filter_favorites", 'icon': "filter_favorites"},
         'not_started': {'label': "library.filter_not_started", 'icon': "filter_not_started"},
         'in_progress': {'label': "library.filter_in_progress", 'icon': "filter_in_progress"},
         'completed': {'label': "library.filter_completed", 'icon': "filter_completed"},
@@ -821,6 +901,9 @@ class LibraryWidget(QWidget):
         # Always load all audiobooks to enable fast client-side filtering
         if not use_cache or self.cached_library_data is None:
              self.cached_library_data = self.db.load_audiobooks_from_db(self.current_filter)
+
+        # Pre-fetch all tags logic
+        all_tags = self.db.get_all_audiobook_tags()
         
         # Optimize tree population by disabling repaints and sorting
         self.tree.setUpdatesEnabled(False)
@@ -834,6 +917,9 @@ class LibraryWidget(QWidget):
                 for parent_path, items in self.cached_library_data.items():
                     for item_data in items:
                         if not item_data['is_folder']:
+                            # Attach tags to data dict temporarily for item creation
+                            if 'id' in item_data:
+                                item_data['tags'] = all_tags.get(item_data['id'], [])
                             all_items.append(item_data)
                 
                 # Re-sort at client side to ensure absolute order (SQL order might be fragmented in the map)
@@ -841,12 +927,20 @@ class LibraryWidget(QWidget):
                 if self.current_filter == 'in_progress': sort_key = 'last_updated'
                 elif self.current_filter == 'completed': sort_key = 'time_finished'
                 elif self.current_filter == 'not_started': sort_key = 'time_added'
+                elif self.current_filter == 'favorites': sort_key = 'name' # Sort favorites by name
                 
                 all_items.sort(key=lambda x: (x.get(sort_key) or '', x.get('name') or ''), reverse=(sort_key != 'name'))
                 
                 # Batch add to avoid recursion overhead
                 self.add_flat_items(self.tree, all_items)
             else:
+                # Need to inject tags into the recursive add
+                # We can modify cached_library_data in place safely as it is a dict of lists
+                for items in self.cached_library_data.values():
+                    for item_data in items:
+                        if not item_data['is_folder'] and 'id' in item_data:
+                             item_data['tags'] = all_tags.get(item_data['id'], [])
+                             
                 self.add_items_from_db(self.tree, '', self.cached_library_data)
         finally:
             self.tree.blockSignals(False)
@@ -911,7 +1005,8 @@ class LibraryWidget(QWidget):
         # Store status flags for client-side filtering
         item.setData(0, Qt.ItemDataRole.UserRole + 3, (
             data['is_started'],
-            data['is_completed']
+            data['is_completed'],
+            data['is_favorite']
         ))
         
         # Fetch and scale the audiobook cover
@@ -928,6 +1023,11 @@ class LibraryWidget(QWidget):
                 force_square=True
             )
         item.setIcon(0, cover_icon or self.default_audiobook_icon)
+        
+        # Store tags
+        if 'tags' in data:
+            item.setData(0, Qt.ItemDataRole.UserRole + 4, data['tags'])
+            
         return item
 
     
@@ -973,8 +1073,9 @@ class LibraryWidget(QWidget):
                 # 1. Check Status Filter
                 status_data = child.data(0, Qt.ItemDataRole.UserRole + 3)
                 status_match = True
-                if status_data:
-                    is_started, is_completed = status_data
+                if status_data and len(status_data) >= 2:
+                    is_started = status_data[0]
+                    is_completed = status_data[1]
                     if self.current_filter == 'not_started':
                         status_match = not is_started
                     elif self.current_filter == 'in_progress':
@@ -1005,6 +1106,15 @@ class LibraryWidget(QWidget):
                         if b_mode and search_text in b_mode.lower():
                             text_match = True
                         
+                        # Tag Search
+                        tags = child.data(0, Qt.ItemDataRole.UserRole + 4)
+                        if tags and isinstance(tags, list):
+                            for tag in tags:
+                                if isinstance(tag, dict) and 'name' in tag:
+                                    if search_text in tag['name'].lower():
+                                        text_match = True
+                                        break
+                                    
                         # Bitrate search
                         search_min = b_min // 1000 if b_min > 5000 else b_min
                         search_max = b_max // 1000 if b_max > 5000 else b_max
@@ -1049,6 +1159,13 @@ class LibraryWidget(QWidget):
             if not info:
                 return
             audiobook_id = info[0]
+            
+            # Fetch fresh favorite status
+            is_favorite = False
+            status_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+            if status_data and len(status_data) >= 3:
+                is_favorite = status_data[2]
+            
             duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4]
 
             menu = QMenu()
@@ -1056,6 +1173,32 @@ class LibraryWidget(QWidget):
             play_action.setIcon(get_icon("context_play"))
             play_action.triggered.connect(lambda _: self.on_item_double_clicked(item, 0))
             menu.addAction(play_action)
+            
+            # Favorites Action
+            fav_text = tr("library.menu_remove_favorite") if is_favorite else tr("library.menu_add_favorite")
+            fav_icon = get_icon("context_favorite_on" if is_favorite else "context_favorite_off")
+            
+            # Fallback icons if resource not present
+            if not fav_icon or fav_icon.isNull():
+                 fav_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogYesButton)
+            
+            fav_action = QAction(fav_text, self)
+            fav_action.setIcon(fav_icon)
+            fav_action.triggered.connect(lambda _: self.toggle_favorite(audiobook_id, path))
+            menu.addAction(fav_action)
+            
+            # Tags Submenu
+            menu.addSeparator()
+            tags_menu = menu.addMenu(tr("tags.menu_title"))
+            tags_menu.setIcon(get_icon("context_tags")) # Ensure icon exists or fallback logic if needed
+            
+            assign_action = QAction(tr("tags.menu_assign"), self)
+            assign_action.triggered.connect(lambda _: self.open_tag_assignment(audiobook_id, path))
+            tags_menu.addAction(assign_action)
+            
+            manage_action = QAction(tr("tags.menu_manage"), self)
+            manage_action.triggered.connect(lambda _: self.open_tag_manager())
+            tags_menu.addAction(manage_action)
             
             menu.addSeparator()
 
@@ -1108,7 +1251,13 @@ class LibraryWidget(QWidget):
         self.update_cache_item_status(path, is_started=True, is_completed=True)
         item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
         if item:
-            item.setData(0, Qt.ItemDataRole.UserRole + 3, (True, True))
+            # Preserve existing favorite status
+            current_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+            is_favorite = False
+            if current_data and len(current_data) >= 3:
+                is_favorite = current_data[2]
+            
+            item.setData(0, Qt.ItemDataRole.UserRole + 3, (True, True, is_favorite))
             self.refresh_audiobook_item(path)
         self.filter_audiobooks()
         window = self.window()
@@ -1120,7 +1269,13 @@ class LibraryWidget(QWidget):
         self.update_cache_item_status(path, is_started=False, is_completed=False)
         item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
         if item:
-            item.setData(0, Qt.ItemDataRole.UserRole + 3, (False, False))
+            # Preserve existing favorite status
+            current_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+            is_favorite = False
+            if current_data and len(current_data) >= 3:
+                is_favorite = current_data[2]
+                
+            item.setData(0, Qt.ItemDataRole.UserRole + 3, (False, False, is_favorite))
             self.refresh_audiobook_item(path)
         self.filter_audiobooks()
         window = self.window()
@@ -1129,6 +1284,30 @@ class LibraryWidget(QWidget):
             window.playback_controller.saved_position = 0
             window.update_ui_for_audiobook()
     
+    def toggle_favorite(self, audiobook_id: int, path: str):
+        """Toggle favorite status and refresh item"""
+        new_state = self.db.toggle_favorite(audiobook_id)
+        self.refresh_audiobook_item(path)
+        
+        # If we are in Favorites view and we removed it, reload to hide it
+        if self.current_filter == 'favorites' and not new_state:
+            self.load_audiobooks(use_cache=False)
+            
+    def open_tag_assignment(self, audiobook_id, path):
+        """Open dialog to assign tags to audiobook"""
+        dialog = TagSelectionDialog(self.db, audiobook_id, self)
+        if dialog.exec():
+            # Refresh this item to show new tags
+            self.refresh_audiobook_item(path)
+            
+    def open_tag_manager(self):
+        """Open global tag manager"""
+        dialog = TagManagerDialog(self.db, self)
+        dialog.exec()
+        # We might need to refresh all items if colors/names changed, 
+        # but for now maybe just refresh current view
+        self.load_audiobooks(use_cache=False)
+
     def confirm_delete(self, audiobook_id: int, path: str):
         """Ask for user confirmation before proceeding with book deletion"""
         display_path = os.path.basename(path)
@@ -1334,8 +1513,16 @@ class LibraryWidget(QWidget):
             if 'is_started' in data and 'is_completed' in data:
                 item.setData(0, Qt.ItemDataRole.UserRole + 3, (
                     data['is_started'],
-                    data['is_completed']
+                    data['is_completed'],
+                    data['is_favorite']
                 ))
+            
+            # Refresh tags
+            info = self.db.get_audiobook_info(audiobook_path)
+            if info:
+                tags = self.db.get_tags_for_audiobook(info[0])
+                item.setData(0, Qt.ItemDataRole.UserRole + 4, tags)
+            
             item.setText(0, item.text(0))
             self.update_cache_item_status(audiobook_path, data['is_started'], data['is_completed'])
             self.tree.viewport().update()
@@ -1361,6 +1548,8 @@ class LibraryWidget(QWidget):
                 if item['path'] == path:
                     item['is_started'] = is_started
                     item['is_completed'] = is_completed
+                    # is_favorite is not cached here for now, as it requires a DB reload for full consistency
+                    # but we could add it if needed.
                     found = True
                     break
             if found:

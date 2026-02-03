@@ -23,6 +23,8 @@
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Отметить прочитанной",
     "menu_mark_unread": "Отметить не начатой",
+    "menu_add_favorite": "Добавить в избранное",
+    "menu_remove_favorite": "Убрать из избранного",
     "menu_delete": "Удалить книгу",
     "menu_delete_folder": "Удалить папку",
     "confirm_delete_title": "Подтверждение удаления",
@@ -32,6 +34,7 @@
     "delete_folder_contents_header": "Содержимое:",
     "delete_error": "Ошибка при удалении: {error}",
     "filter_all": " Все",
+    "filter_favorites": "Избранное",
     "filter_recent_added": "Добавленные",
     "filter_in_progress": "Начатые",
     "filter_completed": "Завершённые",
@@ -130,6 +133,25 @@
   },
   "units": {
     "kbps": "кбит/с"
+  },
+  "tags": {
+    "edit_title": "Редактирование тега",
+    "create_title": "Создание тега",
+    "name_label": "Название тега:",
+    "color_label": "Цвет:",
+    "select_color": "Выбрать цвет...",
+    "manager_title": "Управление тегами",
+    "add_btn": "Добавить",
+    "edit_btn": "Изменить",
+    "delete_btn": "Удалить",
+    "error_create": "Ошибка создания: такой тег уже есть.",
+    "confirm_delete_title": "Удаление тега",
+    "confirm_delete_msg": "Вы уверены, что хотите удалить этот тег?",
+    "assign_title": "Назначение тегов",
+    "manage_link": "Управление тегами...",
+    "menu_title": "Теги",
+    "menu_assign": "Назначить теги...",
+    "menu_manage": "Управление тегами..."
   },
   "scan_dialog": {
     "title": "Сканирование...",

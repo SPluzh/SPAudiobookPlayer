@@ -23,6 +23,8 @@
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Mark as Read",
     "menu_mark_unread": "Mark as Not Started",
+    "menu_add_favorite": "Add to Favorites",
+    "menu_remove_favorite": "Remove from Favorites",
     "menu_delete": "Delete Book",
     "menu_delete_folder": "Delete Folder",
     "confirm_delete_title": "Delete Confirmation",
@@ -32,6 +34,7 @@
     "delete_folder_contents_header": "Contents:",
     "delete_error": "Delete error: {error}",
     "filter_all": "All",
+    "filter_favorites": "Favorites",
     "filter_recent_added": "Recently added",
     "filter_in_progress": "Started",
     "filter_completed": "Finished",
@@ -130,6 +133,25 @@
   },
   "units": {
     "kbps": "kbps"
+  },
+  "tags": {
+    "edit_title": "Edit Tag",
+    "create_title": "Create New Tag",
+    "name_label": "Tag Name:",
+    "color_label": "Color:",
+    "select_color": "Select Color...",
+    "manager_title": "Tag Manager",
+    "add_btn": "Add Tag",
+    "edit_btn": "Edit",
+    "delete_btn": "Delete",
+    "error_create": "Error creating tag. Name must be unique.",
+    "confirm_delete_title": "Delete Tag",
+    "confirm_delete_msg": "Are you sure you want to delete this tag?",
+    "assign_title": "Assign Tags",
+    "manage_link": "Manage Tags...",
+    "menu_title": "Tags",
+    "menu_assign": "Assign Tags...",
+    "menu_manage": "Manage Tags..."
   },
   "scan_dialog": {
     "title": "Scanning...",
