@@ -83,6 +83,7 @@ class TagManagerDialog(QDialog):
         self.load_tags()
         
     def setup_ui(self):
+        # Main layout is vertical
         layout = QVBoxLayout(self)
         
         # Help label if in assignment mode
@@ -90,42 +91,74 @@ class TagManagerDialog(QDialog):
             lbl = QLabel(tr("tags.assign_help"))
             lbl.setWordWrap(True)
             layout.addWidget(lbl)
+            
+        # Middle area (List + Side Buttons)
+        middle_layout = QHBoxLayout()
         
         self.list_widget = QListWidget()
-        layout.addWidget(self.list_widget)
+        # Explicitly enable selection highlight to override global theme
+        self.list_widget.setObjectName("tagsList")
+        middle_layout.addWidget(self.list_widget)
         
-        # Management Controls (always visible)
-        btn_layout = QHBoxLayout()
+        # Management Controls (Vertical on the right)
+        btn_layout = QVBoxLayout()
+        btn_layout.setSpacing(5)
+        # removed top stretch to align to top
         
-        self.add_btn = QPushButton(get_icon("add"), tr("tags.add_btn"))
+        btn_size = QSize(32, 32)
+        
+        self.add_btn = QPushButton()
+        self.add_btn.setIcon(get_icon("add"))
+        self.add_btn.setFixedSize(btn_size)
+        self.add_btn.setToolTip(tr("tags.add_btn"))
         self.add_btn.clicked.connect(self.add_tag)
         
-        self.edit_btn = QPushButton(get_icon("edit"), tr("tags.edit_btn"))
+        self.edit_btn = QPushButton()
+        self.edit_btn.setIcon(get_icon("edit"))
+        self.edit_btn.setFixedSize(btn_size)
+        self.edit_btn.setToolTip(tr("tags.edit_btn"))
         self.edit_btn.clicked.connect(self.edit_tag)
         
-        self.del_btn = QPushButton(get_icon("delete"), tr("tags.delete_btn"))
+        self.del_btn = QPushButton()
+        self.del_btn.setIcon(get_icon("delete"))
+        self.del_btn.setFixedSize(btn_size)
+        self.del_btn.setToolTip(tr("tags.delete_btn"))
         self.del_btn.clicked.connect(self.delete_tag)
         
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.edit_btn)
         btn_layout.addWidget(self.del_btn)
+        btn_layout.addStretch()
         
-        layout.addLayout(btn_layout)
-        
-        layout.addSpacing(10)
+        middle_layout.addLayout(btn_layout)
+        layout.addLayout(middle_layout)
         
         # Dialog Buttons
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setSpacing(10)
+        
+        from PyQt6.QtWidgets import QSizePolicy
+        
         if self.audiobook_id:
-            # OK/Cancel for assignment confirmation
-            self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-            self.buttons.accepted.connect(self.save_selection)
-            self.buttons.rejected.connect(self.reject)
+            # Assign Button
+            self.assign_btn = QPushButton(tr("tags.assign_btn"))
+            self.assign_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            self.assign_btn.clicked.connect(self.save_selection)
+            bottom_layout.addWidget(self.assign_btn)
+            
+            # Close Button
+            self.close_btn = QPushButton(tr("tags.close_btn"))
+            self.close_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            self.close_btn.clicked.connect(self.reject)
+            bottom_layout.addWidget(self.close_btn)
         else:
             # Just Close button for pure management
-            self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-            self.buttons.rejected.connect(self.accept) # Close is effectively cancel/accept
+            self.close_btn = QPushButton(tr("tags.close_btn"))
+            self.close_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            self.close_btn.clicked.connect(self.accept)
+            bottom_layout.addWidget(self.close_btn)
             
-        layout.addWidget(self.buttons)
+        layout.addLayout(bottom_layout)
         
     def load_tags(self):
         self.list_widget.clear()

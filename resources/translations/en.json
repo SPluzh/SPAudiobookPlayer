@@ -151,8 +151,12 @@
     "manage_link": "Manage Tags...",
     "menu_title": "Tags",
     "menu_assign": "Assign Tags...",
-    "menu_manage": "Manage Tags..."
+    "menu_manage": "Manage Tags...",
+    "assign_help": "Check tags to assign to this audiobook.",
+    "assign_btn": "Assign",
+    "close_btn": "Close"
   },
+  "error": "Error",
   "scan_dialog": {
     "title": "Scanning...",
     "scanning": "Searching for audiobooks...",

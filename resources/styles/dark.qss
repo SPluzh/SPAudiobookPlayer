@@ -792,3 +792,12 @@ QLabel#aboutSectionContent {
     font-size: 12px;
     color: #CCCCCC;
 }
+
+/* ============================================================
+   TAGS DIALOG
+   ============================================================ */
+#tagsList::item:selected,
+#tagsList::item:selected:active {
+    background-color: #018574;
+    color: white;
+}
