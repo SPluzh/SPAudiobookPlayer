@@ -313,9 +313,10 @@ class MultiLineDelegate(QStyledItemDelegate):
         painter.save()
         
         icon = index.data(Qt.ItemDataRole.DecorationRole)
+        icon_y = option.rect.top() + (option.rect.height() - self.audiobook_icon_size) // 2
         icon_rect = QRect(
             option.rect.left() + self.horizontal_padding,
-            option.rect.top() + self.vertical_padding,
+            icon_y,
             self.audiobook_icon_size,
             self.audiobook_icon_size
         )
@@ -665,9 +666,10 @@ class LibraryTree(QTreeWidget):
                  if item_type == 'audiobook':
                      rect = self.visualRect(index)
                      icon_size = delegate.audiobook_icon_size
+                     icon_y = rect.top() + (rect.height() - icon_size) // 2
                      icon_rect = QRect(
                          rect.left() + delegate.horizontal_padding,
-                         rect.top() + delegate.vertical_padding,
+                         icon_y,
                          icon_size, icon_size
                      )
                      play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
@@ -688,9 +690,10 @@ class LibraryTree(QTreeWidget):
                     if delegate and hasattr(delegate, 'get_play_button_rect'):
                         rect = self.visualRect(index)
                         icon_size = delegate.audiobook_icon_size
+                        icon_y = rect.top() + (rect.height() - icon_size) // 2
                         icon_rect = QRect(
                             rect.left() + delegate.horizontal_padding,
-                            rect.top() + delegate.vertical_padding,
+                            icon_y,
                             icon_size, icon_size
                         )
                         play_rect = delegate.get_play_button_rect(QRectF(icon_rect))

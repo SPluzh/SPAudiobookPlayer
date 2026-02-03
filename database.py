@@ -820,7 +820,7 @@ class DatabaseManager:
                 FROM tags t
                 JOIN audiobook_tags at ON t.id = at.tag_id
                 WHERE at.audiobook_id = ?
-                ORDER BY t.name
+                ORDER BY t.color, t.name
             """
             cursor.execute(query, (audiobook_id,))
             return [{'id': row[0], 'name': row[1], 'color': row[2]} for row in cursor.fetchall()]
