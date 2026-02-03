@@ -308,6 +308,16 @@ class MultiLineDelegate(QStyledItemDelegate):
             btn_size
         )
 
+    def get_heart_rect(self, icon_rect: QRectF) -> QRectF:
+        """Calculate the rect for the favorite heart icon relative to the main icon"""
+        heart_size = 20.0
+        # Position: Top-Right of icon, same as in paint
+        return QRectF(
+            float(icon_rect.right() - heart_size + 5), 
+            float(icon_rect.top() - 5), 
+            float(heart_size), float(heart_size)
+        )
+
     def _paint_audiobook(self, painter, option, index):
         """Render detailed audiobook item with cover, progress, and metadata"""
         painter.save()
@@ -385,13 +395,8 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.save()
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 
-                heart_size = 20
                 # Position: Top-Right of icon
-                heart_rect = QRectF(
-                    float(icon_rect.right() - heart_size + 5), 
-                    float(icon_rect.top() - 5), 
-                    float(heart_size), float(heart_size)
-                )
+                heart_rect = self.get_heart_rect(QRectF(icon_rect))
                 
                 # Draw circle background
                 painter.setBrush(QColor(255, 255, 255, 200))
@@ -635,6 +640,7 @@ class MultiLineDelegate(QStyledItemDelegate):
 class LibraryTree(QTreeWidget):
     """Customized tree widget that handles hover detection and direct interaction with audiobook 'Play' buttons"""
     play_button_clicked = pyqtSignal(str) # Emits the relative path to the selected audiobook
+    favorite_clicked = pyqtSignal(str) # Emits path when heart is clicked
 
     def __init__(self, parent=None):
         """Enable mouse tracking for fine-grained hover effects on custom-painted items"""
@@ -676,6 +682,19 @@ class LibraryTree(QTreeWidget):
                      if play_rect.contains(QPointF(event.pos())):
                          self.setCursor(Qt.CursorShape.PointingHandCursor)
                          return
+                     
+                     # Check heart hover
+                     has_fav_data = False
+                     status_data = index.data(Qt.ItemDataRole.UserRole + 3)
+                     if status_data and len(status_data) >= 3:
+                         if status_data[2]: # is_favorite
+                             has_fav_data = True
+                     
+                     if has_fav_data:
+                         heart_rect = delegate.get_heart_rect(QRectF(icon_rect))
+                         if heart_rect.contains(QPointF(event.pos())):
+                             self.setCursor(Qt.CursorShape.PointingHandCursor)
+                             return
              
         self.setCursor(Qt.CursorShape.ArrowCursor)
 
@@ -701,6 +720,19 @@ class LibraryTree(QTreeWidget):
                             path = index.data(Qt.ItemDataRole.UserRole)
                             self.play_button_clicked.emit(path)
                             return
+                        
+                        # Check heart click
+                        status_data = index.data(Qt.ItemDataRole.UserRole + 3)
+                        is_favorite = False
+                        if status_data and len(status_data) >= 3:
+                            is_favorite = status_data[2]
+                        
+                        if is_favorite:
+                            heart_rect = delegate.get_heart_rect(QRectF(icon_rect))
+                            if heart_rect.contains(QPointF(event.pos())):
+                                path = index.data(Qt.ItemDataRole.UserRole)
+                                self.favorite_clicked.emit(path)
+                                return
         super().mousePressEvent(event)
 
 
@@ -823,6 +855,7 @@ class LibraryWidget(QWidget):
         ))
         self.tree.setIndentation(20)
         self.tree.itemDoubleClicked.connect(self.on_item_double_clicked)
+        self.tree.favorite_clicked.connect(self.on_tree_favorite_clicked)
         self.tree.itemExpanded.connect(self.on_item_expanded)
         self.tree.itemCollapsed.connect(self.on_item_collapsed)
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -894,7 +927,29 @@ class LibraryWidget(QWidget):
                 self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon),
                 self.config.get('folder_icon_size', 35)
             )
+
     
+    def on_tree_favorite_clicked(self, path: str):
+        """Handle click on the favorite heart icon in the tree"""
+        # Find ID for path
+        info = self.db.get_audiobook_info(path)
+        if not info:
+            return
+            
+        audiobook_id = info[0]
+        
+        # Check current status to prevent accidental reset (unfavoriting)
+        # We want this action to: Ensure Favorite AND/OR Go To Favorites
+        data = self.db.get_audiobook_by_path(path)
+        if data and not data.get('is_favorite'):
+             self.toggle_favorite(audiobook_id, path)
+        
+        # Activate Favorites filter if not already active
+        if self.current_filter != 'favorites':
+            if self.btn_favorites:
+                self.btn_favorites.setChecked(True)
+                self.apply_filter('favorites')
+
     def apply_filter(self, filter_type: str):
         """Switch the current library view filter and refresh the audiobook listing"""
         self.current_filter = filter_type
