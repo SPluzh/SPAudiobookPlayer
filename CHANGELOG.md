@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0]
+- **Favorites**: Mark audiobooks as "Favorites" (❤) via context menu.
+    - Added dedicated "Favorites" filter to the main toolbar.
+    - Visual heart indicator on book covers.
+- **Tags**: Comprehensive tagging system for organizing the library.
+    - **Tag Manager**: Create, edit, and delete custom colored tags.
+    - **Assignment**: Assign multiple tags to books via context menu.
+    - **Visualization**: Tags appear as colored chips under the book details.
+    - **Search**: integrated tag search (e.g., searching for "Sci-Fi" finds books with that tag).
+
 ## [1.1.12]
 - **Audio Engine**: Added support for **APE** (Monkey's Audio) format:
     - Integrated `bassape` plugin for high-quality lossless playback.

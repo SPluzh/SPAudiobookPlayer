@@ -711,7 +711,6 @@ class LibraryWidget(QWidget):
     # Internal configuration for status filtering
     FILTER_CONFIG = {
         'all': {'label': "library.filter_all", 'icon': "filter_all"},
-        'favorites': {'label': "library.filter_favorites", 'icon': "filter_favorites"},
         'not_started': {'label': "library.filter_not_started", 'icon': "filter_not_started"},
         'in_progress': {'label': "library.filter_in_progress", 'icon': "filter_in_progress"},
         'completed': {'label': "library.filter_completed", 'icon': "filter_completed"},
@@ -766,6 +765,17 @@ class LibraryWidget(QWidget):
         self.btn_show_folders.clicked.connect(self.on_show_folders_toggled)
         filter_layout.addWidget(self.btn_show_folders)
         
+        # Favorites Filter (Icon-only)
+        self.btn_favorites = QPushButton("")
+        self.btn_favorites.setObjectName("filterBtn")
+        self.btn_favorites.setCheckable(True)
+        self.btn_favorites.setFixedWidth(40)
+        self.btn_favorites.setIcon(get_icon("favorites"))
+        self.btn_favorites.setToolTip(tr("library.filter_favorites"))
+        self.btn_favorites.clicked.connect(lambda: self.apply_filter('favorites'))
+        self.btn_favorites.setProperty('filter_type', 'favorites')
+        filter_layout.addWidget(self.btn_favorites)
+        
         filter_layout.addSpacing(5)
         
         self.filter_group = QButtonGroup(self)
@@ -785,7 +795,12 @@ class LibraryWidget(QWidget):
             btn.clicked.connect(lambda checked, f=filter_id: self.apply_filter(f))
             self.filter_group.addButton(btn)
             self.filter_buttons[filter_id] = btn
+
             filter_layout.addWidget(btn)
+        
+        # Add favorites to group and dictionary for state management
+        self.filter_group.addButton(self.btn_favorites)
+        self.filter_buttons['favorites'] = self.btn_favorites
             
         last_btn = self.filter_buttons[self.current_filter]
         if last_btn:
