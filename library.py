@@ -398,8 +398,9 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.drawEllipse(heart_rect)
                 
                 # Draw Heart Shape
-                painter.setBrush(QColor("#E74C3C"))
-                hr = heart_rect.adjusted(3, 3, -3, -3)
+                painter.setBrush(QColor("#018574"))
+                # Make the heart wider by reducing horizontal padding
+                hr = heart_rect.adjusted(1, 2, -1, -3)
                 
                 path = QPainterPath()
                 path.moveTo(hr.center().x(), hr.bottom())
