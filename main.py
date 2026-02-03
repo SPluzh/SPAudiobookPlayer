@@ -48,13 +48,6 @@ from library import (
 )
 
 
-
-
-
-
-
-
-
 class AudiobookPlayerWindow(QMainWindow):
     def __init__(self):
         """Initialize the main application window, establishing directory structures, loading configurations, and assembling core components"""
@@ -185,7 +178,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 'ffprobe_path': self.ffprobe_path
             },
             self.delegate,
-            show_folders=self.show_folders
+            show_folders=self.show_folders,
+            show_filter_labels=self.show_filter_labels
         )
         self.library_widget.setMinimumWidth(200)
         self.splitter.addWidget(self.library_widget)
@@ -381,6 +375,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_deesser(self.deesser_enabled)
         self.player.set_compressor(self.compressor_enabled)
         self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
+        self.show_filter_labels = config.getboolean('Library', 'show_filter_labels', fallback=True)
         
         # Synchronize library root with controller if active
         if hasattr(self, 'playback_controller'):
@@ -429,7 +424,8 @@ class AudiobookPlayerWindow(QMainWindow):
             'compressor_enabled': 'False'
         }
         config['Library'] = {
-            'show_folders': 'False'
+            'show_folders': 'False',
+            'show_filter_labels': 'True'
         }
         config['LastSession'] = {
             'last_audiobook_id': '0',
@@ -475,6 +471,7 @@ class AudiobookPlayerWindow(QMainWindow):
         
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
+        config['Library']['show_filter_labels'] = str(self.show_filter_labels)
         
         # Visual Style Persistence
         if 'Audiobook_Style' not in config: config['Audiobook_Style'] = {}

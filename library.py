@@ -752,7 +752,7 @@ class LibraryWidget(QWidget):
         'completed': {'label': "library.filter_completed", 'icon': "filter_completed"},
     }
     
-    def __init__(self, db_manager: DatabaseManager, config: dict, delegate=None, show_folders: bool = False):
+    def __init__(self, db_manager: DatabaseManager, config: dict, delegate=None, show_folders: bool = False, show_filter_labels: bool = True):
         """Initialize library managers, styling preferences, and default state"""
         super().__init__()
         self.db = db_manager
@@ -765,6 +765,7 @@ class LibraryWidget(QWidget):
         self.highlight_text_color = QColor(255, 255, 255)
         self.current_filter = 'all'
         self.show_folders = show_folders
+        self.show_filter_labels = show_filter_labels
         self.cached_library_data = None  # Cache for fast reconstruction
         self.setup_ui()
         self.load_icons()
@@ -877,7 +878,7 @@ class LibraryWidget(QWidget):
             return
             
         # Threshold for hiding text (only icons shown below this width)
-        show_text = self.width() >= 450
+        show_text = (self.width() >= 450) if self.show_filter_labels else False
         
         for filter_id, config in self.FILTER_CONFIG.items():
             if filter_id in self.filter_buttons:
