@@ -223,7 +223,9 @@
   },
   "about": {
     "version": "Version: {version}",
-    "description": "Audiobook library manager and player based on PyQt6 and BASS library. Allows you to easily browse your collection, save listening progress and quickly find the books you need.",
+    "description": "The program allows you to conveniently browse your collection, save listening progress and quickly find the books you need.\nBuilt on PyQt6 and BASS library.",
+    "supported_formats": "Supported formats:",
+    "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE support (chapter markers and metadata)",
     "close": "Close"
   },
   "taskbar": {

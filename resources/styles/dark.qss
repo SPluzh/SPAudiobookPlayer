@@ -733,16 +733,19 @@ QFrame#aboutContainer {
     background-color: #2b2b2b;
     border: 1px solid #444;
     border-radius: 3px;
+    padding: 40px 30px 30px 30px; /* Replacing layout margins (T, R, B, L) */
+    min-width: 400px;
 }
 
 #aboutContainer QLabel {
-    color: #ccc;
+    color: #CCCCCC;
+    qproperty-alignment: 'AlignCenter';
 }
 
 QLabel#aboutTitle {
     font-size: 24px;
     font-weight: bold;
-    color: white;
+    color: #CCCCCC;
 }
 
 QLabel#aboutVersion {
@@ -761,11 +764,13 @@ QLabel#aboutDesc {
 
 QPushButton#aboutCloseBtn {
     background-color: #444;
-    color: white;
+    color: #CCCCCC;
     border: none;
     padding: 8px;
     border-radius: 3px;
     font-weight: bold;
+    min-width: 120px;
+    max-width: 120px;
 }
 
 QPushButton#aboutCloseBtn:hover {
@@ -774,4 +779,16 @@ QPushButton#aboutCloseBtn:hover {
 
 QPushButton#aboutCloseBtn:pressed {
     background-color: #333;
+}
+
+QLabel#aboutSectionTitle {
+    font-size: 13px;
+    font-weight: bold;
+    color: #CCCCCC;
+    margin-top: 10px;
+}
+
+QLabel#aboutSectionContent {
+    font-size: 12px;
+    color: #CCCCCC;
 }

@@ -34,27 +34,23 @@ class AboutDialog(QDialog):
         """Build the about dialog interface"""
         # Main layout with dark background
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
         
         # Container frame
         self.container = QFrame()
         self.container.setObjectName("aboutContainer")
         
         container_layout = QVBoxLayout(self.container)
-        container_layout.setContentsMargins(30, 40, 30, 30)
         container_layout.setSpacing(15)
         
         # Title
         title = QLabel(tr('window.title'))
         title.setObjectName("aboutTitle")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         container_layout.addWidget(title)
         
         # Version
         version_text = self.get_app_version()
         version = QLabel(trf('about.version', version=version_text))
         version.setObjectName("aboutVersion")
-        version.setAlignment(Qt.AlignmentFlag.AlignCenter)
         container_layout.addWidget(version)
         
         # Separator
@@ -66,9 +62,18 @@ class AboutDialog(QDialog):
         # Description
         desc = QLabel(tr('about.description'))
         desc.setObjectName("aboutDesc")
-        desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc.setWordWrap(True)
         container_layout.addWidget(desc)
+        
+        # Supported Formats
+        formats_title = QLabel(tr('about.supported_formats'))
+        formats_title.setObjectName("aboutSectionTitle")
+        container_layout.addWidget(formats_title)
+        
+        formats_content = QLabel(tr('about.formats_list'))
+        formats_content.setObjectName("aboutSectionContent")
+        formats_content.setWordWrap(True)
+        container_layout.addWidget(formats_content)
         
         container_layout.addSpacing(10)
         
@@ -76,7 +81,6 @@ class AboutDialog(QDialog):
         close_btn = QPushButton(tr('about.close'))
         close_btn.setObjectName("aboutCloseBtn")
         close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        close_btn.setFixedWidth(120)
         close_btn.clicked.connect(self.accept)
         container_layout.addWidget(close_btn, 0, Qt.AlignmentFlag.AlignCenter)
         
