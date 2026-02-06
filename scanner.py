@@ -1195,7 +1195,13 @@ class AudiobookScanner:
                             total_virtual_files += 1
                     else:
                         # No chapters or not M4B
-                        track_no = f_tags['track'] if f_tags['track'] is not None else virtual_file_index
+                        if is_merged:
+                             # For merged books, ignore ID3 track numbers to ensure folder-based ordering
+                             track_no = virtual_file_index
+                        else:
+                             # Use ID3 track if available, otherwise fallback to index
+                             track_no = f_tags['track'] if f_tags['track'] is not None else virtual_file_index
+                             
                         c.execute("""
                             INSERT INTO audiobook_files
                             (
@@ -1216,8 +1222,8 @@ class AudiobookScanner:
                             f_tags['genre'],
                             f_tags['comment']
                         ))
-                        # If the track_no was from tags, ensure virtual_file_index stays ahead
-                        if f_tags['track'] is not None:
+                        # If the track_no was from tags and NOT merged, ensure virtual_file_index stays ahead
+                        if not is_merged and f_tags['track'] is not None:
                             virtual_file_index = max(virtual_file_index, f_tags['track'] + 1)
                         else:
                             virtual_file_index += 1
