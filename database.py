@@ -52,7 +52,8 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 is_expanded INTEGER DEFAULT 0,
                 state_hash TEXT,
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                is_favorite INTEGER DEFAULT 0
+                is_favorite INTEGER DEFAULT 0,
+                is_merged INTEGER DEFAULT 0
             )
         """)
         
@@ -154,6 +155,14 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             
         # Migration: create tags tables if they don't exist (handled by CREATE TABLE IF NOT EXISTS above)
 
+        # Migration: add is_merged column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN is_merged INTEGER DEFAULT 0")
+            if log_func:
+                log_func("scanner.db_added_is_merged")
+        except sqlite3.OperationalError:
+            pass
+            
         conn.commit()
 
 
@@ -196,7 +205,7 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent,
                 is_started, is_completed, is_available, is_expanded, last_updated,
                 codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                time_added, time_started, time_finished, is_favorite, id
+                time_added, time_started, time_finished, is_favorite, is_merged, id
             '''
             
             columns_with_prefix = '''
@@ -204,7 +213,7 @@ class DatabaseManager:
                 p.is_folder, p.file_count, p.duration, p.listened_duration, p.progress_percent,
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
                 p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
-                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.id
+                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.id
             '''
             
             if filter_type == 'all':
@@ -278,7 +287,7 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent, \
                 is_started, is_completed, is_available, is_expanded, last_updated, \
                 codec, bitrate_min, bitrate_max, bitrate_mode, container, \
-                time_added, time_started, time_finished, is_favorite, audiobook_id = row
+                time_added, time_started, time_finished, is_favorite, is_merged, audiobook_id = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -305,7 +314,9 @@ class DatabaseManager:
                     'time_added': time_added,
                     'time_started': time_started,
                     'time_finished': time_finished,
+                    'time_finished': time_finished,
                     'is_favorite': bool(is_favorite),
+                    'is_merged': bool(is_merged),
                     'id': audiobook_id
                 })
             
@@ -698,6 +709,22 @@ class DatabaseManager:
             conn.commit()
         except sqlite3.Error as e:
             print(f"Database error in update_folder_expanded_state: {e}")
+        finally:
+            conn.close()
+
+    def set_folder_merged(self, path: str, is_merged: bool):
+        """Update the is_merged state for a folder"""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE audiobooks
+                SET is_merged = ?
+                WHERE path = ? AND is_folder = 1
+            ''', (1 if is_merged else 0, path))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in set_folder_merged: {e}")
         finally:
             conn.close()
 

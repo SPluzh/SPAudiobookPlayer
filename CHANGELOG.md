@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2]
+- **Library**: Implemented **Virtual Merge** feature for folders:
+    - Allows merging a folder and its subfolders into a single audiobook without changing physical files.
+
 ## [1.3.1]
 - **UI**: Improved **Noise Suppression** settings popup:
     - Popup now appears correctly below the button.

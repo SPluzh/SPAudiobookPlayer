@@ -743,6 +743,7 @@ class LibraryWidget(QWidget):
     show_folders_toggled = pyqtSignal(bool) # Emits the new state of the folders toggle
     delete_requested = pyqtSignal(int, str) # Emits (audiobook_id, rel_path)
     folder_delete_requested = pyqtSignal(str) # Emits folder relative path
+    scan_requested = pyqtSignal()
     
     # Internal configuration for status filtering
     FILTER_CONFIG = {
@@ -1343,6 +1344,13 @@ class LibraryWidget(QWidget):
             delete_action.setIcon(get_icon("delete"))
             delete_action.triggered.connect(lambda _: self.confirm_delete_folder(path))
             menu.addAction(delete_action)
+
+            menu.addSeparator()
+
+            merge_action = QAction(tr("library.menu_merge_folders"), self)
+            merge_action.setIcon(get_icon("merge"))
+            merge_action.triggered.connect(lambda _: self.on_merge_folders_requested(path))
+            menu.addAction(merge_action)
             
             menu.exec(self.tree.viewport().mapToGlobal(pos))
 
@@ -1483,6 +1491,32 @@ class LibraryWidget(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             self.folder_delete_requested.emit(path)
 
+    def on_merge_folders_requested(self, path: str):
+        """Handle request to merge folders"""
+        reply = QMessageBox.question(
+            self,
+            tr("library.merge_confirm_title"),
+            tr("library.merge_confirm_msg"),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self.perform_virtual_merge(path)
+
+    def perform_virtual_merge(self, path: str):
+        """Mark folder as merged in DB and trigger rescan"""
+        try:
+            self.db.set_folder_merged(path, True)
+            # Trigger a rescan to update the library structure
+            self.scan_requested.emit()
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                tr("window.title"),
+                f"Error merging folders: {str(e)}"
+            )
+
     def remove_folder_from_ui(self, path: str):
         """Recursively remove a folder and all its contents from the tree and internal cache"""
         # 1. Purge from in-memory cache
@@ -1524,10 +1558,14 @@ class LibraryWidget(QWidget):
             return
         try:
             default_path = self.config.get('default_path', '')
+            print(f"DEBUG: Opening folder. Config default_path: {default_path}")
+            
             if default_path:
                 abs_path = Path(default_path) / path
             else:
                 abs_path = Path(path)
+                
+            print(f"DEBUG: Target path: {abs_path}")
             if abs_path.exists() and abs_path.is_file():
                 folder_path = abs_path.parent
             else:

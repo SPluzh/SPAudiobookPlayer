@@ -796,10 +796,22 @@ class AudiobookScanner:
                     current_position,
                     playback_speed,
                     is_started,
-                    is_completed
+                    is_completed,
+                    is_merged
                 FROM audiobooks
-                WHERE is_folder = 0
+                WHERE is_folder = 0 -- Keep progress for actual books (including merged ones)
             """)
+            
+            # Fetch locally merged paths to handle virtual merging
+            print("\n" + "-" * 70)
+            print(self.tr("scanner.checking_merged_folders"))
+            print("-" * 70)
+            c.execute("SELECT path FROM audiobooks WHERE is_merged = 1")
+            merged_paths_set = {row[0] for row in c.fetchall()}
+            if merged_paths_set:
+                 print(self.tr("scanner.merged_folders_found", count=len(merged_paths_set)))
+                 for mp in merged_paths_set:
+                     print(f"  [MERGED] {mp}")
             
             # Reset availability for all books before scanning
             c.execute("UPDATE audiobooks SET is_available = 0")
@@ -813,10 +825,28 @@ class AudiobookScanner:
             print(self.tr("scanner.searching_books"))
             print("-" * 70)
             
-            folders = [
-                d for d in root.rglob('*')
-                if d.is_dir() and self._has_audio_files(d)
-            ]
+            folders = []
+            for d in root.rglob('*'):
+                if d.is_dir():
+                     try:
+                        # Check if this folder is a child of any merged folder
+                        rel_path_str = str(d.relative_to(root))
+                        is_child_of_merged = False
+                        for mp in merged_paths_set:
+                             # Check if rel_path starts with mp + sep
+                             # e.g. mp="Series", rel="Series\Book1" -> Child
+                             if rel_path_str.startswith(mp + os.sep) or rel_path_str == mp:
+                                 if rel_path_str != mp: # It is a strict child
+                                     is_child_of_merged = True
+                                     break
+                        
+                        if is_child_of_merged:
+                            continue
+
+                        if self._has_audio_files(d) or (rel_path_str in merged_paths_set):
+                             folders.append(d)
+                     except ValueError:
+                         continue
             
             print("\n" + self.tr("scanner.found_folders", count=len(folders)))
             
@@ -830,10 +860,23 @@ class AudiobookScanner:
                 parent = rel.parent if str(rel.parent) != '.' else ''
                 
                 # Get file list
-                files = sorted(
-                    f for f in folder.iterdir()
-                    if f.is_file() and f.suffix.lower() in self.audio_extensions
-                )
+                # Check if this is a merged folder
+                is_merged = str(rel) in merged_paths_set
+                
+                # Get file list
+                if is_merged:
+                    # Recursive scan for merged folders
+                    # We look for all audio files in this directory AND subdirectories
+                    files = sorted(
+                        f for f in folder.rglob('*')
+                        if f.is_file() and f.suffix.lower() in self.audio_extensions
+                    )
+                else:
+                    # Standard flat scan
+                    files = sorted(
+                        f for f in folder.iterdir()
+                        if f.is_file() and f.suffix.lower() in self.audio_extensions
+                    )
                 
                 # Calculate current state hash
                 current_state_hash = self._calculate_state_hash(files)
@@ -979,7 +1022,10 @@ class AudiobookScanner:
                 
                 state = c.fetchone()
                 if state:
-                    listened, prog_pct, cur_idx, cur_pos, playback_speed, is_started, is_completed = state
+                    listened, prog_pct, cur_idx, cur_pos, playback_speed, is_started, is_completed, saved_is_merged = state
+                    # Ensure we respect the saved merged state preference if it matches
+                    # logic: The is_merged flag comes from the MAIN table (via temp_state select), so we preserve it.
+                    # But actually, we already determined 'is_merged' from 'merged_paths_set' which covers this.
                     if prog_pct > 0:
                         print(self.tr("scanner.progress_restored", percent=prog_pct))
                 else:
@@ -1018,7 +1064,9 @@ class AudiobookScanner:
                             bitrate_mode = ?,
                             container = ?,
                             time_added = COALESCE(time_added, CURRENT_TIMESTAMP),
-                            is_available = 1
+                            is_available = 1,
+                            is_merged = ?,
+                            is_folder = 0
                         WHERE path = ?
                     """, (
                         str(parent),
@@ -1039,6 +1087,7 @@ class AudiobookScanner:
                         bitrate_max,
                         bitrate_mode,
                         container,
+                        1 if is_merged else 0,
                         str(rel)
                     ))
                     book_id = existing_row[0]
@@ -1063,9 +1112,9 @@ class AudiobookScanner:
                             is_available,
                             state_hash,
                             codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                            time_added
+                            time_added, is_merged
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
                     """, (
                         str(rel),
                         str(parent),
@@ -1092,7 +1141,8 @@ class AudiobookScanner:
                         bitrate_min,
                         bitrate_max,
                         bitrate_mode,
-                        container
+                        container,
+                        1 if is_merged else 0
                     ))
                     c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
                     book_id = c.fetchone()[0]

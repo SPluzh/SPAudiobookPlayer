@@ -348,8 +348,11 @@ class AudiobookPlayerWindow(QMainWindow):
         self.library_widget.tree.play_button_clicked.connect(self.on_library_play_clicked)
         self.library_widget.show_folders_toggled.connect(self.on_show_folders_toggled)
         self.library_widget.delete_requested.connect(self.on_delete_requested)
+        self.library_widget.delete_requested.connect(self.on_delete_requested)
         self.library_widget.folder_delete_requested.connect(self.on_folder_delete_requested)
+        self.library_widget.scan_requested.connect(self.rescan_directory)
 
+        # Playback Control Signals
         # Playback Control Signals
         self.player_widget.play_clicked.connect(self.toggle_play)
         self.player_widget.next_clicked.connect(self.on_next_clicked)
@@ -980,7 +983,13 @@ class AudiobookPlayerWindow(QMainWindow):
                 # Synchronize root path in the playback controller
                 if hasattr(self, 'playback_controller'):
                     self.playback_controller.library_root = Path(new_path)
-                self.library_widget.load_audiobooks()
+                
+                # Update library widget config
+                if hasattr(self, 'library_widget'):
+                    self.library_widget.config['default_path'] = new_path
+                    self.library_widget.load_audiobooks()
+                
+                print(f"DEBUG: Path saved in main.py. New path: {new_path}")
                 self.statusBar().showMessage(tr("status.path_saved"))
         
         def on_scan_requested(new_path):
@@ -990,6 +999,12 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.save_settings()
                 if hasattr(self, 'playback_controller'):
                     self.playback_controller.library_root = Path(new_path)
+                
+                # Update library widget config
+                if hasattr(self, 'library_widget'):
+                    self.library_widget.config['default_path'] = new_path
+            
+            print(f"DEBUG: Scan requested. Updating library config path to: {new_path}")
             self.rescan_directory()
         
         dialog.path_saved.connect(on_path_saved)
