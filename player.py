@@ -247,6 +247,7 @@ class PlayerWidget(QWidget):
     auto_rewind_toggled_signal = pyqtSignal(bool)
     deesser_toggled_signal = pyqtSignal(bool)
     compressor_toggled_signal = pyqtSignal(bool)
+    noise_suppression_toggled_signal = pyqtSignal(bool)
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
@@ -313,6 +314,15 @@ class PlayerWidget(QWidget):
         self.compressor_btn.setToolTip(tr("player.tooltip_compressor"))
         self.compressor_btn.toggled.connect(self.on_compressor_toggled)
         btns_row.addWidget(self.compressor_btn)
+        
+        # Noise Suppression Toggle
+        self.noise_suppression_btn = QPushButton("NS")
+        self.noise_suppression_btn.setCheckable(True)
+        self.noise_suppression_btn.setFixedWidth(40)
+        self.noise_suppression_btn.setObjectName("noiseSuppressionBtn")
+        self.noise_suppression_btn.setToolTip(tr("player.tooltip_noise_suppression"))
+        self.noise_suppression_btn.toggled.connect(self.on_noise_suppression_toggled)
+        btns_row.addWidget(self.noise_suppression_btn)
         btns_row.addStretch()
         
         settings_layout.addLayout(btns_row)
@@ -542,6 +552,9 @@ class PlayerWidget(QWidget):
     def on_compressor_toggled(self, checked):
         self.compressor_toggled_signal.emit(checked)
     
+    def on_noise_suppression_toggled(self, checked):
+        self.noise_suppression_toggled_signal.emit(checked)
+    
     def load_files(self, files_list: list, current_index: int = 0):
         self.last_files_list = files_list
         self.file_list.clear()
@@ -616,3 +629,4 @@ class PlayerWidget(QWidget):
         self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
         self.deesser_btn.setToolTip(tr("player.tooltip_deesser"))
         self.compressor_btn.setToolTip(tr("player.tooltip_compressor"))
+        self.noise_suppression_btn.setToolTip(tr("player.tooltip_noise_suppression"))

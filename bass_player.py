@@ -21,6 +21,9 @@ BASS_UNICODE = 0x80000000
 # Plugin flags
 BASS_PLUGIN_UNICODE = 0x80000000
 
+# VST flags
+BASS_VST_KEEP_CHANS = 1  # Keep original channel count
+
 def load_library(name):
     """Load BASS shared library from resources or system path"""
     try:
@@ -34,6 +37,7 @@ def load_library(name):
 # Load libraries
 bass = load_library("resources/bin/bass.dll")
 bass_fx = load_library("resources/bin/bass_fx.dll")
+bass_vst = load_library("resources/bin/bass_vst.dll")
 
 class BASS_BFX_PEAKEQ(ctypes.Structure):
     _fields_ = [
@@ -100,6 +104,17 @@ if bass_fx:
     bass_fx.BASS_FX_TempoCreate.argtypes = [c_int, c_int]
     bass_fx.BASS_FX_TempoCreate.restype = c_int
 
+if bass_vst:
+    # BASS_VST_ChannelSetDSP(chan, dllFile, flags, priority) -> vstHandle
+    bass_vst.BASS_VST_ChannelSetDSP.argtypes = [c_int, c_void_p, c_int, c_int]
+    bass_vst.BASS_VST_ChannelSetDSP.restype = c_int
+    # BASS_VST_ChannelRemoveDSP(chan, vstHandle) -> BOOL
+    bass_vst.BASS_VST_ChannelRemoveDSP.argtypes = [c_int, c_int]
+    bass_vst.BASS_VST_ChannelRemoveDSP.restype = c_bool
+    # BASS_VST_SetParam(vstHandle, paramIndex, value) -> BOOL
+    bass_vst.BASS_VST_SetParam.argtypes = [c_int, c_int, c_float]
+    bass_vst.BASS_VST_SetParam.restype = c_bool
+
 class BassPlayer:
     """Audio player using BASS library with tempo control support"""
     
@@ -117,8 +132,14 @@ class BassPlayer:
         self.compressor_handle = 0
         self.compressor_enabled = False
         self.temp_file = None
+        
+        # Noise suppression (VST) state
+        self.noise_suppression_enabled = False
+        self.noise_suppression_handle = 0
+        self.has_vst = bass_vst is not None
 
-        if bass and bass.BASS_Init(-1, 44100, 0, 0, None):
+        # Initialize BASS at 48kHz (required for RNNoise VST plugin)
+        if bass and bass.BASS_Init(-1, 48000, 0, 0, None):
             self.initialized = True
             
             # Load plugins (OPUS, AAC/M4B, FLAC, APE)
@@ -146,6 +167,7 @@ class BassPlayer:
             self.chan0 = 0
             self.deesser_handle = 0
             self.compressor_handle = 0
+            self.noise_suppression_handle = 0
 
         # Cleanup previous temp file
         if self.temp_file and os.path.exists(self.temp_file):
@@ -270,6 +292,11 @@ class BassPlayer:
     def unload(self):
         """Stop playback and free the current stream and temporary files"""
         if self.chan != 0:
+            # Remove VST before freeing stream
+            if self.noise_suppression_handle != 0 and self.has_vst:
+                bass_vst.BASS_VST_ChannelRemoveDSP(self.chan, self.noise_suppression_handle)
+                self.noise_suppression_handle = 0
+            
             bass.BASS_StreamFree(self.chan)
             self.chan = 0
             self.chan0 = 0
@@ -318,6 +345,37 @@ class BassPlayer:
         """Set playback speed (5-20 where 10 is 1.0x)"""
         self.speed_pos = max(5, min(20, value))
         self.apply_attributes()
+
+    def set_noise_suppression(self, enabled: bool):
+        """Toggle noise suppression (RNNoise VST plugin)"""
+        self.noise_suppression_enabled = enabled
+        self.apply_noise_suppression()
+
+    def apply_noise_suppression(self):
+        """Apply or remove the noise suppression VST effect on the current channel"""
+        if self.chan == 0 or not self.initialized or not self.has_vst:
+            return
+
+        # Remove existing VST if any
+        if self.noise_suppression_handle != 0:
+            bass_vst.BASS_VST_ChannelRemoveDSP(self.chan, self.noise_suppression_handle)
+            self.noise_suppression_handle = 0
+
+        if self.noise_suppression_enabled:
+            vst_path = os.path.join(os.path.dirname(__file__), 
+                                    "resources/bin/rnnoise_stereo.dll")
+            if os.path.exists(vst_path):
+                # Encode path as UTF-16LE for BASS_UNICODE
+                path_bytes = vst_path.encode('utf-16le') + b'\x00\x00'
+                # Priority -1 = process FIRST (before other effects)
+                self.noise_suppression_handle = bass_vst.BASS_VST_ChannelSetDSP(
+                    self.chan, path_bytes, BASS_UNICODE | BASS_VST_KEEP_CHANS, -1
+                )
+                
+                if self.noise_suppression_handle != 0:
+                    # Configure plugin parameters
+                    # Param 0: VAD Threshold (0.0-1.0, default ~0.90)
+                    bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 0, 0.90)
 
     def set_deesser(self, enabled: bool):
         """Toggle DeEsser (parametric EQ filter at 6kHz)"""
@@ -375,8 +433,8 @@ class BassPlayer:
         if self.has_fx:
             tempo_percent = (self.speed_pos * 10) - 100.0
             bass.BASS_ChannelSetAttribute(self.chan, BASS_ATTRIB_TEMPO, c_float(tempo_percent))
-        
-        # Always reapply DeEsser and Compressor when attributes are reapplied (e.g. on new track)
+        # Always reapply effects when attributes are reapplied (e.g. on new track)
+        self.apply_noise_suppression()  # First in chain (priority -1)
         self.apply_deesser()
         self.apply_compressor()
 

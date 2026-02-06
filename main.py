@@ -70,6 +70,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.auto_rewind = False
         self.deesser_enabled = False
         self.compressor_enabled = False
+        self.noise_suppression_enabled = False
         self.last_pause_time = None
         
         # Load user configurations and localization settings
@@ -199,6 +200,9 @@ class AudiobookPlayerWindow(QMainWindow):
         
         self.player_widget.compressor_btn.setChecked(self.compressor_enabled)
         self.player_widget.compressor_toggled_signal.connect(self.on_compressor_state_toggled)
+        
+        self.player_widget.noise_suppression_btn.setChecked(self.noise_suppression_enabled)
+        self.player_widget.noise_suppression_toggled_signal.connect(self.on_noise_suppression_state_toggled)
         
         self.splitter.addWidget(self.player_widget)
         
@@ -372,8 +376,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
         self.deesser_enabled = config.getboolean('Player', 'deesser_enabled', fallback=False)
         self.compressor_enabled = config.getboolean('Player', 'compressor_enabled', fallback=False)
+        self.noise_suppression_enabled = config.getboolean('Player', 'noise_suppression_enabled', fallback=False)
         self.player.set_deesser(self.deesser_enabled)
         self.player.set_compressor(self.compressor_enabled)
+        self.player.set_noise_suppression(self.noise_suppression_enabled)
         self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
         self.show_filter_labels = config.getboolean('Library', 'show_filter_labels', fallback=True)
         
@@ -468,6 +474,7 @@ class AudiobookPlayerWindow(QMainWindow):
             config['Player']['auto_rewind'] = str(self.auto_rewind)
             config['Player']['deesser_enabled'] = str(self.deesser_enabled)
             config['Player']['compressor_enabled'] = str(self.compressor_enabled)
+            config['Player']['noise_suppression_enabled'] = str(self.noise_suppression_enabled)
         
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
@@ -588,6 +595,12 @@ class AudiobookPlayerWindow(QMainWindow):
         """Update and persist the Compressor preference"""
         self.compressor_enabled = state
         self.player.set_compressor(state)
+        self.save_settings()
+
+    def on_noise_suppression_state_toggled(self, state: bool):
+        """Update and persist the Noise Suppression preference"""
+        self.noise_suppression_enabled = state
+        self.player.set_noise_suppression(state)
         self.save_settings()
 
     def on_show_folders_toggled(self, checked):

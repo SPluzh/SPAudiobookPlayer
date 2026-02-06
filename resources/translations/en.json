@@ -69,6 +69,7 @@
     "tooltip_deesser": "DeEsser: reduces sharp 's' sounds in audiobooks",
     "compressor": "Compressor",
     "tooltip_compressor": "Compressor: normalizes volume levels",
+    "tooltip_noise_suppression": "Noise Suppression (RNNoise): removes background noise",
     "of": "of"
   },
   "status": {
