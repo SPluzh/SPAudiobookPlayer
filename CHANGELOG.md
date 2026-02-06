@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0]
+- **Noise Suppression**: Added advanced noise reduction system (Right-click **NS** button to configure).
+    - Features tunable **VAD** (Voice Activity Detection): Sensitivity, Grace Period, and Retroactive recording.
+- **Audio Effects**: Updated **De-Esser** and **Compressor** with adjustable presets.
+    - Added **Light**, **Medium**, and **Strong** modes (Right-click to select).
+- **Localization**: Full translation of player buttons (ID3, AR, DS, C, NS).
+
 ## [1.2.0]
 - **Favorites**: Mark audiobooks as "Favorites" (❤) via context menu.
     - Added dedicated "Favorites" filter to the main toolbar.
