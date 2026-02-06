@@ -72,8 +72,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.compressor_enabled = False
         self.noise_suppression_enabled = False
         self.vad_threshold = 90  # Default 90% (0-100)
-        self.vad_grace_period = 20  # Default 20 (0-100)
+        self.vad_grace_period = 0  # Default 0 (0-100)
         self.vad_retroactive_grace = 0  # Default 0 (0-100)
+        self.deesser_preset = 1 # 0=Light, 1=Medium, 2=Strong
+        self.compressor_preset = 1 # 0=Light, 1=Medium, 2=Strong
         self.last_pause_time = None
         
         # Load user configurations and localization settings
@@ -193,29 +195,41 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.setMinimumWidth(400)
         self.player_widget.id3_btn.setChecked(self.show_id3)
         self.player_widget.on_id3_toggled(self.show_id3)
+        
         self.player_widget.id3_toggled_signal.connect(self.on_id3_state_toggled)
         
-        self.player_widget.auto_rewind_btn.setChecked(self.auto_rewind)
         self.player_widget.auto_rewind_toggled_signal.connect(self.on_auto_rewind_state_toggled)
         
-        self.player_widget.deesser_btn.setChecked(self.deesser_enabled)
         self.player_widget.deesser_toggled_signal.connect(self.on_deesser_state_toggled)
         
-        self.player_widget.compressor_btn.setChecked(self.compressor_enabled)
         self.player_widget.compressor_toggled_signal.connect(self.on_compressor_state_toggled)
         
-        self.player_widget.noise_suppression_btn.setChecked(self.noise_suppression_enabled)
         self.player_widget.noise_suppression_toggled_signal.connect(self.on_noise_suppression_state_toggled)
         
         # VAD threshold slider
-        self.player_widget.set_vad_threshold_value(self.vad_threshold)
         self.player_widget.vad_threshold_changed_signal.connect(self.on_vad_threshold_changed)
         
         # VAD grace period sliders
-        self.player_widget.set_vad_grace_value(self.vad_grace_period)
         self.player_widget.vad_grace_period_changed_signal.connect(self.on_vad_grace_period_changed)
-        self.player_widget.set_vad_retro_value(self.vad_retroactive_grace)
         self.player_widget.vad_retroactive_grace_changed_signal.connect(self.on_vad_retro_grace_changed)
+
+        # DeEsser & Compressor Presets
+        self.player_widget.deesser_preset_changed_signal.connect(self.on_deesser_preset_changed)
+        self.player_widget.compressor_preset_changed_signal.connect(self.on_compressor_preset_changed)
+        
+        # Set initial states
+        self.player_widget.id3_btn.setChecked(self.show_id3)
+        self.player_widget.auto_rewind_btn.setChecked(self.auto_rewind)
+        self.player_widget.deesser_btn.setChecked(self.deesser_enabled)
+        self.player_widget.compressor_btn.setChecked(self.compressor_enabled)
+        self.player_widget.noise_suppression_btn.setChecked(self.noise_suppression_enabled)
+        
+        # Set initial values for sliders
+        self.player_widget.set_vad_threshold_value(self.vad_threshold)
+        self.player_widget.set_vad_grace_value(self.vad_grace_period)
+        self.player_widget.set_vad_retro_value(self.vad_retroactive_grace)
+        self.player_widget.set_deesser_preset_value(self.deesser_preset)
+        self.player_widget.set_compressor_preset_value(self.compressor_preset)
         
         self.splitter.addWidget(self.player_widget)
         
@@ -387,18 +401,28 @@ class AudiobookPlayerWindow(QMainWindow):
         # Player Functional Preferences
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
         self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
-        self.deesser_enabled = config.getboolean('Player', 'deesser_enabled', fallback=False)
-        self.compressor_enabled = config.getboolean('Player', 'compressor_enabled', fallback=False)
-        self.noise_suppression_enabled = config.getboolean('Player', 'noise_suppression_enabled', fallback=False)
-        self.vad_threshold = config.getint('Player', 'vad_threshold', fallback=90)
-        self.vad_grace_period = config.getint('Player', 'vad_grace_period', fallback=20)
-        self.vad_retroactive_grace = config.getint('Player', 'vad_retroactive_grace', fallback=0)
+        
+        # Audio Settings (Unified in [Audio])
+        self.deesser_enabled = config.getboolean('Audio', 'deesser', fallback=config.getboolean('Player', 'deesser_enabled', fallback=False))
+        self.compressor_enabled = config.getboolean('Audio', 'compressor', fallback=config.getboolean('Player', 'compressor_enabled', fallback=False))
+        self.noise_suppression_enabled = config.getboolean('Audio', 'noise_suppression', fallback=config.getboolean('Player', 'noise_suppression_enabled', fallback=False))
+        self.vad_threshold = config.getint('Audio', 'vad_threshold', fallback=config.getint('Player', 'vad_threshold', fallback=90))
+        self.vad_grace_period = config.getint('Audio', 'vad_grace_period', fallback=config.getint('Player', 'vad_grace_period', fallback=0))
+        self.vad_retroactive_grace = config.getint('Audio', 'vad_retroactive_grace', fallback=config.getint('Player', 'vad_retroactive_grace', fallback=0))
+        self.deesser_preset = config.getint('Audio', 'deesser_preset', fallback=1)
+        self.compressor_preset = config.getint('Audio', 'compressor_preset', fallback=1)
+        
+        # Apply settings
+        self.player.set_deesser_preset(self.deesser_preset)
         self.player.set_deesser(self.deesser_enabled)
+        
+        self.player.set_compressor_preset(self.compressor_preset) 
         self.player.set_compressor(self.compressor_enabled)
+        
+        self.player.set_vad_threshold(self.vad_threshold)
+        self.player.set_vad_grace_period(self.vad_grace_period)
+        self.player.set_retroactive_grace(self.vad_retroactive_grace)
         self.player.set_noise_suppression(self.noise_suppression_enabled)
-        self.player.set_vad_threshold(self.vad_threshold / 100.0)
-        self.player.set_vad_grace_period(self.vad_grace_period / 100.0)
-        self.player.set_retroactive_grace(self.vad_retroactive_grace / 100.0)
         self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
         self.show_filter_labels = config.getboolean('Library', 'show_filter_labels', fallback=True)
         
@@ -489,15 +513,19 @@ class AudiobookPlayerWindow(QMainWindow):
         # Player Functional Preferences
         if 'Player' not in config: config['Player'] = {}
         if hasattr(self, 'player_widget'):
-            config['Player']['show_id3'] = str(self.player_widget.show_id3)
-            config['Player']['auto_rewind'] = str(self.auto_rewind)
-            config['Player']['deesser_enabled'] = str(self.deesser_enabled)
-            config['Player']['compressor_enabled'] = str(self.compressor_enabled)
-            config['Player']['noise_suppression_enabled'] = str(self.noise_suppression_enabled)
-            config['Player']['vad_threshold'] = str(self.vad_threshold)
-            config['Player']['vad_grace_period'] = str(self.vad_grace_period)
-            config['Player']['vad_retroactive_grace'] = str(self.vad_retroactive_grace)
-        
+            config['Audio'] = {
+            'volume': str(self.player.vol_pos),
+            'speed': str(self.player.speed_pos),
+            'auto_rewind': str(self.auto_rewind),
+            'deesser': str(self.deesser_enabled),
+            'compressor': str(self.compressor_enabled),
+            'noise_suppression': str(self.noise_suppression_enabled),
+            'vad_threshold': str(self.vad_threshold),
+            'vad_grace_period': str(self.vad_grace_period),
+            'vad_retroactive_grace': str(self.vad_retroactive_grace),
+            'deesser_preset': str(self.deesser_preset),
+            'compressor_preset': str(self.compressor_preset)
+        }
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
         config['Library']['show_filter_labels'] = str(self.show_filter_labels)
@@ -641,6 +669,18 @@ class AudiobookPlayerWindow(QMainWindow):
         """Update Retroactive VAD Grace when slider changed"""
         self.vad_retroactive_grace = value
         self.player.set_retroactive_grace(value / 100.0)
+        self.save_settings()
+
+    def on_deesser_preset_changed(self, value):
+        """Handle DeEsser preset change"""
+        self.deesser_preset = value
+        self.player.set_deesser_preset(value)
+        self.save_settings()
+
+    def on_compressor_preset_changed(self, value):
+        """Handle Compressor preset change"""
+        self.compressor_preset = value
+        self.player.set_compressor_preset(value)
         self.save_settings()
 
     def on_show_folders_toggled(self, checked):

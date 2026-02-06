@@ -139,6 +139,10 @@ class BassPlayer:
         self.vad_threshold = 0.90  # Default 90% (0.0-1.0)
         self.vad_grace_period = 0.0  # Param 1: Grace Period
         self.vad_retroactive_grace = 0.0  # Param 2: Retroactive Grace
+        
+        # Effect Presets (0=Light, 1=Medium, 2=Strong)
+        self.deesser_preset = 1
+        self.compressor_preset = 1
         self.has_vst = bass_vst is not None
 
         # Initialize BASS at 48kHz (required for RNNoise VST plugin)
@@ -399,6 +403,18 @@ class BassPlayer:
                     bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 1, self.vad_grace_period)
                     bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 2, self.vad_retroactive_grace)
 
+    def set_deesser_preset(self, preset: int):
+        """Set DeEsser Preset (0=Light, 1=Medium, 2=Strong)"""
+        self.deesser_preset = max(0, min(2, preset))
+        if self.deesser_enabled and self.deesser_handle:
+            self.apply_deesser()
+
+    def set_compressor_preset(self, preset: int):
+        """Set Compressor Preset (0=Light, 1=Medium, 2=Strong)"""
+        self.compressor_preset = max(0, min(2, preset))
+        if self.compressor_enabled and self.compressor_handle:
+            self.apply_compressor()
+
     def set_deesser(self, enabled: bool):
         """Toggle DeEsser (parametric EQ filter at 6kHz)"""
         self.deesser_enabled = enabled
@@ -415,12 +431,20 @@ class BassPlayer:
             self.deesser_handle = 0
 
         if self.deesser_enabled:
-            # Set BASS_FX Peaking EQ at 6000Hz, -6dB, 4.5 bandwidth (Softer)
+            # Set BASS_FX Peaking EQ at 6000Hz
             # Using BASS_FX_BFX_PEAKEQ instead of DX8 to avoid constant conflicts
             self.deesser_handle = bass.BASS_ChannelSetFX(self.chan, BASS_FX_BFX_PEAKEQ, 0)
             if self.deesser_handle != 0:
-                # lBand=0, fBandwidth=4.5, fQ=0, fCenter=6000.0, fGain=-6.0, lChannel=BASS_BFX_CHANALL
-                params = BASS_BFX_PEAKEQ(0, 4.5, 0.0, 6000.0, -6.0, BASS_BFX_CHANALL)
+                # Presets: Light(0), Medium(1), Strong(2)
+                defaults = {
+                    0: (3.0, -3.0),   # Light: Bandwidth 3.0, Gain -3dB
+                    1: (4.5, -6.0),   # Medium: Bandwidth 4.5, Gain -6dB
+                    2: (6.0, -12.0)   # Strong: Bandwidth 6.0, Gain -12dB
+                }
+                bw, gain = defaults.get(self.deesser_preset, (4.5, -6.0))
+                
+                # lBand=0, fBandwidth=bw, fQ=0, fCenter=6000.0, fGain=gain, lChannel=BASS_BFX_CHANALL
+                params = BASS_BFX_PEAKEQ(0, bw, 0.0, 6000.0, gain, BASS_BFX_CHANALL)
                 bass.BASS_FXSetParameters(self.deesser_handle, ctypes.byref(params))
 
     def set_compressor(self, enabled: bool):
@@ -440,11 +464,19 @@ class BassPlayer:
 
         if self.compressor_enabled:
             # Set BASS_FX Compressor 2 (Hard Preset)
-            # Using BASS_FX_BFX_COMPRESSOR2 ($10011) to avoid echo issue ($10001 is ECHO)
-            # Parameters: fGain(5.0), fThreshold(-20.0), fRatio(4.0), fAttack(10.0), fRelease(300.0), lChannel(CHANALL)
+            # Using BASS_FX_BFX_COMPRESSOR2 ($10011) to avoid echo issue
             self.compressor_handle = bass.BASS_ChannelSetFX(self.chan, BASS_FX_BFX_COMPRESSOR2, 0)
             if self.compressor_handle != 0:
-                params = BASS_BFX_COMPRESSOR2(5.0, -20.0, 4.0, 10.0, 300.0, BASS_BFX_CHANALL)
+                # Presets: Light(0), Medium(1), Strong(2) (Ratio, Threshold, Gain)
+                defaults = {
+                    0: (2.0, -15.0, 4.0),  # Light
+                    1: (4.0, -20.0, 7.0),  # Medium
+                    2: (8.0, -28.0, 12.0)  # Strong
+                }
+                ratio, thresh, gain = defaults.get(self.compressor_preset, (4.0, -20.0, 7.0))
+                
+                # fGain, fThreshold, fRatio, fAttack=10.0, fRelease=300.0, lChannel=CHANALL
+                params = BASS_BFX_COMPRESSOR2(gain, thresh, ratio, 10.0, 300.0, BASS_BFX_CHANALL)
                 bass.BASS_FXSetParameters(self.compressor_handle, ctypes.byref(params))
 
     def apply_attributes(self):

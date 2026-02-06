@@ -4,9 +4,9 @@ from typing import List, Dict, Optional
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, 
     QLabel, QProgressBar, QListWidget, QListWidgetItem, QSizePolicy,
-    QFrame, QGridLayout
+    QFrame, QGridLayout, QStyle, QStyleOptionSlider
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QPoint
 
 from bass_player import BassPlayer
 from database import DatabaseManager
@@ -231,6 +231,45 @@ class PlaybackController:
         return "Audiobook Player"
 
 
+class ClickableSlider(QSlider):
+    """A slider that jumps directly to the clicked position"""
+    
+    def __init__(self, orientation=Qt.Orientation.Horizontal):
+        super().__init__(orientation)
+
+    def mousePressEvent(self, event):
+        """Handle mouse click to jump to value"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            val = self.pixelPosToRangeValue(event.pos())
+            self.setValue(val)
+            self.sliderMoved.emit(val)  # Emit signal continuously
+            self.sliderPressed.emit() # Inform about start of interaction 
+            event.accept()
+        super().mousePressEvent(event)
+        
+    def pixelPosToRangeValue(self, pos):
+        """Convert pixel coordinate to slider value"""
+        opt = QStyleOptionSlider()
+        self.initStyleOption(opt)
+        
+        # Calculate available slider length
+        slider_len = self.style().pixelMetric(QStyle.PixelMetric.PM_SliderLength, opt, self)
+        available_width = self.width() - slider_len
+        
+        if available_width <= 0:
+            return self.minimum()
+            
+        # Calculate relative position
+        pos_x = pos.x() - (slider_len // 2)
+        pos_x = max(0, min(pos_x, available_width))
+        
+        # Map to range
+        range_val = self.maximum() - self.minimum()
+        val = self.minimum() + (pos_x / available_width) * range_val
+        
+        return int(max(self.minimum(), min(self.maximum(), val)))
+
+
 class PlayerWidget(QWidget):
     """UI widget containing playback controls, progress sliders, and the file list"""
     
@@ -251,12 +290,18 @@ class PlayerWidget(QWidget):
     vad_threshold_changed_signal = pyqtSignal(int)  # 0-100
     vad_grace_period_changed_signal = pyqtSignal(int)  # 0-100 (mapped to 0-1000ms?)
     vad_retroactive_grace_changed_signal = pyqtSignal(int)  # 0-100
+    deesser_preset_changed_signal = pyqtSignal(int) # 0, 1, 2
+    compressor_preset_changed_signal = pyqtSignal(int) # 0, 1, 2
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
         super().__init__()
         self.show_id3 = False
         self.slider_dragging = False
+        
+        # State variables for presets (default to Medium=1)
+        self.deesser_preset = 1
+        self.compressor_preset = 1
         
         # Icon resources
         self.play_icon = None
@@ -275,6 +320,12 @@ class PlayerWidget(QWidget):
         player_frame = QFrame()
         player_layout = QVBoxLayout(player_frame)
         
+        # The instruction implies that self.volume_slider should be a ClickableSlider and defined here.
+        # The original code defines it later as a QSlider.
+        # I will define it here as ClickableSlider and remove its later QSlider definition.
+        self.volume_slider = ClickableSlider(Qt.Orientation.Horizontal)
+        self.volume_slider.setRange(0, 100)
+        self.volume_slider.setValue(100)
 
         settings_layout = QVBoxLayout()
         settings_layout.setSpacing(10)
@@ -283,8 +334,10 @@ class PlayerWidget(QWidget):
         btns_row = QHBoxLayout()
         btns_row.setSpacing(5)
         
+        icon_size = QSize(20, 20) # Added as per instruction
+        
         # ID3 Meta-tag Toggle
-        self.id3_btn = QPushButton("ID3")
+        self.id3_btn = QPushButton(tr("player.btn_id3"))
         self.id3_btn.setCheckable(True)
         self.id3_btn.setFixedWidth(40)
         self.id3_btn.setObjectName("id3Btn")
@@ -293,7 +346,7 @@ class PlayerWidget(QWidget):
         btns_row.addWidget(self.id3_btn)
         
         # Auto-rewind Toggle
-        self.auto_rewind_btn = QPushButton("AR")
+        self.auto_rewind_btn = QPushButton(tr("player.btn_autorewind"))
         self.auto_rewind_btn.setCheckable(True)
         self.auto_rewind_btn.setFixedWidth(40)
         self.auto_rewind_btn.setObjectName("autoRewindBtn")
@@ -302,24 +355,30 @@ class PlayerWidget(QWidget):
         btns_row.addWidget(self.auto_rewind_btn)
         
         # DeEsser Toggle
-        self.deesser_btn = QPushButton("DS")
+        self.deesser_btn = QPushButton(tr("player.btn_deesser"))
         self.deesser_btn.setCheckable(True)
         self.deesser_btn.setFixedWidth(40)
         self.deesser_btn.setObjectName("deesserBtn")
         self.deesser_btn.setToolTip(tr("player.tooltip_deesser"))
         self.deesser_btn.toggled.connect(self.on_deesser_toggled)
+        # Right-click for DeEsser presets
+        self.deesser_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.deesser_btn.customContextMenuRequested.connect(self.show_deesser_popup)
         btns_row.addWidget(self.deesser_btn)
         
-        self.compressor_btn = QPushButton("C")
+        self.compressor_btn = QPushButton(tr("player.btn_compressor"))
         self.compressor_btn.setCheckable(True)
         self.compressor_btn.setFixedWidth(40)
         self.compressor_btn.setObjectName("compressorBtn")
         self.compressor_btn.setToolTip(tr("player.tooltip_compressor"))
         self.compressor_btn.toggled.connect(self.on_compressor_toggled)
+        # Right-click for Compressor presets
+        self.compressor_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.compressor_btn.customContextMenuRequested.connect(self.show_compressor_popup)
         btns_row.addWidget(self.compressor_btn)
         
         # Noise Suppression Toggle
-        self.noise_suppression_btn = QPushButton("NS")
+        self.noise_suppression_btn = QPushButton(tr("player.btn_noise_suppression"))
         self.noise_suppression_btn.setCheckable(True)
         self.noise_suppression_btn.setFixedWidth(40)
         self.noise_suppression_btn.setObjectName("noiseSuppressionBtn")
@@ -333,6 +392,8 @@ class PlayerWidget(QWidget):
         
         # VAD Threshold Popup (Advanced Settings)
         self.vad_popup = QWidget(self, Qt.WindowType.Popup)
+        self.vad_popup.setObjectName("vadPopup")
+        self.vad_popup.setStyleSheet("QWidget#vadPopup { background-color: #373737; border: 1px solid #808080; border-radius: 3px; }")
         vad_layout = QGridLayout(self.vad_popup)
         vad_layout.setContentsMargins(8, 8, 8, 8)
         vad_layout.setSpacing(8)
@@ -376,6 +437,44 @@ class PlayerWidget(QWidget):
         self.vad_retro_label.setFixedWidth(35)
         vad_layout.addWidget(self.vad_retro_label, 2, 2)
         
+        # DeEsser Preset Popup
+        self.deesser_popup = QWidget(self, Qt.WindowType.Popup)
+        self.deesser_popup.setObjectName("vadPopup") # Reuse same style
+        self.deesser_popup.setStyleSheet("QWidget#vadPopup { background-color: #373737; border: 1px solid #808080; border-radius: 3px; }")
+        deesser_layout = QHBoxLayout(self.deesser_popup)
+        deesser_layout.setContentsMargins(8, 4, 8, 4)
+        
+        self.deesser_slider = QSlider(Qt.Orientation.Horizontal)
+        self.deesser_slider.setRange(0, 2) # 0=Light, 1=Medium, 2=Strong
+        self.deesser_slider.setValue(1)
+        self.deesser_slider.setFixedWidth(80)
+        self.deesser_slider.valueChanged.connect(self.on_deesser_preset_changed)
+        deesser_layout.addWidget(self.deesser_slider)
+        
+        self.deesser_desc_label = QLabel(tr("player.preset_medium")) # Default
+        self.deesser_desc_label.setFixedWidth(60)
+        self.deesser_desc_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        deesser_layout.addWidget(self.deesser_desc_label)
+        
+        # Compressor Preset Popup
+        self.compressor_popup = QWidget(self, Qt.WindowType.Popup)
+        self.compressor_popup.setObjectName("vadPopup") # Reuse same style
+        self.compressor_popup.setStyleSheet("QWidget#vadPopup { background-color: #373737; border: 1px solid #808080; border-radius: 3px; }")
+        comp_layout = QHBoxLayout(self.compressor_popup)
+        comp_layout.setContentsMargins(8, 4, 8, 4)
+        
+        self.comp_slider = QSlider(Qt.Orientation.Horizontal)
+        self.comp_slider.setRange(0, 2) # 0=Light, 1=Medium, 2=Strong
+        self.comp_slider.setValue(1)
+        self.comp_slider.setFixedWidth(80)
+        self.comp_slider.valueChanged.connect(self.on_compressor_preset_changed)
+        comp_layout.addWidget(self.comp_slider)
+        
+        self.comp_desc_label = QLabel(tr("player.preset_medium")) # Default
+        self.comp_desc_label.setFixedWidth(60)
+        self.comp_desc_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        comp_layout.addWidget(self.comp_desc_label)
+        
         settings_layout.addLayout(btns_row)
         
         # Sliders Row (Volume + Speed)
@@ -383,10 +482,8 @@ class PlayerWidget(QWidget):
         sliders_row.setSpacing(5)
         
         # Volume
-        self.volume_slider = QSlider(Qt.Orientation.Horizontal)
+        # Volume (already defined as ClickableSlider above)
         self.volume_slider.setObjectName("volumeSlider")
-        self.volume_slider.setRange(0, 100)
-        self.volume_slider.setValue(100)
         self.volume_slider.setMinimumWidth(100)
         self.volume_slider.setToolTip(tr("player.volume"))
         self.volume_slider.valueChanged.connect(self.on_volume_changed)
@@ -642,11 +739,69 @@ class PlayerWidget(QWidget):
         self.vad_retroactive_grace_changed_signal.emit(value)
 
     def set_vad_retro_value(self, value: int):
-        """Set Retroactive VAD Grace slider value programmatically"""
+        """Programmatically update VAD retroactive grace slider"""
         self.vad_retro_slider.blockSignals(True)
-        self.vad_retro_slider.setValue(value)
+        self.vad_retro_slider.setValue(int(value))
         self.vad_retro_label.setText(f"{value}%")
         self.vad_retro_slider.blockSignals(False)
+
+    def show_deesser_popup(self, pos):
+        """Show DeEsser preset popup below the button"""
+        global_pos = self.deesser_btn.mapToGlobal(QPoint(0, self.deesser_btn.height()))
+        self.deesser_popup.move(global_pos)
+        self.deesser_popup.show()
+
+    def on_deesser_preset_changed(self, value: int):
+        """Handle changes to DeEsser preset slider"""
+        # Update label text
+        labels = {
+            0: tr("player.preset_light"),
+            1: tr("player.preset_medium"),
+            2: tr("player.preset_strong")
+        }
+        self.deesser_desc_label.setText(labels.get(value, ""))
+        self.deesser_preset_changed_signal.emit(value)
+
+    def set_deesser_preset_value(self, value: int):
+        """Programmatically set DeEsser preset"""
+        self.deesser_slider.blockSignals(True)
+        self.deesser_slider.setValue(value)
+        # Also update label
+        labels = {
+            0: tr("player.preset_light"),
+            1: tr("player.preset_medium"),
+            2: tr("player.preset_strong")
+        }
+        self.deesser_desc_label.setText(labels.get(value, ""))
+        self.deesser_slider.blockSignals(False)
+
+    def show_compressor_popup(self, pos):
+        """Show Compressor preset popup below the button"""
+        global_pos = self.compressor_btn.mapToGlobal(QPoint(0, self.compressor_btn.height()))
+        self.compressor_popup.move(global_pos)
+        self.compressor_popup.show()
+
+    def on_compressor_preset_changed(self, value: int):
+        """Handle changes to Compressor preset slider"""
+        labels = {
+            0: tr("player.preset_light"),
+            1: tr("player.preset_medium"),
+            2: tr("player.preset_strong")
+        }
+        self.comp_desc_label.setText(labels.get(value, ""))
+        self.compressor_preset_changed_signal.emit(value)
+
+    def set_compressor_preset_value(self, value: int):
+        """Programmatically set Compressor preset"""
+        self.comp_slider.blockSignals(True)
+        self.comp_slider.setValue(value)
+        labels = {
+            0: tr("player.preset_light"),
+            1: tr("player.preset_medium"),
+            2: tr("player.preset_strong")
+        }
+        self.comp_desc_label.setText(labels.get(value, ""))
+        self.comp_slider.blockSignals(False)
     
     def set_noise_suppression_active(self, active: bool):
         """Visual indicator when noise suppression is processing"""
@@ -716,10 +871,32 @@ class PlayerWidget(QWidget):
         self.volume_label.setText(trf("formats.percent", value=value))
     
     def update_texts(self):
+        """Update UI texts when language changes"""
+        # Buttons
+        self.id3_btn.setText(tr("player.btn_id3"))
+        self.id3_btn.setToolTip(tr("player.show_id3"))
+        
+        self.auto_rewind_btn.setText(tr("player.btn_autorewind"))
+        self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
+        
+        self.deesser_btn.setText(tr("player.btn_deesser"))
+        self.deesser_btn.setToolTip(tr("player.tooltip_deesser"))
+        
+        self.compressor_btn.setText(tr("player.btn_compressor"))
+        self.compressor_btn.setToolTip(tr("player.tooltip_compressor"))
+        
+        self.noise_suppression_btn.setText(tr("player.btn_noise_suppression"))
+        self.noise_suppression_btn.setToolTip(tr("player.tooltip_noise_suppression"))
+        
+        # Sliders
+        self.volume_slider.setToolTip(tr("player.volume"))
+        
+        # Update dynamic labels
         speed_value = self.speed_slider.value() / 10
         self.speed_label.setText(trf("formats.speed", value=speed_value))
         self.volume_label.setText(trf("formats.percent", value=self.volume_slider.value()))
         
+        # Control Buttons Tooltips
         self.btn_prev.setToolTip(tr("player.prev_track"))
         self.btn_next.setToolTip(tr("player.next_track"))
         self.btn_rw60.setToolTip(tr("player.rewind_60"))
@@ -727,8 +904,18 @@ class PlayerWidget(QWidget):
         self.btn_ff10.setToolTip(tr("player.forward_10"))
         self.btn_ff60.setToolTip(tr("player.forward_60"))
         self.play_btn.setToolTip(tr("player.play"))
-        self.id3_btn.setToolTip(tr("player.show_id3"))
-        self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
-        self.deesser_btn.setToolTip(tr("player.tooltip_deesser"))
-        self.compressor_btn.setToolTip(tr("player.tooltip_compressor"))
-        self.noise_suppression_btn.setToolTip(tr("player.tooltip_noise_suppression"))
+        
+        # Popups
+        if hasattr(self, 'deesser_desc_label'):
+             # Re-trigger preset changed to update label text
+             self.on_deesser_preset_changed(self.deesser_preset)
+             
+        if hasattr(self, 'comp_desc_label'):
+             self.on_compressor_preset_changed(self.compressor_preset)
+             
+        if hasattr(self, 'vad_label'):
+            # Update VAD labels if needed, though they are usually numeric. 
+            # But the static labels "Sensitivity:", etc are in the popup layout.
+            # Popups are tricky to retranslate if labels aren't stored as self.attributes.
+            # For now, we focus on the main buttons.
+            pass
