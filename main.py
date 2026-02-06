@@ -76,6 +76,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.vad_retroactive_grace = 0  # Default 0 (0-100)
         self.deesser_preset = 1 # 0=Light, 1=Medium, 2=Strong
         self.compressor_preset = 1 # 0=Light, 1=Medium, 2=Strong
+        self.pitch_enabled = False
+        self.pitch_value = 0.0
         self.last_pause_time = None
         
         # Load user configurations and localization settings
@@ -206,6 +208,9 @@ class AudiobookPlayerWindow(QMainWindow):
         
         self.player_widget.noise_suppression_toggled_signal.connect(self.on_noise_suppression_state_toggled)
         
+        self.player_widget.pitch_toggled_signal.connect(self.on_pitch_toggled)
+        self.player_widget.pitch_changed_signal.connect(self.on_pitch_changed)
+        
         # VAD threshold slider
         self.player_widget.vad_threshold_changed_signal.connect(self.on_vad_threshold_changed)
         
@@ -223,6 +228,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.deesser_btn.setChecked(self.deesser_enabled)
         self.player_widget.compressor_btn.setChecked(self.compressor_enabled)
         self.player_widget.noise_suppression_btn.setChecked(self.noise_suppression_enabled)
+        self.player_widget.pitch_btn.setChecked(self.pitch_enabled)
         
         # Set initial values for sliders
         self.player_widget.set_vad_threshold_value(self.vad_threshold)
@@ -230,6 +236,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.set_vad_retro_value(self.vad_retroactive_grace)
         self.player_widget.set_deesser_preset_value(self.deesser_preset)
         self.player_widget.set_compressor_preset_value(self.compressor_preset)
+        self.player_widget.set_pitch_value(self.pitch_value)
         
         self.splitter.addWidget(self.player_widget)
         
@@ -414,6 +421,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.vad_retroactive_grace = config.getint('Audio', 'vad_retroactive_grace', fallback=config.getint('Player', 'vad_retroactive_grace', fallback=0))
         self.deesser_preset = config.getint('Audio', 'deesser_preset', fallback=1)
         self.compressor_preset = config.getint('Audio', 'compressor_preset', fallback=1)
+        self.pitch_enabled = config.getboolean('Audio', 'pitch_enabled', fallback=False)
+        self.pitch_value = config.getfloat('Audio', 'pitch_value', fallback=0.0)
         
         # Apply settings
         self.player.set_deesser_preset(self.deesser_preset)
@@ -426,6 +435,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_vad_grace_period(self.vad_grace_period)
         self.player.set_retroactive_grace(self.vad_retroactive_grace)
         self.player.set_noise_suppression(self.noise_suppression_enabled)
+        self.player.set_pitch(self.pitch_value)
+        self.player.set_pitch_enabled(self.pitch_enabled)
         self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
         self.show_filter_labels = config.getboolean('Library', 'show_filter_labels', fallback=True)
         
@@ -527,7 +538,12 @@ class AudiobookPlayerWindow(QMainWindow):
             'vad_grace_period': str(self.vad_grace_period),
             'vad_retroactive_grace': str(self.vad_retroactive_grace),
             'deesser_preset': str(self.deesser_preset),
-            'compressor_preset': str(self.compressor_preset)
+            'vac_grace_period': str(self.vad_grace_period),
+            'vad_retroactive_grace': str(self.vad_retroactive_grace),
+            'deesser_preset': str(self.deesser_preset),
+            'compressor_preset': str(self.compressor_preset),
+            'pitch_enabled': str(self.pitch_enabled),
+            'pitch_value': str(self.pitch_value)
         }
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
@@ -684,6 +700,18 @@ class AudiobookPlayerWindow(QMainWindow):
         """Handle Compressor preset change"""
         self.compressor_preset = value
         self.player.set_compressor_preset(value)
+        self.save_settings()
+
+    def on_pitch_toggled(self, state: bool):
+        """Update and persist pitch enabled state"""
+        self.pitch_enabled = state
+        self.player.set_pitch_enabled(state)
+        self.save_settings()
+
+    def on_pitch_changed(self, value: float):
+        """Update and persist pitch value"""
+        self.pitch_value = value
+        self.player.set_pitch(value)
         self.save_settings()
 
     def on_show_folders_toggled(self, checked):

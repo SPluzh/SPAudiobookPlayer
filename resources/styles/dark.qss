@@ -175,6 +175,31 @@ QPushButton#noiseSuppressionBtn:checked {
     font-weight: bold;
 }
 
+/* Pitch Toggle Button */
+QPushButton#pitchBtn {
+    background-color: #373737;
+    border: 1px solid #808080;
+    color: #eaeaea;
+    padding: 2px 5px;
+    font-weight: 500;
+    font-size: 11px;
+    min-height: 18px;
+    margin-top: 2px;
+    border-radius: 3px;
+}
+
+QPushButton#pitchBtn:hover {
+    background-color: #018574;
+    border-color: #018574;
+    color: #ffffff;
+}
+
+QPushButton#pitchBtn:checked {
+    background-color: #018574;
+    border-color: #018574;
+    font-weight: bold;
+}
+
 /* Filter buttons in tab style */
 QPushButton#filterBtn {
     background-color: transparent;

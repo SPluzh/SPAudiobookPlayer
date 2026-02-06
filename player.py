@@ -292,6 +292,8 @@ class PlayerWidget(QWidget):
     vad_retroactive_grace_changed_signal = pyqtSignal(int)  # 0-100
     deesser_preset_changed_signal = pyqtSignal(int) # 0, 1, 2
     compressor_preset_changed_signal = pyqtSignal(int) # 0, 1, 2
+    pitch_toggled_signal = pyqtSignal(bool)
+    pitch_changed_signal = pyqtSignal(float)
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
@@ -388,6 +390,19 @@ class PlayerWidget(QWidget):
         self.noise_suppression_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.noise_suppression_btn.customContextMenuRequested.connect(self.show_vad_slider_popup)
         btns_row.addWidget(self.noise_suppression_btn)
+        
+        # Pitch Toggle
+        self.pitch_btn = QPushButton(tr("player.btn_pitch"))
+        self.pitch_btn.setCheckable(True)
+        self.pitch_btn.setFixedWidth(40)
+        self.pitch_btn.setObjectName("pitchBtn")
+        self.pitch_btn.setToolTip(tr("player.tooltip_pitch"))
+        self.pitch_btn.toggled.connect(self.on_pitch_toggled)
+        # Right-click for Pitch settings
+        self.pitch_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.pitch_btn.customContextMenuRequested.connect(self.show_pitch_popup)
+        btns_row.addWidget(self.pitch_btn)
+
         btns_row.addStretch()
         
         # VAD Threshold Popup (Advanced Settings)
@@ -478,6 +493,25 @@ class PlayerWidget(QWidget):
         self.comp_desc_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         comp_layout.addWidget(self.comp_desc_label)
         
+        # Pitch Popup
+        self.pitch_popup = QWidget(self, Qt.WindowType.Popup)
+        self.pitch_popup.setObjectName("vadPopup") # Reuse same style
+        self.pitch_popup.setStyleSheet("QWidget#vadPopup { background-color: #373737; border: 1px solid #808080; border-radius: 3px; }")
+        pitch_layout = QHBoxLayout(self.pitch_popup)
+        pitch_layout.setContentsMargins(8, 4, 8, 4)
+        
+        self.pitch_slider = QSlider(Qt.Orientation.Horizontal)
+        self.pitch_slider.setRange(-120, 120) # -12.0 to +12.0 semitones
+        self.pitch_slider.setValue(0)
+        self.pitch_slider.setFixedWidth(120)
+        self.pitch_slider.valueChanged.connect(self.on_pitch_slider_changed)
+        pitch_layout.addWidget(self.pitch_slider)
+        
+        self.pitch_val_label = QLabel(f"0.0 {tr('player.pitch_label')}")
+        self.pitch_val_label.setFixedWidth(60)
+        self.pitch_val_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        pitch_layout.addWidget(self.pitch_val_label)
+
         settings_layout.addLayout(btns_row)
         
         # Sliders Row (Volume + Speed)
@@ -798,6 +832,7 @@ class PlayerWidget(QWidget):
         """Programmatically set Compressor preset"""
         self.comp_slider.blockSignals(True)
         self.comp_slider.setValue(value)
+        # Also update label
         labels = {
             0: tr("player.preset_light"),
             1: tr("player.preset_medium"),
@@ -805,6 +840,29 @@ class PlayerWidget(QWidget):
         }
         self.comp_desc_label.setText(labels.get(value, ""))
         self.comp_slider.blockSignals(False)
+
+    def on_pitch_toggled(self, checked):
+        self.pitch_toggled_signal.emit(checked)
+
+    def show_pitch_popup(self, pos):
+        """Show Pitch settings popup below the button"""
+        global_pos = self.pitch_btn.mapToGlobal(QPoint(0, self.pitch_btn.height()))
+        self.pitch_popup.move(global_pos)
+        self.pitch_popup.show()
+
+    def on_pitch_slider_changed(self, value: int):
+        """Handle pitch slider change (value is x10 semitones)"""
+        semitones = value / 10.0
+        self.pitch_val_label.setText(f"{semitones:+.1f} {tr('player.pitch_label')}")
+        self.pitch_changed_signal.emit(semitones)
+
+    def set_pitch_value(self, semitones: float):
+        """Programmatically set pitch value"""
+        self.pitch_slider.blockSignals(True)
+        self.pitch_slider.setValue(int(semitones * 10))
+        self.pitch_val_label.setText(f"{semitones:+.1f} {tr('player.pitch_label')}")
+        self.pitch_slider.blockSignals(False)
+
     
     def set_noise_suppression_active(self, active: bool):
         """Visual indicator when noise suppression is processing"""
@@ -891,6 +949,9 @@ class PlayerWidget(QWidget):
         self.noise_suppression_btn.setText(tr("player.btn_noise_suppression"))
         self.noise_suppression_btn.setToolTip(tr("player.tooltip_noise_suppression"))
         
+        self.pitch_btn.setText(tr("player.btn_pitch"))
+        self.pitch_btn.setToolTip(tr("player.tooltip_pitch"))
+        
         # Sliders
         self.volume_slider.setToolTip(tr("player.volume"))
         
@@ -933,3 +994,8 @@ class PlayerWidget(QWidget):
                 self.vad_grace_slider.setToolTip(tr("player.tooltip_vad_grace"))
             if hasattr(self, 'vad_retro_slider'):
                 self.vad_retro_slider.setToolTip(tr("player.tooltip_vad_retro"))
+        
+        if hasattr(self, 'pitch_val_label'):
+             # Update pitch label unit "st"
+             semitones = self.pitch_slider.value() / 10.0
+             self.pitch_val_label.setText(f"{semitones:+.1f} {tr('player.pitch_label')}")

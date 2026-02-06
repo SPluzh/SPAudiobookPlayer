@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.3]
+- **Pitch Control**: Implemented independent pitch shifting functionality.
+    - Added "Pitch" toggle button with context menu for fine-tuning (-12 to +12 semitones).
+
 ## [1.3.2]
 - **Library**: Implemented **Virtual Merge** feature for folders:
     - Allows merging a folder and its subfolders into a single audiobook without changing physical files.

@@ -11,6 +11,8 @@ BASS_UNICODE = 0x80000000
 BASS_FX_FREESOURCE = 0x10000
 BASS_ATTRIB_VOL = 2
 BASS_ATTRIB_TEMPO = 0x10000
+BASS_ATTRIB_TEMPO = 0x10000
+BASS_ATTRIB_TEMPO_PITCH = 0x10001
 BASS_POS_BYTE = 0
 BASS_ACTIVE_PLAYING = 1
 BASS_FX_BFX_PEAKEQ = 0x10004
@@ -144,6 +146,10 @@ class BassPlayer:
         self.deesser_preset = 1
         self.compressor_preset = 1
         self.has_vst = bass_vst is not None
+        
+        # Pitch state
+        self.pitch_enabled = False
+        self.pitch_pos = 0.0
 
         # Initialize BASS at 48kHz (required for RNNoise VST plugin)
         if bass and bass.BASS_Init(-1, 48000, 0, 0, None):
@@ -353,6 +359,16 @@ class BassPlayer:
         self.speed_pos = max(5, min(20, value))
         self.apply_attributes()
 
+    def set_pitch(self, semitones: float):
+        """Set pitch in semitones (e.g. -12 to +12)"""
+        self.pitch_pos = semitones
+        self.apply_attributes()
+
+    def set_pitch_enabled(self, enabled: bool):
+        """Enable/Disable pitch shifting"""
+        self.pitch_enabled = enabled
+        self.apply_attributes()
+
     def set_noise_suppression(self, enabled: bool):
         """Toggle noise suppression (RNNoise VST plugin)"""
         self.noise_suppression_enabled = enabled
@@ -487,6 +503,9 @@ class BassPlayer:
         if self.has_fx:
             tempo_percent = (self.speed_pos * 10) - 100.0
             bass.BASS_ChannelSetAttribute(self.chan, BASS_ATTRIB_TEMPO, c_float(tempo_percent))
+            
+            pitch_val = self.pitch_pos if self.pitch_enabled else 0.0
+            bass.BASS_ChannelSetAttribute(self.chan, BASS_ATTRIB_TEMPO_PITCH, c_float(pitch_val))
         # Always reapply effects when attributes are reapplied (e.g. on new track)
         self.apply_noise_suppression()  # First in chain (priority -1)
         self.apply_deesser()
