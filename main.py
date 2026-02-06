@@ -71,6 +71,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.deesser_enabled = False
         self.compressor_enabled = False
         self.noise_suppression_enabled = False
+        self.vad_threshold = 90  # Default 90% (0-100)
+        self.vad_grace_period = 20  # Default 20 (0-100)
+        self.vad_retroactive_grace = 0  # Default 0 (0-100)
         self.last_pause_time = None
         
         # Load user configurations and localization settings
@@ -203,6 +206,16 @@ class AudiobookPlayerWindow(QMainWindow):
         
         self.player_widget.noise_suppression_btn.setChecked(self.noise_suppression_enabled)
         self.player_widget.noise_suppression_toggled_signal.connect(self.on_noise_suppression_state_toggled)
+        
+        # VAD threshold slider
+        self.player_widget.set_vad_threshold_value(self.vad_threshold)
+        self.player_widget.vad_threshold_changed_signal.connect(self.on_vad_threshold_changed)
+        
+        # VAD grace period sliders
+        self.player_widget.set_vad_grace_value(self.vad_grace_period)
+        self.player_widget.vad_grace_period_changed_signal.connect(self.on_vad_grace_period_changed)
+        self.player_widget.set_vad_retro_value(self.vad_retroactive_grace)
+        self.player_widget.vad_retroactive_grace_changed_signal.connect(self.on_vad_retro_grace_changed)
         
         self.splitter.addWidget(self.player_widget)
         
@@ -377,9 +390,15 @@ class AudiobookPlayerWindow(QMainWindow):
         self.deesser_enabled = config.getboolean('Player', 'deesser_enabled', fallback=False)
         self.compressor_enabled = config.getboolean('Player', 'compressor_enabled', fallback=False)
         self.noise_suppression_enabled = config.getboolean('Player', 'noise_suppression_enabled', fallback=False)
+        self.vad_threshold = config.getint('Player', 'vad_threshold', fallback=90)
+        self.vad_grace_period = config.getint('Player', 'vad_grace_period', fallback=20)
+        self.vad_retroactive_grace = config.getint('Player', 'vad_retroactive_grace', fallback=0)
         self.player.set_deesser(self.deesser_enabled)
         self.player.set_compressor(self.compressor_enabled)
         self.player.set_noise_suppression(self.noise_suppression_enabled)
+        self.player.set_vad_threshold(self.vad_threshold / 100.0)
+        self.player.set_vad_grace_period(self.vad_grace_period / 100.0)
+        self.player.set_retroactive_grace(self.vad_retroactive_grace / 100.0)
         self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
         self.show_filter_labels = config.getboolean('Library', 'show_filter_labels', fallback=True)
         
@@ -475,6 +494,9 @@ class AudiobookPlayerWindow(QMainWindow):
             config['Player']['deesser_enabled'] = str(self.deesser_enabled)
             config['Player']['compressor_enabled'] = str(self.compressor_enabled)
             config['Player']['noise_suppression_enabled'] = str(self.noise_suppression_enabled)
+            config['Player']['vad_threshold'] = str(self.vad_threshold)
+            config['Player']['vad_grace_period'] = str(self.vad_grace_period)
+            config['Player']['vad_retroactive_grace'] = str(self.vad_retroactive_grace)
         
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
@@ -601,6 +623,24 @@ class AudiobookPlayerWindow(QMainWindow):
         """Update and persist the Noise Suppression preference"""
         self.noise_suppression_enabled = state
         self.player.set_noise_suppression(state)
+        self.save_settings()
+
+    def on_vad_threshold_changed(self, value: int):
+        """Update VAD threshold when slider changed"""
+        self.vad_threshold = value
+        self.player.set_vad_threshold(value / 100.0)
+        self.save_settings()
+
+    def on_vad_grace_period_changed(self, value: int):
+        """Update VAD Grace Period when slider changed"""
+        self.vad_grace_period = value
+        self.player.set_vad_grace_period(value / 100.0)
+        self.save_settings()
+
+    def on_vad_retro_grace_changed(self, value: int):
+        """Update Retroactive VAD Grace when slider changed"""
+        self.vad_retroactive_grace = value
+        self.player.set_retroactive_grace(value / 100.0)
         self.save_settings()
 
     def on_show_folders_toggled(self, checked):

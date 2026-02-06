@@ -69,7 +69,13 @@
     "tooltip_deesser": "DeEsser: reduces sharp 's' sounds in audiobooks",
     "compressor": "Compressor",
     "tooltip_compressor": "Compressor: normalizes volume levels",
-    "tooltip_noise_suppression": "Noise Suppression (RNNoise): removes background noise",
+    "tooltip_noise_suppression": "Noise Suppression (RNNoise). RMB: VAD settings",
+    "tooltip_vad_threshold": "VAD Threshold (Sensitivity). Rec: 90-95%",
+    "tooltip_vad_grace": "Grace Period (keeps endings). Rec: 20-50%",
+    "tooltip_vad_retro": "Retroactive Grace (keeps starts, adds latency!). Rec: 0%",
+    "vad_sens_label": "Sens:",
+    "vad_grace_label": "Grace:",
+    "vad_retro_label": "Retro:",
     "of": "of"
   },
   "status": {

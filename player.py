@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, 
     QLabel, QProgressBar, QListWidget, QListWidgetItem, QSizePolicy,
-    QFrame
+    QFrame, QGridLayout
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
 
@@ -248,6 +248,9 @@ class PlayerWidget(QWidget):
     deesser_toggled_signal = pyqtSignal(bool)
     compressor_toggled_signal = pyqtSignal(bool)
     noise_suppression_toggled_signal = pyqtSignal(bool)
+    vad_threshold_changed_signal = pyqtSignal(int)  # 0-100
+    vad_grace_period_changed_signal = pyqtSignal(int)  # 0-100 (mapped to 0-1000ms?)
+    vad_retroactive_grace_changed_signal = pyqtSignal(int)  # 0-100
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
@@ -322,8 +325,56 @@ class PlayerWidget(QWidget):
         self.noise_suppression_btn.setObjectName("noiseSuppressionBtn")
         self.noise_suppression_btn.setToolTip(tr("player.tooltip_noise_suppression"))
         self.noise_suppression_btn.toggled.connect(self.on_noise_suppression_toggled)
+        # Right-click for VAD threshold popup
+        self.noise_suppression_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.noise_suppression_btn.customContextMenuRequested.connect(self.show_vad_slider_popup)
         btns_row.addWidget(self.noise_suppression_btn)
         btns_row.addStretch()
+        
+        # VAD Threshold Popup (Advanced Settings)
+        self.vad_popup = QWidget(self, Qt.WindowType.Popup)
+        vad_layout = QGridLayout(self.vad_popup)
+        vad_layout.setContentsMargins(8, 8, 8, 8)
+        vad_layout.setSpacing(8)
+        
+        # 1. Sensitivity (Threshold)
+        vad_layout.addWidget(QLabel(tr("player.vad_sens_label")), 0, 0)
+        self.vad_slider = QSlider(Qt.Orientation.Horizontal)
+        self.vad_slider.setRange(0, 100)
+        self.vad_slider.setValue(90)
+        self.vad_slider.setFixedWidth(120)
+        self.vad_slider.setToolTip(tr("player.tooltip_vad_threshold"))
+        self.vad_slider.valueChanged.connect(self.on_vad_threshold_changed)
+        vad_layout.addWidget(self.vad_slider, 0, 1)
+        self.vad_label = QLabel("90%")
+        self.vad_label.setFixedWidth(35)
+        vad_layout.addWidget(self.vad_label, 0, 2)
+        
+        # 2. Grace Period
+        vad_layout.addWidget(QLabel(tr("player.vad_grace_label")), 1, 0)
+        self.vad_grace_slider = QSlider(Qt.Orientation.Horizontal)
+        self.vad_grace_slider.setRange(0, 100) # 0-100% (arbitrary scale)
+        self.vad_grace_slider.setValue(20)
+        self.vad_grace_slider.setFixedWidth(120)
+        self.vad_grace_slider.setToolTip(tr("player.tooltip_vad_grace"))
+        self.vad_grace_slider.valueChanged.connect(self.on_vad_grace_changed)
+        vad_layout.addWidget(self.vad_grace_slider, 1, 1)
+        self.vad_grace_label = QLabel("20%")
+        self.vad_grace_label.setFixedWidth(35)
+        vad_layout.addWidget(self.vad_grace_label, 1, 2)
+        
+        # 3. Retroactive Grace
+        vad_layout.addWidget(QLabel(tr("player.vad_retro_label")), 2, 0)
+        self.vad_retro_slider = QSlider(Qt.Orientation.Horizontal)
+        self.vad_retro_slider.setRange(0, 100)
+        self.vad_retro_slider.setValue(0)
+        self.vad_retro_slider.setFixedWidth(120)
+        self.vad_retro_slider.setToolTip(tr("player.tooltip_vad_retro"))
+        self.vad_retro_slider.valueChanged.connect(self.on_vad_retro_changed)
+        vad_layout.addWidget(self.vad_retro_slider, 2, 1)
+        self.vad_retro_label = QLabel("0%")
+        self.vad_retro_label.setFixedWidth(35)
+        vad_layout.addWidget(self.vad_retro_label, 2, 2)
         
         settings_layout.addLayout(btns_row)
         
@@ -554,6 +605,57 @@ class PlayerWidget(QWidget):
     
     def on_noise_suppression_toggled(self, checked):
         self.noise_suppression_toggled_signal.emit(checked)
+    
+    def show_vad_slider_popup(self, pos):
+        """Show VAD threshold slider popup on right-click"""
+        global_pos = self.noise_suppression_btn.mapToGlobal(pos)
+        self.vad_popup.move(global_pos.x(), global_pos.y() - self.vad_popup.sizeHint().height())
+        self.vad_popup.show()
+    
+    def on_vad_threshold_changed(self, value):
+        """Handle VAD threshold slider change"""
+        self.vad_label.setText(f"{value}%")
+        self.vad_threshold_changed_signal.emit(value)
+    
+    def set_vad_threshold_value(self, value: int):
+        """Set VAD slider value programmatically (from settings)"""
+        self.vad_slider.blockSignals(True)
+        self.vad_slider.setValue(value)
+        self.vad_label.setText(f"{value}%")
+        self.vad_slider.blockSignals(False)
+
+    def on_vad_grace_changed(self, value: int):
+        """Handle VAD Grace Period slider change"""
+        self.vad_grace_label.setText(f"{value}%")
+        self.vad_grace_period_changed_signal.emit(value)
+
+    def set_vad_grace_value(self, value: int):
+        """Set VAD Grace Period slider value programmatically"""
+        self.vad_grace_slider.blockSignals(True)
+        self.vad_grace_slider.setValue(value)
+        self.vad_grace_label.setText(f"{value}%")
+        self.vad_grace_slider.blockSignals(False)
+
+    def on_vad_retro_changed(self, value: int):
+        """Handle Retroactive VAD Grace slider change"""
+        self.vad_retro_label.setText(f"{value}%")
+        self.vad_retroactive_grace_changed_signal.emit(value)
+
+    def set_vad_retro_value(self, value: int):
+        """Set Retroactive VAD Grace slider value programmatically"""
+        self.vad_retro_slider.blockSignals(True)
+        self.vad_retro_slider.setValue(value)
+        self.vad_retro_label.setText(f"{value}%")
+        self.vad_retro_slider.blockSignals(False)
+    
+    def set_noise_suppression_active(self, active: bool):
+        """Visual indicator when noise suppression is processing"""
+        if active and self.noise_suppression_btn.isChecked():
+            self.noise_suppression_btn.setStyleSheet(
+                "QPushButton:checked { background-color: #4CAF50; color: white; }"
+            )
+        else:
+            self.noise_suppression_btn.setStyleSheet("")
     
     def load_files(self, files_list: list, current_index: int = 0):
         self.last_files_list = files_list

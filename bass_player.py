@@ -136,6 +136,9 @@ class BassPlayer:
         # Noise suppression (VST) state
         self.noise_suppression_enabled = False
         self.noise_suppression_handle = 0
+        self.vad_threshold = 0.90  # Default 90% (0.0-1.0)
+        self.vad_grace_period = 0.0  # Param 1: Grace Period
+        self.vad_retroactive_grace = 0.0  # Param 2: Retroactive Grace
         self.has_vst = bass_vst is not None
 
         # Initialize BASS at 48kHz (required for RNNoise VST plugin)
@@ -351,6 +354,24 @@ class BassPlayer:
         self.noise_suppression_enabled = enabled
         self.apply_noise_suppression()
 
+    def set_vad_threshold(self, value: float):
+        """Set VAD threshold (0.0-1.0) for noise suppression sensitivity"""
+        self.vad_threshold = max(0.0, min(1.0, value))
+        if self.noise_suppression_handle != 0 and self.has_vst:
+            bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 0, self.vad_threshold)
+
+    def set_vad_grace_period(self, value: float):
+        """Set VAD Grace Period (0.0-1.0) - delay before silence"""
+        self.vad_grace_period = max(0.0, min(1.0, value))
+        if self.noise_suppression_handle != 0 and self.has_vst:
+            bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 1, self.vad_grace_period)
+
+    def set_retroactive_grace(self, value: float):
+        """Set Retroactive Grace Period (0.0-1.0) - pre-recording buffer (latency!)"""
+        self.vad_retroactive_grace = max(0.0, min(1.0, value))
+        if self.noise_suppression_handle != 0 and self.has_vst:
+            bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 2, self.vad_retroactive_grace)
+
     def apply_noise_suppression(self):
         """Apply or remove the noise suppression VST effect on the current channel"""
         if self.chan == 0 or not self.initialized or not self.has_vst:
@@ -373,9 +394,10 @@ class BassPlayer:
                 )
                 
                 if self.noise_suppression_handle != 0:
-                    # Configure plugin parameters
-                    # Param 0: VAD Threshold (0.0-1.0, default ~0.90)
-                    bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 0, 0.90)
+                    # Configure plugin parameters using stored threshold
+                    bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 0, self.vad_threshold)
+                    bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 1, self.vad_grace_period)
+                    bass_vst.BASS_VST_SetParam(self.noise_suppression_handle, 2, self.vad_retroactive_grace)
 
     def set_deesser(self, enabled: bool):
         """Toggle DeEsser (parametric EQ filter at 6kHz)"""
