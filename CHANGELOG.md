@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.4]
+- **Metadata**: Implemented **Edit Metadata** context menu option.
+    - Allows manual editing of Author, Title, and Narrator fields.
+
 ## [1.3.3]
 - **Pitch Control**: Implemented independent pitch shifting functionality.
     - Added "Pitch" toggle button with context menu for fine-tuning (-12 to +12 semitones).

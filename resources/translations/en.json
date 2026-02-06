@@ -19,6 +19,7 @@
   "library": {
     "search_placeholder": "Search by title, author, narrator...",
     "context_play": "Play",
+    "menu_edit_metadata": "Edit Metadata",
     "menu_open_folder": "Open Folder",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Mark as Read",
@@ -156,6 +157,16 @@
   },
   "units": {
     "kbps": "kbps"
+  },
+  "metadata": {
+    "edit_title": "Edit Metadata",
+    "author": "Author:",
+    "title": "Title:",
+    "narrator": "Narrator:",
+    "from_tags": "From Tags",
+    "from_tags_tooltip": "Fill fields from file tags (ID3)",
+    "save": "Save",
+    "cancel": "Cancel"
   },
   "tags": {
     "edit_title": "Edit Tag",

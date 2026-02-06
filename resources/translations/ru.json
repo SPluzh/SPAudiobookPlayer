@@ -19,6 +19,7 @@
   "library": {
     "search_placeholder": "Поиск по названию, автору, рассказчику...",
     "context_play": "Воспроизвести",
+    "menu_edit_metadata": "Редактировать метаданные",
     "menu_open_folder": "Открыть папку",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Отметить прочитанной",
@@ -156,6 +157,16 @@
   },
   "units": {
     "kbps": "кбит/с"
+  },
+  "metadata": {
+    "edit_title": "Редактирование метаданных",
+    "author": "Автор:",
+    "title": "Название:",
+    "narrator": "Чтец:",
+    "from_tags": "Из тегов",
+    "from_tags_tooltip": "Заполнить из тегов файла (ID3)",
+    "save": "Сохранить",
+    "cancel": "Отмена"
   },
   "tags": {
     "edit_title": "Редактирование тега",

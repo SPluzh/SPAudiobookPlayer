@@ -885,3 +885,82 @@ class DatabaseManager:
         finally:
             conn.close()
 
+    def get_audiobook_metadata(self, audiobook_id: int) -> Optional[Dict]:
+        """Get editable metadata and tag values for an audiobook"""
+        if not audiobook_id:
+            return None
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT author, title, narrator, tag_author, tag_title, tag_narrator
+                FROM audiobooks 
+                WHERE id = ?
+            ''', (audiobook_id,))
+            row = cursor.fetchone()
+            
+            if row:
+                return {
+                    'author': row[0],
+                    'title': row[1],
+                    'narrator': row[2],
+                    'tag_author': row[3],
+                    'tag_title': row[4],
+                    'tag_narrator': row[5]
+                }
+            return None
+        except sqlite3.Error as e:
+            print(f"Database error in get_audiobook_metadata: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def update_audiobook_metadata(self, audiobook_id: int, author: str, title: str, narrator: str):
+        """Update audiobook metadata"""
+        if not audiobook_id:
+            return
+
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE audiobooks
+                SET author = ?, title = ?, narrator = ?, last_updated = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (author, title, narrator, audiobook_id))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in update_audiobook_metadata: {e}")
+        finally:
+            conn.close()
+
+    def get_all_authors(self) -> List[str]:
+        """Get list of all unique authors"""
+        return self._get_unique_column_values('author')
+
+    def get_all_titles(self) -> List[str]:
+        """Get list of all unique titles"""
+        return self._get_unique_column_values('title')
+
+    def get_all_narrators(self) -> List[str]:
+        """Get list of all unique narrators"""
+        return self._get_unique_column_values('narrator')
+
+    def _get_unique_column_values(self, column: str) -> List[str]:
+        """Helper to get unique non-empty values from a column"""
+        if not self.db_file.exists():
+            return []
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            # Use distinct and filter out nulls/empty strings
+            cursor.execute(f"SELECT DISTINCT {column} FROM audiobooks WHERE {column} IS NOT NULL AND {column} != '' ORDER BY {column}")
+            return [row[0] for row in cursor.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Database error in _get_unique_column_values for {column}: {e}")
+            return []
+        finally:
+            conn.close()
+

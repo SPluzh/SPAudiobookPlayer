@@ -24,6 +24,7 @@ from utils import (
 )
 from scanner import AudiobookScanner
 from tags_dialog import TagManagerDialog
+from metadata_dialog import MetadataEditDialog
 
 class ScannerThread(QThread):
     """Background thread for scanning a directory for audiobooks"""
@@ -1299,7 +1300,13 @@ class LibraryWidget(QWidget):
             assign_action.triggered.connect(lambda _: self.open_tag_assignment(audiobook_id, path))
             tags_menu.addAction(assign_action)
             
+            menu.addSeparator()
 
+            edit_metadata_action = QAction(tr("library.menu_edit_metadata"), self)
+            # using standard icon for edit if custom not available
+            edit_metadata_action.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)) 
+            edit_metadata_action.triggered.connect(lambda _: self.open_metadata_editor(audiobook_id, path))
+            menu.addAction(edit_metadata_action)
             
             menu.addSeparator()
 
@@ -1420,6 +1427,23 @@ class LibraryWidget(QWidget):
         self.refresh_audiobook_item(path)
             
 
+
+    def open_metadata_editor(self, audiobook_id: int, path: str):
+        """Open dialog to edit audiobook metadata (author, title, narrator)"""
+        dialog = MetadataEditDialog(self.db, audiobook_id, self)
+        if dialog.exec():
+            # Get updated data
+            author, title, narrator = dialog.get_data()
+            
+            # Update database
+            self.db.update_audiobook_metadata(audiobook_id, author, title, narrator)
+            
+            # Refresh UI item
+            self.refresh_audiobook_item(path)
+            
+            # If currently filtered by text, re-apply filter in case metadata changed visibility
+            if self.search_edit.text():
+                self.filter_audiobooks()
 
     def confirm_delete(self, audiobook_id: int, path: str):
         """Ask for user confirmation before proceeding with book deletion"""
