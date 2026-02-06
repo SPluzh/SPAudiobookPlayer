@@ -399,7 +399,8 @@ class PlayerWidget(QWidget):
         vad_layout.setSpacing(8)
         
         # 1. Sensitivity (Threshold)
-        vad_layout.addWidget(QLabel(tr("player.vad_sens_label")), 0, 0)
+        self.vad_sens_label_title = QLabel(tr("player.vad_sens_label"))
+        vad_layout.addWidget(self.vad_sens_label_title, 0, 0)
         self.vad_slider = QSlider(Qt.Orientation.Horizontal)
         self.vad_slider.setRange(0, 100)
         self.vad_slider.setValue(90)
@@ -412,7 +413,8 @@ class PlayerWidget(QWidget):
         vad_layout.addWidget(self.vad_label, 0, 2)
         
         # 2. Grace Period
-        vad_layout.addWidget(QLabel(tr("player.vad_grace_label")), 1, 0)
+        self.vad_grace_label_title = QLabel(tr("player.vad_grace_label"))
+        vad_layout.addWidget(self.vad_grace_label_title, 1, 0)
         self.vad_grace_slider = QSlider(Qt.Orientation.Horizontal)
         self.vad_grace_slider.setRange(0, 100) # 0-100% (arbitrary scale)
         self.vad_grace_slider.setValue(20)
@@ -425,7 +427,8 @@ class PlayerWidget(QWidget):
         vad_layout.addWidget(self.vad_grace_label, 1, 2)
         
         # 3. Retroactive Grace
-        vad_layout.addWidget(QLabel(tr("player.vad_retro_label")), 2, 0)
+        self.vad_retro_label_title = QLabel(tr("player.vad_retro_label"))
+        vad_layout.addWidget(self.vad_retro_label_title, 2, 0)
         self.vad_retro_slider = QSlider(Qt.Orientation.Horizontal)
         self.vad_retro_slider.setRange(0, 100)
         self.vad_retro_slider.setValue(0)
@@ -705,8 +708,8 @@ class PlayerWidget(QWidget):
     
     def show_vad_slider_popup(self, pos):
         """Show VAD threshold slider popup on right-click"""
-        global_pos = self.noise_suppression_btn.mapToGlobal(pos)
-        self.vad_popup.move(global_pos.x(), global_pos.y() - self.vad_popup.sizeHint().height())
+        global_pos = self.noise_suppression_btn.mapToGlobal(QPoint(0, self.noise_suppression_btn.height()))
+        self.vad_popup.move(global_pos)
         self.vad_popup.show()
     
     def on_vad_threshold_changed(self, value):
@@ -916,6 +919,17 @@ class PlayerWidget(QWidget):
         if hasattr(self, 'vad_label'):
             # Update VAD labels if needed, though they are usually numeric. 
             # But the static labels "Sensitivity:", etc are in the popup layout.
-            # Popups are tricky to retranslate if labels aren't stored as self.attributes.
-            # For now, we focus on the main buttons.
-            pass
+            if hasattr(self, 'vad_sens_label_title'):
+                self.vad_sens_label_title.setText(tr("player.vad_sens_label"))
+            if hasattr(self, 'vad_grace_label_title'):
+                self.vad_grace_label_title.setText(tr("player.vad_grace_label"))
+            if hasattr(self, 'vad_retro_label_title'):
+                self.vad_retro_label_title.setText(tr("player.vad_retro_label"))
+            
+            # Update tooltips for VAD sliders
+            if hasattr(self, 'vad_slider'):
+                self.vad_slider.setToolTip(tr("player.tooltip_vad_threshold"))
+            if hasattr(self, 'vad_grace_slider'):
+                self.vad_grace_slider.setToolTip(tr("player.tooltip_vad_grace"))
+            if hasattr(self, 'vad_retro_slider'):
+                self.vad_retro_slider.setToolTip(tr("player.tooltip_vad_retro"))

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1]
+- **UI**: Improved **Noise Suppression** settings popup:
+    - Popup now appears correctly below the button.
+    - Added dynamic translation support for popup labels (Sensitivity, Grace Period, Retroactive).
+    - Labels update instantly when changing application language.
+
 ## [1.3.0]
 - **Noise Suppression**: Added advanced noise reduction system (Right-click **NS** button to configure).
     - Features tunable **VAD** (Voice Activity Detection): Sensitivity, Grace Period, and Retroactive recording.
