@@ -576,7 +576,60 @@ class AudiobookScanner:
             return False
         except PermissionError:
             return False
-    
+
+    def _get_cached_analysis(self, file_path: Path, conn) -> dict | None:
+        """Check cache and return metadata if file hasn't changed"""
+        try:
+            stat = file_path.stat()
+            # Use relative path if possible, otherwise absolute
+            rel_path = str(file_path)
+            
+            c = conn.cursor()
+            c.execute("""
+                SELECT duration, bitrate, codec, is_vbr, file_size, mtime
+                FROM file_metadata_cache
+                WHERE file_path = ?
+            """, (rel_path,))
+            
+            row = c.fetchone()
+            if row:
+                cached_size, cached_mtime = row[4], row[5]
+                # Check if file has changed (allowing small float precision difference for mtime)
+                if stat.st_size == cached_size and abs(stat.st_mtime - cached_mtime) < 0.01:
+                    return {
+                        'duration': row[0],
+                        'bitrate': row[1],
+                        'codec': row[2],
+                        'is_vbr': bool(row[3]),
+                        'needs_ffprobe': False
+                    }
+        except Exception:
+            pass
+        return None
+
+    def _save_to_cache(self, file_path: Path, info: dict, conn):
+        """Save analysis result to cache"""
+        try:
+            stat = file_path.stat()
+            rel_path = str(file_path)
+            
+            c = conn.cursor()
+            c.execute("""
+                INSERT OR REPLACE INTO file_metadata_cache
+                (file_path, file_size, mtime, duration, bitrate, codec, is_vbr, cached_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (
+                rel_path,
+                stat.st_size,
+                stat.st_mtime,
+                info['duration'],
+                info['bitrate'],
+                info['codec'],
+                1 if info.get('is_vbr') else 0
+            ))
+        except Exception:
+            pass
+
     def _analyze_file_fast(self, path, verbose=False):
         """
         Fast analysis of audio file using only mutagen.
@@ -689,27 +742,45 @@ class AudiobookScanner:
             info = self._analyze_file_with_ffprobe(path, info, verbose)
         return info
 
-    def _analyze_files_parallel(self, files, max_workers=4, verbose=False):
-        """Analyze a list of files concurrently"""
+    def _analyze_files_parallel(self, files, conn=None, max_workers=4, verbose=False):
+        """Analyze a list of files concurrently with caching"""
         if not files:
             return []
             
-        # Strategy: Run fast mutagen analysis in parallel. 
-        # Then run ffprobe sequentially for those that still need it 
-        # (ffprobe is heavy, multicore ffprobe might be too much I/O).
+        results = [None] * len(files)
+        files_to_analyze = []
+        file_indices = []
         
-        workers = min(max_workers, len(files))
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            fast_results = list(executor.map(lambda f: self._analyze_file_fast(f, verbose), files))
+        # 1. Check cache first
+        if conn:
+            for i, f in enumerate(files):
+                cached = self._get_cached_analysis(f, conn)
+                if cached:
+                    results[i] = cached
+                else:
+                    files_to_analyze.append(f)
+                    file_indices.append(i)
+        else:
+            files_to_analyze = files
+            file_indices = list(range(len(files)))
             
-        final_results = []
-        for f, info in zip(files, fast_results):
-            if info.pop('needs_ffprobe', False):
-                info = self._analyze_file_with_ffprobe(f, info, verbose)
-            final_results.append(info)
+        # 2. Analyze only non-cached files
+        if files_to_analyze:
+            workers = min(max_workers, len(files_to_analyze))
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                fast_results = list(executor.map(lambda f: self._analyze_file_fast(f, verbose), files_to_analyze))
+                
+            for idx, (f, info) in zip(file_indices, zip(files_to_analyze, fast_results)):
+                if info.pop('needs_ffprobe', False):
+                    info = self._analyze_file_with_ffprobe(f, info, verbose)
+                
+                # Save to cache
+                if conn and info['duration'] > 0:
+                    self._save_to_cache(f, info, conn)
+                    
+                results[idx] = info
             
-        return final_results
-
+        return results
 
     def _extract_embedded_cover(self, directory, key):
         """Extract embedded cover image from audio files"""
@@ -1009,6 +1080,9 @@ class AudiobookScanner:
             
             self._log_info(self.tr("scanner.found_folders", count=len(folders)))
             
+            # Cleanup old cache entries (older than 30 days)
+            c.execute("DELETE FROM file_metadata_cache WHERE cached_at < datetime('now', '-30 days')")
+            
             # Processing each folder
             # Processing each folder
             self._log_section(self.tr("scanner.processing_books"))
@@ -1069,7 +1143,7 @@ class AudiobookScanner:
                 title = f_title or t_title
                 narrator = f_narrator or t_narrator
                 
-                # Analyze files
+                # Analyze files in parallel
                 file_count = len(files)
                 duration = 0
                 failed_count = 0
@@ -1082,8 +1156,8 @@ class AudiobookScanner:
                 vbr_detected = False
                 cbr_detected = False
                 
-                # Analyze files in parallel
-                file_analyses = self._analyze_files_parallel(files, max_workers=4, verbose=verbose)
+                # Analyze files in parallel with cache lookup
+                file_analyses = self._analyze_files_parallel(files, conn=conn, max_workers=4, verbose=verbose)
                 
                 for info in file_analyses:
                     file_duration = info['duration']

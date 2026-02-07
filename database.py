@@ -179,6 +179,21 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         except sqlite3.OperationalError:
             pass
             
+        # File Metadata Cache table for faster rescanning
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS file_metadata_cache (
+                file_path TEXT PRIMARY KEY,
+                file_size INTEGER NOT NULL,
+                mtime REAL NOT NULL,
+                duration REAL NOT NULL DEFAULT 0,
+                bitrate INTEGER NOT NULL DEFAULT 0,
+                codec TEXT DEFAULT '',
+                is_vbr INTEGER DEFAULT 0,
+                cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_file_cache_path ON file_metadata_cache(file_path)")
+        
         conn.commit()
 
 
