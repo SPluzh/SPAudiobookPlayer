@@ -1,3 +1,4 @@
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, 
     QPushButton, QDialogButtonBox, QMessageBox, QFormLayout
@@ -38,6 +39,9 @@ class MetadataEditDialog(QDialog):
         # Author Field
         self.author_combo = QComboBox()
         self.author_combo.setEditable(True)
+        # Prevent resizing based on content
+        self.author_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.author_combo.setMinimumWidth(300)
         # Allow inserting any text
         self.author_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.author_combo.setCurrentText(self.current_data.get('author') or "")
@@ -46,6 +50,8 @@ class MetadataEditDialog(QDialog):
         # Title Field
         self.title_combo = QComboBox()
         self.title_combo.setEditable(True)
+        self.title_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.title_combo.setMinimumWidth(300)
         self.title_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.title_combo.setCurrentText(self.current_data.get('title') or "")
         form_layout.addRow(tr("metadata.title"), self.title_combo)
@@ -53,11 +59,17 @@ class MetadataEditDialog(QDialog):
         # Narrator Field
         self.narrator_combo = QComboBox()
         self.narrator_combo.setEditable(True)
+        self.narrator_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.narrator_combo.setMinimumWidth(300)
         self.narrator_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.narrator_combo.setCurrentText(self.current_data.get('narrator') or "")
         form_layout.addRow(tr("metadata.narrator"), self.narrator_combo)
+
         
         layout.addLayout(form_layout)
+        
+        # Action Buttons
+
         
         # "Fill from Tags" Button
         tags_layout = QHBoxLayout()
@@ -93,18 +105,43 @@ class MetadataEditDialog(QDialog):
         self.title_combo.blockSignals(True)
         self.narrator_combo.blockSignals(True)
         
-        # Get unique values
-        authors = self.db.get_all_authors()
-        titles = self.db.get_all_titles()
-        narrators = self.db.get_all_narrators()
         
-        # Add items (excluding the current value if it's already there to avoid dupes visually, 
-        # though QComboBox handles duplicates fine usually)
-        self.author_combo.addItems(authors)
-        self.title_combo.addItems(titles)
-        self.narrator_combo.addItems(narrators)
+        # 1. Local Suggestions (from this book's files)
+        # These match the actual file content, even if it's in the wrong tag
+        local_tags = self.db.get_all_book_raw_tags(self.audiobook_id)
         
-        # Restore current text (addItems might have cleared or changed selection)
+        # Helper to merge lists: [current_value] + [local_tags]
+        def create_suggestion_list(current_val):
+            items = []
+            seen = set()
+            
+            # Current value first
+            if current_val:
+                items.append(current_val)
+                seen.add(current_val)
+            
+            # Then local tags
+            for tag in local_tags:
+                if tag not in seen:
+                    items.append(tag)
+                    seen.add(tag)
+                    
+            return items
+
+        # Populate Combos
+        self.author_combo.addItems(create_suggestion_list(
+            self.current_data.get('author')
+        ))
+        
+        self.title_combo.addItems(create_suggestion_list(
+            self.current_data.get('title')
+        ))
+        
+        self.narrator_combo.addItems(create_suggestion_list(
+            self.current_data.get('narrator')
+        ))
+        
+        # Restore current text (addItems might change selection if current text is not first)
         if self.current_data.get('author'):
             self.author_combo.setCurrentText(self.current_data['author'])
         
@@ -117,7 +154,8 @@ class MetadataEditDialog(QDialog):
         self.author_combo.blockSignals(False)
         self.title_combo.blockSignals(False)
         self.narrator_combo.blockSignals(False)
-        
+
+
     def fill_from_tags(self):
         """Fill entry fields using the extracted ID3 tags"""
         if self.current_data:

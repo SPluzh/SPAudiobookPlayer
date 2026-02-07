@@ -936,31 +936,120 @@ class DatabaseManager:
             conn.close()
 
     def get_all_authors(self) -> List[str]:
-        """Get list of all unique authors"""
-        return self._get_unique_column_values('author')
+        """Get list of all unique authors (including from tags)"""
+        return self._get_unique_merged_values('author', 'tag_author')
 
     def get_all_titles(self) -> List[str]:
-        """Get list of all unique titles"""
-        return self._get_unique_column_values('title')
+        """Get list of all unique titles (including from tags)"""
+        return self._get_unique_merged_values('title', 'tag_title')
 
     def get_all_narrators(self) -> List[str]:
-        """Get list of all unique narrators"""
-        return self._get_unique_column_values('narrator')
+        """Get list of all unique narrators (including from tags)"""
+        return self._get_unique_merged_values('narrator', 'tag_narrator')
 
-    def _get_unique_column_values(self, column: str) -> List[str]:
-        """Helper to get unique non-empty values from a column"""
+    def _get_unique_merged_values(self, col1: str, col2: str) -> List[str]:
+        """Helper to get unique non-empty values from two columns"""
         if not self.db_file.exists():
             return []
             
         conn = sqlite3.connect(self.db_file)
         try:
             cursor = conn.cursor()
-            # Use distinct and filter out nulls/empty strings
-            cursor.execute(f"SELECT DISTINCT {column} FROM audiobooks WHERE {column} IS NOT NULL AND {column} != '' ORDER BY {column}")
+            # Union of both columns, distinct, non-empty
+            query = f"""
+                SELECT {col1} FROM audiobooks WHERE {col1} IS NOT NULL AND {col1} != ''
+                UNION
+                SELECT {col2} FROM audiobooks WHERE {col2} IS NOT NULL AND {col2} != ''
+                ORDER BY 1
+            """
+            cursor.execute(query)
             return [row[0] for row in cursor.fetchall()]
         except sqlite3.Error as e:
-            print(f"Database error in _get_unique_column_values for {column}: {e}")
+            print(f"Database error in _get_unique_merged_values for {col1}/{col2}: {e}")
             return []
         finally:
             conn.close()
+
+    def get_all_book_raw_tags(self, audiobook_id: int) -> List[str]:
+        """
+        Get a flat list of ALL unique text values found in the metadata 
+        for a specific audiobook (file tags and book tags).
+        Useful for suggesting values when tags are mixed up (e.g. Author in Title tag).
+        """
+        if not audiobook_id:
+            return []
+            
+        conn = sqlite3.connect(self.db_file)
+        values = set()
+        try:
+            cursor = conn.cursor()
+            
+            # 1. Get tags from audiobook record
+            cursor.execute('''
+                SELECT author, title, narrator, tag_author, tag_title, tag_narrator
+                FROM audiobooks WHERE id = ?
+            ''', (audiobook_id,))
+            row = cursor.fetchone()
+            if row:
+                for val in row:
+                    if val and isinstance(val, str):
+                        values.add(val.strip())
+            
+            # 2. Get tags from all files belonging to this audiobook
+            # We check standard tag columns
+            cursor.execute('''
+                SELECT tag_title, tag_artist, tag_album, tag_genre, tag_comment
+                FROM audiobook_files WHERE audiobook_id = ?
+            ''', (audiobook_id,))
+            
+            file_rows = cursor.fetchall()
+            for f_row in file_rows:
+                for val in f_row:
+                    if val and isinstance(val, str):
+                        val_clean = val.strip()
+                        # specific filter to avoid junk like "Track 1" if possible, but keep it simple for now
+                        if val_clean and len(val_clean) > 1: 
+                            values.add(val_clean)
+                            
+            return sorted(list(values))
+            
+        except sqlite3.Error as e:
+            print(f"Database error in get_all_book_raw_tags: {e}")
+            return []
+        finally:
+            conn.close()
+
+    def get_filename_for_metadata(self, audiobook_id: int) -> Optional[str]:
+        """Get the folder name or filename for metadata parsing."""
+        if not audiobook_id:
+            return None
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            # 1. First try to get the main audiobook path (usually the folder)
+            cursor.execute('SELECT path, is_folder FROM audiobooks WHERE id = ?', (audiobook_id,))
+            row = cursor.fetchone()
+            if row:
+                path, is_folder = row
+                # Always return the basename of the main path first
+                # For folders: "C:/Books/Stephen King - The Shining" -> "Stephen King - The Shining"
+                # For single files: "C:/Books/Book.mp3" -> "Book.mp3"
+                if path:
+                    return os.path.basename(path)
+
+            # 2. Fallback to individual files if main path is somehow missing or weird
+            cursor.execute('SELECT file_name FROM audiobook_files WHERE audiobook_id = ? ORDER BY track_number, file_name LIMIT 1', (audiobook_id,))
+            row = cursor.fetchone()
+            if row and row[0]:
+                return row[0]
+                
+            return None
+        except sqlite3.Error as e:
+            print(f"Database error in get_filename_for_metadata: {e}")
+            return None
+        finally:
+            conn.close()
+
 
