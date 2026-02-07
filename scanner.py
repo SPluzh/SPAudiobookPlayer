@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import re
+import time
 from pathlib import Path
 import configparser
 import json
@@ -932,6 +933,7 @@ class AudiobookScanner:
 
     def scan_directory(self, root_path, verbose=False):
         """Perform recursive directory scanning for audiobooks"""
+        start_time = time.time()
         self._log_header(self.tr("scanner.scan_start"))
         
         root = Path(root_path)
@@ -1498,8 +1500,13 @@ class AudiobookScanner:
             conn.commit()
         
         # Result statistics
+        elapsed_time = time.time() - start_time
+        elapsed_minutes = int(elapsed_time // 60)
+        elapsed_seconds = int(elapsed_time % 60)
+        
         self._log_header(self.tr("scanner.scan_complete"))
         self._log_info(self.tr("scanner.processed_count", count=len(folders)))
+        self._log_info(self.tr("scanner.elapsed_time", minutes=elapsed_minutes, seconds=elapsed_seconds))
         self._log_info(self.tr("scanner.db_file", path=self.db_file))
         self._log("")
         

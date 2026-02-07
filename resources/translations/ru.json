@@ -250,6 +250,7 @@
     "created_folders": "  Создано промежуточных папок: {count}",
     "scan_complete": "СКАНИРОВАНИЕ ЗАВЕРШЕНО",
     "processed_count": "  Обработано аудиокниг: {count}",
+    "elapsed_time": "  Время сканирования: {minutes} мин {seconds} сек",
     "db_file": "  База данных: {path}",
     "cli_start": "ЗАПУСК СКАНИРОВАНИЯ",
     "cli_path": "Путь для сканирования: {path}",

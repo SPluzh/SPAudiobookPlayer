@@ -250,6 +250,7 @@
     "created_folders": "  Created intermediate folders: {count}",
     "scan_complete": "SCAN COMPLETE",
     "processed_count": "  Audiobooks processed: {count}",
+    "elapsed_time": "  Scan time: {minutes} min {seconds} sec",
     "db_file": "  Database: {path}",
     "cli_start": "LAUNCHING SCAN",
     "cli_path": "Path to scan: {path}",
