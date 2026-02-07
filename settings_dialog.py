@@ -278,7 +278,6 @@ class SettingsDialog(QDialog):
         
         if reply == QMessageBox.StandardButton.Yes:
             self.data_reset_requested.emit()
-            self.accept()
 
     def apply_blur(self):
         """Proxy blur request to parent window if supported"""

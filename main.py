@@ -467,7 +467,7 @@ class AudiobookPlayerWindow(QMainWindow):
             'window_height': '800',
             'window_x': '100',
             'window_y': '100',
-            'language': 'ru'
+            'language': 'en'
         }
         config['Audiobook_Style'] = {
             'icon_size': '100',

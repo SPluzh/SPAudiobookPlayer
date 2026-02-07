@@ -42,9 +42,70 @@ class AudiobookScanner:
         # Load translations
         self._load_translations()
         
-        print("\n" + "=" * 70)
-        print(self.tr("scanner.init_title"))
-        print("=" * 70)
+    def _log(self, message: str, end: str = '\n'):
+        """Helper to print formatted messages"""
+        print(message, end=end, flush=True)
+
+    def _log_header(self, title: str):
+        """Print a centered header"""
+        self._log("\n" + "=" * 60)
+        self._log(f"{title:^60}")
+        self._log("=" * 60)
+
+    def _log_section(self, title: str):
+        """Print a section header"""
+        self._log("\n" + "-" * 60)
+        self._log(f" {title}")
+        self._log("-" * 60)
+
+    def _log_item(self, key: str, value: str = '', indent: int = 1):
+        """Print a key-value item"""
+        prefix = "  " * indent
+        if value:
+            self._log(f"{prefix}• {key}: {value}")
+        else:
+            self._log(f"{prefix}• {key}")
+            
+    def _log_info(self, message: str, indent: int = 1):
+        """Print an informational message"""
+        prefix = "  " * indent
+        self._log(f"{prefix}{message}")
+
+    def _log_success(self, message: str, indent: int = 1):
+        """Print a success message"""
+        prefix = "  " * indent
+        self._log(f"{prefix}[OK] {message}")
+
+    def _log_warn(self, message: str, indent: int = 1):
+        """Print a warning message"""
+        prefix = "  " * indent
+        self._log(f"{prefix}[!] {message}")
+
+    def _log_error(self, message: str, indent: int = 1):
+        """Print an error message"""
+        prefix = "  " * indent
+        self._log(f"{prefix}[ERROR] {message}")
+
+    def __init__(self, config_file='settings.ini'):
+        """Initialize scanner and load configurations"""
+        self.script_dir = Path(__file__).parent
+        self.config_file = self.script_dir / 'resources' / config_file
+        
+        # Load settings
+        self._load_settings()
+        
+        # Paths
+        self.db_file = self.script_dir / 'data' / 'audiobooks.db'
+        
+        covers_dir_str = self.config.get('Paths', 'covers_dir', fallback='data/extracted_covers')
+        self.covers_dir = Path(covers_dir_str)
+        if not self.covers_dir.is_absolute():
+            self.covers_dir = self.script_dir / self.covers_dir
+        
+        # Load translations
+        self._load_translations()
+        
+        self._log_header(self.tr("scanner.init_title"))
         
         # ffprobe path
         path_str = self.config.get('Paths', 'ffprobe_path', fallback=str(self.script_dir / 'resources' / 'bin' / 'ffprobe.exe'))
@@ -53,16 +114,16 @@ class AudiobookScanner:
             self.ffprobe_path = self.script_dir / self.ffprobe_path
         self.has_ffprobe = self.ffprobe_path.exists()
         
-        print(f"\n{self.tr('scanner.working_paths')}")
-        print(self.tr("scanner.path_script", path=self.script_dir))
-        print(self.tr("scanner.path_config", path=self.config_file))
-        print(self.tr("scanner.path_db", path=self.db_file))
-        print(self.tr("scanner.path_covers", path=self.covers_dir))
+        self._log_section(self.tr("scanner.working_paths"))
+        self._log_item("Script", str(self.script_dir))
+        self._log_item("Config", str(self.config_file))
+        self._log_item("Database", str(self.db_file))
+        self._log_item("Covers", str(self.covers_dir))
         
         if self.has_ffprobe:
-            print(self.tr("scanner.ffprobe_found", path=self.ffprobe_path))
+            self._log_success(self.tr("scanner.ffprobe_found", path=self.ffprobe_path))
         else:
-            print(self.tr("scanner.ffprobe_not_found"))
+            self._log_warn(self.tr("scanner.ffprobe_not_found"))
         
         self.covers_dir.mkdir(exist_ok=True)
         self._print_settings_summary()
@@ -121,29 +182,25 @@ class AudiobookScanner:
 
     def _print_settings_summary(self):
         """Print summary of loaded settings"""
-        print("\n" + "-" * 70)
-        print(self.tr("scanner.loading_settings"))
-        print("-" * 70)
+        self._log_section(self.tr("scanner.loading_settings"))
         
-        print("\n" + self.tr("scanner.audio_formats", count=len(self.audio_extensions)))
-        print(f"  {', '.join(sorted(self.audio_extensions))}")
+        self._log(f"  • {self.tr('scanner.audio_formats', count=len(self.audio_extensions))}")
+        self._log(f"    {', '.join(sorted(self.audio_extensions))}")
         
-        print("\n" + self.tr("scanner.cover_names", count=len(self.cover_names)))
+        self._log(f"  • {self.tr('scanner.cover_names', count=len(self.cover_names))}")
         for name in self.cover_names:
-            print(f"  - {name}")
+            self._log(f"    - {name}")
 
 
     def _init_database(self):
         """Initialize database schema"""
-        print("\n" + "-" * 70)
-        print(self.tr("scanner.db_init"))
-        print("-" * 70)
+        self._log_section(self.tr("scanner.db_init"))
         
         init_database(self.db_file)
         
-        print("\n" + self.tr("scanner.db_tables_ready"))
-        print(self.tr("scanner.db_indexes_ready"))
-        print(self.tr("scanner.db_cascade_on"))
+        self._log_success(self.tr("scanner.db_tables_ready"))
+        self._log_success(self.tr("scanner.db_indexes_ready"))
+        self._log_success(self.tr("scanner.db_cascade_on"))
 
 
     @staticmethod
@@ -574,7 +631,7 @@ class AudiobookScanner:
                     info['bitrate'] = int(audio.info.bitrate)
         except Exception as e:
             if verbose:
-                print(self.tr("scanner.log_mutagen_error", error=type(e).__name__))
+                self._log_warn(self.tr("scanner.log_mutagen_error", error=type(e).__name__))
         
         # Method 2: ffprobe (fallback if duration/bitrate missing or to identify codec)
         if (info['duration'] == 0 or info['bitrate'] == 0 or not info['codec']) and self.has_ffprobe:
@@ -654,12 +711,12 @@ class AudiobookScanner:
 
             except Exception as e:
                 if verbose:
-                    print(self.tr("scanner.log_ffprobe_error", error=type(e).__name__))
+                    self._log_warn(self.tr("scanner.log_ffprobe_error", error=type(e).__name__))
         
         if verbose and info['duration'] > 0:
-             print(self.tr("scanner.log_ffprobe_duration", duration=info['duration']))
+             self._log_info(self.tr("scanner.log_ffprobe_duration", duration=info['duration']), indent=2)
         elif verbose:
-            print(self.tr("scanner.log_duration_failed"))
+            self._log_warn(self.tr("scanner.log_duration_failed"), indent=2)
             
         return info
 
@@ -755,7 +812,7 @@ class AudiobookScanner:
                          
                 return str(dest_path)
             except Exception as e:
-                print(f"Error caching cover: {e}")
+                self._log_error(f"Error caching cover: {e}")
                 try:
                     # Fallback to direct copy on error
                     ext = Path(src_path).suffix.lower()
@@ -829,17 +886,59 @@ class AudiobookScanner:
         return hashlib.md5(state_str.encode('utf-8')).hexdigest()
 
 
+    def _log_book_summary(self, title, author, narrator, duration, file_count, codec, bitrate, bitrate_mode, cover, cue_count, problems):
+        """Print a consolidated summary of the book"""
+        self._log("") # Empty line before book
+        
+        # Line 1: Title (with [+] marker)
+        self._log(f"[+] {title}")
+        
+        # Line 2: Author & Narrator
+        author_str = author if author else self.tr('scanner.unknown_author')
+        if narrator:
+            self._log(f"    {author_str} ({narrator})")
+        else:
+             self._log(f"    {author_str}")
+        
+        # Line 3: Tech Stats
+        # Format: 10h 52m | 7 files | MP3 VBR 62kbps
+        hours = int(duration // 3600)
+        minutes = int((duration % 3600) // 60)
+        time_str = f"{hours}h {minutes}m"
+        
+        files_str = f"{file_count} files"
+        if file_count == 1:
+             files_str = "1 file"
+             
+        bitrate_str = f"{bitrate}kbps"
+        if bitrate_mode:
+            bitrate_str = f"{bitrate_mode} {bitrate_str}"
+            
+        tech_line = f"    {time_str} | {files_str} | {codec.upper()} {bitrate_str}"
+        self._log(tech_line)
+        
+        # Line 4: Extras (Cover, CUE, Problems)
+        extras = []
+        if cover:
+            extras.append("[Cover: OK]")
+        if cue_count > 0:
+            extras.append(f"[CUE: {cue_count}]")
+            
+        if problems > 0:
+            extras.append(f"[WARNING: {problems} failed files]")
+            
+        if extras:
+            self._log(f"    {' '.join(extras)}")
+
     def scan_directory(self, root_path, verbose=False):
         """Perform recursive directory scanning for audiobooks"""
-        print("\n" + "=" * 70)
-        print(self.tr("scanner.scan_start"))
-        print("=" * 70)
+        self._log_header(self.tr("scanner.scan_start"))
         
         root = Path(root_path)
-        print("\n" + self.tr("scanner.root_dir", path=root))
+        self._log_item("Root", str(root))
         
         if not root.exists():
-            print("\n" + self.tr("scanner.error_not_exists"))
+            self._log_error(self.tr("scanner.error_not_exists"))
             return 0
         
         with sqlite3.connect(self.db_file) as conn:
@@ -847,9 +946,8 @@ class AudiobookScanner:
             c.execute("PRAGMA foreign_keys = ON")
             
             # Save current progress state to temp table
-            print("\n" + "-" * 70)
-            print(self.tr("scanner.saving_state"))
-            print("-" * 70)
+            # Save current progress state to temp table
+            self._log_section(self.tr("scanner.saving_state"))
             
             c.execute("""
                 CREATE TEMP TABLE temp_state AS
@@ -868,27 +966,25 @@ class AudiobookScanner:
             """)
             
             # Fetch locally merged paths to handle virtual merging
-            print("\n" + "-" * 70)
-            print(self.tr("scanner.checking_merged_folders"))
-            print("-" * 70)
+            # Fetch locally merged paths to handle virtual merging
+            self._log_section(self.tr("scanner.checking_merged_folders"))
             c.execute("SELECT path FROM audiobooks WHERE is_merged = 1")
             merged_paths_set = {row[0] for row in c.fetchall()}
             if merged_paths_set:
-                 print(self.tr("scanner.merged_folders_found", count=len(merged_paths_set)))
+                 self._log_info(self.tr("scanner.merged_folders_found", count=len(merged_paths_set)))
                  for mp in merged_paths_set:
-                     print(f"  [MERGED] {mp}")
+                     self._log(f"    [MERGED] {mp}")
             
             # Reset availability for all books before scanning
             c.execute("UPDATE audiobooks SET is_available = 0")
             
             c.execute("SELECT COUNT(*) FROM temp_state")
             saved_count = c.fetchone()[0]
-            print(self.tr("scanner.saved_progress_count", count=saved_count))
+            self._log_info(self.tr("scanner.saved_progress_count", count=saved_count))
             
             # Searching for folders
-            print("\n" + "-" * 70)
-            print(self.tr("scanner.searching_books"))
-            print("-" * 70)
+            # Searching for folders
+            self._log_section(self.tr("scanner.searching_books"))
             
             folders = []
             for d in root.rglob('*'):
@@ -913,12 +1009,11 @@ class AudiobookScanner:
                      except ValueError:
                          continue
             
-            print("\n" + self.tr("scanner.found_folders", count=len(folders)))
+            self._log_info(self.tr("scanner.found_folders", count=len(folders)))
             
             # Processing each folder
-            print("\n" + "-" * 70)
-            print(self.tr("scanner.processing_books"))
-            print("-" * 70)
+            # Processing each folder
+            self._log_section(self.tr("scanner.processing_books"))
             
             for idx, folder in enumerate(folders, 1):
                 rel = folder.relative_to(root)
@@ -958,7 +1053,7 @@ class AudiobookScanner:
                     if db_hash == current_state_hash and db_codec is not None:
                         c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing_row_data[0],))
                         if verbose:
-                            print(f"  {self.tr('scanner.skip_existing', path=rel)}")
+                            self._log_info(self.tr('scanner.skip_existing', path=rel), indent=2)
                         continue
                 
                 # Extract metadata from tags
@@ -975,15 +1070,6 @@ class AudiobookScanner:
                 author = f_author or t_author
                 title = f_title or t_title
                 narrator = f_narrator or t_narrator
-                
-                if author or title or narrator:
-                    print(f"  {self.tr('scanner.author', author=author or self.tr('scanner.not_specified'))}")
-                    print(f"  {self.tr('scanner.title', title=title or self.tr('scanner.not_specified'))}")
-                    if narrator:
-                        print(f"  {self.tr('scanner.narrator', narrator=narrator)}")
-                
-                if t_author or t_title:
-                    print(f"  Tags: Author='{t_author}', Title='{t_title}', Narrator='{t_narrator}'")
                 
                 # Analyze files
                 file_count = len(files)
@@ -1020,8 +1106,7 @@ class AudiobookScanner:
                         cbr_detected = True
                 
                 # Calculate aggregated stats
-                hours = int(duration // 3600)
-                minutes = int((duration % 3600) // 60)
+                listened = 0 # Default if new
                 
                 bitrate_min = (min(bitrates) // 1000) if bitrates else 0
                 bitrate_max = (max(bitrates) // 1000) if bitrates else 0
@@ -1049,28 +1134,40 @@ class AudiobookScanner:
                 extensions = [f.suffix.lstrip('.').lower() for f in files]
                 container = Counter(extensions).most_common(1)[0][0] if extensions else ''
                 
-                if failed_count > 0:
-                    print(self.tr("scanner.files_stats_problem", count=file_count, failed=failed_count, hours=hours, minutes=minutes))
-                    print(self.tr("scanner.duration_warn", count=failed_count))
-                else:
-                    print(self.tr("scanner.files_stats", count=file_count, hours=hours, minutes=minutes))
-                    if bitrates:
-                        print(f"  Bitrate: {bitrate_min}-{bitrate_max} {self.tr('units.kbps', default='kbps')} ({bitrate_mode}) Codec: {common_codec}")
-                
                 # Search for cover image
                 cover, cover_cached = self._find_cover(folder, str(rel))
-                if cover_cached:
-                    cover_name = Path(cover_cached).name
-                    print(self.tr("scanner.cover_found", name=cover_name))
 
                 # Check for .cue files in this folder
                 cue_files = list(folder.glob('*.cue'))
                 cue_data_chapters = []
                 if cue_files:
                     _, cue_data_chapters = self._parse_cue_file(cue_files[0])
-                    if cue_data_chapters:
-                        print(f"  {self.tr('scanner.cue_found', count=len(cue_data_chapters))}")
 
+                # Log unified book summary
+                # Use max bitrate for display if no range, or just average/max? 
+                # Display usually shows typically bitrate. Let's show average or max.
+                # Previous logic used range. Let's just use average if range is small, 
+                # or simplified "128kbps" if it's CBR.
+                
+                disp_bitrate = 0
+                if bitrates:
+                     avg_bitrate = sum(bitrates) // len(bitrates)
+                     disp_bitrate = avg_bitrate // 1000
+                
+                self._log_book_summary(
+                    title=title or folder.name, 
+                    author=author, 
+                    narrator=narrator, 
+                    duration=duration, 
+                    file_count=file_count, 
+                    codec=common_codec, 
+                    bitrate=disp_bitrate, 
+                    bitrate_mode=bitrate_mode,
+                    cover=cover_cached, 
+                    cue_count=len(cue_data_chapters) if cue_data_chapters else 0,
+                    problems=failed_count
+                )
+                
                 # Restore state from temp table if possible
                 c.execute("""
                     SELECT
@@ -1092,7 +1189,7 @@ class AudiobookScanner:
                     # logic: The is_merged flag comes from the MAIN table (via temp_state select), so we preserve it.
                     # But actually, we already determined 'is_merged' from 'merged_paths_set' which covers this.
                     if prog_pct > 0:
-                        print(self.tr("scanner.progress_restored", percent=prog_pct))
+                        self._log_info(self.tr("scanner.progress_restored", percent=prog_pct), indent=2)
                 else:
                     listened = 0
                     prog_pct = 0
@@ -1301,9 +1398,7 @@ class AudiobookScanner:
                 c.execute("UPDATE audiobooks SET file_count = ? WHERE id = ?", (total_virtual_files, book_id))
             
             # Recreate intermediate folder structure
-            print("\n" + "-" * 70)
-            print(self.tr("scanner.creating_structure"))
-            print("-" * 70)
+            self._log_section(self.tr("scanner.creating_structure"))
             
             saved_folders = set()
             
@@ -1350,19 +1445,17 @@ class AudiobookScanner:
                 if str(parent) != '.':
                     save_folder(str(parent))
             
-            print(self.tr("scanner.created_folders", count=len(saved_folders)))
+            self._log_info(self.tr("scanner.created_folders", count=len(saved_folders)))
             
             # Finalize: cleanup temp table and commit
             c.execute("DROP TABLE temp_state")
             conn.commit()
         
         # Result statistics
-        print("\n" + "=" * 70)
-        print(self.tr("scanner.scan_complete"))
-        print("=" * 70)
-        print("\n" + self.tr("scanner.processed_count", count=len(folders)))
-        print(self.tr("scanner.db_file", path=self.db_file))
-        print()
+        self._log_header(self.tr("scanner.scan_complete"))
+        self._log_info(self.tr("scanner.processed_count", count=len(folders)))
+        self._log_info(self.tr("scanner.db_file", path=self.db_file))
+        self._log("")
         
         return len(folders)
 
@@ -1382,16 +1475,13 @@ def main():
     import sys
     path = sys.argv[1] if len(sys.argv) > 1 else default_path
     
-    print("\n" + "=" * 70)
-    print(scanner.tr("scanner.cli_start"))
-    print("=" * 70)
-    print("\n" + scanner.tr("scanner.cli_path", path=path))
+    scanner._log_header(scanner.tr("scanner.cli_start"))
+    scanner._log_item("Path", path)
     
     count = scanner.scan_directory(path, verbose=True)
     
-    print("=" * 70)
-    print(scanner.tr("scanner.cli_done", count=count))
-    print("=" * 70 + "\n")
+    scanner._log_header(scanner.tr("scanner.cli_done", count=count))
+    scanner._log("")
 
 
 if __name__ == '__main__':

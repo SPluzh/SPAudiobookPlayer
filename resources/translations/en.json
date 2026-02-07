@@ -231,6 +231,7 @@
     "processing_books": "PROCESSING AUDIOBOOKS",
     "processing_item": "[{current}/{total}] {name}",
     "not_specified": "(not specified)",
+    "unknown_author": "(unknown author)",
     "author": "  Author: {author}",
     "title": "  Title: {title}",
     "narrator": "  Narrator: {narrator}",
