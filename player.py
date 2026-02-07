@@ -696,24 +696,30 @@ class PlayerWidget(QWidget):
         self.play_btn.setIcon(self.pause_icon if is_playing else self.play_icon)
         self.play_btn.setToolTip(tr("player.pause") if is_playing else tr("player.play"))
     
-    def update_file_progress(self, position: float, duration: float):
+    def update_file_progress(self, position: float, duration: float, speed: float = 1.0):
         if not self.slider_dragging:
+            display_pos = position / speed if speed > 0 else position
             if duration >= 3600:
-                self.time_current.setText(format_time(position))
+                self.time_current.setText(format_time(display_pos))
             else:
-                self.time_current.setText(format_time_short(position))
+                self.time_current.setText(format_time_short(display_pos))
                 
             if duration > 0:
                 self.position_slider.setValue(int((position / duration) * 1000))
         
+        display_dur = duration / speed if speed > 0 else duration
         if duration >= 3600:
-            self.time_duration.setText(format_time(duration))
+            self.time_duration.setText(format_time(display_dur))
         else:
-            self.time_duration.setText(format_time_short(duration))
+            self.time_duration.setText(format_time_short(display_dur))
     
     def update_total_progress(self, current: float, total: float, speed: float = 1.0):
-        self.total_time_label.setText(format_time(current))
-        self.total_duration_label.setText(format_time(total))
+        if speed > 0:
+            self.total_time_label.setText(format_time(current / speed))
+            self.total_duration_label.setText(format_time(total / speed))
+        else:
+            self.total_time_label.setText(format_time(current))
+            self.total_duration_label.setText(format_time(total))
         
         if total > 0:
             percent = int((current / total) * 100)

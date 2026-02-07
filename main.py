@@ -914,7 +914,11 @@ class AudiobookPlayerWindow(QMainWindow):
         chapter_duration = current_file_info.get('duration', duration)
 
         # Synchronize individual track progress indicators
-        self.player_widget.update_file_progress(pos - start_offset, chapter_duration)
+        self.player_widget.update_file_progress(
+            pos - start_offset, 
+            chapter_duration, 
+            self.player.speed_pos / 10.0
+        )
         
         # Synchronize aggregate audiobook progress indicators
         total_pos = self.playback_controller.get_current_position()
