@@ -8,6 +8,7 @@ import json
 import sys
 import hashlib
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 
 from database import init_database
 from PyQt6.QtGui import QImage
@@ -576,19 +577,19 @@ class AudiobookScanner:
         except PermissionError:
             return False
     
-    def _analyze_file(self, path, verbose=False):
+    def _analyze_file_fast(self, path, verbose=False):
         """
-        Analyze audio file to extract duration and technical details.
-        Returns: {'duration': float, 'bitrate': int, 'codec': str, 'is_vbr': bool}
+        Fast analysis of audio file using only mutagen.
+        Returns: {'duration': float, 'bitrate': int, 'codec': str, 'is_vbr': bool, 'needs_ffprobe': bool}
         """
         info = {
             'duration': 0.0,
             'bitrate': 0,
             'codec': '',
-            'is_vbr': False
+            'is_vbr': False,
+            'needs_ffprobe': False
         }
         
-        # Method 1: Mutagen
         try:
             from mutagen.mp3 import MP3, BitrateMode
             from mutagen.mp4 import MP4
@@ -606,120 +607,108 @@ class AudiobookScanner:
                     info['is_vbr'] = (audio.info.bitrate_mode == BitrateMode.VBR)
             elif suffix in ('.m4a', '.m4b', '.mp4', '.aac'):
                 audio = MP4(path)
-                # Do NOT hardcode 'aac' here; let ffprobe or mutagen info determine it
+                info['codec'] = 'aac'
             elif suffix == '.flac':
                 audio = FLAC(path)
                 info['codec'] = 'flac'
             elif suffix == '.ogg':
                 audio = OggVorbis(path)
-                # Let ffprobe or mutagen info determine codec (could be opus/vorbis/flac)
+                info['codec'] = 'vorbis'
             elif suffix == '.wav':
                 audio = WAVE(path)
                 info['codec'] = 'pcm'
             elif suffix == '.ape':
                 try:
-                    from mutagen.apev2 import APEv2
                     from mutagen.monkeysaudio import MonkeysAudio
                     audio = MonkeysAudio(path)
                     info['codec'] = 'ape'
-                except ImportError:
-                    pass
+                except: pass
             
             if audio and audio.info:
                 if hasattr(audio.info, 'length'):
                     info['duration'] = audio.info.length
                 if hasattr(audio.info, 'bitrate') and audio.info.bitrate:
                     info['bitrate'] = int(audio.info.bitrate)
-        except Exception as e:
-            if verbose:
-                self._log_warn(self.tr("scanner.log_mutagen_error", error=type(e).__name__))
-        
-        # Method 2: ffprobe (fallback if duration/bitrate missing or to identify codec)
-        if (info['duration'] == 0 or info['bitrate'] == 0 or not info['codec']) and self.has_ffprobe:
-            try:
-                import subprocess
-                
-                # Hide console window on Windows
-                startupinfo = None
-                if hasattr(subprocess, 'STARTUPINFO'):
-                    startupinfo = subprocess.STARTUPINFO()
-                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                
-                # Get streams and format info
-                cmd = [
-                    str(self.ffprobe_path),
-                    '-v', 'error',
-                    '-select_streams', 'a:0',
-                    '-show_entries', 'stream=codec_name:format=duration,bit_rate',
-                    '-of', 'default=noprint_wrappers=1:nokey=1',
-                    str(path)
-                ]
-                
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    encoding='utf-8',
-                    timeout=10,
-                    startupinfo=startupinfo
-                )
-                
-                if result.returncode == 0 and result.stdout.strip():
-                    lines = result.stdout.strip().splitlines()
-                    # Output order depends on internal ffprobe loop, usually streams then format
-                    # But we requested specific entries. 
-                    # Safer to parse JSON if we want robust, but keeping it simple:
-                    # If we use json output it's safer. Let's switch to json for ffprobe?
-                    # sticking to simple for now matching existing style, but let's try to be robust.
-                    pass 
-                    
-                    # Retry with json for reliability
-                    cmd = [
-                        str(self.ffprobe_path),
-                        '-v', 'error',
-                        '-select_streams', 'a:0',
-                        '-show_entries', 'stream=codec_name:format=duration,bit_rate',
-                        '-of', 'json',
-                        str(path)
-                    ]
-                    result = subprocess.run(
-                        cmd, 
-                        capture_output=True, 
-                        text=True, 
-                        encoding='utf-8', 
-                        timeout=10, 
-                        startupinfo=startupinfo
-                    )
-                    
-                    if result.returncode == 0:
-                        data = json.loads(result.stdout)
-                        
-                        # Duration
-                        if info['duration'] == 0 and 'format' in data and 'duration' in data['format']:
-                            try:
-                                info['duration'] = float(data['format']['duration'])
-                            except: pass
-                            
-                        # Bitrate
-                        if info['bitrate'] == 0 and 'format' in data and 'bit_rate' in data['format']:
-                            try:
-                                info['bitrate'] = int(data['format']['bit_rate'])
-                            except: pass
-                            
-                        # Codec
-                        if not info['codec'] and 'streams' in data and len(data['streams']) > 0:
-                            info['codec'] = data['streams'][0].get('codec_name', '')
+        except Exception:
+            info['needs_ffprobe'] = True
+            
+        if info['duration'] == 0 or not info['codec']:
+             info['needs_ffprobe'] = True
+             
+        return info
 
-            except Exception as e:
-                if verbose:
-                    self._log_warn(self.tr("scanner.log_ffprobe_error", error=type(e).__name__))
-        
-        if verbose and info['duration'] > 0:
-             self._log_info(self.tr("scanner.log_ffprobe_duration", duration=info['duration']), indent=2)
-        elif verbose:
-            self._log_warn(self.tr("scanner.log_duration_failed"), indent=2)
+    def _analyze_file_with_ffprobe(self, path, info, verbose=False):
+        """Supplementary analysis using ffprobe only if needed"""
+        if not self.has_ffprobe:
+            return info
+            
+        try:
+            import subprocess
+            startupinfo = None
+            if hasattr(subprocess, 'STARTUPINFO'):
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            
+            cmd = [
+                str(self.ffprobe_path),
+                '-v', 'error',
+                '-select_streams', 'a:0',
+                '-show_entries', 'stream=codec_name:format=duration,bit_rate',
+                '-of', 'json',
+                str(path)
+            ]
+            
+            result = subprocess.run(
+                cmd, 
+                capture_output=True, 
+                text=True, 
+                encoding='utf-8', 
+                timeout=10, 
+                startupinfo=startupinfo
+            )
+            
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                if info['duration'] == 0 and 'format' in data and 'duration' in data['format']:
+                    try: info['duration'] = float(data['format']['duration'])
+                    except: pass
+                if info['bitrate'] == 0 and 'format' in data and 'bit_rate' in data['format']:
+                    try: info['bitrate'] = int(data['format']['bit_rate'])
+                    except: pass
+                if not info['codec'] and 'streams' in data and data['streams']:
+                    info['codec'] = data['streams'][0].get('codec_name', '')
+        except Exception:
+            pass
             
         return info
+
+    def _analyze_file(self, path, verbose=False):
+        """Combined analysis: fast path with mutagen, fallback to ffprobe"""
+        info = self._analyze_file_fast(path, verbose)
+        if info.pop('needs_ffprobe', False):
+            info = self._analyze_file_with_ffprobe(path, info, verbose)
+        return info
+
+    def _analyze_files_parallel(self, files, max_workers=4, verbose=False):
+        """Analyze a list of files concurrently"""
+        if not files:
+            return []
+            
+        # Strategy: Run fast mutagen analysis in parallel. 
+        # Then run ffprobe sequentially for those that still need it 
+        # (ffprobe is heavy, multicore ffprobe might be too much I/O).
+        
+        workers = min(max_workers, len(files))
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            fast_results = list(executor.map(lambda f: self._analyze_file_fast(f, verbose), files))
+            
+        final_results = []
+        for f, info in zip(files, fast_results):
+            if info.pop('needs_ffprobe', False):
+                info = self._analyze_file_with_ffprobe(f, info, verbose)
+            final_results.append(info)
+            
+        return final_results
 
 
     def _extract_embedded_cover(self, directory, key):
@@ -945,7 +934,11 @@ class AudiobookScanner:
         
         with sqlite3.connect(self.db_file) as conn:
             c = conn.cursor()
+            # Performance optimizations for SQLite
             c.execute("PRAGMA foreign_keys = ON")
+            c.execute("PRAGMA synchronous = NORMAL")
+            c.execute("PRAGMA journal_mode = WAL")
+            c.execute("PRAGMA cache_size = 10000")
             
             # Save current progress state to temp table
             # Save current progress state to temp table
@@ -989,27 +982,30 @@ class AudiobookScanner:
             self._log_section(self.tr("scanner.searching_books"))
             
             folders = []
-            for d in root.rglob('*'):
-                if d.is_dir():
-                     try:
-                        # Check if this folder is a child of any merged folder
-                        rel_path_str = str(d.relative_to(root))
-                        is_child_of_merged = False
-                        for mp in merged_paths_set:
-                             # Check if rel_path starts with mp + sep
-                             # e.g. mp="Series", rel="Series\Book1" -> Child
-                             if rel_path_str.startswith(mp + os.sep) or rel_path_str == mp:
-                                 if rel_path_str != mp: # It is a strict child
-                                     is_child_of_merged = True
-                                     break
-                        
-                        if is_child_of_merged:
-                            continue
-
-                        if self._has_audio_files(d) or (rel_path_str in merged_paths_set):
-                             folders.append(d)
-                     except ValueError:
-                         continue
+            for dirpath, dirnames, filenames in os.walk(root):
+                d = Path(dirpath)
+                try:
+                    rel_path_str = str(d.relative_to(root))
+                except ValueError: continue
+                
+                if rel_path_str == '.': continue
+                
+                # Check for merged parent
+                is_child_of_merged = False
+                for mp in merged_paths_set:
+                    if rel_path_str.startswith(mp + os.sep):
+                        is_child_of_merged = True
+                        break
+                
+                if is_child_of_merged:
+                    dirnames.clear() # Skip subdirectories
+                    continue
+                
+                # Check for audio files in current filenames list (fast)
+                has_audio = any(Path(fn).suffix.lower() in self.audio_extensions for fn in filenames)
+                
+                if has_audio or (rel_path_str in merged_paths_set):
+                    folders.append(d)
             
             self._log_info(self.tr("scanner.found_folders", count=len(folders)))
             
@@ -1086,10 +1082,10 @@ class AudiobookScanner:
                 vbr_detected = False
                 cbr_detected = False
                 
-                for f in files:
-                    info = self._analyze_file(f, verbose=verbose)
-                    file_analyses.append(info)
-                    
+                # Analyze files in parallel
+                file_analyses = self._analyze_files_parallel(files, max_workers=4, verbose=verbose)
+                
+                for info in file_analyses:
                     file_duration = info['duration']
                     duration += file_duration
                     
@@ -1364,34 +1360,25 @@ class AudiobookScanner:
                 c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
                 
                 virtual_file_index = 1
-                total_virtual_files = 0
+                files_batch = []
                 
                 for i, (f, info) in enumerate(zip(files, file_analyses), 1):
                     f_tags = self._extract_file_tags(f)
                     file_duration = info['duration']
                     
-                    # Check for chapters in M4B/MP4/M4A
+                    # Check for chapters
                     chapters = []
                     if f.suffix.lower() in ('.m4b', '.mp4', '.m4a'):
                         chapters = self._extract_chapters(f)
                     
-                    # If no internal chapters, try CUE (primary for single-file albums)
                     if not chapters and cue_data_chapters and len(files) == 1:
                         chapters = cue_data_chapters
-                        # Fill in the duration for the last chapter if it's 0
                         if chapters and chapters[-1].get('duration') == 0:
                             chapters[-1]['duration'] = max(0, file_duration - chapters[-1]['start'])
                     
                     if chapters:
                         for chap in chapters:
-                            c.execute("""
-                                INSERT INTO audiobook_files
-                                (
-                                    audiobook_id, file_path, file_name, track_number, duration,
-                                    start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment
-                                )
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            """, (
+                            files_batch.append((
                                 book_id,
                                 str(f.relative_to(root)),
                                 f.name,
@@ -1405,24 +1392,13 @@ class AudiobookScanner:
                                 f_tags['comment']
                             ))
                             virtual_file_index += 1
-                            total_virtual_files += 1
                     else:
-                        # No chapters or not M4B
                         if is_merged:
-                             # For merged books, ignore ID3 track numbers to ensure folder-based ordering
                              track_no = virtual_file_index
                         else:
-                             # Use ID3 track if available, otherwise fallback to index
                              track_no = f_tags['track'] if f_tags['track'] is not None else virtual_file_index
                              
-                        c.execute("""
-                            INSERT INTO audiobook_files
-                            (
-                                audiobook_id, file_path, file_name, track_number, duration,
-                                start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment
-                            )
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
+                        files_batch.append((
                             book_id,
                             str(f.relative_to(root)),
                             f.name,
@@ -1435,15 +1411,21 @@ class AudiobookScanner:
                             f_tags['genre'],
                             f_tags['comment']
                         ))
-                        # If the track_no was from tags and NOT merged, ensure virtual_file_index stays ahead
                         if not is_merged and f_tags['track'] is not None:
                             virtual_file_index = max(virtual_file_index, f_tags['track'] + 1)
                         else:
                             virtual_file_index += 1
-                        total_virtual_files += 1
+                
+                if files_batch:
+                    c.executemany("""
+                        INSERT INTO audiobook_files
+                        (audiobook_id, file_path, file_name, track_number, duration,
+                         start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, files_batch)
 
-                # Update the file_count in audiobooks table to reflect virtual files (chapters)
-                c.execute("UPDATE audiobooks SET file_count = ? WHERE id = ?", (total_virtual_files, book_id))
+                # Update the file_count in audiobooks table
+                c.execute("UPDATE audiobooks SET file_count = ? WHERE id = ?", (len(files_batch), book_id))
             
             # Recreate intermediate folder structure
             self._log_section(self.tr("scanner.creating_structure"))
