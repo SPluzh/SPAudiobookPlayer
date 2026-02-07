@@ -1143,6 +1143,49 @@ class AudiobookScanner:
                 if cue_files:
                     _, cue_data_chapters = self._parse_cue_file(cue_files[0])
 
+                # Check for description file
+                description = ""
+                potential_desc_files = sorted([f for f in folder.glob("*.txt")])
+                # Prioritize: 'description.txt', 'info.txt', '{folder_name}.txt'
+                priority_names = ['description', 'info', 'about', folder.name.lower()]
+                selected_file = None
+                
+                # Check priority
+                for p_name in priority_names:
+                    for f in potential_desc_files:
+                        if f.stem.lower() == p_name:
+                            selected_file = f
+                            break
+                    if selected_file:
+                        break
+                
+                # Fallback to first text file if any exist
+                if not selected_file and potential_desc_files:
+                    selected_file = potential_desc_files[0]
+                
+                if selected_file:
+                    description = ""
+                    # smart encoding detection
+                    encodings = ['utf-8', 'cp1251', 'cp1252', 'latin-1']
+                    for enc in encodings:
+                        try:
+                            with open(selected_file, 'r', encoding=enc, errors='strict') as df:
+                                description = df.read().strip()
+                            if description:
+                                break
+                        except UnicodeDecodeError:
+                            continue
+                        except Exception:
+                            break
+                    
+                    # Fallback if all strict attempts fail
+                    if not description:
+                        try:
+                            with open(selected_file, 'r', encoding='utf-8', errors='replace') as df:
+                                description = df.read().strip()
+                        except Exception:
+                            pass
+
                 # Log unified book summary
                 # Use max bitrate for display if no range, or just average/max? 
                 # Display usually shows typically bitrate. Let's show average or max.
@@ -1229,6 +1272,7 @@ class AudiobookScanner:
                             time_added = COALESCE(time_added, CURRENT_TIMESTAMP),
                             is_available = 1,
                             is_merged = ?,
+                            description = ?,
                             is_folder = 0
                         WHERE path = ?
                     """, (
@@ -1252,6 +1296,7 @@ class AudiobookScanner:
                         bitrate_mode,
                         container,
                         1 if is_merged else 0,
+                        description,
                         str(rel)
                     ))
                     book_id = existing_row[0]
@@ -1276,9 +1321,9 @@ class AudiobookScanner:
                             is_available,
                             state_hash,
                             codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                            time_added, is_merged
+                            time_added, is_merged, description
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
                     """, (
                         str(rel),
                         str(parent),
@@ -1307,7 +1352,8 @@ class AudiobookScanner:
                         bitrate_max,
                         bitrate_mode,
                         container,
-                        1 if is_merged else 0
+                        1 if is_merged else 0,
+                        description
                     ))
                     c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
                     book_id = c.fetchone()[0]

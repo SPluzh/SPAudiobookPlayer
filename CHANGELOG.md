@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.6]
+- **Library**: Added **Audiobook Description** feature:
+    - **Scanner**: Automatically detects `description.txt`, `info.txt`, `about.txt`, or `{folder_name}.txt` inside audiobook folders.
+    - **UI**: Displays an "Info" (i) icon on the book cover if a description is found.
+    - **Dialog**: Clicking the icon opens a dedicated window with the book description.
+
 ## [1.3.5]
 - **Performance**: Implemented comprehensive **Cover Caching** system:
     - Covers are extracted, resized (to 300x300), and cached during scanning to `data/extracted_covers`.

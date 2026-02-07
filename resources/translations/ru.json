@@ -51,7 +51,8 @@
     "tooltip_filter_completed": "Показать завершённые книги",
     "tooltip_last_played": "Последнее прослушивание: {date}",
     "tooltip_progress": "Прогресс: {percent}%",
-    "tooltip_duration": "Длительность"
+    "tooltip_duration": "Длительность",
+    "description_title": "Описание аудиокниги"
   },
   "player": {
     "volume": "Громкость",
@@ -142,7 +143,8 @@
   },
   "dialog": {
     "restart_title": "Изменение языка",
-    "restart_text": "Для полного применения изменений требуется перезапуск приложения. Перезапустить сейчас?"
+    "restart_text": "Для полного применения изменений требуется перезапуск приложения. Перезапустить сейчас?",
+    "close": "Закрыть"
   },
   "formats": {
     "duration_hours": "{hours}ч {minutes}м",

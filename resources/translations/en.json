@@ -51,7 +51,8 @@
     "tooltip_filter_completed": "Show finished books",
     "tooltip_last_played": "Last played: {date}",
     "tooltip_progress": "Progress: {percent}%",
-    "tooltip_duration": "Duration"
+    "tooltip_duration": "Duration",
+    "description_title": "Audiobook Description"
   },
   "player": {
     "volume": "Volume",
@@ -142,7 +143,8 @@
   },
   "dialog": {
     "restart_title": "Language Change",
-    "restart_text": "Application restart is required to fully apply changes. Restart now?"
+    "restart_text": "Application restart is required to fully apply changes. Restart now?",
+    "close": "Close"
   },
   "formats": {
     "duration_hours": "{hours}h {minutes}m",

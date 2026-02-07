@@ -322,6 +322,16 @@ class MultiLineDelegate(QStyledItemDelegate):
             float(heart_size), float(heart_size)
         )
 
+    def get_info_rect(self, icon_rect: QRectF) -> QRectF:
+        """Calculate the rect for the info icon"""
+        info_size = 20.0
+        # Position: Top-Left of icon, mirrored from heart
+        return QRectF(
+            float(icon_rect.left() - 5), 
+            float(icon_rect.top() - 5), 
+            float(info_size), float(info_size)
+        )
+
     def _paint_audiobook(self, painter, option, index):
         """Render detailed audiobook item with cover, progress, and metadata"""
         painter.save()
@@ -340,7 +350,10 @@ class MultiLineDelegate(QStyledItemDelegate):
             return
             
         author, title, narrator, file_count, duration, listened_duration, \
-        progress_percent, codec, b_min, b_max, b_mode, container = data
+        progress_percent, codec, b_min, b_max, b_mode, container = data[:12]
+        description = data[12] if len(data) > 12 else ""
+        
+        # Unpack status data for favorites
         
         # Unpack status data for favorites
         status_data = index.data(Qt.ItemDataRole.UserRole + 3)
@@ -418,6 +431,32 @@ class MultiLineDelegate(QStyledItemDelegate):
                 path.cubicTo(hr.left(), hr.top(), hr.left(), hr.center().y(), hr.center().x(), hr.bottom())
                 
                 painter.drawPath(path)
+                painter.drawPath(path)
+                painter.restore()
+
+            # Draw Info Icon if description exists (Always visible)
+            if description:
+                painter.save()
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                
+                info_rect = self.get_info_rect(QRectF(icon_rect))
+                
+                # Check hover for info icon
+                is_over_info = False
+                if self.mouse_pos and info_rect.contains(QPointF(self.mouse_pos)):
+                    is_over_info = True
+                    
+                painter.setBrush(QColor(255, 255, 255, 200) if not is_over_info else QColor(255, 255, 255, 255))
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawEllipse(info_rect)
+                
+                # Draw 'i'
+                painter.setPen(QColor("#018574"))
+                font = painter.font()
+                font.setBold(True)
+                font.setPixelSize(14)
+                painter.setFont(font)
+                painter.drawText(info_rect, Qt.AlignmentFlag.AlignCenter, "i")
                 painter.restore()
  
             # 5. Play/Pause Button Overlay Logic
@@ -440,6 +479,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                     btn_color = btn_color.lighter(110)
                 
                 painter.setBrush(btn_color)
+                painter.setPen(Qt.PenStyle.NoPen)
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(play_btn_rect)
                 
@@ -645,6 +685,7 @@ class LibraryTree(QTreeWidget):
     """Customized tree widget that handles hover detection and direct interaction with audiobook 'Play' buttons"""
     play_button_clicked = pyqtSignal(str) # Emits the relative path to the selected audiobook
     favorite_clicked = pyqtSignal(str) # Emits path when heart is clicked
+    description_requested = pyqtSignal(str) # Emits path when info icon is clicked
 
     def __init__(self, parent=None):
         """Enable mouse tracking for fine-grained hover effects on custom-painted items"""
@@ -699,6 +740,15 @@ class LibraryTree(QTreeWidget):
                          if heart_rect.contains(QPointF(event.pos())):
                              self.setCursor(Qt.CursorShape.PointingHandCursor)
                              return
+
+                     # Check info hover
+                     data = index.data(Qt.ItemDataRole.UserRole + 2)
+                     description = data[12] if data and len(data) > 12 else ""
+                     if description:
+                         info_rect = delegate.get_info_rect(QRectF(icon_rect))
+                         if info_rect.contains(QPointF(event.pos())):
+                             self.setCursor(Qt.CursorShape.PointingHandCursor)
+                             return
              
         self.setCursor(Qt.CursorShape.ArrowCursor)
 
@@ -736,6 +786,16 @@ class LibraryTree(QTreeWidget):
                             if heart_rect.contains(QPointF(event.pos())):
                                 path = index.data(Qt.ItemDataRole.UserRole)
                                 self.favorite_clicked.emit(path)
+                                return
+                        
+                        # Check info click
+                        data = index.data(Qt.ItemDataRole.UserRole + 2)
+                        description = data[12] if data and len(data) > 12 else ""
+                        if description:
+                            info_rect = delegate.get_info_rect(QRectF(icon_rect))
+                            if info_rect.contains(QPointF(event.pos())):
+                                path = index.data(Qt.ItemDataRole.UserRole)
+                                self.description_requested.emit(path)
                                 return
         super().mousePressEvent(event)
 
@@ -862,6 +922,7 @@ class LibraryWidget(QWidget):
         self.tree.setIndentation(20)
         self.tree.itemDoubleClicked.connect(self.on_item_double_clicked)
         self.tree.favorite_clicked.connect(self.on_tree_favorite_clicked)
+        self.tree.description_requested.connect(self.show_description_dialog)
         self.tree.itemExpanded.connect(self.on_item_expanded)
         self.tree.itemCollapsed.connect(self.on_item_collapsed)
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -954,7 +1015,42 @@ class LibraryWidget(QWidget):
         if self.current_filter != 'favorites':
             if self.btn_favorites:
                 self.btn_favorites.setChecked(True)
+                self.btn_favorites.setChecked(True)
                 self.apply_filter('favorites')
+
+    def show_description_dialog(self, path: str):
+        """Show a dialog with the audiobook description"""
+        info = self.db.get_audiobook_by_path(path)
+        if not info or not info.get('description'):
+            return
+            
+        dialog = QDialog(self)
+        dialog.setWindowTitle(tr("library.description_title"))
+        dialog.setMinimumSize(500, 400)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # Title
+        title_label = QLabel(info.get('title', ''))
+        font = title_label.font()
+        font.setBold(True)
+        font.setPointSize(12)
+        title_label.setFont(font)
+        title_label.setWordWrap(True)
+        layout.addWidget(title_label)
+        
+        # Text
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+        text_edit.setPlainText(info.get('description', ''))
+        layout.addWidget(text_edit)
+        
+        # Close button
+        close_btn = QPushButton(tr("dialog.close"))
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn, 0, Qt.AlignmentFlag.AlignRight)
+        
+        dialog.exec()
 
     def apply_filter(self, filter_type: str):
         """Switch the current library view filter and refresh the audiobook listing"""
@@ -1080,7 +1176,8 @@ class LibraryWidget(QWidget):
             data['bitrate_min'],
             data['bitrate_max'],
             data['bitrate_mode'],
-            data['container']
+            data['container'],
+            data.get('description', '')
         ))
         # Store status flags for client-side filtering
         item.setData(0, Qt.ItemDataRole.UserRole + 3, (
@@ -1684,7 +1781,8 @@ class LibraryWidget(QWidget):
                 data['bitrate_min'],
                 data['bitrate_max'],
                 data['bitrate_mode'],
-                data['container']
+                data['container'],
+                data.get('description', '')
             ))
             if 'is_started' in data and 'is_completed' in data:
                 item.setData(0, Qt.ItemDataRole.UserRole + 3, (

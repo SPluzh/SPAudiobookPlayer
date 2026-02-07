@@ -170,6 +170,14 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 log_func("scanner.db_added_cached_cover_path")
         except sqlite3.OperationalError:
             pass
+
+        # Migration: add description column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN description TEXT")
+            if log_func:
+                log_func("scanner.db_added_description")
+        except sqlite3.OperationalError:
+            pass
             
         conn.commit()
 
@@ -213,7 +221,7 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent,
                 is_started, is_completed, is_available, is_expanded, last_updated,
                 codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                time_added, time_started, time_finished, is_favorite, is_merged, id
+                time_added, time_started, time_finished, is_favorite, is_merged, description, id
             '''
             
             columns_with_prefix = '''
@@ -221,7 +229,7 @@ class DatabaseManager:
                 p.is_folder, p.file_count, p.duration, p.listened_duration, p.progress_percent,
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
                 p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
-                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.id
+                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.description, p.id
             '''
             
             if filter_type == 'all':
@@ -295,7 +303,7 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent, \
                 is_started, is_completed, is_available, is_expanded, last_updated, \
                 codec, bitrate_min, bitrate_max, bitrate_mode, container, \
-                time_added, time_started, time_finished, is_favorite, is_merged, audiobook_id = row
+                time_added, time_started, time_finished, is_favorite, is_merged, description, audiobook_id = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -323,9 +331,9 @@ class DatabaseManager:
                     'time_added': time_added,
                     'time_started': time_started,
                     'time_finished': time_finished,
-                    'time_finished': time_finished,
                     'is_favorite': bool(is_favorite),
                     'is_merged': bool(is_merged),
+                    'description': description,
                     'id': audiobook_id
                 })
             
@@ -471,7 +479,7 @@ class DatabaseManager:
             cursor.execute('''
             SELECT id, name, author, title, current_file_index, current_position, duration, 
                    COALESCE(playback_speed, 1.0), COALESCE(use_id3_tags, 1),
-                   cover_path, cached_cover_path
+                   cover_path, cached_cover_path, description
             FROM audiobooks WHERE path = ? AND is_folder = 0
         ''', (audiobook_path,))
             return cursor.fetchone()
@@ -671,7 +679,7 @@ class DatabaseManager:
                 SELECT author, title, narrator, file_count, duration, 
                        listened_duration, progress_percent, is_started, is_completed,
                        codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                       time_added, time_started, time_finished, is_favorite
+                       time_added, time_started, time_finished, is_favorite, description
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -696,7 +704,8 @@ class DatabaseManager:
                     'time_added': row[14],
                     'time_started': row[15],
                     'time_finished': row[16],
-                    'is_favorite': bool(row[17])
+                    'is_favorite': bool(row[17]),
+                    'description': row[18]
                 }
             return None
         except sqlite3.Error as e:
