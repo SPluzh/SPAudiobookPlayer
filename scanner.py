@@ -6,8 +6,11 @@ import configparser
 import json
 import sys
 import hashlib
+import shutil
 
 from database import init_database
+from PyQt6.QtGui import QImage
+from PyQt6.QtCore import Qt
 
 # Ensure correct UTF-8 output in Windows console
 if hasattr(sys.stdout, 'reconfigure'):
@@ -681,43 +684,96 @@ class AudiobookScanner:
                 safe_name = hashlib.md5(key.encode()).hexdigest()
                 cover_path = self.covers_dir / f"{safe_name}.jpg"
                 
+                # Check directly if file exists
+                if cover_path.exists():
+                     return str(cover_path)
+
+                img_data = None
+                
                 if f.suffix.lower() == '.mp3':
                     tags = ID3(f)
                     for tag in tags.values():
                         if isinstance(tag, APIC):
-                            cover_path.write_bytes(tag.data)
-                            return str(cover_path)
+                            img_data = tag.data
+                            break
                 
                 elif f.suffix.lower() in ('.m4a', '.m4b', '.mp4'):
                     audio = MP4(f)
                     if 'covr' in audio:
-                        cover_path.write_bytes(audio['covr'][0])
-                        return str(cover_path)
+                        img_data = audio['covr'][0]
                 
                 elif f.suffix.lower() == '.flac':
                     audio = FLAC(f)
                     if audio.pictures:
-                        cover_path.write_bytes(audio.pictures[0].data)
-                        return str(cover_path)
+                        img_data = audio.pictures[0].data
                 elif f.suffix.lower() == '.ape':
                     from mutagen.monkeysaudio import MonkeysAudio
                     audio = MonkeysAudio(f)
                     if 'Cover Art (Front)' in audio:
-                        cover_path.write_bytes(audio['Cover Art (Front)'].value)
-                        return str(cover_path)
+                        img_data = audio['Cover Art (Front)'].value
+                
+                if img_data:
+                    # Resize and save
+                    image = QImage.fromData(img_data)
+                    if not image.isNull():
+                         scaled = image.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                         scaled.save(str(cover_path), "JPG")
+                         return str(cover_path)
+                    else:
+                        # Fallback if image load fails 
+                        pass
+
             except Exception:
                 continue
         
         return None
     
     def _find_cover(self, directory, key):
-        """Find cover image (file or embedded) for the audiobook"""
+        """Find cover image (file or embedded) for the audiobook. Returns (original_path, cached_path)"""
+        
+        # Helper to cache a file
+        def cache_file(src_path):
+            try:
+                src_path_obj = Path(src_path)
+                if not src_path_obj.exists():
+                    return None
+                    
+                ext = src_path_obj.suffix.lower()
+                safe_name = hashlib.md5(key.encode()).hexdigest()
+                dest_path = self.covers_dir / f"{safe_name}{ext}"
+                
+                # Check directly if file exists to avoid unnecessary copy
+                if not dest_path.exists():
+                    # Try to resize and save
+                    image = QImage(str(src_path))
+                    if not image.isNull():
+                         scaled = image.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                         scaled.save(str(dest_path))
+                    else:
+                         # Fallback to direct copy
+                         shutil.copy2(src_path, dest_path)
+                         
+                return str(dest_path)
+            except Exception as e:
+                print(f"Error caching cover: {e}")
+                try:
+                    # Fallback to direct copy on error
+                    ext = Path(src_path).suffix.lower()
+                    safe_name = hashlib.md5(key.encode()).hexdigest()
+                    dest_path = self.covers_dir / f"{safe_name}{ext}"
+                    if not dest_path.exists():
+                        shutil.copy2(src_path, dest_path)
+                    return str(dest_path)
+                except:
+                    return None
+
         # 1. Search in current directory (priority names)
         for name in self.cover_names:
             p = directory / name
             try:
                 if p.is_file():
-                    return str(p)
+                    cached = cache_file(str(p))
+                    return str(p), cached
             except (PermissionError, OSError):
                 continue
         
@@ -725,7 +781,8 @@ class AudiobookScanner:
         try:
             for f in directory.iterdir():
                 if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp'}:
-                    return str(f)
+                     cached = cache_file(str(f))
+                     return str(f), cached
         except (PermissionError, OSError):
             pass
         
@@ -734,7 +791,8 @@ class AudiobookScanner:
             try:
                 for p in directory.rglob(name):
                     if p.is_file():
-                        return str(p)
+                        cached = cache_file(str(p))
+                        return str(p), cached
             except (PermissionError, OSError):
                 continue
         
@@ -743,12 +801,19 @@ class AudiobookScanner:
             try:
                 for p in directory.rglob(f"*{ext}"):
                     if p.is_file():
-                        return str(p)
+                        cached = cache_file(str(p))
+                        return str(p), cached
             except (PermissionError, OSError):
                 continue
         
         # 5. Fallback to embedded cover
-        return self._extract_embedded_cover(directory, key)
+        # Embedded cover extraction already handles caching/extraction to covers_dir
+        embedded_path = self._extract_embedded_cover(directory, key)
+        if embedded_path:
+             # For embedded covers, we don't have an "original" file path, so return None for original
+             return None, embedded_path
+             
+        return None, None
 
     def _calculate_state_hash(self, files):
         """Calculate a hash based on file names, sizes, and modification times"""
@@ -993,9 +1058,9 @@ class AudiobookScanner:
                         print(f"  Bitrate: {bitrate_min}-{bitrate_max} {self.tr('units.kbps', default='kbps')} ({bitrate_mode}) Codec: {common_codec}")
                 
                 # Search for cover image
-                cover = self._find_cover(folder, str(rel))
-                if cover:
-                    cover_name = Path(cover).name
+                cover, cover_cached = self._find_cover(folder, str(rel))
+                if cover_cached:
+                    cover_name = Path(cover_cached).name
                     print(self.tr("scanner.cover_found", name=cover_name))
 
                 # Check for .cue files in this folder
@@ -1055,6 +1120,7 @@ class AudiobookScanner:
                             tag_narrator = ?,
                             tag_year = ?,
                             cover_path = ?,
+                            cached_cover_path = ?,
                             file_count = ?,
                             duration = ?,
                             state_hash = ?,
@@ -1079,6 +1145,7 @@ class AudiobookScanner:
                         t_narrator,
                         t_year,
                         cover,
+                        cover_cached,
                         file_count,
                         duration,
                         current_state_hash,
@@ -1099,7 +1166,7 @@ class AudiobookScanner:
                             path, parent_path, name,
                             author, title, narrator,
                             tag_author, tag_title, tag_narrator, tag_year,
-                            cover_path,
+                            cover_path, cached_cover_path,
                             file_count, duration,
                             listened_duration,
                             progress_percent,
@@ -1114,7 +1181,7 @@ class AudiobookScanner:
                             codec, bitrate_min, bitrate_max, bitrate_mode, container,
                             time_added, is_merged
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
                     """, (
                         str(rel),
                         str(parent),
@@ -1127,6 +1194,7 @@ class AudiobookScanner:
                         t_narrator,
                         t_year,
                         cover,
+                        cover_cached,
                         file_count,
                         duration,
                         listened,
@@ -1261,11 +1329,11 @@ class AudiobookScanner:
                 
                 c.execute("""
                     INSERT OR IGNORE INTO audiobooks
-                    (path, parent_path, name, author, title, narrator, cover_path,
+                    (path, parent_path, name, author, title, narrator, cover_path, cached_cover_path,
                      file_count, duration, listened_duration, progress_percent, is_folder,
                      current_file_index, current_position, is_started, is_completed, is_available,
                      time_added)
-                    VALUES (?, ?, ?, '', '', '', NULL, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, CURRENT_TIMESTAMP)
+                    VALUES (?, ?, ?, '', '', '', NULL, NULL, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, CURRENT_TIMESTAMP)
                 """, (path_str, parent, path_obj.name))
                 
                 # Mark existing folder as available and ensure time_added is set

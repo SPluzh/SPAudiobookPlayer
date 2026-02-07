@@ -3,6 +3,7 @@ import os
 import subprocess
 import configparser
 import shutil
+from functools import lru_cache
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar, 
@@ -223,6 +224,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             label = StyleLabel(name, parent)
             self._style_labels[name] = label
     
+    @lru_cache(maxsize=32)
     def _get_style(self, style_name: str) -> tuple[QFont, QColor]:
         """Fetch font and color settings from a style label mapped to the given name"""
         label = self._style_labels.get(style_name)
@@ -239,6 +241,7 @@ class MultiLineDelegate(QStyledItemDelegate):
     
     def update_styles(self):
         """Force a refresh of style properties from the loaded QSS"""
+        self._get_style.cache_clear()
         for label in self._style_labels.values():
             label.style().unpolish(label)
             label.style().polish(label)
@@ -1088,9 +1091,15 @@ class LibraryWidget(QWidget):
         
         # Fetch and scale the audiobook cover
         cover_icon = None
-        if data['cover_path']:
-            cover_p = Path(data['cover_path'])
-            # For relative paths, resolve them against the library's root directory
+        
+        # Prioritize cached cover (fastest access)
+        cover_p_str = data.get('cached_cover_path')
+        if not cover_p_str:
+             cover_p_str = data.get('cover_path')
+             
+        if cover_p_str:
+            cover_p = Path(cover_p_str)
+            # For relative paths (legacy or uncached), resolve them against the library's root directory
             if not cover_p.is_absolute() and self.config.get('default_path'):
                 cover_p = Path(self.config.get('default_path')) / cover_p
                 

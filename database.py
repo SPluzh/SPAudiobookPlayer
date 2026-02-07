@@ -162,6 +162,14 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 log_func("scanner.db_added_is_merged")
         except sqlite3.OperationalError:
             pass
+
+        # Migration: add cached_cover_path column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN cached_cover_path TEXT")
+            if log_func:
+                log_func("scanner.db_added_cached_cover_path")
+        except sqlite3.OperationalError:
+            pass
             
         conn.commit()
 
@@ -201,7 +209,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             
             columns = '''
-                path, parent_path, name, author, title, narrator, cover_path,
+                path, parent_path, name, author, title, narrator, cover_path, cached_cover_path,
                 is_folder, file_count, duration, listened_duration, progress_percent,
                 is_started, is_completed, is_available, is_expanded, last_updated,
                 codec, bitrate_min, bitrate_max, bitrate_mode, container,
@@ -209,7 +217,7 @@ class DatabaseManager:
             '''
             
             columns_with_prefix = '''
-                p.path, p.parent_path, p.name, p.author, p.title, p.narrator, p.cover_path,
+                p.path, p.parent_path, p.name, p.author, p.title, p.narrator, p.cover_path, p.cached_cover_path,
                 p.is_folder, p.file_count, p.duration, p.listened_duration, p.progress_percent,
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
                 p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
@@ -283,7 +291,7 @@ class DatabaseManager:
             
             data_by_parent = {}
             for row in rows:
-                path, parent_path, name, author, title, narrator, cover_path, \
+                path, parent_path, name, author, title, narrator, cover_path, cached_cover_path, \
                 is_folder, file_count, duration, listened_duration, progress_percent, \
                 is_started, is_completed, is_available, is_expanded, last_updated, \
                 codec, bitrate_min, bitrate_max, bitrate_mode, container, \
@@ -296,6 +304,7 @@ class DatabaseManager:
                     'title': title,
                     'narrator': narrator,
                     'cover_path': cover_path,
+                    'cached_cover_path': cached_cover_path,
                     'is_folder': bool(is_folder),
                     'file_count': file_count or 0,
                     'duration': duration or 0,
@@ -461,7 +470,8 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute('''
             SELECT id, name, author, title, current_file_index, current_position, duration, 
-                   COALESCE(playback_speed, 1.0), COALESCE(use_id3_tags, 1)
+                   COALESCE(playback_speed, 1.0), COALESCE(use_id3_tags, 1),
+                   cover_path, cached_cover_path
             FROM audiobooks WHERE path = ? AND is_folder = 0
         ''', (audiobook_path,))
             return cursor.fetchone()

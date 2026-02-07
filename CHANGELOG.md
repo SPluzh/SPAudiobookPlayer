@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.5]
+- **Performance**: Implemented comprehensive **Cover Caching** system:
+    - Covers are extracted, resized (to 300x300), and cached during scanning to `data/extracted_covers`.
+    - Significantly reduces memory usage and improves library scrolling performance.
+    - Added `lru_cache` to style calculations for smoother UI rendering.
+
 ## [1.3.4]
 - **Metadata**: Implemented **Edit Metadata** context menu option.
     - Allows manual editing of Author, Title, and Narrator fields.
