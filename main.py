@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QProgressBar, QListWidget, QListWidgetItem, QFrame, QTextEdit, QSizePolicy,
     QGraphicsBlurEffect
 )
-from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSignal, QRect, QRectF, QPoint, QPointF, QThread
+from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSignal, QRect, QRectF, QPoint, QPointF, QThread, QByteArray
 from PyQt6.QtGui import (
     QIcon, QAction, QPixmap, QBrush, QColor, QFont, QPen, QPainter, QPolygon,
     QTextCursor, QPainterPath, QFontMetrics
@@ -126,7 +126,32 @@ class AudiobookPlayerWindow(QMainWindow):
         self.timer.start(100)
         
         # Window geometry restoration
-        self.setGeometry(self.window_x, self.window_y, self.window_width, self.window_height)
+        display_restored = False
+        if self.saved_geometry_hex:
+            display_restored = self.restoreGeometry(QByteArray.fromHex(self.saved_geometry_hex.encode()))
+        
+        if not display_restored:
+            # Fallback to manual coordinates, but ensure they are sane
+            # Fix potential "creeping" issues from previous bugs where coordinates became negative or zero
+            safe_x = max(0, self.window_x)
+            safe_y = max(30, self.window_y) # Ensure title bar is likely visible
+            safe_width = max(450, self.window_width)
+            safe_height = max(450, self.window_height)
+            self.setGeometry(safe_x, safe_y, safe_width, safe_height)
+        
+        # Final Safety Check: Ensure window is actually visible on the screen
+        # This catches cases where restored geometry might be on a disconnected monitor
+        # or if calculations were still wrong.
+        screen_geo = self.screen().availableGeometry()
+        frame_geo = self.frameGeometry()
+        
+        # If the top-left corner is completely out of bounds or the title bar is cut off
+        if not screen_geo.intersects(frame_geo) or frame_geo.top() < screen_geo.top():
+            # Reset to center of screen
+            center_point = screen_geo.center()
+            frame_geo.moveCenter(center_point)
+            self.move(frame_geo.topLeft())
+        
         self.setMinimumSize(450, 450)
         self.statusBar().showMessage(tr("status.load_library"))
         
@@ -383,6 +408,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.window_y = config.getint('Display', 'window_y', fallback=100)
         self.window_width = config.getint('Display', 'window_width', fallback=1200)
         self.window_height = config.getint('Display', 'window_height', fallback=800)
+        self.saved_geometry_hex = config.get('Display', 'window_geometry', fallback=None)
         
         # Filesystem Path Configurations
         self.default_path = config.get('Paths', 'default_path', fallback="")
@@ -512,6 +538,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Display']['window_y'] = str(rect.y())
         config['Display']['window_width'] = str(rect.width())
         config['Display']['window_height'] = str(rect.height())
+        config['Display']['window_geometry'] = self.saveGeometry().toHex().data().decode()
         
         # Filesystem Path Configs
         if 'Paths' not in config: config['Paths'] = {}
@@ -580,6 +607,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Display']['window_height'] = str(self.height())
         config['Display']['window_x'] = str(self.x())
         config['Display']['window_y'] = str(self.y())
+        config['Display']['window_geometry'] = self.saveGeometry().toHex().data().decode()
         
         # Persist the relative sizes of layout panes
         if hasattr(self, 'splitter'):
