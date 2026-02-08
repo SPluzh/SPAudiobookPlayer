@@ -21,7 +21,7 @@ from database import DatabaseManager
 from translations import tr, trf
 from utils import (
     get_base_path, get_icon, load_icon, resize_icon, 
-    format_time, format_time_short, OutputCapture
+    format_time, format_time_short, format_duration, OutputCapture
 )
 from scanner import AudiobookScanner
 from tags_dialog import TagManagerDialog
@@ -374,10 +374,6 @@ class MultiLineDelegate(QStyledItemDelegate):
     def _get_style(self, style_name: str) -> tuple[QFont, QColor]:
         """Fetch font and color settings from the style manager mapped to the given name"""
         return StyleManager.get_theme_property(style_name)
-
-    def _default_format_duration(self, seconds: int) -> str:
-        """Fallback 시간 formatting when no specific formatter is provided"""
-        return format_time(seconds)
     
     def update_styles(self):
         """Force a refresh of style properties from the loaded QSS"""
@@ -716,7 +712,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         # Overall duration
         if duration:
             font_dur, color_dur = self._get_style('delegate_duration')
-            duration_text = f"{tr('delegate.duration_prefix')} {self.format_duration(duration)}"
+            duration_text = f"{tr('delegate.duration_prefix')} {format_duration(duration)}"
             info_parts.append((duration_text, font_dur, color_dur))
         
         # Listening progress percentage

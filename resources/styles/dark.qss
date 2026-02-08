@@ -885,7 +885,6 @@ QLabel#aboutSectionContent {
 #tagPreview {
     border-radius: 4px;
     padding: 4px 8px;
-    font-family: "Segoe UI";
     font-size: 12px;
     font-weight: bold;
 }
@@ -907,12 +906,10 @@ QLabel#aboutSectionContent {
 }
 
 #delegate_info_font {
-    font-family: 'Segoe UI';
-    font-size: 8px;
+    font-size: 12px;
 }
 
 #delegate_regular_font {
-    font-family: 'Segoe UI';
     font-size: 13px;
 }
 
