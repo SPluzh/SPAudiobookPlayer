@@ -292,7 +292,7 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # Open Library Folder
         open_folder_action = QAction(tr("menu.open_library_folder"), self)
-        open_folder_action.setIcon(get_icon("context_open_folder")) 
+        open_folder_action.setIcon(get_icon("context_open_folder")) стиль 
         open_folder_action.triggered.connect(self.open_library_folder)
         library_menu.addAction(open_folder_action)
         

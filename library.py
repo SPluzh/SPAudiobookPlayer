@@ -9,9 +9,9 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar, 
     QLabel, QLineEdit, QMenu, QStyle, QButtonGroup, QDialog, 
     QTextEdit, QTreeWidget, QTreeWidgetItem, QMessageBox,
-    QStyledItemDelegate
+    QStyledItemDelegate, QToolTip, QListWidget, QListWidgetItem, QStyleOptionViewItem
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QRect, QRectF, QPoint, QPointF, QThread
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QRect, QRectF, QPoint, QPointF, QThread, QEvent
 from PyQt6.QtGui import (
     QIcon, QAction, QPixmap, QBrush, QColor, QFont, QPen, QPainter, 
     QPainterPath, QFontMetrics, QTextCursor
@@ -25,7 +25,171 @@ from utils import (
 )
 from scanner import AudiobookScanner
 from tags_dialog import TagManagerDialog
+
+
 from metadata_dialog import MetadataEditDialog
+
+class TagFilterPopup(QWidget):
+    """A popup widget containing a checkable list of tags for filtering"""
+    filter_changed = pyqtSignal(set) # Emits set of checked tag IDs
+
+    def __init__(self, all_tags, selected_ids, parent=None):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setLayout(QVBoxLayout())
+        # Add some padding for the outer frame since we draw our own border in list_widget style
+        # Actually, let's keep 0 margin and let widgets handle it
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
+        
+        # Helper layout for buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.setContentsMargins(5, 5, 5, 5)
+        btn_layout.setSpacing(5)
+        
+        self.btn_select_all = QPushButton(tr("library.select_all"))
+        self.btn_select_all.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_select_all.setStyleSheet("padding: 4px; font-size: 11px;")
+        self.btn_select_all.clicked.connect(self.select_all)
+        
+        self.btn_deselect_all = QPushButton(tr("library.deselect_all"))
+        self.btn_deselect_all.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_deselect_all.setStyleSheet("padding: 4px; font-size: 11px;")
+        self.btn_deselect_all.clicked.connect(self.deselect_all)
+
+        btn_layout.addWidget(self.btn_select_all)
+        btn_layout.addWidget(self.btn_deselect_all)
+        
+        # Container for buttons to give them background
+        btn_container = QWidget()
+        btn_container.setObjectName("TagPopupHeader")
+        btn_container.setStyleSheet("#TagPopupHeader { background-color: #373737; border: 1px solid #808080; border-bottom: none; border-top-left-radius: 3px; border-top-right-radius: 3px; }")
+        btn_container.setLayout(btn_layout)
+        
+        self.layout().addWidget(btn_container)
+        
+        self.list_widget = QListWidget()
+        self.list_widget.setSelectionMode(QListWidget.SelectionMode.NoSelection) # Selection handled by checkboxes
+        self.list_widget.itemChanged.connect(self._on_item_changed)
+        
+        # Install event filter to handle row click
+        self.list_widget.viewport().installEventFilter(self)
+        
+        # Enforce consistent style (border, rounded corners) regardless of focus state
+        # Adjusted bottom radius since top is handled by header
+        self.list_widget.setStyleSheet("""
+            QListWidget {
+                background-color: #373737;
+                border: 1px solid #808080;
+                border-top: none;
+                border-bottom-left-radius: 3px;
+                border-bottom-right-radius: 3px;
+                padding: 5px;
+                outline: none;
+            }
+            QListWidget:focus {
+                border: 1px solid #808080;
+                border-top: none;
+            }
+            QListWidget:!active {
+                border: 1px solid #808080;
+                border-top: none;
+            }
+            QListWidget::item:hover {
+                background-color: #4a4a4a;
+                color: #ffffff;
+                border-radius: 0px;
+            }
+        """)
+        
+        # Populate list
+        if not all_tags:
+             item = QListWidgetItem(tr("library.no_tags_available") if hasattr(tr, "library.no_tags_available") else "No tags available")
+             item.setFlags(Qt.ItemFlag.NoItemFlags)
+             self.list_widget.addItem(item)
+             self.btn_select_all.setEnabled(False)
+             self.btn_deselect_all.setEnabled(False)
+        else:
+            for tag in all_tags:
+                item = QListWidgetItem(tag['name'])
+                item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
+                item.setCheckState(Qt.CheckState.Checked if tag['id'] in selected_ids else Qt.CheckState.Unchecked)
+                item.setData(Qt.ItemDataRole.UserRole, tag['id'])
+                
+                if tag.get('color'):
+                    pixmap = QPixmap(14, 14)
+                    pixmap.fill(QColor(tag['color']))
+                    item.setIcon(QIcon(pixmap))
+                
+                self.list_widget.addItem(item)
+                
+        # Calculate size based on content (max height constraints?)
+        rows = self.list_widget.count()
+        row_height = self.list_widget.sizeHintForRow(0) if rows > 0 else 20
+        # Add a bit of buffer + header height (increased to avoid scrollbar)
+        height = min(400, rows * row_height + 25 + 40)
+        width = self.list_widget.sizeHintForColumn(0) + 50 # + checkbox/scroll
+        width = max(200, width) # Min width for buttons
+        
+        self.list_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.resize(width, height)
+        self.layout().addWidget(self.list_widget)
+
+    def select_all(self):
+        self._set_all_checked(Qt.CheckState.Checked)
+
+    def deselect_all(self):
+        self._set_all_checked(Qt.CheckState.Unchecked)
+
+    def _set_all_checked(self, state):
+        self.list_widget.blockSignals(True)
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            if item.flags() & Qt.ItemFlag.ItemIsUserCheckable:
+                item.setCheckState(state)
+        self.list_widget.blockSignals(False)
+        # Manually trigger update
+        self._on_item_changed(None)
+
+    def eventFilter(self, source, event):
+        if source == self.list_widget.viewport() and event.type() == QEvent.Type.MouseButtonPress:
+            item = self.list_widget.itemAt(event.pos())
+            if item and (item.flags() & Qt.ItemFlag.ItemIsUserCheckable):
+                # Check if click is on the checkbox itself (to avoid double toggle)
+                opt = QStyleOptionViewItem()
+                rect = self.list_widget.visualItemRect(item)
+                opt.rect = rect
+                # This gives us a reasonable approximation of where the checkbox is
+                # For exact precision we'd need initViewItemOption which is protected
+                # But usually checkbox is at the left edge
+                style = self.list_widget.style()
+                check_rect = style.subElementRect(QStyle.SubElement.SE_ItemViewItemCheckIndicator, opt, self.list_widget)
+                
+                # If we are NOT clicking the checkbox, toggle it manually
+                if not check_rect.contains(event.pos()):
+                    current = item.checkState()
+                    item.setCheckState(Qt.CheckState.Unchecked if current == Qt.CheckState.Checked else Qt.CheckState.Checked)
+                    return True # Consume event to prevent default handling (selection etc)
+        
+        return super().eventFilter(source, event)
+
+    def _on_item_changed(self, item):
+        """Handle checkbox toggle"""
+        if item is not None:
+             tag_id = item.data(Qt.ItemDataRole.UserRole)
+             if tag_id is None: return
+        
+        # Collect all checked IDs
+        checked_ids = set()
+        for i in range(self.list_widget.count()):
+            it = self.list_widget.item(i)
+            if it.checkState() == Qt.CheckState.Checked:
+                tid = it.data(Qt.ItemDataRole.UserRole)
+                if tid is not None:
+                    checked_ids.add(tid)
+        
+        self.filter_changed.emit(checked_ids)
 
 class ScannerThread(QThread):
     """Background thread for scanning a directory for audiobooks"""
@@ -832,6 +996,9 @@ class LibraryWidget(QWidget):
         self.show_folders = show_folders
         self.show_filter_labels = show_filter_labels
         self.cached_library_data = None  # Cache for fast reconstruction
+        self.tag_filter_ids = set()
+        self.is_tag_filter_active = False
+        self.is_favorites_filter_active = False
         self.setup_ui()
         self.load_icons()
     
@@ -874,9 +1041,21 @@ class LibraryWidget(QWidget):
         self.btn_favorites.setFixedWidth(40)
         self.btn_favorites.setIcon(get_icon("favorites"))
         self.btn_favorites.setToolTip(tr("library.filter_favorites"))
-        self.btn_favorites.clicked.connect(lambda: self.apply_filter('favorites'))
-        self.btn_favorites.setProperty('filter_type', 'favorites')
+        self.btn_favorites.clicked.connect(self.on_favorites_filter_toggled)
+        # self.btn_favorites.setProperty('filter_type', 'favorites') # No longer an exclusive type
         filter_layout.addWidget(self.btn_favorites)
+        
+        # Tags Filter
+        self.btn_tags = QPushButton("")
+        self.btn_tags.setObjectName("filterBtn")
+        self.btn_tags.setCheckable(True)
+        self.btn_tags.setFixedWidth(40)
+        self.btn_tags.setIcon(get_icon("context_tags"))
+        self.btn_tags.setToolTip(tr("library.tooltip_filter_tags"))
+        self.btn_tags.clicked.connect(self.on_tag_filter_toggled)
+        self.btn_tags.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.btn_tags.customContextMenuRequested.connect(self.show_tag_filter_menu)
+        filter_layout.addWidget(self.btn_tags)
         
         filter_layout.addSpacing(5)
         
@@ -901,10 +1080,11 @@ class LibraryWidget(QWidget):
             filter_layout.addWidget(btn)
         
         # Add favorites to group and dictionary for state management
-        self.filter_group.addButton(self.btn_favorites)
+        # self.filter_group.addButton(self.btn_favorites) # Removed from exclusive group
         self.filter_buttons['favorites'] = self.btn_favorites
+        self.filter_buttons['tags'] = self.btn_tags
             
-        last_btn = self.filter_buttons[self.current_filter]
+        last_btn = self.filter_buttons.get(self.current_filter)
         if last_btn:
              last_btn.setChecked(True)
 
@@ -946,27 +1126,35 @@ class LibraryWidget(QWidget):
         # Threshold for hiding text (only icons shown below this width)
         show_text = (self.width() >= 450) if self.show_filter_labels else False
         
+        # Standard filters
         for filter_id, config in self.FILTER_CONFIG.items():
             if filter_id in self.filter_buttons:
                 btn = self.filter_buttons[filter_id]
-                if show_text:
-                    label = tr(config['label'])
-                    btn.setText(label)
-                    
-                    # Calculate required width using BOLD metrics to prevent truncation when active
-                    font = btn.font()
-                    font.setBold(True)
-                    metrics = QFontMetrics(font)
-                    
-                    text_width = metrics.horizontalAdvance(label)
-                    icon_width = btn.iconSize().width() if not btn.icon().isNull() else 0
-                    
-                    # Buffer: icon + text + horizontal padding (10+10) + icon spacing + requested 15px
-                    required_width = text_width + icon_width + 20 + 5 + 15
-                    btn.setMinimumWidth(required_width)
-                else:
-                    btn.setText("")
-                    btn.setMinimumWidth(0) # Reset min width allow shrinking to icon size (or rely on style)
+                self._update_btn_label(btn, config['label'], show_text)
+                
+        # Tag filter
+        if hasattr(self, 'btn_tags') and self.btn_tags:
+            self._update_btn_label(self.btn_tags, "library.filter_tags", show_text)
+
+    def _update_btn_label(self, btn, label_key, show_text):
+        if show_text:
+            label = tr(label_key)
+            btn.setText(label)
+            
+            # Calculate required width using BOLD metrics to prevent truncation when active
+            font = btn.font()
+            font.setBold(True)
+            metrics = QFontMetrics(font)
+            
+            text_width = metrics.horizontalAdvance(label)
+            icon_width = btn.iconSize().width() if not btn.icon().isNull() else 0
+            
+            # Buffer: icon + text + horizontal padding (10+10) + icon spacing + requested 15px
+            required_width = text_width + icon_width + 20 + 5 + 15
+            btn.setMinimumWidth(required_width)
+        else:
+            btn.setText("")
+            btn.setMinimumWidth(0) # Reset min width allow shrinking to icon size (or rely on style)
     
     def load_icons(self):
         """Load and scale standard icons for folders and audiobook covers from resources"""
@@ -996,6 +1184,36 @@ class LibraryWidget(QWidget):
             )
 
     
+    
+    def on_tag_filter_toggled(self, checked):
+        """Toggle tag filtering on/off"""
+        self.is_tag_filter_active = checked
+        if checked and not self.tag_filter_ids:
+             QToolTip.showText(self.btn_tags.mapToGlobal(QPoint(0, self.btn_tags.height())), 
+                               tr("library.no_tags_selected"), self.btn_tags)
+        self.load_audiobooks(use_cache=False)
+
+    def show_tag_filter_menu(self, pos):
+        """Show popup for selecting tags to filter by"""
+        # Close existing popup if open? (Qt handles Popup focus loss close usually)
+        
+        all_tags = self.db.get_all_tags()
+        
+        self.tag_popup = TagFilterPopup(all_tags, self.tag_filter_ids, self)
+        self.tag_popup.filter_changed.connect(self.on_tag_selection_changed)
+        
+        # Position under the button
+        global_pos = self.btn_tags.mapToGlobal(QPoint(0, self.btn_tags.height()))
+        self.tag_popup.move(global_pos)
+        self.tag_popup.show()
+
+    def on_tag_selection_changed(self, selected_ids):
+        """Update the set of selected tag IDs for filtering"""
+        self.tag_filter_ids = selected_ids
+        
+        if self.is_tag_filter_active:
+            self.load_audiobooks(use_cache=False)
+
     def on_tree_favorite_clicked(self, path: str):
         """Handle click on the favorite heart icon in the tree"""
         # Find ID for path
@@ -1011,12 +1229,25 @@ class LibraryWidget(QWidget):
         if data and not data.get('is_favorite'):
              self.toggle_favorite(audiobook_id, path)
         
-        # Activate Favorites filter if not already active
-        if self.current_filter != 'favorites':
-            if self.btn_favorites:
-                self.btn_favorites.setChecked(True)
-                self.btn_favorites.setChecked(True)
-                self.apply_filter('favorites')
+                # Activate Favorites filter if not already active
+        if not self.is_favorites_filter_active:
+             if self.btn_favorites:
+                 self.btn_favorites.setChecked(True)
+                 self.on_favorites_filter_toggled(True)
+        else:
+             # Refresh current view to reflect change (e.g. remove item if unfavorited)
+             self.refresh_audiobook_item(path)
+             if not self.db.is_favorite(audiobook_id): # helper needed? or check data
+                 # Actually, refresh_audiobook_item updates data. But if filter active and item NOT favorite,
+                 # we should hide it.
+                 # The simplest is full reload if we are removing from active favorites filter.
+                 self.load_audiobooks(use_cache=False)
+
+    
+    def on_favorites_filter_toggled(self, checked):
+        """Toggle favorites filtering on/off"""
+        self.is_favorites_filter_active = checked
+        self.load_audiobooks(use_cache=False)
 
     def show_description_dialog(self, path: str):
         """Show a dialog with the audiobook description"""
@@ -1077,7 +1308,7 @@ class LibraryWidget(QWidget):
         # Always load all audiobooks to enable fast client-side filtering
         if not use_cache or self.cached_library_data is None:
              self.cached_library_data = self.db.load_audiobooks_from_db(self.current_filter)
-
+ 
         # Pre-fetch all tags logic
         all_tags = self.db.get_all_audiobook_tags()
         
@@ -1093,9 +1324,22 @@ class LibraryWidget(QWidget):
                 for parent_path, items in self.cached_library_data.items():
                     for item_data in items:
                         if not item_data['is_folder']:
-                            # Attach tags to data dict temporarily for item creation
+                            # Get tags
+                            item_tags = all_tags.get(item_data['id'], [])
                             if 'id' in item_data:
-                                item_data['tags'] = all_tags.get(item_data['id'], [])
+                                item_data['tags'] = item_tags
+                            
+                            # Apply Tag Filter
+                            if self.is_tag_filter_active and self.tag_filter_ids:
+                                item_tag_ids = {t['id'] for t in item_tags}
+                                if not self.tag_filter_ids.intersection(item_tag_ids):
+                                    continue
+                            
+                            # Apply Favorites Filter
+                            if self.is_favorites_filter_active:
+                                if not item_data.get('is_favorite'):
+                                    continue
+                                    
                             all_items.append(item_data)
                 
                 # Re-sort at client side to ensure absolute order (SQL order might be fragmented in the map)
@@ -1103,21 +1347,49 @@ class LibraryWidget(QWidget):
                 if self.current_filter == 'in_progress': sort_key = 'last_updated'
                 elif self.current_filter == 'completed': sort_key = 'time_finished'
                 elif self.current_filter == 'not_started': sort_key = 'time_added'
-                elif self.current_filter == 'favorites': sort_key = 'name' # Sort favorites by name
+                # favorites sort key removed as it's no longer a main mode
                 
                 all_items.sort(key=lambda x: (x.get(sort_key) or '', x.get('name') or ''), reverse=(sort_key != 'name'))
                 
                 # Batch add to avoid recursion overhead
-                self.add_flat_items(self.tree, all_items)
+                self.add_flat_items(self.tree.invisibleRootItem(), all_items)
             else:
-                # Need to inject tags into the recursive add
-                # We can modify cached_library_data in place safely as it is a dict of lists
-                for items in self.cached_library_data.values():
-                    for item_data in items:
-                        if not item_data['is_folder'] and 'id' in item_data:
-                             item_data['tags'] = all_tags.get(item_data['id'], [])
+                # Prepare data for recursive add, potentially filtering
+                data_to_display = self.cached_library_data
+                
+                if self.is_tag_filter_active or True: # always attach tags first
+                     # We need to reconstruct if we filter, to avoid modifying the cache in a way that loses data permanently?
+                     # No, cached_library_data is a dict of lists of dicts.
+                     # We create a NEW dict structure pointing to the same item dicts (checking tags).
+                     
+                     filtered_data = {}
+                     for parent_path, items in self.cached_library_data.items():
+                         filtered_items = []
+                         for item_data in items:
+                             # Attach tags logic
+                             if not item_data['is_folder'] and 'id' in item_data:
+                                 item_data['tags'] = all_tags.get(item_data['id'], [])
                              
-                self.add_items_from_db(self.tree, '', self.cached_library_data)
+                             # Filtering logic
+                             if self.is_tag_filter_active and not item_data['is_folder'] and self.tag_filter_ids:
+                                 item_tags = item_data.get('tags', [])
+                                 item_tag_ids = {t['id'] for t in item_tags}
+                                 item_tag_ids = {t['id'] for t in item_tags}
+                                 if not self.tag_filter_ids.intersection(item_tag_ids):
+                                     continue
+                             
+                             if self.is_favorites_filter_active and not item_data['is_folder']:
+                                 if not item_data.get('is_favorite'):
+                                     continue
+                             
+                             filtered_items.append(item_data)
+                         
+                         if filtered_items:
+                             filtered_data[parent_path] = filtered_items
+                     
+                     data_to_display = filtered_data
+
+                self.add_items_from_db(self.tree.invisibleRootItem(), '', data_to_display)
         finally:
             self.tree.blockSignals(False)
             self.tree.setUpdatesEnabled(True)
@@ -1153,6 +1425,10 @@ class LibraryWidget(QWidget):
                 
                 # Sub-items traversal
                 self.add_items_from_db(item, data['path'], data_by_parent)
+                
+                # Prune empty folders (if no children were added or all were filtered out)
+                if item.childCount() == 0:
+                    parent_item.removeChild(item)
             else:
                 self._create_item_from_data(parent_item, data)
 
@@ -1512,8 +1788,8 @@ class LibraryWidget(QWidget):
         new_state = self.db.toggle_favorite(audiobook_id)
         self.refresh_audiobook_item(path)
         
-        # If we are in Favorites view and we removed it, reload to hide it
-        if self.current_filter == 'favorites' and not new_state:
+        # If we are in Favorites filter mode and we removed it, reload to hide it
+        if self.is_favorites_filter_active and not new_state:
             self.load_audiobooks(use_cache=False)
             
     def open_tag_assignment(self, audiobook_id, path):
