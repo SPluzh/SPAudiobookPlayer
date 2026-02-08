@@ -1409,8 +1409,7 @@ class LibraryWidget(QWidget):
             menu.addSeparator()
 
             edit_metadata_action = QAction(tr("library.menu_edit_metadata"), self)
-            # using standard icon for edit if custom not available
-            edit_metadata_action.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)) 
+            edit_metadata_action.setIcon(get_icon("context_edit_metadata"))
             edit_metadata_action.triggered.connect(lambda _: self.open_metadata_editor(audiobook_id, path))
             menu.addAction(edit_metadata_action)
             
