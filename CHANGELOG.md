@@ -6,7 +6,6 @@ All notable changes to this project will be documented in this file.
 - **Scanner**: Implemented support for **Single-File Audiobooks**.
     - Detects and processes standalone audio files (e.g., `.m4b`, `.mp3`) located in the library root.
     - Extracts metadata and cover art directly from individual files.
-- **Localization**: Added full translation support for single-file scanning status messages (English/Russian).
 
 ## [1.3.6]
 - **Library**: Added **Audiobook Description** feature:
