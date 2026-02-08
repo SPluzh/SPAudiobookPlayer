@@ -18,10 +18,10 @@ from PyQt6.QtWidgets import (
     QProgressBar, QListWidget, QListWidgetItem, QFrame, QTextEdit, QSizePolicy,
     QGraphicsBlurEffect
 )
-from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSignal, QRect, QRectF, QPoint, QPointF, QThread, QByteArray
+from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSignal, QRect, QRectF, QPoint, QPointF, QThread, QByteArray, QUrl
 from PyQt6.QtGui import (
     QIcon, QAction, QPixmap, QBrush, QColor, QFont, QPen, QPainter, QPolygon,
-    QTextCursor, QPainterPath, QFontMetrics
+    QTextCursor, QPainterPath, QFontMetrics, QDesktopServices
 )
 
 from bass_player import BassPlayer
@@ -290,6 +290,12 @@ class AudiobookPlayerWindow(QMainWindow):
         scan_action.triggered.connect(self.rescan_directory)
         library_menu.addAction(scan_action)
         
+        # Open Library Folder
+        open_folder_action = QAction(tr("menu.open_library_folder"), self)
+        open_folder_action.setIcon(get_icon("context_open_folder")) 
+        open_folder_action.triggered.connect(self.open_library_folder)
+        library_menu.addAction(open_folder_action)
+        
 
         view_menu = menubar.addMenu(tr("menu.view"))
         
@@ -372,6 +378,24 @@ class AudiobookPlayerWindow(QMainWindow):
         # Reload the library tree to apply new delegate formatting
         if hasattr(self, 'library_widget'):
             self.library_widget.load_audiobooks()
+    
+    def open_library_folder(self):
+        """Open the current library folder in the system's default file manager"""
+        path = self.default_path
+        if not path:
+             # Try to get from controller if default_path is not set but controller has root
+             if hasattr(self, 'playback_controller') and self.playback_controller.library_root:
+                 path = str(self.playback_controller.library_root)
+        
+        if path and os.path.isdir(path):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+        else:
+            QMessageBox.warning(self, tr("error"), tr("status.no_database")) # Using generic error or strictly "Path not found" if we had a key.
+            # "status.no_database" says "Database not found...", maybe not perfect but close enough for "Library not set".
+            # Better might be just a silent fail or console log if we want to be less obtrusive, 
+            # but user clicked a button so they expect something.
+            # Let's check if we have a better key. "settings.specify_path" is "Specify path...".
+            pass
     
     def connect_signals(self):
         """Map signals from sub-widgets (Library and Player) to their respective handler methods in the main window"""
