@@ -782,73 +782,85 @@ class AudiobookScanner:
             
         return results
 
-    def _extract_embedded_cover(self, directory, key):
-        """Extract embedded cover image from audio files"""
+    def _extract_cover_from_file(self, f, key):
+        """Extract embedded cover from a specific file"""
         try:
             from mutagen.id3 import ID3, APIC
             from mutagen.mp4 import MP4
             from mutagen.flac import FLAC
-        except Exception:
-            return None
-        
-        audio_files = sorted(
-            f for f in directory.iterdir()
-            if f.is_file() and f.suffix.lower() in self.audio_extensions
-        )
-        
-        for f in audio_files[:3]:
-            try:
-                # Use MD5 hash of the key (path) to ensure stable cover filename
-                safe_name = hashlib.md5(key.encode()).hexdigest()
-                cover_path = self.covers_dir / f"{safe_name}.jpg"
-                
-                # Check directly if file exists
-                if cover_path.exists():
+            
+            # Use MD5 hash of the key (path) to ensure stable cover filename
+            safe_name = hashlib.md5(key.encode()).hexdigest()
+            cover_path = self.covers_dir / f"{safe_name}.jpg"
+            
+            # Check directly if file exists
+            if cover_path.exists():
+                 return str(cover_path)
+
+            img_data = None
+            
+            if f.suffix.lower() == '.mp3':
+                tags = ID3(f)
+                for tag in tags.values():
+                    if isinstance(tag, APIC):
+                        img_data = tag.data
+                        break
+            
+            elif f.suffix.lower() in ('.m4a', '.m4b', '.mp4'):
+                audio = MP4(f)
+                if 'covr' in audio:
+                    img_data = audio['covr'][0]
+            
+            elif f.suffix.lower() == '.flac':
+                audio = FLAC(f)
+                if audio.pictures:
+                    img_data = audio.pictures[0].data
+            elif f.suffix.lower() == '.ape':
+                from mutagen.monkeysaudio import MonkeysAudio
+                audio = MonkeysAudio(f)
+                if 'Cover Art (Front)' in audio:
+                    img_data = audio['Cover Art (Front)'].value
+            
+            if img_data:
+                # Resize and save
+                image = QImage.fromData(img_data)
+                if not image.isNull():
+                     scaled = image.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                     scaled.save(str(cover_path), "JPG")
                      return str(cover_path)
 
-                img_data = None
-                
-                if f.suffix.lower() == '.mp3':
-                    tags = ID3(f)
-                    for tag in tags.values():
-                        if isinstance(tag, APIC):
-                            img_data = tag.data
-                            break
-                
-                elif f.suffix.lower() in ('.m4a', '.m4b', '.mp4'):
-                    audio = MP4(f)
-                    if 'covr' in audio:
-                        img_data = audio['covr'][0]
-                
-                elif f.suffix.lower() == '.flac':
-                    audio = FLAC(f)
-                    if audio.pictures:
-                        img_data = audio.pictures[0].data
-                elif f.suffix.lower() == '.ape':
-                    from mutagen.monkeysaudio import MonkeysAudio
-                    audio = MonkeysAudio(f)
-                    if 'Cover Art (Front)' in audio:
-                        img_data = audio['Cover Art (Front)'].value
-                
-                if img_data:
-                    # Resize and save
-                    image = QImage.fromData(img_data)
-                    if not image.isNull():
-                         scaled = image.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                         scaled.save(str(cover_path), "JPG")
-                         return str(cover_path)
-                    else:
-                        # Fallback if image load fails 
-                        pass
-
-            except Exception:
-                continue
+        except Exception:
+            pass
         
+        return None
+
+    def _extract_embedded_cover(self, directory, key):
+        """Extract embedded cover image from audio files"""
+        try:
+            audio_files = sorted(
+                f for f in directory.iterdir()
+                if f.is_file() and f.suffix.lower() in self.audio_extensions
+            )
+            
+            for f in audio_files[:3]:
+                result = self._extract_cover_from_file(f, key)
+                if result:
+                    return result
+        except Exception:
+            pass
         return None
     
     def _find_cover(self, directory, key):
         """Find cover image (file or embedded) for the audiobook. Returns (original_path, cached_path)"""
         
+        path_obj = Path(directory)
+        
+        # Case 0: Standalone file
+        if path_obj.is_file():
+             # Try embedded only
+             embedded = self._extract_cover_from_file(path_obj, key)
+             return None, embedded
+
         # Helper to cache a file
         def cache_file(src_path):
             try:
@@ -1490,6 +1502,7 @@ class AudiobookScanner:
                         else:
                             virtual_file_index += 1
                 
+                
                 if files_batch:
                     c.executemany("""
                         INSERT INTO audiobook_files
@@ -1550,7 +1563,27 @@ class AudiobookScanner:
                     save_folder(str(parent))
             
             self._log_info(self.tr("scanner.created_folders", count=len(saved_folders)))
+
+            # --- Process Standalone Files in Root ---
+            self._log_section(self.tr("scanner.processing_standalone"))
             
+            standalone_files = []
+            try:
+                for f in root.iterdir():
+                    if f.is_file() and f.suffix.lower() in self.audio_extensions:
+                        # Check minimal criteria for mp3 to be considering a "book" in root
+                        # For now, just accept all supported audio files in root as books
+                        standalone_files.append(f)
+            except PermissionError:
+                pass
+
+            if standalone_files:
+                self._log_info(self.tr("scanner.standalone_found", count=len(standalone_files)))
+                for f in standalone_files:
+                    self._process_standalone_file(f, root, conn, verbose=verbose)
+            else:
+                self._log_info(self.tr("scanner.standalone_found", count=0))
+
             # Finalize: cleanup temp table and commit
             c.execute("DROP TABLE temp_state")
             conn.commit()
@@ -1561,12 +1594,277 @@ class AudiobookScanner:
         elapsed_seconds = int(elapsed_time % 60)
         
         self._log_header(self.tr("scanner.scan_complete"))
-        self._log_info(self.tr("scanner.processed_count", count=len(folders)))
+        self._log_info(self.tr("scanner.processed_count", count=len(folders) + len(standalone_files)))
         self._log_info(self.tr("scanner.elapsed_time", minutes=elapsed_minutes, seconds=elapsed_seconds))
         self._log_info(self.tr("scanner.db_file", path=self.db_file))
         self._log("")
         
-        return len(folders)
+        return len(folders) + len(standalone_files)
+
+    def _process_standalone_file(self, file_path: Path, root: Path, conn, verbose=False):
+        """Process a single audio file as a book"""
+        c = conn.cursor()
+        
+        rel = file_path.relative_to(root)
+        parent = '' # Root files have no parent path in our relative structure logic (or '.')
+        
+        # Calculate current state hash
+        current_state_hash = self._calculate_state_hash([file_path])
+        
+        # Check for existing
+        c.execute("SELECT id, state_hash, codec FROM audiobooks WHERE path = ?", (str(rel),))
+        existing_row_data = c.fetchone()
+        
+        if existing_row_data:
+            db_hash = existing_row_data[1]
+            db_codec = existing_row_data[2]
+            if db_hash == current_state_hash and db_codec is not None:
+                c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing_row_data[0],))
+                if verbose:
+                    self._log_info(self.tr('scanner.skip_existing', path=rel), indent=2)
+                return
+
+        # Extract metadata
+        # For single file, treat it as the "folder" for metadata extraction purposes
+        # But we need a list of files
+        files = [file_path]
+        
+        # Use file tags primarily
+        tags = self._extract_file_tags(file_path)
+        t_author = tags.get('author', '')
+        t_title = tags.get('album', '') or tags.get('title', '')
+        t_narrator = tags.get('narrator', '')
+        t_year = tags.get('year', '')
+        
+        # Parse filename 
+        f_author, f_title, f_narrator = self._parse_audiobook_name(file_path.stem)
+        
+        # Prioritize filename info but fallback to tags
+        author = f_author or t_author
+        title = f_title or t_title or file_path.stem
+        narrator = f_narrator or t_narrator
+        
+        # Analyze file
+        info = self._analyze_file(file_path, verbose)
+        file_duration = info['duration']
+        # If cached
+        if info['duration'] > 0:
+             self._save_to_cache(file_path, info, conn)
+             
+        common_codec = info['codec']
+        bitrate = info['bitrate']
+        bitrate_mode = 'VBR' if info['is_vbr'] else 'CBR'
+        container = file_path.suffix.lstrip('.').lower()
+        
+        # Cover
+        cover, cover_cached = self._find_cover(file_path, str(rel))
+        
+        # Check matching chapters
+        chapters = []
+        if file_path.suffix.lower() in ('.m4b', '.mp4', '.m4a'):
+             chapters = self._extract_chapters(file_path)
+
+        # Restore state
+        c.execute("""
+            SELECT
+                listened_duration,
+                progress_percent,
+                current_file_index,
+                current_position,
+                playback_speed,
+                is_started,
+                is_completed
+            FROM temp_state
+            WHERE path = ?
+        """, (str(rel),))
+        state = c.fetchone()
+        
+        if state:
+            listened, prog_pct, cur_idx, cur_pos, playback_speed, is_started, is_completed = state
+            if prog_pct > 0:
+                 self._log_info(self.tr("scanner.progress_restored", percent=prog_pct), indent=2)
+        else:
+            listened = 0
+            prog_pct = 0
+            cur_idx = 0
+            cur_pos = 0
+            playback_speed = 1.0
+            is_started = 0
+            is_completed = 0
+
+        # Create/Update DB Record
+        
+        # Check if record already exists (again, to get ID)
+        if existing_row_data:
+             c.execute("""
+                UPDATE audiobooks
+                SET parent_path = ?,
+                    name = ?,
+                    author = ?,
+                    title = ?,
+                    narrator = ?,
+                    tag_author = ?,
+                    tag_title = ?,
+                    tag_narrator = ?,
+                    tag_year = ?,
+                    cover_path = ?,
+                    cached_cover_path = ?,
+                    file_count = ?,
+                    duration = ?,
+                    state_hash = ?,
+                    codec = ?,
+                    bitrate_min = ?,
+                    bitrate_max = ?,
+                    bitrate_mode = ?,
+                    container = ?,
+                    time_added = COALESCE(time_added, CURRENT_TIMESTAMP),
+                    is_available = 1,
+                    is_merged = 0,
+                    description = ?,
+                    is_folder = 0
+                WHERE path = ?
+            """, (
+                str(parent),
+                file_path.name,
+                author,
+                title,
+                narrator,
+                t_author,
+                t_title,
+                t_narrator,
+                t_year,
+                cover,
+                cover_cached,
+                1, # Will update later if chapters
+                file_duration,
+                current_state_hash,
+                common_codec,
+                bitrate,
+                bitrate,
+                bitrate_mode,
+                container,
+                tags.get('comment', ''),
+                str(rel)
+            ))
+             book_id = existing_row_data[0]
+        else:
+            c.execute("""
+                INSERT INTO audiobooks
+                (
+                    path, parent_path, name,
+                    author, title, narrator,
+                    tag_author, tag_title, tag_narrator, tag_year,
+                    cover_path, cached_cover_path,
+                    file_count, duration,
+                    listened_duration,
+                    progress_percent,
+                    is_folder,
+                    current_file_index,
+                    current_position,
+                    playback_speed,
+                    is_started,
+                    is_completed,
+                    is_available,
+                    state_hash,
+                    codec, bitrate_min, bitrate_max, bitrate_mode, container,
+                    time_added, is_merged, description
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?)
+            """, (
+                str(rel),
+                str(parent),
+                file_path.name,
+                author,
+                title,
+                narrator,
+                t_author,
+                t_title,
+                t_narrator,
+                t_year,
+                cover,
+                cover_cached,
+                1,
+                file_duration,
+                listened,
+                prog_pct,
+                cur_idx,
+                cur_pos,
+                playback_speed,
+                is_started,
+                is_completed,
+                current_state_hash,
+                common_codec,
+                bitrate,
+                bitrate,
+                bitrate_mode,
+                container,
+                tags.get('comment', '')
+            ))
+            c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
+            book_id = c.fetchone()[0]
+
+        # Files (Chapters)
+        c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
+        
+        files_batch = []
+        virtual_file_index = 1
+        
+        if chapters:
+            for chap in chapters:
+                files_batch.append((
+                    book_id,
+                    str(file_path.relative_to(root)),
+                    file_path.name,
+                    virtual_file_index,
+                    chap['duration'],
+                    chap['start'],
+                    chap['title'] or f"Chapter {virtual_file_index}",
+                    t_author,
+                    tags.get('album', ''),
+                    tags.get('genre', ''),
+                    tags.get('comment', '')
+                ))
+                virtual_file_index += 1
+        else:
+             files_batch.append((
+                book_id,
+                str(rel),
+                file_path.name,
+                1,
+                file_duration,
+                0.0,
+                t_title or title,
+                t_author,
+                tags.get('album', ''),
+                tags.get('genre', ''),
+                tags.get('comment', '')
+            ))
+
+        if files_batch:
+            c.executemany("""
+                INSERT INTO audiobook_files
+                (audiobook_id, file_path, file_name, track_number, duration,
+                    start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, files_batch)
+
+        # Update file_count
+        c.execute("UPDATE audiobooks SET file_count = ? WHERE id = ?", (len(files_batch), book_id))
+        
+        # Log Summary
+        self._log_book_summary(
+            title=title, 
+            author=author, 
+            narrator=narrator, 
+            duration=file_duration, 
+            file_count=len(files_batch), 
+            codec=common_codec, 
+            bitrate=bitrate // 1000 if bitrate else 0, 
+            bitrate_mode=bitrate_mode,
+            cover=cover_cached, 
+            cue_count=0,
+            problems=1 if file_duration == 0 else 0
+        )
 
 
 def main():

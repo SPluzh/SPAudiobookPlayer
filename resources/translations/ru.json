@@ -248,6 +248,8 @@
     "cue_found": "  Найден CUE-файл: {count} треков",
     "creating_structure": "Создание структуры каталогов...",
     "created_folders": "  Создано промежуточных папок: {count}",
+    "processing_standalone": "ОБРАБОТКА ОДИНОЧНЫХ ФАЙЛОВ",
+    "standalone_found": "  Найдено одиночных файлов: {count}",
     "scan_complete": "СКАНИРОВАНИЕ ЗАВЕРШЕНО",
     "processed_count": "  Обработано аудиокниг: {count}",
     "elapsed_time": "  Время сканирования: {minutes} мин {seconds} сек",

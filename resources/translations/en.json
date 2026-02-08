@@ -248,6 +248,8 @@
     "cue_found": "  Found CUE sheet: {count} tracks",
     "creating_structure": "Creating catalog structure...",
     "created_folders": "  Created intermediate folders: {count}",
+    "processing_standalone": "PROCESSING STANDALONE FILES",
+    "standalone_found": "  Found standalone files: {count}",
     "scan_complete": "SCAN COMPLETE",
     "processed_count": "  Audiobooks processed: {count}",
     "elapsed_time": "  Scan time: {minutes} min {seconds} sec",
