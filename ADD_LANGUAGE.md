@@ -16,15 +16,20 @@ The application now supports dynamic language loading. You can add new translati
    {
        "language_name": "Deutsch",
        "window": {
-           "title": "SP Hörbuch Player"
+           "title": "SP Audiobook Player",
+           "title_with_book": "SP Audiobook Player - {title}"
        },
        "menu": {
            "menu": "Menü",
+           "library": "Bibliothek",
            ...
-       }
+       },
        ...
    }
    ```
+   
+   > [!IMPORTANT]
+   > The application name **"SP Audiobook Player"** should remain in English across all translations for branding consistency.
 
 3. **Verify**
    - Restart the application.
