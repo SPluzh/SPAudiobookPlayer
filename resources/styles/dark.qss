@@ -460,7 +460,6 @@ QLabel {
 QLabel#titleLabel {
     font-size: 18px;
     font-weight: bold;
-    color: #ffffff;
 }
 
 QLabel#subtitleLabel {
@@ -797,10 +796,77 @@ QFrame#aboutContainer {
     qproperty-alignment: 'AlignCenter';
 }
 
-QLabel#aboutTitle {
+#aboutContainer #aboutTitle {
     font-size: 24px;
     font-weight: bold;
-    color: #CCCCCC;
+}
+
+/* ============================================================
+   CUSTOM THEME PROPERTIES (for StyleManager)
+   ============================================================ */
+
+#delegate_accent {
+    color: #018574; /* Theme Primary / Accent */
+}
+
+#theme_primary {
+    color: #018574;
+}
+
+#overlay_background {
+    color: rgba(0, 0, 0, 100);
+}
+
+#overlay_progress_bg {
+    color: rgba(0, 0, 0, 150);
+}
+
+#separator_dot {
+    color: #646464;
+}
+
+#delegate_info_font {
+    font-size: 11px;
+}
+
+#delegate_regular_font {
+    font-size: 13px;
+}
+
+/* ============================================================
+   POPUP AND TAGS
+   ============================================================ */
+
+#TagPopupFrame {
+    background-color: #373737;
+    border: 1px solid #808080;
+    border-radius: 5px;
+}
+
+#popupSeparator {
+    background-color: #808080;
+    max-height: 1px;
+}
+
+#popupTagList {
+    background-color: transparent;
+    border: none;
+    padding: 5px;
+    outline: none;
+}
+
+#popupTagList::item:hover {
+    background-color: #4a4a4a;
+    color: #ffffff;
+    border-radius: 2px;
+}
+
+#tagPreviewLabel {
+    background-color: #373737;
+    border: 1px solid #808080;
+    border-radius: 3px;
+    padding: 5px;
+    padding: 5px;
 }
 
 QLabel#aboutVersion {
@@ -911,5 +977,13 @@ QLabel#aboutSectionContent {
 
 #delegate_regular_font {
     font-size: 13px;
+}
+
+#icon_background {
+    color: rgba(255, 255, 255, 180);
+}
+
+#icon_background_hover {
+    color: rgba(255, 255, 255, 255);
 }
 

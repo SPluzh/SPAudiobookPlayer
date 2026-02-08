@@ -23,7 +23,8 @@ class StyleManager:
         'delegate_info', 'delegate_folder', 'delegate_progress', 
         'delegate_duration', 'delegate_file_count', 'delegate_favorite',
         'delegate_accent', 'delegate_accent_secondary', 'delegate_text_dim',
-        'delegate_info_font', 'delegate_regular_font'
+        'delegate_info_font', 'delegate_regular_font', 'theme_primary',
+        'overlay_background', 'overlay_progress_bg', 'separator_dot'
     ]
 
     @staticmethod

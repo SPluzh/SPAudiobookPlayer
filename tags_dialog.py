@@ -87,7 +87,7 @@ class TagEditDialog(QDialog):
         # Contrast logic matching library.py
         text_color = "#FFFFFF" if bg_color.lightness() < 130 else "#000000"
         
-        # Only set dynamic colors, static props are in QSS #tagPreview
+        # Only set dynamic colors, static props are in QSS #tagPreviewLabel
         self.preview_label.setStyleSheet(f"""
             background-color: {bg_color.name()};
             color: {text_color};
@@ -216,7 +216,8 @@ class TagManagerDialog(QDialog):
             
             # Icon
             pixmap = QPixmap(16, 16)
-            pixmap.fill(QColor(tag['color'] or "#FFFFFF"))
+            _, accent_color = StyleManager.get_theme_property('delegate_accent')
+            pixmap.fill(QColor(tag['color'] or accent_color.name()))
             item.setIcon(QIcon(pixmap))
             
             # Store full data

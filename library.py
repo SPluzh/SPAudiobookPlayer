@@ -93,19 +93,7 @@ class TagFilterPopup(QWidget):
         
         # Enforce consistent style (border, rounded corners) regardless of focus state
         # Border handled by container frame, list is transparent/seamless
-        self.list_widget.setStyleSheet("""
-            QListWidget {
-                background-color: transparent;
-                border: none;
-                padding: 5px;
-                outline: none;
-            }
-            QListWidget::item:hover {
-                background-color: #4a4a4a;
-                color: #ffffff;
-                border-radius: 2px;
-            }
-        """)
+        # Styles moved to dark.qss (#TagPopupFrame, #popupTagList, #popupSeparator)
         
         # Populate list
         if not all_tags:
@@ -275,10 +263,9 @@ class ScanProgressDialog(QDialog):
         self.console = QTextEdit()
         self.console.setObjectName("scanConsole")
         self.console.setReadOnly(True)
-        # Use monospaced font for console
-        font = QFont("Consolas", 10)
-        if font.exactMatch():
-            self.console.setFont(font)
+        # Use monospaced font for console - properties extracted from #scanConsole in QSS
+        font, _ = StyleManager.get_theme_property('scanConsole')
+        self.console.setFont(font)
         layout.addWidget(self.console, 1)
         
         # Close Button
@@ -520,20 +507,23 @@ class MultiLineDelegate(QStyledItemDelegate):
                                 pb_h)
                 
                 # Background
-                painter.fillRect(pb_rect, QColor(0, 0, 0, 150))
+                _, bg_color = StyleManager.get_theme_property('overlay_progress_bg')
+                painter.fillRect(pb_rect, bg_color)
                 
                 # Fill
                 fill_w = int(pb_rect.width() * progress_percent / 100)
                 if fill_w > 0:
                     fill_rect = QRect(pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height())
-                    painter.fillRect(fill_rect, QColor("#018574")) # Theme primary
+                    _, primary_color = StyleManager.get_theme_property('theme_primary')
+                    painter.fillRect(fill_rect, primary_color)
             
             # 3. Hover Background
             playing_file = index.data(Qt.ItemDataRole.UserRole)
             is_playing_this = (self.playing_path and playing_file == self.playing_path)
             
             if self.hovered_index == index:
-                painter.fillRect(icon_rect, QColor(0, 0, 0, 100))
+                _, overlay_bg = StyleManager.get_theme_property('overlay_background')
+                painter.fillRect(icon_rect, overlay_bg)
             
             painter.restore()
             
@@ -555,7 +545,8 @@ class MultiLineDelegate(QStyledItemDelegate):
                 heart_rect = self.get_heart_rect(QRectF(icon_rect))
                 
                 # Draw circle background
-                painter.setBrush(QColor(255, 255, 255, 200))
+                _, bg_color = StyleManager.get_theme_property('icon_background')
+                painter.setBrush(bg_color)
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(heart_rect)
                 
@@ -585,8 +576,12 @@ class MultiLineDelegate(QStyledItemDelegate):
                 is_over_info = False
                 if self.mouse_pos and info_rect.contains(QPointF(self.mouse_pos)):
                     is_over_info = True
+
+                # Background: Color from QSS
+                prop = 'icon_background' if not is_over_info else 'icon_background_hover'
+                _, bg_color = StyleManager.get_theme_property(prop)
                     
-                painter.setBrush(QColor(255, 255, 255, 200) if not is_over_info else QColor(255, 255, 255, 255))
+                painter.setBrush(bg_color)
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(info_rect)
                 
@@ -775,7 +770,8 @@ class MultiLineDelegate(QStyledItemDelegate):
                 
                 # Inline separator dot
                 if i < len(info_parts) - 1:
-                    painter.setPen(QColor(100, 100, 100))
+                    _, dot_color = StyleManager.get_theme_property('separator_dot')
+                    painter.setPen(dot_color)
                     painter.drawText(QRect(current_x - 10, text_y, 10, line_height),
                                    Qt.AlignmentFlag.AlignCenter, tr("delegate.separator"))
         
@@ -970,8 +966,8 @@ class LibraryWidget(QWidget):
         self.default_audiobook_icon = None
         self.folder_icon = None
         self.current_playing_item = None
-        self.highlight_color = QColor(1, 133, 116)
-        self.highlight_text_color = QColor(255, 255, 255)
+        _, self.highlight_color = StyleManager.get_theme_property('delegate_accent')
+        self.highlight_text_color = Qt.GlobalColor.white
         self.current_filter = 'all'
         self.show_folders = show_folders
         self.show_filter_labels = show_filter_labels
@@ -1370,7 +1366,10 @@ class LibraryWidget(QWidget):
                      
                      data_to_display = filtered_data
 
+                # Root path can be represented as '' or None in the database map
                 self.add_items_from_db(self.tree.invisibleRootItem(), '', data_to_display)
+                if None in data_to_display:
+                    self.add_items_from_db(self.tree.invisibleRootItem(), None, data_to_display)
         finally:
             self.tree.blockSignals(False)
             self.tree.setUpdatesEnabled(True)
@@ -1383,7 +1382,7 @@ class LibraryWidget(QWidget):
         for data in items_list:
             self._create_item_from_data(parent_item, data)
 
-    def add_items_from_db(self, parent_item, parent_path: str, data_by_parent: dict):
+    def add_items_from_db(self, parent_item, parent_path, data_by_parent: dict):
         """Recursively populate the tree widget with folders and audiobooks from the database map"""
         if parent_path not in data_by_parent:
             return

@@ -1331,8 +1331,8 @@ def main():
         print("QApplication created.")
         
         app.setStyle('Fusion')
-        print(f"Loading stylesheet from: {DARK_QSS_PATH}")
-        app.setStyleSheet(DARK_STYLE)
+        # Apply Stylesheet
+        StyleManager.apply_style(app)
         
         print("Initializing Style Manager...")
         StyleManager.init(app)

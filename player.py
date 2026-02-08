@@ -874,12 +874,9 @@ class PlayerWidget(QWidget):
     
     def set_noise_suppression_active(self, active: bool):
         """Visual indicator when noise suppression is processing"""
-        if active and self.noise_suppression_btn.isChecked():
-            self.noise_suppression_btn.setStyleSheet(
-                "QPushButton:checked { background-color: #4CAF50; color: white; }"
-            )
-        else:
-            self.noise_suppression_btn.setStyleSheet("")
+        self.noise_suppression_btn.setProperty("processing", active)
+        self.noise_suppression_btn.style().unpolish(self.noise_suppression_btn)
+        self.noise_suppression_btn.style().polish(self.noise_suppression_btn)
     
     def load_files(self, files_list: list, current_index: int = 0):
         self.last_files_list = files_list
