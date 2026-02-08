@@ -16,7 +16,8 @@
 Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with an intuitive interface and robust functionality.
 
 
-https://github.com/user-attachments/assets/0217de3d-64f2-4932-9604-54cc257d59d7
+
+https://github.com/user-attachments/assets/80126acc-8bc2-4c49-b95e-ae3a068343b0
 
 
 ## ✨ Features
