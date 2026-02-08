@@ -4,14 +4,16 @@ from PyQt6.QtWidgets import QLabel
 from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtCore import Qt
 
-# Path to the dark theme stylesheet
-DARK_QSS_PATH = Path(__file__).parent / "resources" / "styles" / "dark.qss"
+# Theme paths
+STYLES_DIR = Path(__file__).parent / "resources" / "styles"
+DARK_QSS_PATH = STYLES_DIR / "dark.qss"
+MIKU_QSS_PATH = STYLES_DIR / "miku.qss"
 
-# Initial load of the dark style
+# Fallback styles
 try:
     DARK_STYLE = DARK_QSS_PATH.read_text(encoding="utf-8")
 except Exception:
-    DARK_STYLE = ""  # Fallback to empty style if file is missing
+    DARK_STYLE = ""
 
 class StyleManager:
     """Manager for application-wide visual styles and themes"""
@@ -51,15 +53,23 @@ class StyleManager:
             StyleManager._property_cache[obj_name] = (font, color)
 
     @staticmethod
-    def get_style(path: Path = DARK_QSS_PATH) -> str:
+    def get_theme_path(theme_name: str) -> Path:
+        """Get the file path for a given theme name"""
+        if theme_name == "miku":
+            return MIKU_QSS_PATH
+        return DARK_QSS_PATH
+
+    @staticmethod
+    def get_style(path: Path) -> str:
         """Read stylesheet content from the specified file path"""
         if path.exists():
             return path.read_text(encoding="utf-8")
         return ""
 
     @staticmethod
-    def apply_style(app, path: Path = DARK_QSS_PATH):
+    def apply_style(app, theme: str = "dark"):
         """Apply the specified stylesheet to the entire application"""
+        path = StyleManager.get_theme_path(theme)
         qss = StyleManager.get_style(path)
         if qss:
             app.setStyleSheet(qss)

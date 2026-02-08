@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+ 
+## [1.4.1]
+- **Themes**: Added full support for dynamic theme switching:
+    - Included **Dark Mint** and **Dark Pink** themes.
+    - Implemented instant style reloading without application restart.
 
 ## [1.4.0]
 - **Localization**: Extensive expansion of language support:

@@ -13,6 +13,7 @@
         "open_library_folder": "라이브러리 폴더 열기",
         "scan": "스캔",
         "reload_styles": "스타일 새로고침",
+        "theme": "테마",
         "language": "언어",
         "about": "정보"
     },

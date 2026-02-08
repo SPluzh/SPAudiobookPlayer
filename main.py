@@ -319,12 +319,25 @@ class AudiobookPlayerWindow(QMainWindow):
         
         view_menu.addSeparator()
         
-        # CSS Refresh Action
+        # Theme Selection
+        theme_menu = view_menu.addMenu(tr("menu.theme"))
+        self.theme_actions = {}
+        for theme_id, theme_name in [("dark", "Dark Mint"), ("miku", "Dark Pink")]:
+            action = QAction(theme_name, self)
+            action.setCheckable(True)
+            action.setChecked(self.current_theme == theme_id)
+            action.triggered.connect(lambda checked, t=theme_id: self.change_theme(t))
+            theme_menu.addAction(action)
+            self.theme_actions[theme_id] = action
+        
+        theme_menu.addSeparator()
+        
+        # CSS Refresh Action (Nested in Theme menu)
         reload_styles_action = QAction(tr("menu.reload_styles"), self)
         reload_styles_action.setIcon(get_icon("menu_reload"))
         reload_styles_action.setShortcut("Ctrl+Q")
         reload_styles_action.triggered.connect(self.reload_styles)
-        view_menu.addAction(reload_styles_action)
+        theme_menu.addAction(reload_styles_action)
         
 
         help_menu = menubar.addMenu(tr("menu.help"))
@@ -349,6 +362,21 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # Propagate translation updates across the entire interface
         self.update_all_texts()
+        
+    def change_theme(self, theme: str):
+        """Update the application's visual theme and immediately refresh all UI components"""
+        if self.current_theme == theme:
+            return
+        
+        self.current_theme = theme
+        self.save_settings()
+        
+        # Synchronize checkmarks in the theme menu
+        for t, action in self.theme_actions.items():
+            action.setChecked(t == theme)
+        
+        # Apply the new theme
+        self.reload_styles()
     
     def update_all_texts(self):
         """Synchronize window titles, menus, and sub-widget labels after a language change event"""
@@ -429,6 +457,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.window_width = config.getint('Display', 'window_width', fallback=1200)
         self.window_height = config.getint('Display', 'window_height', fallback=800)
         self.saved_geometry_hex = config.get('Display', 'window_geometry', fallback=None)
+        self.current_theme = config.get('Display', 'theme', fallback='dark')
         
         # Filesystem Path Configurations
         self.default_path = config.get('Paths', 'default_path', fallback="")
@@ -567,6 +596,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Display']['window_width'] = str(rect.width())
         config['Display']['window_height'] = str(rect.height())
         config['Display']['window_geometry'] = self.saveGeometry().toHex().data().decode()
+        config['Display']['theme'] = self.current_theme
         
         # Filesystem Path Configs
         if 'Paths' not in config: config['Paths'] = {}
@@ -1052,12 +1082,15 @@ class AudiobookPlayerWindow(QMainWindow):
     def reload_styles(self):
         """Immediately re-apply global CSS styles and update presentation delegates to reflect theme changes"""
         try:
-            from styles import StyleManager, DARK_QSS_PATH
-            StyleManager.apply_style(QApplication.instance(), path=DARK_QSS_PATH)
+            from styles import StyleManager
+            StyleManager.apply_style(QApplication.instance(), theme=self.current_theme)
             
             # Synchronize item rendering delegates
             if self.delegate:
                 self.delegate.update_styles()
+            
+            # Force StyleManager to refresh its cache based on the new stylesheet
+            StyleManager.refresh_cache()
             
             self.statusBar().showMessage(tr("status.styles_reloaded"))
         except Exception as e:
@@ -1331,8 +1364,17 @@ def main():
         print("QApplication created.")
         
         app.setStyle('Fusion')
+        # Load theme from settings
+        config = configparser.ConfigParser()
+        config_dir = get_base_path() / 'resources'
+        config_file = config_dir / 'settings.ini'
+        current_theme = 'dark'
+        if config_file.exists():
+            config.read(config_file, encoding='utf-8')
+            current_theme = config.get('Display', 'theme', fallback='dark')
+            
         # Apply Stylesheet
-        StyleManager.apply_style(app)
+        StyleManager.apply_style(app, theme=current_theme)
         
         print("Initializing Style Manager...")
         StyleManager.init(app)

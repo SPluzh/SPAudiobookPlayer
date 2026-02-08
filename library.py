@@ -358,7 +358,9 @@ class MultiLineDelegate(QStyledItemDelegate):
         # UI state for interaction
         self.hovered_index = None
         self.mouse_pos = None
+    @lru_cache(maxsize=32)
     def _get_style(self, style_name: str) -> tuple[QFont, QColor]:
+
         """Fetch font and color settings from the style manager mapped to the given name"""
         return StyleManager.get_theme_property(style_name)
     

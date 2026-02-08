@@ -13,6 +13,7 @@
         "open_library_folder": "ライブラリフォルダーを開く",
         "scan": "スキャン",
         "reload_styles": "スタイルを再読み込み",
+        "theme": "テーマ",
         "language": "言語",
         "about": "このアプリについて"
     },
