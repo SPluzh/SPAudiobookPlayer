@@ -6,16 +6,14 @@ a = Analysis(
     ['../main.py'],
     pathex=['..'],
     binaries=[
-        ('../resources/bin/bass.dll', 'resources/bin'),
-        ('../resources/bin/bass_fx.dll', 'resources/bin'),
-        ('../resources/bin/ffprobe.exe', 'resources/bin'),
+        ('../resources/bin/*.dll', 'resources/bin'),
+        ('../resources/bin/*.exe', 'resources/bin'),
     ],
     datas=[
-        ('../resources/styles/dark.qss', 'resources/styles'),
+        ('../resources/styles/*.qss', 'resources/styles'),
         ('../resources/version.txt', 'resources'),
         # --- Translations ---
-        ('../resources/translations/ru.json', 'resources/translations'),
-        ('../resources/translations/en.json', 'resources/translations'),
+        ('../resources/translations/*.json', 'resources/translations'),
         # --- icons ---
         ('../resources/icons/*.png', 'resources/icons'),
         ('../resources/icons/*.ico', 'resources/icons'),

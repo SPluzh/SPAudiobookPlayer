@@ -30,6 +30,74 @@ from styles import StyleManager
 
 from metadata_dialog import MetadataEditDialog
 
+def get_placeholder_folder_rect(rect):
+    """Calculate the folder icon rect within the given bounds"""
+    center = rect.center()
+    icon_size = 64
+    icon_y_center = center.y() - 40
+    # Create a slightly larger hit area for easier clicking
+    hit_rect = QRectF(float(center.x() - icon_size/2), float(icon_y_center - icon_size / 2 - icon_size * 0.1), float(icon_size), float(icon_size * 1.0))
+    return hit_rect
+
+def draw_library_placeholder(painter, rect):
+    """Draw a beautiful placeholder when the library is empty"""
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    
+    center = rect.center()
+    
+    # 1. Stylized Folder Icon
+    icon_size = 64
+    
+    # Get color from StyleManager
+    _, icon_color = StyleManager.get_theme_property('placeholder_icon')
+    
+    painter.setOpacity(1.0)
+    painter.setBrush(QBrush(icon_color))
+    painter.setPen(Qt.PenStyle.NoPen)
+    
+    # Move icon up to prevent overlap
+    icon_y_center = center.y() - 40
+    
+    # Draw folder shape
+    folder_rect = QRectF(float(center.x() - icon_size/2), float(icon_y_center - icon_size / 2), float(icon_size), float(icon_size * 0.7))
+    painter.drawRoundedRect(folder_rect, 5, 5)
+    # Folder tab
+    tab_rect = QRectF(float(center.x() - icon_size/2), float(icon_y_center - icon_size / 2 - icon_size * 0.1), float(icon_size * 0.4), float(icon_size * 0.2))
+    painter.drawRoundedRect(tab_rect, 3, 3)
+    
+    # 2. Text Message
+    painter.setOpacity(1.0)
+    
+    # Title
+    font_title, color_title = StyleManager.get_theme_property('placeholder_title')
+    painter.setPen(QPen(color_title))
+    painter.setFont(font_title)
+    
+    title_text = tr('status.no_audiobooks_title')
+         
+    # Position title below icon
+    title_top = icon_y_center + icon_size * 0.6
+    painter.drawText(
+        QRectF(float(rect.left() + 20), float(title_top), float(rect.width() - 40), 30),
+        Qt.AlignmentFlag.AlignCenter,
+        title_text
+    )
+    
+    # Instructions
+    font_text, color_text = StyleManager.get_theme_property('placeholder_text')
+    painter.setFont(font_text)
+    painter.setPen(QPen(color_text))
+    
+    text = tr('status.no_audiobooks_instructions')
+    
+    # Position text below title
+    text_top = title_top + 45
+    text_rect = QRectF(float(rect.left() + 40), float(text_top), float(rect.width() - 80), float(rect.height() - text_top))
+    
+    painter.drawText(text_rect, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter | Qt.TextFlag.TextWordWrap, text)
+
+
+
 class TagFilterPopup(QWidget):
     """A popup widget containing a checkable list of tags for filtering"""
     filter_changed = pyqtSignal(set) # Emits set of checked tag IDs
@@ -828,11 +896,26 @@ class LibraryTree(QTreeWidget):
     play_button_clicked = pyqtSignal(str) # Emits the relative path to the selected audiobook
     favorite_clicked = pyqtSignal(str) # Emits path when heart is clicked
     description_requested = pyqtSignal(str) # Emits path when info icon is clicked
+    settings_requested = pyqtSignal() # Emits when placeholder settings icon is clicked
 
     def __init__(self, parent=None):
         """Enable mouse tracking for fine-grained hover effects on custom-painted items"""
         super().__init__(parent)
         self.setMouseTracking(True)
+
+    def paintEvent(self, event):
+        """Paint the tree or the placeholder if empty"""
+        # If the model is empty (topLevelItemCount == 0), draw the placeholder.
+        # But we must be careful: if we are Filtering, and no results, we might want a "No results" placeholder instead?
+        # For now, let's stick to the request: "when list is empty".
+        # We can check if topLevelItemCount is 0.
+        
+        if self.topLevelItemCount() == 0:
+            painter = QPainter(self.viewport())
+            draw_library_placeholder(painter, self.viewport().rect())
+        else:
+            super().paintEvent(event)
+
 
     def leaveEvent(self, event):
         """Clear hover state in the delegate when the mouse leaves the widget viewport"""
@@ -846,6 +929,17 @@ class LibraryTree(QTreeWidget):
     def mouseMoveEvent(self, event):
         """Track mouse position to detect hover over specialized UI elements like playback buttons"""
         super().mouseMoveEvent(event)
+        
+        # Check placeholder hover
+        if self.topLevelItemCount() == 0:
+            rect = get_placeholder_folder_rect(self.viewport().rect())
+            if rect.contains(QPointF(event.pos())):
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+                return
+            else:
+                self.setCursor(Qt.CursorShape.ArrowCursor)
+                return
+
         index = self.indexAt(event.pos())
         
         delegate = self.itemDelegate()
@@ -897,6 +991,13 @@ class LibraryTree(QTreeWidget):
     def mousePressEvent(self, event):
         """Identify clicks on the custom 'Play' button to initiate playback without selecting the item"""
         if event.button() == Qt.MouseButton.LeftButton:
+            # Check placeholder click
+            if self.topLevelItemCount() == 0:
+                rect = get_placeholder_folder_rect(self.viewport().rect())
+                if rect.contains(QPointF(event.pos())):
+                    self.settings_requested.emit()
+                    return
+
             index = self.indexAt(event.pos())
             if index.isValid():
                 item_type = index.data(Qt.ItemDataRole.UserRole + 1)
@@ -950,6 +1051,7 @@ class LibraryWidget(QWidget):
     delete_requested = pyqtSignal(int, str) # Emits (audiobook_id, rel_path)
     folder_delete_requested = pyqtSignal(str) # Emits folder relative path
     scan_requested = pyqtSignal()
+    settings_requested = pyqtSignal() # Propagate settings request
     
     # Internal configuration for status filtering
     FILTER_CONFIG = {
@@ -1086,6 +1188,7 @@ class LibraryWidget(QWidget):
         self.tree.itemCollapsed.connect(self.on_item_collapsed)
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.show_context_menu)
+        self.tree.settings_requested.connect(self.settings_requested.emit)
         
         if self.delegate:
             self.tree.setItemDelegate(self.delegate)

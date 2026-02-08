@@ -107,6 +107,8 @@
     "load_library": "📚 Load audiobook library",
     "restored_session": "✅ Last session restored",
     "library_count": "📚 Library: {count} audiobooks",
+    "no_audiobooks_title": "Library is empty",
+    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
     "no_database": "⚠️ Database not found — click \"Scan\"",
     "scanning": "🔄 Scanning...",
     "scan_complete": "✅ Found audiobooks: {count}",

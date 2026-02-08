@@ -26,7 +26,8 @@ class StyleManager:
         'delegate_duration', 'delegate_file_count', 'delegate_favorite',
         'delegate_accent', 'delegate_accent_secondary', 'delegate_text_dim',
         'delegate_info_font', 'delegate_regular_font', 'theme_primary',
-        'overlay_background', 'overlay_progress_bg', 'separator_dot'
+        'overlay_background', 'overlay_progress_bg', 'separator_dot',
+        'placeholder_title', 'placeholder_text', 'placeholder_icon'
     ]
 
     @staticmethod

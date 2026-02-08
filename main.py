@@ -430,7 +430,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.library_widget.delete_requested.connect(self.on_delete_requested)
         self.library_widget.delete_requested.connect(self.on_delete_requested)
         self.library_widget.folder_delete_requested.connect(self.on_folder_delete_requested)
+        self.library_widget.folder_delete_requested.connect(self.on_folder_delete_requested)
         self.library_widget.scan_requested.connect(self.rescan_directory)
+        self.library_widget.settings_requested.connect(self.show_settings)
 
         # Playback Control Signals
         # Playback Control Signals

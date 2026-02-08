@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
  
+## [1.4.2]
+- **UI**: Added **Empty Library Placeholder** with instructional text and a clickable folder icon.
+
 ## [1.4.1]
 - **Themes**: Added full support for dynamic theme switching:
     - Included **Dark Mint** and **Dark Pink** themes.

@@ -1001,3 +1001,26 @@ QLabel#aboutSectionContent {
     color: rgba(255, 255, 255, 255);
 }
 
+/* ============================================================
+   PLACEHOLDER
+   ============================================================ */
+
+/* Title: "Library is empty" */
+QLabel#placeholder_title {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: bold;
+    color: #b0b0b0;
+}
+
+/* Instructions text */
+QLabel#placeholder_text {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    color: #808080;
+}
+
+/* Icon color (using text color property) */
+QLabel#placeholder_icon {
+    color: #e12885;
+}

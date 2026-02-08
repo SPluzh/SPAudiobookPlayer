@@ -27,7 +27,7 @@ set "ZIP_NAME=SP_Audiobook_Player_v!VERSION!.zip"
 
 echo.
 echo Creating release zip: !ZIP_NAME!
-echo Excluding from release: ffprobe.exe, settings.ini, data/
+echo Excluding from release: _internal\*.exe, settings.ini, data/
 echo.
 
 REM --- Create a temporary directory for zipping ---
@@ -41,7 +41,7 @@ xcopy /e /i /y "!DIST_DIR!" "!TEMP_ZIP_DIR!" >nul
 
 REM --- Remove specific files from everywhere in temp dir ---
 echo Filtering out excluded files...
-del /s /f /q "!TEMP_ZIP_DIR!\ffprobe.exe" >nul 2>&1
+del /s /f /q "!TEMP_ZIP_DIR!\_internal\*.exe" >nul 2>&1
 del /s /f /q "!TEMP_ZIP_DIR!\settings.ini" >nul 2>&1
 
 REM --- Remove data folder from temp dir ---
