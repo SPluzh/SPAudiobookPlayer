@@ -29,6 +29,7 @@ class PlaybackController:
         self.global_position: float = 0.0
         self.total_duration: float = 0.0
         self.use_id3_tags: bool = True
+        self.current_description: str = ""
         
         # Saved state for session restoration
         self.saved_file_index: Optional[int] = None
@@ -49,7 +50,7 @@ class PlaybackController:
         
         audiobook_id, abook_name, author, title, saved_file_index, \
         saved_position, total_dur, saved_speed, use_id3_tags, \
-        cover_path, cached_cover_path = audiobook_info
+        cover_path, cached_cover_path, description = audiobook_info
         
         # Update internal state with database values
         self.current_audiobook_id = audiobook_id
@@ -58,6 +59,7 @@ class PlaybackController:
         self.saved_file_index = saved_file_index
         self.saved_position = saved_position
         self.use_id3_tags = bool(use_id3_tags)
+        self.current_description = description or ""
         
         # Prioritize cached cover path
         self.current_cover_path = cached_cover_path if cached_cover_path else cover_path
@@ -229,8 +231,8 @@ class PlaybackController:
             
         info = self.db.get_audiobook_info(self.current_audiobook_path)
         if info:
-            # info contains 11 fields (including covers)
-            _, name, author, title, _, _, _, _, _, _, _ = info
+            # info contains 12 fields (including description and covers)
+            _, name, author, title, _, _, _, _, _, _, _, _ = info
             return name
         return "Audiobook Player"
 
