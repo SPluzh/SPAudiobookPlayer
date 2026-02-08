@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QProgressBar, 
     QLabel, QLineEdit, QMenu, QStyle, QButtonGroup, QDialog, 
     QTextEdit, QTreeWidget, QTreeWidgetItem, QMessageBox,
-    QStyledItemDelegate, QToolTip, QListWidget, QListWidgetItem, QStyleOptionViewItem
+    QStyledItemDelegate, QToolTip, QListWidget, QListWidgetItem, QStyleOptionViewItem, QFrame
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QRect, QRectF, QPoint, QPointF, QThread, QEvent
 from PyQt6.QtGui import (
@@ -37,11 +37,29 @@ class TagFilterPopup(QWidget):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setLayout(QVBoxLayout())
-        # Add some padding for the outer frame since we draw our own border in list_widget style
-        # Actually, let's keep 0 margin and let widgets handle it
-        self.layout().setContentsMargins(0, 0, 0, 0)
-        self.layout().setSpacing(0)
+        
+        # Main container frame to handle border and background seamlessley
+        self.container_frame = QFrame()
+        self.container_frame.setObjectName("TagPopupFrame")
+        self.container_frame.setStyleSheet("""
+            QFrame#TagPopupFrame {
+                background-color: #373737;
+                border: 1px solid #808080;
+                border-radius: 3px;
+            }
+        """)
+        
+        # Set layout for popup itself (transparent wrapper)
+        popup_layout = QVBoxLayout()
+        popup_layout.setContentsMargins(0, 0, 0, 0)
+        popup_layout.setSpacing(0)
+        self.setLayout(popup_layout)
+        popup_layout.addWidget(self.container_frame)
+        
+        # Set layout for inner frame
+        container_layout = QVBoxLayout(self.container_frame)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
         
         # Helper layout for buttons
         btn_layout = QHBoxLayout()
@@ -50,24 +68,28 @@ class TagFilterPopup(QWidget):
         
         self.btn_select_all = QPushButton(tr("library.select_all"))
         self.btn_select_all.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_select_all.setStyleSheet("padding: 4px; font-size: 11px;")
+        self.btn_select_all.setStyleSheet("padding: 4px; font-size: 11px; border: 1px solid #555; background-color: #444; border-radius: 2px;")
         self.btn_select_all.clicked.connect(self.select_all)
         
         self.btn_deselect_all = QPushButton(tr("library.deselect_all"))
         self.btn_deselect_all.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_deselect_all.setStyleSheet("padding: 4px; font-size: 11px;")
+        self.btn_deselect_all.setStyleSheet("padding: 4px; font-size: 11px; border: 1px solid #555; background-color: #444; border-radius: 2px;")
         self.btn_deselect_all.clicked.connect(self.deselect_all)
 
         btn_layout.addWidget(self.btn_select_all)
         btn_layout.addWidget(self.btn_deselect_all)
         
-        # Container for buttons to give them background
+        # Container for buttons - transparent background, no border
         btn_container = QWidget()
-        btn_container.setObjectName("TagPopupHeader")
-        btn_container.setStyleSheet("#TagPopupHeader { background-color: #373737; border: 1px solid #808080; border-bottom: none; border-top-left-radius: 3px; border-top-right-radius: 3px; }")
         btn_container.setLayout(btn_layout)
+        container_layout.addWidget(btn_container)
         
-        self.layout().addWidget(btn_container)
+        # Separator line
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Plain)
+        line.setStyleSheet("background-color: #555555; max-height: 1px;") # Subtle separator
+        container_layout.addWidget(line)
         
         self.list_widget = QListWidget()
         self.list_widget.setSelectionMode(QListWidget.SelectionMode.NoSelection) # Selection handled by checkboxes
@@ -77,29 +99,18 @@ class TagFilterPopup(QWidget):
         self.list_widget.viewport().installEventFilter(self)
         
         # Enforce consistent style (border, rounded corners) regardless of focus state
-        # Adjusted bottom radius since top is handled by header
+        # Border handled by container frame, list is transparent/seamless
         self.list_widget.setStyleSheet("""
             QListWidget {
-                background-color: #373737;
-                border: 1px solid #808080;
-                border-top: none;
-                border-bottom-left-radius: 3px;
-                border-bottom-right-radius: 3px;
+                background-color: transparent;
+                border: none;
                 padding: 5px;
                 outline: none;
-            }
-            QListWidget:focus {
-                border: 1px solid #808080;
-                border-top: none;
-            }
-            QListWidget:!active {
-                border: 1px solid #808080;
-                border-top: none;
             }
             QListWidget::item:hover {
                 background-color: #4a4a4a;
                 color: #ffffff;
-                border-radius: 0px;
+                border-radius: 2px;
             }
         """)
         
@@ -134,7 +145,7 @@ class TagFilterPopup(QWidget):
         
         self.list_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.resize(width, height)
-        self.layout().addWidget(self.list_widget)
+        container_layout.addWidget(self.list_widget)
 
     def select_all(self):
         self._set_all_checked(Qt.CheckState.Checked)
