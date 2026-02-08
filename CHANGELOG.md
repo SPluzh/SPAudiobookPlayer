@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0]
+- **Localization**: Extensive expansion of language support:
+    - Added 10 new languages: **Arabic**, **Chinese**, **French**, **German**, **Hindi**, **Japanese**, **Korean**, **Portuguese**, **Spanish**, and **Turkish**.
+    - **Dynamic Loading**: Application now automatically scans the `resources/translations` directory and adds new languages back to the settings menu.
+
 ## [1.3.8]
 - **Library**: Added **Tag Filter** button enabling tag selection from a dropdown list.
 - **Library**: Added **Open Library Folder** option to the main menu.

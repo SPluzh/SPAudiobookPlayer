@@ -1,18 +1,18 @@
 import json
 from pathlib import Path
-from typing import Dict, Optional
-from enum import Enum
+from typing import Dict, Optional, List, Tuple
 
-class Language(Enum):
-    """Supported application languages"""
+class Language:
+    """Supported application languages (constants for backward compatibility)"""
     RUSSIAN = "ru"
     ENGLISH = "en"
 
 class TranslationManager:
-    """Application translation manager (singleton)"""
+    """Application translation manager (singleton) with dynamic language support"""
     
     _instance = None
     _translations: Dict[str, Dict[str, str]] = {}
+    _language_names: Dict[str, str] = {}
     _current_language = Language.RUSSIAN
     
     def __new__(cls):
@@ -31,33 +31,53 @@ class TranslationManager:
         self.load_translations()
     
     def load_translations(self):
-        """Load all available translation files"""
+        """Load all available translation files form the directory"""
         self._translations = {}
+        self._language_names = {}
         
-        for lang in Language:
-            file_path = self.translations_dir / f"{lang.value}.json"
-            if file_path.exists():
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        self._translations[lang.value] = json.load(f)
-                except Exception as e:
-                    print(f"Error loading translation {lang.value}: {e}")
-                    self._translations[lang.value] = {}
-            else:
-                # If file not found, create empty dictionary
-                self._translations[lang.value] = {}
+        # Ensure directory exists
+        if not self.translations_dir.exists():
+            print(f"Translations directory not found: {self.translations_dir}")
+            return
+
+        # Scan for all .json files
+        for file_path in self.translations_dir.glob("*.json"):
+            if file_path.name == "missing_keys.json":
+                continue
+                
+            lang_code = file_path.stem  # e.g. "en" from "en.json"
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self._translations[lang_code] = data
+                    
+                    # Extract language name or fallback to code
+                    lang_name = data.get("language_name", lang_code)
+                    self._language_names[lang_code] = lang_name
+            except Exception as e:
+                print(f"Error loading translation {lang_code}: {e}")
+                self._translations[lang_code] = {}
+                self._language_names[lang_code] = lang_code
+
+    def get_available_languages(self) -> List[Tuple[str, str]]:
+        """Return a list of (code, name) tuples for all available languages"""
+        # Sort by name for display? Or maybe put English/Russian first?
+        # Let's sort alphabetically by name for now
+        langs = list(self._language_names.items())
+        langs.sort(key=lambda x: x[1])
+        return langs
     
-    def set_language(self, language: Language):
+    def set_language(self, language_code: str):
         """Set the current application language"""
-        self._current_language = language
+        self._current_language = language_code
     
-    def get_language(self) -> Language:
-        """Get the current application language"""
+    def get_language(self) -> str:
+        """Get the current application language code"""
         return self._current_language
     
     def translate(self, key: str, default: Optional[str] = None) -> str:
         """Get translated string by key (supports nested keys via dot)"""
-        lang_dict = self._translations.get(self._current_language.value, {})
+        lang_dict = self._translations.get(self._current_language, {})
         
         # Support nested keys via dot notation
         keys = key.split('.')
@@ -72,7 +92,7 @@ class TranslationManager:
         if value is None or not isinstance(value, str):
             # Fallback to English if translation not found
             if self._current_language != Language.ENGLISH:
-                en_dict = self._translations.get(Language.ENGLISH.value, {})
+                en_dict = self._translations.get(Language.ENGLISH, {})
                 value = en_dict
                 for k in keys:
                     if isinstance(value, dict):
@@ -124,10 +144,14 @@ def trf(key: str, **kwargs) -> str:
     """Convenience function for formatted translations"""
     return _manager.format(key, **kwargs)
 
-def set_language(language: Language):
+def set_language(language: str):
     """Convenience function for setting language"""
     _manager.set_language(language)
 
-def get_language() -> Language:
+def get_language() -> str:
     """Convenience function for getting language"""
     return _manager.get_language()
+
+def get_available_languages() -> List[Tuple[str, str]]:
+    """Get list of available languages (code, name)"""
+    return _manager.get_available_languages()

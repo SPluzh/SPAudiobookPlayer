@@ -30,7 +30,7 @@ from styles import DARK_STYLE
 from taskbar_progress import TaskbarProgress, TaskbarThumbnailButtons
 import ctypes
 from ctypes import wintypes
-from translations import tr, trf, set_language, get_language, Language
+from translations import tr, trf, set_language, get_language, Language, get_available_languages
 from hotkeys import HotKeyManager
 from functools import lru_cache
 from about_dialog import AboutDialog
@@ -168,11 +168,12 @@ class AudiobookPlayerWindow(QMainWindow):
         config.read(self.config_file, encoding='utf-8')
         
         lang_code = config.get('Display', 'language', fallback='ru')
-        try:
-            language = Language(lang_code)
-            set_language(language)
-        except ValueError:
-            # Revert to default language if the preference is invalid
+        
+        # Verify language code exists in available languages
+        available_codes = [lang[0] for lang in get_available_languages()]
+        if lang_code in available_codes:
+            set_language(lang_code)
+        else:
             set_language(Language.RUSSIAN)
     
     def save_language_preference(self):
@@ -183,7 +184,7 @@ class AudiobookPlayerWindow(QMainWindow):
         if 'Display' not in config:
             config['Display'] = {}
         
-        config['Display']['language'] = get_language().value
+        config['Display']['language'] = get_language()
         
         with open(self.config_file, 'w', encoding='utf-8') as f:
             config.write(f)
@@ -304,24 +305,17 @@ class AudiobookPlayerWindow(QMainWindow):
         # Language Selection Nested Menu
         language_menu = view_menu.addMenu(tr("menu.language"))
         
-        # Russian Localization Toggle
-        russian_action = QAction(tr("menu.russian"), self)
-        russian_action.setCheckable(True)
-        russian_action.setChecked(get_language() == Language.RUSSIAN)
-        russian_action.triggered.connect(lambda _: self.change_language(Language.RUSSIAN))
-        language_menu.addAction(russian_action)
+        available_langs = get_available_languages()
+        self.language_actions = {}
         
-        # English Localization Toggle
-        english_action = QAction(tr("menu.english"), self)
-        english_action.setCheckable(True)
-        english_action.setChecked(get_language() == Language.ENGLISH)
-        english_action.triggered.connect(lambda _: self.change_language(Language.ENGLISH))
-        language_menu.addAction(english_action)
-        
-        self.language_actions = {
-            Language.RUSSIAN: russian_action,
-            Language.ENGLISH: english_action
-        }
+        for code, name in available_langs:
+            action = QAction(name, self)
+            action.setCheckable(True)
+            action.setChecked(get_language() == code)
+            # Use default argument to capture current loop variable
+            action.triggered.connect(lambda checked, c=code: self.change_language(c))
+            language_menu.addAction(action)
+            self.language_actions[code] = action
         
         view_menu.addSeparator()
         
@@ -341,7 +335,7 @@ class AudiobookPlayerWindow(QMainWindow):
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
     
-    def change_language(self, language: Language):
+    def change_language(self, language: str):
         """Update the application's language preference and immediately refresh all UI components without requiring a restart"""
         if get_language() == language:
             return
