@@ -468,7 +468,8 @@ class AudiobookScanner:
         try:
             # Try different encodings
             content = None
-            for enc in ['utf-8-sig', 'utf-8', 'cp1251', 'latin-1']:
+            for enc in ['utf-8-sig', 'utf-8', 'utf-16', 'utf-16-le', 'cp1251', 'latin-1']:
+
                 try:
                     with open(cue_path, 'r', encoding=enc) as f:
                         content = f.read()
@@ -1250,7 +1251,7 @@ class AudiobookScanner:
                 if selected_file:
                     description = ""
                     # smart encoding detection
-                    encodings = ['utf-8', 'cp1251', 'cp1252', 'latin-1']
+                    encodings = ['utf-8', 'utf-16', 'utf-16-le', 'cp1251', 'cp1252', 'latin-1']
                     for enc in encodings:
                         try:
                             with open(selected_file, 'r', encoding=enc, errors='strict') as df:

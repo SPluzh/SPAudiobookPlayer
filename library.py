@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QTextEdit, QTreeWidget, QTreeWidgetItem, QMessageBox,
     QStyledItemDelegate, QToolTip, QListWidget, QListWidgetItem, QStyleOptionViewItem, QFrame
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QRect, QRectF, QPoint, QPointF, QThread, QEvent
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QRect, QRectF, QPoint, QPointF, QThread, QEvent, QTimer
 from PyQt6.QtGui import (
     QIcon, QAction, QPixmap, QBrush, QColor, QFont, QPen, QPainter, 
     QPainterPath, QFontMetrics, QTextCursor
@@ -614,8 +614,14 @@ class MultiLineDelegate(QStyledItemDelegate):
                 # Position: Top-Right of icon
                 heart_rect = self.get_heart_rect(QRectF(icon_rect))
                 
+                # Check hover for heart icon
+                is_over_heart = False
+                if self.mouse_pos and heart_rect.contains(QPointF(self.mouse_pos)):
+                    is_over_heart = True
+
                 # Draw circle background
-                _, bg_color = StyleManager.get_theme_property('icon_background')
+                prop = 'icon_background' if not is_over_heart else 'icon_background_hover'
+                _, bg_color = StyleManager.get_theme_property(prop)
                 painter.setBrush(bg_color)
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(heart_rect)
@@ -902,6 +908,7 @@ class LibraryTree(QTreeWidget):
         """Enable mouse tracking for fine-grained hover effects on custom-painted items"""
         super().__init__(parent)
         self.setMouseTracking(True)
+        self.has_any_content = False  # Track if DB has any items regardless of current filter
 
     def paintEvent(self, event):
         """Paint the tree or the placeholder if empty"""
@@ -910,7 +917,7 @@ class LibraryTree(QTreeWidget):
         # For now, let's stick to the request: "when list is empty".
         # We can check if topLevelItemCount is 0.
         
-        if self.topLevelItemCount() == 0:
+        if self.topLevelItemCount() == 0 and not self.has_any_content:
             painter = QPainter(self.viewport())
             draw_library_placeholder(painter, self.viewport().rect())
         else:
@@ -931,7 +938,7 @@ class LibraryTree(QTreeWidget):
         super().mouseMoveEvent(event)
         
         # Check placeholder hover
-        if self.topLevelItemCount() == 0:
+        if self.topLevelItemCount() == 0 and not self.has_any_content:
             rect = get_placeholder_folder_rect(self.viewport().rect())
             if rect.contains(QPointF(event.pos())):
                 self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -992,7 +999,7 @@ class LibraryTree(QTreeWidget):
         """Identify clicks on the custom 'Play' button to initiate playback without selecting the item"""
         if event.button() == Qt.MouseButton.LeftButton:
             # Check placeholder click
-            if self.topLevelItemCount() == 0:
+            if self.topLevelItemCount() == 0 and not self.has_any_content:
                 rect = get_placeholder_folder_rect(self.viewport().rect())
                 if rect.contains(QPointF(event.pos())):
                     self.settings_requested.emit()
@@ -1028,7 +1035,9 @@ class LibraryTree(QTreeWidget):
                             heart_rect = delegate.get_heart_rect(QRectF(icon_rect))
                             if heart_rect.contains(QPointF(event.pos())):
                                 path = index.data(Qt.ItemDataRole.UserRole)
-                                self.favorite_clicked.emit(path)
+                                # Defer callback to avoid modifying the tree while in event handler (prevents crash)
+                                QTimer.singleShot(0, lambda p=path: self._emit_favorite_clicked(p))
+                                event.accept()
                                 return
                         
                         # Check info click
@@ -1041,6 +1050,11 @@ class LibraryTree(QTreeWidget):
                                 self.description_requested.emit(path)
                                 return
         super().mousePressEvent(event)
+
+        super().mousePressEvent(event)
+
+    def _emit_favorite_clicked(self, path):
+        self.favorite_clicked.emit(path)
 
 
 class LibraryWidget(QWidget):
@@ -1298,29 +1312,31 @@ class LibraryWidget(QWidget):
 
     def on_tree_favorite_clicked(self, path: str):
         """Handle click on the favorite heart icon in the tree"""
+        if self.is_favorites_filter_active:
+            return
+
         # Find ID for path
         info = self.db.get_audiobook_info(path)
         if not info:
             return
             
         audiobook_id = info[0]
-        
         # Check current status to prevent accidental reset (unfavoriting)
         # We want this action to: Ensure Favorite AND/OR Go To Favorites
         data = self.db.get_audiobook_by_path(path)
         if data and not data.get('is_favorite'):
              self.toggle_favorite(audiobook_id, path)
         
-                # Activate Favorites filter if not already active
+        # Activate Favorites filter if not already active
         if not self.is_favorites_filter_active:
-             if self.btn_favorites:
+             if hasattr(self, 'btn_favorites') and self.btn_favorites:
                  self.btn_favorites.setChecked(True)
                  self.on_favorites_filter_toggled(True)
         else:
              # Refresh current view to reflect change (e.g. remove item if unfavorited)
              self.refresh_audiobook_item(path)
-             if not self.db.is_favorite(audiobook_id): # helper needed? or check data
-                 # Actually, refresh_audiobook_item updates data. But if filter active and item NOT favorite,
+             if not self.db.is_favorite(audiobook_id): 
+                 # actually, refresh_audiobook_item updates data. But if filter active and item NOT favorite,
                  # we should hide it.
                  # The simplest is full reload if we are removing from active favorites filter.
                  self.load_audiobooks(use_cache=False)
@@ -1390,6 +1406,10 @@ class LibraryWidget(QWidget):
         # Always load all audiobooks to enable fast client-side filtering
         if not use_cache or self.cached_library_data is None:
              self.cached_library_data = self.db.load_audiobooks_from_db(self.current_filter)
+
+        # Update global content flag based on DB count (independent of filter)
+        total_count = self.db.get_audiobook_count()
+        self.tree.has_any_content = total_count > 0
  
         # Pre-fetch all tags logic
         all_tags = self.db.get_all_audiobook_tags()
@@ -1950,8 +1970,10 @@ class LibraryWidget(QWidget):
             
         # 3. Refresh status metrics in the main window
         window = self.window()
+        total_count = self.db.get_audiobook_count()
+        # Update placeholder state
+        self.tree.has_any_content = total_count > 0
         if hasattr(window, 'statusBar'):
-            total_count = self.db.get_audiobook_count()
             window.statusBar().showMessage(trf("status.library_count", count=total_count))
     
     def confirm_delete_folder(self, path: str):
@@ -2042,8 +2064,10 @@ class LibraryWidget(QWidget):
             
         # 3. Synchronize status metrics
         window = self.window()
+        total_count = self.db.get_audiobook_count()
+        # Update placeholder state
+        self.tree.has_any_content = total_count > 0
         if hasattr(window, 'statusBar'):
-            total_count = self.db.get_audiobook_count()
             window.statusBar().showMessage(trf("status.library_count", count=total_count))
     
     def open_folder(self, path: str):
