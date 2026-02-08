@@ -860,3 +860,59 @@ QLabel#aboutSectionContent {
     color: white;
 }
 
+/* ============================================================
+   POPUPS AND DIALOGS
+   ============================================================ */
+#TagPopupFrame, #vadPopup, #deesserPopup, #compressorPopup, #pitchPopup {
+    background-color: #373737;
+    border: 1px solid #808080;
+    border-radius: 3px;
+}
+
+#TagPopupFrame QPushButton {
+    padding: 4px;
+    font-size: 11px;
+    border: 1px solid #555555;
+    background-color: #444444;
+    border-radius: 2px;
+}
+
+#infoLabelSmall {
+    color: #888888;
+    font-size: 11px;
+}
+
+#tagPreview {
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: "Segoe UI";
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ============================================================
+   DELEGATE THEME PROPERTIES
+   (Used by Painter via StyleManager.get_theme_property)
+   ============================================================ */
+#delegate_accent {
+    color: #018574;
+}
+
+#delegate_accent_secondary {
+    color: #02a58a;
+}
+
+#delegate_text_dim {
+    color: #CCCCCC;
+}
+
+#delegate_info_font {
+    font-family: 'Segoe UI';
+    font-size: 8px;
+}
+
+#delegate_regular_font {
+    font-family: 'Segoe UI';
+    font-size: 13px;
+}
+

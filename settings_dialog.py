@@ -53,11 +53,6 @@ class UpdateProgressDialog(QDialog):
         self.console = QTextEdit()
         self.console.setReadOnly(True)
         self.console.setObjectName("scanConsole")
-        # monospaced font
-        font = QFont("Consolas", 10)
-        if not font.exactMatch():
-            font = QFont("Courier New", 10)
-        self.console.setFont(font)
         layout.addWidget(self.console)
         
         self.close_btn = QPushButton(tr("scan_dialog.close"))
@@ -182,7 +177,7 @@ class SettingsDialog(QDialog):
         
         tools_info = QLabel(tr("ffmpeg_updater.settings_info"))
         tools_info.setWordWrap(True)
-        tools_info.setStyleSheet("color: #888; font-size: 11px;")
+        tools_info.setObjectName("infoLabelSmall")
         tools_layout.addWidget(tools_info)
         
         # Data Reset Configuration
@@ -194,7 +189,7 @@ class SettingsDialog(QDialog):
         
         reset_info = QLabel(tr("settings.reset_data_info"))
         reset_info.setWordWrap(True)
-        reset_info.setStyleSheet("color: #888; font-size: 11px;")
+        reset_info.setObjectName("infoLabelSmall")
         tools_layout.addWidget(reset_info)
         
         tools_layout.addStretch()

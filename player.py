@@ -414,7 +414,6 @@ class PlayerWidget(QWidget):
         # VAD Threshold Popup (Advanced Settings)
         self.vad_popup = QWidget(self, Qt.WindowType.Popup)
         self.vad_popup.setObjectName("vadPopup")
-        self.vad_popup.setStyleSheet("QWidget#vadPopup { background-color: #373737; border: 1px solid #808080; border-radius: 3px; }")
         vad_layout = QGridLayout(self.vad_popup)
         vad_layout.setContentsMargins(8, 8, 8, 8)
         vad_layout.setSpacing(8)
@@ -463,8 +462,7 @@ class PlayerWidget(QWidget):
         
         # DeEsser Preset Popup
         self.deesser_popup = QWidget(self, Qt.WindowType.Popup)
-        self.deesser_popup.setObjectName("vadPopup") # Reuse same style
-        self.deesser_popup.setStyleSheet("QWidget#vadPopup { background-color: #373737; border: 1px solid #808080; border-radius: 3px; }")
+        self.deesser_popup.setObjectName("deesserPopup")
         deesser_layout = QHBoxLayout(self.deesser_popup)
         deesser_layout.setContentsMargins(8, 4, 8, 4)
         
@@ -482,8 +480,7 @@ class PlayerWidget(QWidget):
         
         # Compressor Preset Popup
         self.compressor_popup = QWidget(self, Qt.WindowType.Popup)
-        self.compressor_popup.setObjectName("vadPopup") # Reuse same style
-        self.compressor_popup.setStyleSheet("QWidget#vadPopup { background-color: #373737; border: 1px solid #808080; border-radius: 3px; }")
+        self.compressor_popup.setObjectName("compressorPopup")
         comp_layout = QHBoxLayout(self.compressor_popup)
         comp_layout.setContentsMargins(8, 4, 8, 4)
         
@@ -501,8 +498,7 @@ class PlayerWidget(QWidget):
         
         # Pitch Popup
         self.pitch_popup = QWidget(self, Qt.WindowType.Popup)
-        self.pitch_popup.setObjectName("vadPopup") # Reuse same style
-        self.pitch_popup.setStyleSheet("QWidget#vadPopup { background-color: #373737; border: 1px solid #808080; border-radius: 3px; }")
+        self.pitch_popup.setObjectName("pitchPopup")
         pitch_layout = QHBoxLayout(self.pitch_popup)
         pitch_layout.setContentsMargins(8, 4, 8, 4)
         

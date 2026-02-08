@@ -26,7 +26,7 @@ from PyQt6.QtGui import (
 
 from bass_player import BassPlayer
 from database import DatabaseManager
-from styles import DARK_STYLE
+from styles import DARK_STYLE, DARK_QSS_PATH, StyleManager
 from taskbar_progress import TaskbarProgress, TaskbarThumbnailButtons
 import ctypes
 from ctypes import wintypes
@@ -1324,19 +1324,38 @@ class TaskbarEventFilter(QAbstractNativeEventFilter):
 
 def main():
     """Application entry point: initializes the Qt application context, registers native event filters, and launches the main window"""
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    app.setStyleSheet(DARK_STYLE)
-    
-    window = AudiobookPlayerWindow()
-    
-    # Register the native event filter for taskbar button interaction
-    event_filter = TaskbarEventFilter(window)
-    app.installNativeEventFilter(event_filter)
-    
-    window.show()
-    
-    sys.exit(app.exec())
+    import traceback
+    try:
+        print("Starting SPAudiobookPlayer...")
+        app = QApplication(sys.argv)
+        print("QApplication created.")
+        
+        app.setStyle('Fusion')
+        print(f"Loading stylesheet from: {DARK_QSS_PATH}")
+        app.setStyleSheet(DARK_STYLE)
+        
+        print("Initializing Style Manager...")
+        StyleManager.init(app)
+        
+        print("Initializing Main Window...")
+        window = AudiobookPlayerWindow()
+        
+        # Register the native event filter for taskbar button interaction
+        event_filter = TaskbarEventFilter(window)
+        app.installNativeEventFilter(event_filter)
+        
+        print("Showing window.")
+        window.show()
+        
+        sys.exit(app.exec())
+    except Exception as e:
+        print("\n" + "="*50)
+        print("CRITICAL STARTUP ERROR:")
+        print("="*50)
+        traceback.print_exc()
+        print("="*50)
+        input("\nPress Enter to exit...")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

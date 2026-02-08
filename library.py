@@ -25,6 +25,7 @@ from utils import (
 )
 from scanner import AudiobookScanner
 from tags_dialog import TagManagerDialog
+from styles import StyleManager
 
 
 from metadata_dialog import MetadataEditDialog
@@ -41,13 +42,6 @@ class TagFilterPopup(QWidget):
         # Main container frame to handle border and background seamlessley
         self.container_frame = QFrame()
         self.container_frame.setObjectName("TagPopupFrame")
-        self.container_frame.setStyleSheet("""
-            QFrame#TagPopupFrame {
-                background-color: #373737;
-                border: 1px solid #808080;
-                border-radius: 3px;
-            }
-        """)
         
         # Set layout for popup itself (transparent wrapper)
         popup_layout = QVBoxLayout()
@@ -68,12 +62,10 @@ class TagFilterPopup(QWidget):
         
         self.btn_select_all = QPushButton(tr("library.select_all"))
         self.btn_select_all.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_select_all.setStyleSheet("padding: 4px; font-size: 11px; border: 1px solid #555; background-color: #444; border-radius: 2px;")
         self.btn_select_all.clicked.connect(self.select_all)
         
         self.btn_deselect_all = QPushButton(tr("library.deselect_all"))
         self.btn_deselect_all.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_deselect_all.setStyleSheet("padding: 4px; font-size: 11px; border: 1px solid #555; background-color: #444; border-radius: 2px;")
         self.btn_deselect_all.clicked.connect(self.deselect_all)
 
         btn_layout.addWidget(self.btn_select_all)
@@ -86,12 +78,13 @@ class TagFilterPopup(QWidget):
         
         # Separator line
         line = QFrame()
+        line.setObjectName("popupSeparator")
         line.setFrameShape(QFrame.Shape.HLine)
         line.setFrameShadow(QFrame.Shadow.Plain)
-        line.setStyleSheet("background-color: #555555; max-height: 1px;") # Subtle separator
         container_layout.addWidget(line)
         
         self.list_widget = QListWidget()
+        self.list_widget.setObjectName("popupTagList")
         self.list_widget.setSelectionMode(QListWidget.SelectionMode.NoSelection) # Selection handled by checkboxes
         self.list_widget.itemChanged.connect(self._on_item_changed)
         
@@ -344,15 +337,6 @@ class ScanProgressDialog(QDialog):
             super().closeEvent(event)
 
 
-class StyleLabel(QLabel):
-    """Helper widget to extract styles from QSS for custom painting"""
-    def __init__(self, object_name: str, parent: QWidget = None):
-        """Initialize the style label with an object name, ensuring it is hidden"""
-        super().__init__(parent)
-        self.setObjectName(object_name)
-        self.setVisible(False)
-
-
 class MultiLineDelegate(QStyledItemDelegate):
     """Custom item delegate for library tree items with styling and localization support"""
     
@@ -387,29 +371,10 @@ class MultiLineDelegate(QStyledItemDelegate):
         # UI state for interaction
         self.hovered_index = None
         self.mouse_pos = None
-        
-        self._style_labels: dict[str, StyleLabel] = {}
-        self._create_style_widgets(parent)
-        
-        self.format_duration = self._default_format_duration
-
-    def _create_style_widgets(self, parent: QWidget):
-        """Initialize hidden widgets used to read formatting from the stylesheet"""
-        for name in self.STYLE_NAMES:
-            label = StyleLabel(name, parent)
-            self._style_labels[name] = label
-    
-    @lru_cache(maxsize=32)
     def _get_style(self, style_name: str) -> tuple[QFont, QColor]:
-        """Fetch font and color settings from a style label mapped to the given name"""
-        label = self._style_labels.get(style_name)
-        if label:
-            label.ensurePolished()
-            font = label.font()
-            color = label.palette().color(label.foregroundRole())
-            return font, color
-        return QFont(), QColor(Qt.GlobalColor.white)
-    
+        """Fetch font and color settings from the style manager mapped to the given name"""
+        return StyleManager.get_theme_property(style_name)
+
     def _default_format_duration(self, seconds: int) -> str:
         """Fallback 시간 formatting when no specific formatter is provided"""
         return format_time(seconds)
@@ -417,10 +382,7 @@ class MultiLineDelegate(QStyledItemDelegate):
     def update_styles(self):
         """Force a refresh of style properties from the loaded QSS"""
         self._get_style.cache_clear()
-        for label in self._style_labels.values():
-            label.style().unpolish(label)
-            label.style().polish(label)
-            label.update()
+        # Proxy widgets in StyleManager handle themselves when ensurePolished is called
     
     def sizeHint(self, option, index) -> QSize:
         """Determine item size based on type (folder vs audiobook)"""
@@ -435,15 +397,20 @@ class MultiLineDelegate(QStyledItemDelegate):
         return size
     
     def paint(self, painter, option, index):
-        """Orchestrate custom painting logic for different tree item types"""
-        item_type = index.data(Qt.ItemDataRole.UserRole + 1)
-        
-        if item_type == 'folder':
-            self._paint_folder(painter, option, index)
-        elif item_type == 'audiobook':
-            self._paint_audiobook(painter, option, index)
-        else:
-            super().paint(painter, option, index)
+        """Perform custom rendering for library items based on their type and state"""
+        try:
+            item_type = index.data(Qt.ItemDataRole.UserRole + 1)
+            
+            if item_type == 'folder':
+                self._paint_folder(painter, option, index)
+            elif item_type == 'audiobook':
+                self._paint_audiobook(painter, option, index)
+            else:
+                super().paint(painter, option, index)
+        except Exception as e:
+            import traceback
+            print(f"ERROR: Exception in MultiLineDelegate.paint: {e}")
+            traceback.print_exc()
     
     def _paint_folder(self, painter, option, index):
         """Draw a folder item with icon and display name"""
@@ -577,7 +544,8 @@ class MultiLineDelegate(QStyledItemDelegate):
             # 4. Currently Playing Highlight Border
             if is_playing_this:
                 # Dense green border for active book
-                pen = QPen(QColor("#018574"), 8)
+                _, accent_color = self._get_style('delegate_accent')
+                pen = QPen(accent_color, 8)
                 painter.setPen(pen)
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 painter.drawRoundedRect(QRectF(icon_rect).adjusted(-4, -4, 4, 4), 7, 7)
@@ -596,7 +564,8 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.drawEllipse(heart_rect)
                 
                 # Draw Heart Shape
-                painter.setBrush(QColor("#018574"))
+                _, accent_color = self._get_style('delegate_accent')
+                painter.setBrush(accent_color)
                 # Make the heart wider by reducing horizontal padding
                 hr = heart_rect.adjusted(1, 2, -1, -3)
                 
@@ -626,7 +595,8 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.drawEllipse(info_rect)
                 
                 # Draw 'i'
-                painter.setPen(QColor("#018574"))
+                _, accent_color = self._get_style('delegate_accent')
+                painter.setPen(accent_color)
                 font = painter.font()
                 font.setBold(True)
                 font.setPixelSize(14)
@@ -647,7 +617,8 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 
                 # Button circle
-                btn_color = QColor(1, 133, 116)
+                _, accent_color = self._get_style('delegate_accent')
+                btn_color = accent_color
                 if not is_over_btn:
                     btn_color.setAlpha(200)
                 else:
@@ -823,12 +794,14 @@ class MultiLineDelegate(QStyledItemDelegate):
             
             for tag in tags:
                 tag_name = tag['name']
-                tag_color = QColor(tag['color'] or "#018574")
+                _, accent_color = self._get_style('delegate_accent')
+                tag_color = QColor(tag['color'] or accent_color.name())
                 
                 # Dynamic text color based on brightness
                 text_color = Qt.GlobalColor.white if tag_color.lightness() < 130 else Qt.GlobalColor.black
                 
-                painter.setFont(QFont("Segoe UI", 8))
+                font_tag, _ = self._get_style('delegate_info_font')
+                painter.setFont(font_tag)
                 fm = painter.fontMetrics()
                 t_w = fm.horizontalAdvance(tag_name)
                 t_h = fm.height() + 4

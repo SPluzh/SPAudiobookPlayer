@@ -8,6 +8,7 @@ from PyQt6.QtGui import QIcon, QColor, QPixmap, QPainter
 
 from translations import tr
 from utils import get_icon
+from styles import StyleManager
 
 class TagEditDialog(QDialog):
     """Dialog for creating or editing a tag"""
@@ -16,7 +17,10 @@ class TagEditDialog(QDialog):
         self.setWindowTitle(tr("tags.edit_title") if name else tr("tags.create_title"))
         self.setModal(True)
         self.name = name
-        self.color = color or "#018574" # Default teal
+        
+        # Default teal from theme
+        _, accent_color = StyleManager.get_theme_property('delegate_accent')
+        self.color = color or accent_color.name()
         
         self.setup_ui()
         
@@ -27,6 +31,7 @@ class TagEditDialog(QDialog):
         preview_container = QHBoxLayout()
         preview_container.addStretch()
         self.preview_label = QLabel()
+        self.preview_label.setObjectName("tagPreview")
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         preview_container.addWidget(self.preview_label)
         preview_container.addStretch()
@@ -82,14 +87,10 @@ class TagEditDialog(QDialog):
         # Contrast logic matching library.py
         text_color = "#FFFFFF" if bg_color.lightness() < 130 else "#000000"
         
+        # Only set dynamic colors, static props are in QSS #tagPreview
         self.preview_label.setStyleSheet(f"""
             background-color: {bg_color.name()};
             color: {text_color};
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-family: "Segoe UI";
-            font-size: 12px;
-            font-weight: bold;
         """)
 
     def select_color(self):
