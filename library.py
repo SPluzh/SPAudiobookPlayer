@@ -1007,8 +1007,8 @@ class LibraryWidget(QWidget):
         self.show_folders = show_folders
         self.show_filter_labels = show_filter_labels
         self.cached_library_data = None  # Cache for fast reconstruction
-        self.tag_filter_ids = set()
-        self.is_tag_filter_active = False
+        self.tag_filter_ids = self.config.get('tag_filter_ids', set())
+        self.is_tag_filter_active = self.config.get('tag_filter_active', False)
         self.is_favorites_filter_active = False
         self.setup_ui()
         self.load_icons()
@@ -1060,6 +1060,7 @@ class LibraryWidget(QWidget):
         self.btn_tags = QPushButton("")
         self.btn_tags.setObjectName("filterBtn")
         self.btn_tags.setCheckable(True)
+        self.btn_tags.setChecked(self.is_tag_filter_active)
         self.btn_tags.setFixedWidth(40)
         self.btn_tags.setIcon(get_icon("context_tags"))
         self.btn_tags.setToolTip(tr("library.tooltip_filter_tags"))

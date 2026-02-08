@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.8]
+- **Library**: Added **Tag Filter** button enabling tag selection from a dropdown list.
+- **Library**: Added **Open Library Folder** option to the main menu.
+
 ## [1.3.7]
 - **Scanner**: Implemented support for **Single-File Audiobooks**.
     - Detects and processes standalone audio files (e.g., `.m4b`, `.mp3`) located in the library root.
