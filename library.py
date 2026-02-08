@@ -1352,6 +1352,8 @@ class LibraryWidget(QWidget):
             duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4]
 
             menu = QMenu()
+            menu.setObjectName("libraryContextMenu")
+
             play_action = QAction(tr("library.context_play"), self)
             play_action.setIcon(get_icon("context_play"))
             play_action.triggered.connect(lambda _: self.on_item_double_clicked(item, 0))
@@ -1373,6 +1375,7 @@ class LibraryWidget(QWidget):
             # Tags Submenu
             menu.addSeparator()
             tags_menu = menu.addMenu(tr("tags.menu_title"))
+            tags_menu.setObjectName("libraryContextMenu")
             tags_menu.setIcon(get_icon("context_tags")) # Ensure icon exists or fallback logic if needed
             
             # Populate with existing tags

@@ -622,6 +622,11 @@ QMenuBar {
     font-size: 13px;
 }
 
+/* Specific styling for Library Context Menu */
+QMenu#libraryContextMenu {
+    background-color: #444444;
+}
+
 QMenu {
     background-color: #373737;
     border: 1px solid #444444;
