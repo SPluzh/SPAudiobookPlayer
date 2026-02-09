@@ -1384,6 +1384,11 @@ def main():
         print("Initializing Main Window...")
         window = AudiobookPlayerWindow()
         
+        # Connect player instance to visualizer button
+        if hasattr(window, 'player_widget') and hasattr(window, 'player'):
+             if hasattr(window.player_widget, 'play_btn'):
+                 window.player_widget.play_btn.set_player(window.player)
+        
         # Register the native event filter for taskbar button interaction
         event_filter = TaskbarEventFilter(window)
         app.installNativeEventFilter(event_filter)

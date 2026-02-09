@@ -101,6 +101,11 @@ if bass:
     bass.BASS_PluginLoad.restype = c_int
     bass.BASS_PluginFree.argtypes = [c_int]
     bass.BASS_PluginFree.restype = c_bool
+    bass.BASS_ChannelGetData.argtypes = [c_int, c_void_p, c_int]
+    bass.BASS_ChannelGetData.restype = c_int
+
+# BASS constants for FFT
+BASS_DATA_FFT2048 = 0x80000003
 
 if bass_fx:
     bass_fx.BASS_FX_TempoCreate.argtypes = [c_int, c_int]
@@ -348,6 +353,18 @@ class BassPlayer:
             len_bytes = bass.BASS_ChannelGetLength(self.chan, BASS_POS_BYTE)
             return bass.BASS_ChannelBytes2Seconds(self.chan, len_bytes)
         return 0.0
+
+
+    def get_spectrum(self):
+        """Get FFT data for visualization (returns 1024 floats)"""
+        if self.chan == 0:
+            return None
+        
+        # Buffer for 1024 floats (FFT2048 returns 1024 values)
+        fft_data = (c_float * 1024)()
+        if bass.BASS_ChannelGetData(self.chan, fft_data, BASS_DATA_FFT2048) != -1:
+            return list(fft_data)
+        return None
 
     def set_volume(self, value: int):
         """Set volume (0-100)"""

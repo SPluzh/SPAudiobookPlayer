@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
  
+## [1.4.3]
+- **Visualizer**: Implemented real-time waveform visualization.
+Visualization is integrated directly into the Play/Pause button for a seamless look.
+
 ## [1.4.2]
 - **UI**: Added **Empty Library Placeholder** with instructional text and a clickable folder icon.
 

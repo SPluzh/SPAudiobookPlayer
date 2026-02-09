@@ -11,7 +11,10 @@ from PyQt6.QtCore import Qt, pyqtSignal, QSize, QPoint
 from bass_player import BassPlayer
 from database import DatabaseManager
 from translations import tr, trf
+
 from utils import get_icon, format_time, format_time_short
+from visualizer import VisualizerButton
+
 
 class PlaybackController:
     """Manages playback logic, including file switching, progress tracking, and session persistence"""
@@ -305,6 +308,7 @@ class PlayerWidget(QWidget):
         """Initialize widget state and prepare basic icon properties"""
         super().__init__()
         self.show_id3 = False
+        self.visualizer = None # Deprecated
         self.slider_dragging = False
         
         # State variables for presets (default to Medium=1)
@@ -568,14 +572,19 @@ class PlayerWidget(QWidget):
         self.btn_rw10.clicked.connect(lambda: self.rewind_clicked.emit(-10))
         controls.addWidget(self.btn_rw10)
         
-        # Core Play/Pause Action
-        self.play_btn = self.create_button("playBtn", tr("player.play"), QSize(32, 32))
+        # Core Play/Pause Action (VisualizerButton)
+        self.play_btn = VisualizerButton()
+        self.play_btn.setObjectName("playBtn")
+        self.play_btn.setToolTip(tr("player.play"))
+        self.play_btn.setIconSize(icon_size) # Use smaller icon size for button to leave room for vis? Or standard 32? Let's keep 32.
+        self.play_btn.setIconSize(QSize(32, 32))
         self.play_btn.clicked.connect(self.play_clicked)
         self.play_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
         )
         controls.addWidget(self.play_btn)
+
         
         self.btn_ff10 = self.create_button("rewindBtn", tr("player.forward_10"), icon_size)
         self.btn_ff10.clicked.connect(lambda: self.rewind_clicked.emit(10))
@@ -593,6 +602,7 @@ class PlayerWidget(QWidget):
         
         # File/Track Progress Section
         file_box = QVBoxLayout()
+
         
         file_times = QHBoxLayout()
         self.time_current = QLabel("0:00")
@@ -655,6 +665,7 @@ class PlayerWidget(QWidget):
         btn.setToolTip(tooltip)
         btn.setIconSize(icon_size)
         return btn
+
     
     def load_icons(self):
         self.play_icon = get_icon("play")
