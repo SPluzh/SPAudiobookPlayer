@@ -633,11 +633,13 @@ QMenuBar::item {
 
 QMenuBar::item:selected {
     background-color: #4a4a4a;
+    border-radius: 3px;
 }
 
 /* Specific styling for Library Context Menu */
 QMenu#libraryContextMenu {
     background-color: #444444;
+    border: 1px solid #808080;
 }
 
 QMenu {
@@ -650,14 +652,15 @@ QMenu {
 }
 
 QMenu::item {
-    padding: 2px 2px;
+    padding: 4px 25px 4px 25px;
+    margin: 2px 5px;
     color: #eaeaea;
 }
 
 QMenu::item:selected {
     background-color: #e12885;
     color: #ffffff;
-
+    border-radius: 3px;
 }
 
 QMenu::item:pressed {
@@ -674,6 +677,11 @@ QMenu::separator {
 QMenu::indicator {
     width: 13px;
     height: 13px;
+    margin-left: 5px;
+}
+
+QMenu::indicator:checked {
+    image: url(../icons/check.png);
 }
 
 /* ============================================================
