@@ -1051,7 +1051,7 @@ class LibraryTree(QTreeWidget):
                                 return
         super().mousePressEvent(event)
 
-        super().mousePressEvent(event)
+
 
     def _emit_favorite_clicked(self, path):
         self.favorite_clicked.emit(path)
