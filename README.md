@@ -16,7 +16,6 @@
 Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with an intuitive interface and robust functionality.
 
 
-
 https://github.com/user-attachments/assets/80126acc-8bc2-4c49-b95e-ae3a068343b0
 
 
@@ -37,6 +36,7 @@ https://github.com/user-attachments/assets/80126acc-8bc2-4c49-b95e-ae3a068343b0
 - **Cover art extraction**: Automatically extracts and displays embedded album art
 - **Search functionality**: Find audiobooks by title, author, or narrator
 - **Library filters**: Quick access to recently added, started, and finished books
+- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
 
 ### 📊 Progress Tracking
 - **Per-book progress**: Automatically saves playback position for each audiobook
@@ -50,6 +50,29 @@ https://github.com/user-attachments/assets/80126acc-8bc2-4c49-b95e-ae3a068343b0
 - **Dual-pane layout**: Library browser on the left, player controls on the right
 - **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
 - **Bilingual support**: Full interface localization (English/Russian)
+- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
+
+
+### 🎛️ Smart Audio Processing
+- **Smart Auto-Rewind**: Automatically rewinds after a pause to help you regain context (starts at 5s, adds 2s per minute of pause, up to 30s max).
+- **Voice Enhancement**: 
+  - **De-Esser**: Reduces harsh sibilance (s/sh sounds) with Light/Medium/Strong presets.
+  - **Compressor**: Balances dynamic range for consistent volume levels.
+  - **Noise Suppression**: Removes background noise for clearer speech.
+- **Voice Activity Detection (VAD)**: Skips silence in audio with customizable threshold and grace periods.
+- **Pitch Control**: Adjust playback pitch without changing speed (+/- 12 semitones).
+
+### ⌨️ Keyboard Shortcuts
+| Action | Key |
+| :--- | :--- |
+| **Play / Pause** | `Space` or `Media Play` |
+| **Previous / Next File** | `[` / `]` |
+| **Rewind / Forward 10s** | `Left` / `Right` |
+| **Rewind / Forward 60s** | `Shift` + `Left` / `Right` |
+| **Volume +/- 5%** | `Shift` + `Up` / `Down` |
+| **Speed +/- 0.1x** | `Up` / `Down` |
+| **Scan Library** | `Ctrl` + `R` |
+| **Settings** | `Ctrl` + `,` |
 
 
 ## 🚀 Installation
@@ -85,7 +108,7 @@ https://github.com/user-attachments/assets/80126acc-8bc2-4c49-b95e-ae3a068343b0
 ### First Launch
 1. On first launch, open **Settings** (Menu → Settings)
 2. Specify the path to your audiobook library
-3. Click **"Scan library"** to index your audiobooks
+3. Click **"Scan library"** to index your audiobooks (missing ffmpeg will be downloaded automatically)
 4. (Optional) Install ffprobe via **"Check/Update ffprobe"** for better metadata support
 
 ### Playing Audiobooks
@@ -127,8 +150,15 @@ Audiobooks/
         └── file.mp3
 ```
 
+
 The scanner will automatically find all audiobooks regardless of nesting depth.
 
+### ⚙️ Settings
+- **Library Path**: Change your audiobook library location.
+- **Rescan Library**: Manually trigger a library scan.
+- **Tools**:
+  - **FFmpeg/FFprobe**: Check status and download updates.
+  - **Reset Data**: Clear all library data and covers (useful for clean rescans).
 
 
 ## 📦 Building from Source
@@ -192,6 +222,7 @@ https://github.com/user-attachments/assets/0217de3d-64f2-4932-9604-54cc257d59d7
 - **Извлечение обложек**: Автоматическое извлечение и отображение встроенных обложек
 - **Функция поиска**: Поиск аудиокниг по названию, автору или чтецу
 - **Фильтры библиотеки**: Быстрый доступ к недавно добавленным, начатым и завершённым книгам
+- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink"
 
 ### 📊 Отслеживание прогресса
 - **Прогресс для каждой книги**: Автоматическое сохранение позиции воспроизведения
@@ -205,6 +236,30 @@ https://github.com/user-attachments/assets/0217de3d-64f2-4932-9604-54cc257d59d7
 - **Двухпанельная компоновка**: Браузер библиотеки слева, управление плеером справа
 - **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
 - **Двуязычная поддержка**: Полная локализация интерфейса (английский/русский)
+- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink (Hatsune Miku)"
+
+
+
+### 🎛️ Умная обработка звука
+- **Smart Auto-Rewind**: Автоматическая перемотка назад после паузы для восстановления контекста (Базово 5с + 2с за минуту паузы, макс. 30с).
+- **Улучшение голоса**:
+  - **De-Esser**: Уменьшает резкие свистящие звуки (с/ш) с пресетами (Лёгкий/Средний/Сильный).
+  - **Компрессор**: Выравнивает динамический диапазон для равномерной громкости.
+  - **Шумоподавление**: Удаляет фоновый шум для чёткости речи.
+- **Детектор тишины (VAD)**: Пропускает тишину в аудио с настраиваемым порогом.
+- **Управление высотой тона**: Изменение тона без изменения скорости (+/- 12 полутонов).
+
+### ⌨️ Горячие клавиши
+| Действие | Клавиша |
+| :--- | :--- |
+| **Воспр. / Пауза** | `Пробел` или `Media Play` |
+| **Пред. / След. файл** | `[` / `]` |
+| **Назад / Вперёд 10с** | `Влево` / `Вправо` |
+| **Назад / Вперёд 60с** | `Shift` + `Влево` / `Вправо` |
+| **Громкость +/- 5%** | `Shift` + `Вверх` / `Вниз` |
+| **Скорость +/- 0.1x** | `Вверх` / `Вниз` |
+| **Сканировать** | `Ctrl` + `R` |
+| **Настройки** | `Ctrl` + `,` |
 
 
 ## 🚀 Установка
@@ -240,7 +295,7 @@ https://github.com/user-attachments/assets/0217de3d-64f2-4932-9604-54cc257d59d7
 ### Первый запуск
 1. При первом запуске откройте **Настройки** (Меню → Настройки)
 2. Укажите путь к вашей библиотеке аудиокниг
-3. Нажмите **"Сканировать библиотеку"** для индексации аудиокниг
+3. Нажмите **"Сканировать библиотеку"** для индексации аудиокниг (недостающий ffmpeg будет скачан автоматически)
 4. (Опционально) Установите ffprobe через **"Проверить/Обновить ffprobe"** для лучшей поддержки метаданных
 
 ### Воспроизведение аудиокниг
@@ -279,8 +334,15 @@ Audiobooks/
         └── file.mp3
 ```
 
+
 Сканер автоматически найдёт все аудиокниги вне зависимости от глубины вложенности.
 
+### ⚙️ Настройки
+- **Путь к библиотеке**: Изменение расположения вашей библиотеки аудиокниг.
+- **Сканировать библиотеку**: Ручной запуск сканирования.
+- **Инструменты**:
+  - **FFmpeg/FFprobe**: Проверка статуса и обновление.
+  - **Сброс данных**: Очистка всей базы данных и обложек (полезно для чистого пересканирования).
 
 
 ## 📦 Сборка из исходников
@@ -299,7 +361,6 @@ Audiobooks/
    ```
 
 3. Исполняемый файл будет создан в `_build_/dist/`
-
 
 
 ## 🙏 Благодарности
