@@ -44,3 +44,4 @@ ffprobe.exe
 .vscode/
 .idea/
 *.swp
+.gitignore/
