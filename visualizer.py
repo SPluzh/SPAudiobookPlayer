@@ -17,7 +17,7 @@ class VisualizerButton(QPushButton):
         self.timer.timeout.connect(self.update_visualization)
         
         self.bar_count = 20  # Fewer bars for a button
-        self.bar_color = QColor("#018574")
+        self.bar_color = QColor("#CCCCCC")
         self.bar_color.setAlpha(180) # Slightly transparent
         self.decay = [0.0] * self.bar_count
         self.decay_speed = 0.2
