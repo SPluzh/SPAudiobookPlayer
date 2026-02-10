@@ -1828,6 +1828,7 @@ class LibraryWidget(QWidget):
         elif role == 'folder':
             # Folder context menu
             menu = QMenu()
+            menu.setObjectName("libraryContextMenu")
             
             open_folder_action = QAction(tr("library.menu_open_folder"), self)
             open_folder_action.setIcon(get_icon("context_open_folder"))
