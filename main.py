@@ -46,6 +46,7 @@ from library import (
     ScannerThread, ScanProgressDialog, 
     LibraryTree, MultiLineDelegate, LibraryWidget
 )
+from about_dialog import AboutDialog
 
 
 class AudiobookPlayerWindow(QMainWindow):

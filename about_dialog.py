@@ -12,12 +12,19 @@ class AboutDialog(QDialog):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setup_ui()
+        try:
+            self.setup_ui()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
 
     def showEvent(self, event):
         """Ensure window is centered and sized correctly on show"""
-        self.adjustSize()
-        self.center_window()
+        try:
+            self.adjustSize()
+            self.center_window()
+        except Exception as e:
+            pass
         super().showEvent(event)
 
     def get_app_version(self):
@@ -49,7 +56,12 @@ class AboutDialog(QDialog):
         
         # Version
         version_text = self.get_app_version()
-        version = QLabel(trf('about.version', version=version_text))
+        # Fallback if translation fails
+        version_str = trf('about.version', version=version_text)
+        if not version_str or version_str == 'about.version':
+             version_str = f"Version: {version_text}"
+             
+        version = QLabel(version_str)
         version.setObjectName("aboutVersion")
         container_layout.addWidget(version)
         

@@ -122,9 +122,11 @@ class TranslationManager:
     def format(self, key: str, **kwargs) -> str:
         """Get formatted translation string"""
         template = self.translate(key)
+        # Prevent infinite recursion if the template itself contains braces and checks against itself somehow
+        # or if arguments are weird.
         try:
             return template.format(**kwargs)
-        except (KeyError, ValueError):
+        except Exception:
             return template
     
     def save_missing_keys(self, keys: set):

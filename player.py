@@ -405,6 +405,15 @@ class PlayerWidget(QWidget):
         self.id3_btn.toggled.connect(self.on_id3_toggled)
         btns_row.addWidget(self.id3_btn)
         
+        # Auto-rewind Toggle
+        self.auto_rewind_btn = QPushButton(tr("player.btn_autorewind"))
+        self.auto_rewind_btn.setCheckable(True)
+        self.auto_rewind_btn.setFixedWidth(40)
+        self.auto_rewind_btn.setObjectName("autoRewindBtn")
+        self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
+        self.auto_rewind_btn.toggled.connect(self.on_auto_rewind_toggled)
+        btns_row.addWidget(self.auto_rewind_btn)
+
         # Bookmarks Button
         self.bookmarks_btn = QPushButton(tr("bookmarks.button_label"))
         self.bookmarks_btn.setCheckable(False) # Unlike ID3, this opens a dialog
@@ -414,14 +423,7 @@ class PlayerWidget(QWidget):
         self.bookmarks_btn.clicked.connect(self.bookmarks_clicked)
         btns_row.addWidget(self.bookmarks_btn)
 
-        # Auto-rewind Toggle
-        self.auto_rewind_btn = QPushButton(tr("player.btn_autorewind"))
-        self.auto_rewind_btn.setCheckable(True)
-        self.auto_rewind_btn.setFixedWidth(40)
-        self.auto_rewind_btn.setObjectName("autoRewindBtn")
-        self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
-        self.auto_rewind_btn.toggled.connect(self.on_auto_rewind_toggled)
-        btns_row.addWidget(self.auto_rewind_btn)
+        btns_row.addStretch()
         
         # DeEsser Toggle
         self.deesser_btn = QPushButton(tr("player.btn_deesser"))
@@ -469,8 +471,6 @@ class PlayerWidget(QWidget):
         self.pitch_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.pitch_btn.customContextMenuRequested.connect(self.show_pitch_popup)
         btns_row.addWidget(self.pitch_btn)
-
-        btns_row.addStretch()
         
         # VAD Threshold Popup (Advanced Settings)
         self.vad_popup = QWidget(self, Qt.WindowType.Popup)
