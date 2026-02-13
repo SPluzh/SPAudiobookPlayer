@@ -44,7 +44,7 @@ from utils import (
 from player import PlaybackController, PlayerWidget
 from library import (
     ScannerThread, ScanProgressDialog, 
-    LibraryTree, MultiLineDelegate, LibraryWidget
+    LibraryTree, MultiLineDelegate, LibraryWidget, CopyThread
 )
 from about_dialog import AboutDialog
 
@@ -158,10 +158,21 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # Blur Effect Stacking logic to handle nested modal dialogs
         self._blur_count = 0
+        
+        # Drop Overlay
+        self.drop_overlay = QLabel(tr("window.drop_files") + "\n\n" + tr("window.drop_hint"), self)
+        self.drop_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.drop_overlay.setObjectName("dropOverlay")
+        self.drop_overlay.hide()
+        self.drop_overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self._blur_effect = None
         
         # Ensure the main window has focus so hotkeys work correctly
+        # Ensure the main window has focus so hotkeys work correctly
         self.setFocus()
+
+        # Enable Drag and Drop
+        self.setAcceptDrops(True)
     
     def load_language_preference(self):
         """Retrieve and apply the user's preferred application language from the configuration file"""
@@ -387,6 +398,9 @@ class AudiobookPlayerWindow(QMainWindow):
             self.setWindowTitle(trf("window.title_with_book", title=book_title))
         else:
             self.setWindowTitle(tr("window.title"))
+            
+        # Update Drop Overlay
+        self.drop_overlay.setText(tr("window.drop_files") + "\n\n" + tr("window.drop_hint"))
         
         # Reconstruct the menu bar to apply new translations
         self.menuBar().clear()
@@ -815,29 +829,87 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_retroactive_grace(value / 100.0)
         self.save_settings()
 
-    def on_deesser_preset_changed(self, value):
+    def on_deesser_preset_changed(self, value: int):
         """Handle DeEsser preset change"""
         self.deesser_preset = value
         self.player.set_deesser_preset(value)
         self.save_settings()
 
-    def on_compressor_preset_changed(self, value):
+    def on_compressor_preset_changed(self, value: int):
         """Handle Compressor preset change"""
         self.compressor_preset = value
         self.player.set_compressor_preset(value)
         self.save_settings()
 
-    def on_pitch_toggled(self, state: bool):
+    def on_pitch_toggled(self, checked):
         """Update and persist pitch enabled state"""
-        self.pitch_enabled = state
-        self.player.set_pitch_enabled(state)
+        self.pitch_enabled = checked
+        self.player.set_pitch_enabled(checked)
         self.save_settings()
 
-    def on_pitch_changed(self, value: float):
+    def on_pitch_changed(self, value):
         """Update and persist pitch value"""
         self.pitch_value = value
         self.player.set_pitch(value)
         self.save_settings()
+
+    # Drag and Drop Events
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+            # Apply blur
+            self.apply_blur()
+
+            # Show overlay
+            self.drop_overlay.resize(self.size())
+            self.drop_overlay.raise_()
+            self.drop_overlay.show()
+        else:
+            event.ignore()
+
+    def dragLeaveEvent(self, event):
+        self.drop_overlay.hide()
+        self.remove_blur()
+        event.accept()
+        
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.drop_overlay.isVisible():
+            self.drop_overlay.resize(self.size())
+
+    def dropEvent(self, event):
+        self.drop_overlay.hide()
+        self.remove_blur()
+        if not self.default_path:
+            QMessageBox.warning(self, tr("error"), tr("settings.specify_path"))
+            return
+
+        urls = event.mimeData().urls()
+        if not urls:
+            return
+            
+        self.statusBar().showMessage(tr("status.starting_copy"))
+        
+        # We need to keep a reference to the thread so it doesn't get GC'd
+        self.copy_thread = CopyThread(urls, self.default_path)
+        self.copy_thread.progress.connect(self.on_copy_progress)
+        self.copy_thread.finished_copy.connect(self.on_copy_finished)
+        self.copy_thread.start()
+        
+    def on_copy_progress(self, message):
+         self.statusBar().showMessage(message)
+
+    def on_copy_finished(self, count):
+        # Use a localized string or fallback
+        msg = trf("status.copy_complete", count=count)
+        if msg == "status.copy_complete":
+            msg = f"Copied {count} items."
+            
+        self.statusBar().showMessage(msg, 5000)
+        if count > 0:
+            self.rescan_directory()
+
+
 
     def on_show_folders_toggled(self, checked):
         """Update and persist the folder visibility preference"""
@@ -1288,19 +1360,25 @@ class AudiobookPlayerWindow(QMainWindow):
                                 trf("library.delete_error", error=str(e)))
 
     def apply_blur(self):
-        """Increment blur request counter and apply graphics effect if necessary"""
+        """Increment blur request counter and apply graphics effect to central widget"""
         self._blur_count += 1
         if self._blur_count == 1:
             if not self._blur_effect:
                 self._blur_effect = QGraphicsBlurEffect()
-                self._blur_effect.setBlurRadius(5)
-            self.setGraphicsEffect(self._blur_effect)
+                self._blur_effect.setBlurRadius(15)
+            
+            # Apply to central widget instead of QMainWindow to avoid native window conflicts
+            central = self.centralWidget()
+            if central:
+                central.setGraphicsEffect(self._blur_effect)
 
     def remove_blur(self):
-        """Decrement blur request counter and remove graphics effect if it reaches zero"""
+        """Decrement blur request counter and remove graphics effect if zero"""
         self._blur_count = max(0, self._blur_count - 1)
         if self._blur_count == 0:
-            self.setGraphicsEffect(None)
+            central = self.centralWidget()
+            if central:
+                central.setGraphicsEffect(None)
             self._blur_effect = None
 
     def show_about(self):

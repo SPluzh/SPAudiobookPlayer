@@ -2,7 +2,9 @@
   "language_name": "Русский",
   "window": {
     "title": "SP Audiobook Player",
-    "title_with_book": "SP Audiobook Player - {title}"
+    "title_with_book": "SP Audiobook Player - {title}",
+    "drop_files": "Перетащите сюда файлы",
+    "drop_hint": "Поддерживаются папки и файлы\n(MP3, M4B, M4A, FLAC, OPUS, OGG, WAV, WMA)"
   },
   "menu": {
     "menu": "Меню",
@@ -137,7 +139,8 @@
     "styles_reloaded": "✅ Стили перезагружены",
     "styles_error": "❌ Ошибка стилей: {error}",
     "reset_success": "✅ Библиотека успешно очищена",
-    "delete_success": "✅ Аудиокнига успешно удалена"
+    "delete_success": "✅ Аудиокнига успешно удалена",
+    "starting_copy": "Начало копирования..."
   },
   "delegate": {
     "narrator_prefix": "🎙",

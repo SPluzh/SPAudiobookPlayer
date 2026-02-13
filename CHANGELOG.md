@@ -1,7 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
- 
+
+## [1.5.1]
+- **Drag & Drop**: Implemented comprehensive file and folder drop support
+
 ## [1.5.0]
 - **Bookmarks**: Implemented a complete bookmarking system:
     - Added "Mark" button to player controls.

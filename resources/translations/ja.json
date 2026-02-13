@@ -2,7 +2,9 @@
     "language_name": "日本語",
     "window": {
         "title": "SP Audiobook Player",
-        "title_with_book": "SP Audiobook Player - {title}"
+        "title_with_book": "SP Audiobook Player - {title}",
+        "drop_files": "ドラッグ＆ドロップで追加",
+        "drop_hint": "フォルダとファイルをサポート\n(MP3, M4B, M4A, FLAC, OPUS, OGG, WAV, WMA)"
     },
     "menu": {
         "menu": "メニュー",
@@ -119,7 +121,8 @@
         "reset_success": "✅ ライブラリを正常に初期化しました",
         "delete_success": "✅ オーディオブックを正常に削除しました",
         "no_audiobooks_title": "Library is empty",
-        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+        "starting_copy": "コピーを開始しています..."
     },
     "delegate": {
         "narrator_prefix": "🎙",

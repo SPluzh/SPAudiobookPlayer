@@ -2,7 +2,9 @@
     "language_name": "Español",
     "window": {
         "title": "SP Audiobook Player",
-        "title_with_book": "SP Audiobook Player - {title}"
+        "title_with_book": "SP Audiobook Player - {title}",
+        "drop_files": "Soltar para añadir a la biblioteca",
+        "drop_hint": "Soporta carpetas y archivos\n(MP3, M4B, M4A, FLAC, OPUS, OGG, WAV, WMA)"
     },
     "menu": {
         "menu": "Menú",
@@ -119,7 +121,8 @@
         "reset_success": "✅ Biblioteca purgada exitosamente",
         "delete_success": "✅ Audiolibro eliminado exitosamente",
         "no_audiobooks_title": "Library is empty",
-        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+        "starting_copy": "Iniciando copia..."
     },
     "delegate": {
         "narrator_prefix": "🎙",

@@ -2,7 +2,9 @@
   "language_name": "English",
   "window": {
     "title": "SP Audiobook Player",
-    "title_with_book": "SP Audiobook Player - {title}"
+    "title_with_book": "SP Audiobook Player - {title}",
+    "drop_files": "Drop to Add to Library",
+    "drop_hint": "Supports folders and files\n(MP3, M4B, M4A, FLAC, OPUS, OGG, WAV, WMA)"
   },
   "menu": {
     "menu": "Menu",
@@ -137,7 +139,8 @@
     "styles_reloaded": "✅ Styles reloaded",
     "styles_error": "❌ Styles error: {error}",
     "reset_success": "✅ Library successfully purged",
-    "delete_success": "✅ Audiobook successfully deleted"
+    "delete_success": "✅ Audiobook successfully deleted",
+    "starting_copy": "Starting copy..."
   },
   "delegate": {
     "narrator_prefix": "🎙",

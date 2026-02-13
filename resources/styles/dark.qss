@@ -1068,4 +1068,16 @@ QLabel#placeholder_icon {
     color: @accent;
 }
 
+/* ============================================================
+   DROP OVERLAY
+   ============================================================ */
+QLabel#dropOverlay {
+    background-color: @overlay-progress-bg;
+    color: @text-bright;
+    font-size: 24px;
+    font-weight: bold;
+    border: 4px dashed @accent;
+    border-radius: 10px;
+}
+
 

@@ -2,7 +2,9 @@
     "language_name": "हिन्दी",
     "window": {
         "title": "SP Audiobook Player",
-        "title_with_book": "SP Audiobook Player - {title}"
+        "title_with_book": "SP Audiobook Player - {title}",
+        "drop_files": "लाइब्रेरी में जोड़ने के लिए छोड़ें",
+        "drop_hint": "फ़ोल्डर और फ़ाइलों का समर्थन करता है\n(MP3, M4B, M4A, FLAC, OPUS, OGG, WAV, WMA)"
     },
     "menu": {
         "menu": "मेनू",
@@ -119,7 +121,8 @@
         "reset_success": "✅ लाइब्रेरी सफलतापूर्वक साफ़ की गई",
         "delete_success": "✅ ऑडियोबुक सफलतापूर्वक हटा दी गई",
         "no_audiobooks_title": "Library is empty",
-        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+        "starting_copy": "कॉपी शुरू हो रही है..."
     },
     "delegate": {
         "narrator_prefix": "🎙",

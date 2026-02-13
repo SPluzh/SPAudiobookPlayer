@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QTextEdit, QTreeWidget, QTreeWidgetItem, QMessageBox,
     QStyledItemDelegate, QToolTip, QListWidget, QListWidgetItem, QStyleOptionViewItem, QFrame
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QRect, QRectF, QPoint, QPointF, QThread, QEvent, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QRect, QRectF, QPoint, QPointF, QThread, QEvent, QTimer, QUrl
 from PyQt6.QtGui import (
     QIcon, QAction, QPixmap, QBrush, QColor, QFont, QPen, QPainter, 
     QPainterPath, QFontMetrics, QTextCursor
@@ -302,6 +302,74 @@ class ScannerThread(QThread):
         except Exception as e:
             print(f"Scanner error: {e}")
             self.finished_scan.emit(0)
+
+
+class CopyThread(QThread):
+    """Background thread for copying files/folders to the library"""
+    progress = pyqtSignal(str)
+    finished_copy = pyqtSignal(int)
+    
+    def __init__(self, urls, dest_dir):
+        super().__init__()
+        self.urls = urls
+        self.dest_dir = Path(dest_dir)
+        
+    def run(self):
+        count = 0
+        
+        for url in self.urls:
+            try:
+                if isinstance(url, str):
+                    local_path = Path(url)
+                else:
+                    local_path = Path(url.toLocalFile())
+                    
+                if not local_path.exists():
+                    continue
+                
+                self.progress.emit(f"Copying {local_path.name}...")
+                
+                if local_path.is_dir():
+                    # Check if folder looks like an audiobook (has audio files)
+                    # For now just copy
+                    dest = self.dest_dir / local_path.name
+                    
+                    # Handle duplicate names by appending number
+                    if dest.exists():
+                        counter = 1
+                        while True:
+                            new_dest = self.dest_dir / f"{local_path.name}_{counter}"
+                            if not new_dest.exists():
+                                dest = new_dest
+                                break
+                            counter += 1
+                            
+                    shutil.copytree(local_path, dest)
+                    count += 1
+                        
+                elif local_path.is_file():
+                    # Create folder for single file
+                    folder_name = local_path.stem
+                    dest_folder = self.dest_dir / folder_name
+                    
+                    # Handle duplicate folder names
+                    if dest_folder.exists():
+                        counter = 1
+                        while True:
+                            new_dest_folder = self.dest_dir / f"{folder_name}_{counter}"
+                            if not new_dest_folder.exists():
+                                dest_folder = new_dest_folder
+                                break
+                            counter += 1
+                    
+                    dest_folder.mkdir(exist_ok=True)
+                    shutil.copy2(local_path, dest_folder / local_path.name)
+                    count += 1
+                        
+            except Exception as e:
+                print(f"Copy error: {e}")
+        
+        self.finished_copy.emit(count)
 
 
 class ScanProgressDialog(QDialog):

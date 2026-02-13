@@ -2,7 +2,9 @@
     "language_name": "简体中文",
     "window": {
         "title": "SP Audiobook Player",
-        "title_with_book": "SP Audiobook Player - {title}"
+        "title_with_book": "SP Audiobook Player - {title}",
+        "drop_files": "拖放以添加到库",
+        "drop_hint": "支持文件夹和文件\n(MP3, M4B, M4A, FLAC, OPUS, OGG, WAV, WMA)"
     },
     "menu": {
         "menu": "菜单",
@@ -119,7 +121,8 @@
         "reset_success": "✅ 库已成功清除",
         "delete_success": "✅ 有声书已成功删除",
         "no_audiobooks_title": "Library is empty",
-        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+        "starting_copy": "正在开始复制..."
     },
     "delegate": {
         "narrator_prefix": "🎙",

@@ -2,7 +2,9 @@
     "language_name": "한국어",
     "window": {
         "title": "SP Audiobook Player",
-        "title_with_book": "SP Audiobook Player - {title}"
+        "title_with_book": "SP Audiobook Player - {title}",
+        "drop_files": "라이브러리에 추가하려면 드롭하세요",
+        "drop_hint": "폴더 및 파일 지원\n(MP3, M4B, M4A, FLAC, OPUS, OGG, WAV, WMA)"
     },
     "menu": {
         "menu": "메뉴",
@@ -119,7 +121,8 @@
         "reset_success": "✅ 라이브러리 초기화 성공",
         "delete_success": "✅ 오디오북 삭제 성공",
         "no_audiobooks_title": "Library is empty",
-        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+        "starting_copy": "복사 시작 중..."
     },
     "delegate": {
         "narrator_prefix": "🎙",
