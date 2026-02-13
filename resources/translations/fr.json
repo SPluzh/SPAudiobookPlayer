@@ -117,7 +117,9 @@
         "styles_reloaded": "✅ Styles rechargés",
         "styles_error": "❌ Erreur de style : {error}",
         "reset_success": "✅ Bibliothèque purgée avec succès",
-        "delete_success": "✅ Livre audio supprimé avec succès"
+        "delete_success": "✅ Livre audio supprimé avec succès",
+        "no_audiobooks_title": "Library is empty",
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
     },
     "delegate": {
         "narrator_prefix": "🎙",
@@ -151,7 +153,9 @@
     "dialog": {
         "restart_title": "Changement de langue",
         "restart_text": "Un redémarrage de l'application est nécessaire pour appliquer les modifications. Redémarrer maintenant ?",
-        "close": "Fermer"
+        "close": "Fermer",
+        "cancel": "Annuler",
+        "save": "Enregistrer"
     },
     "formats": {
         "duration_hours": "{hours}h {minutes}m",
@@ -311,5 +315,25 @@
         "next": "Piste suivante",
         "rewind": "Reculer de 10s",
         "forward": "Avancer de 10s"
+    },
+    "confirm": "Confirmer",
+    "info": "Info",
+    "bookmarks": {
+        "edit_title": "Modifier le signet",
+        "add_title": "Ajouter un signet",
+        "title_label": "Titre :",
+        "title_placeholder": "Entrer le titre...",
+        "desc_label": "Description :",
+        "desc_placeholder": "Entrer la description (optionnel)...",
+        "list_title": "Signets",
+        "button_label": "Signet",
+        "play": "Lire",
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "add": "Ajouter",
+        "confirm_delete": "Êtes-vous sûr de vouloir supprimer ce signet ?",
+        "untitled": "Signet sans titre",
+        "bookmark_at": "Signet à",
+        "no_book_playing": "Aucun livre audio en cours de lecture."
     }
 }

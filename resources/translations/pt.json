@@ -117,7 +117,9 @@
         "styles_reloaded": "✅ Estilos recarregados",
         "styles_error": "❌ Erro nos estilos: {error}",
         "reset_success": "✅ Biblioteca limpa com sucesso",
-        "delete_success": "✅ Audiolivro excluído com sucesso"
+        "delete_success": "✅ Audiolivro excluído com sucesso",
+        "no_audiobooks_title": "Library is empty",
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
     },
     "delegate": {
         "narrator_prefix": "🎙",
@@ -151,7 +153,9 @@
     "dialog": {
         "restart_title": "Alteração de Idioma",
         "restart_text": "A reinicialização do aplicativo é necessária para aplicar totalmente as alterações. Reiniciar agora?",
-        "close": "Fechar"
+        "close": "Fechar",
+        "cancel": "Cancelar",
+        "save": "Salvar"
     },
     "formats": {
         "duration_hours": "{hours}h {minutes}m",
@@ -311,5 +315,25 @@
         "next": "Próxima faixa",
         "rewind": "Avançar 10 segundos",
         "forward": "Recuar 10 segundos"
+    },
+    "confirm": "Confirmar",
+    "info": "Informação",
+    "bookmarks": {
+        "edit_title": "Editar Marcador",
+        "add_title": "Adicionar Marcador",
+        "title_label": "Título:",
+        "title_placeholder": "Digite o título...",
+        "desc_label": "Descrição:",
+        "desc_placeholder": "Digite a descrição (opcional)...",
+        "list_title": "Marcadores",
+        "button_label": "Marc.",
+        "play": "Reproduzir",
+        "edit": "Editar",
+        "delete": "Excluir",
+        "add": "Adicionar",
+        "confirm_delete": "Tem certeza que deseja excluir este marcador?",
+        "untitled": "Marcador sem título",
+        "bookmark_at": "Marcador em",
+        "no_book_playing": "Nenhum audiolivro reproduzindo."
     }
 }

@@ -117,7 +117,9 @@
         "styles_reloaded": "✅ 스타일 새로고침됨",
         "styles_error": "❌ 스타일 오류: {error}",
         "reset_success": "✅ 라이브러리 초기화 성공",
-        "delete_success": "✅ 오디오북 삭제 성공"
+        "delete_success": "✅ 오디오북 삭제 성공",
+        "no_audiobooks_title": "Library is empty",
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
     },
     "delegate": {
         "narrator_prefix": "🎙",
@@ -151,7 +153,9 @@
     "dialog": {
         "restart_title": "언어 변경",
         "restart_text": "변경 사항을 완전히 적용하려면 애플리케이션을 다시 시작해야 합니다. 지금 다시 시작하시겠습니까?",
-        "close": "닫기"
+        "close": "닫기",
+        "cancel": "취소",
+        "save": "저장"
     },
     "formats": {
         "duration_hours": "{hours}시간 {minutes}분",
@@ -311,5 +315,25 @@
         "next": "다음 트랙",
         "rewind": "10초 앞으로",
         "forward": "10초 뒤로"
+    },
+    "confirm": "확인",
+    "info": "정보",
+    "bookmarks": {
+        "edit_title": "북마크 편집",
+        "add_title": "북마크 추가",
+        "title_label": "제목:",
+        "title_placeholder": "제목 입력...",
+        "desc_label": "설명:",
+        "desc_placeholder": "설명 입력 (선택)...",
+        "list_title": "북마크",
+        "button_label": "마크",
+        "play": "재생",
+        "edit": "편집",
+        "delete": "삭제",
+        "add": "추가",
+        "confirm_delete": "이 북마크를 삭제하시겠습니까?",
+        "untitled": "제목 없음",
+        "bookmark_at": "북마크 위치",
+        "no_book_playing": "재생 중인 오디오북이 없습니다."
     }
 }

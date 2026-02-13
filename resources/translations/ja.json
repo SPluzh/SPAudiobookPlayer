@@ -117,7 +117,9 @@
         "styles_reloaded": "✅ スタイルを再読み込みしました",
         "styles_error": "❌ スタイルエラー: {error}",
         "reset_success": "✅ ライブラリを正常に初期化しました",
-        "delete_success": "✅ オーディオブックを正常に削除しました"
+        "delete_success": "✅ オーディオブックを正常に削除しました",
+        "no_audiobooks_title": "Library is empty",
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
     },
     "delegate": {
         "narrator_prefix": "🎙",
@@ -151,7 +153,9 @@
     "dialog": {
         "restart_title": "言語の変更",
         "restart_text": "変更を完全に適用するにはアプリの再起動が必要です。今すぐ再起動しますか？",
-        "close": "閉じる"
+        "close": "閉じる",
+        "cancel": "キャンセル",
+        "save": "保存"
     },
     "formats": {
         "duration_hours": "{hours}時間 {minutes}分",
@@ -311,5 +315,25 @@
         "next": "次のトラック",
         "rewind": "10秒進む",
         "forward": "10秒戻る"
+    },
+    "confirm": "確認",
+    "info": "情報",
+    "bookmarks": {
+        "edit_title": "ブックマークを編集",
+        "add_title": "ブックマークを追加",
+        "title_label": "タイトル:",
+        "title_placeholder": "タイトルを入力...",
+        "desc_label": "説明:",
+        "desc_placeholder": "説明を入力 (任意)...",
+        "list_title": "ブックマーク",
+        "button_label": "栞",
+        "play": "再生",
+        "edit": "編集",
+        "delete": "削除",
+        "add": "追加",
+        "confirm_delete": "このブックマークを削除してもよろしいですか？",
+        "untitled": "無題のブックマーク",
+        "bookmark_at": "ブックマーク位置",
+        "no_book_playing": "オーディオブックは再生されていません。"
     }
 }

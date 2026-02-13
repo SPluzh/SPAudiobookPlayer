@@ -117,7 +117,9 @@
         "styles_reloaded": "✅ Stile neu geladen",
         "styles_error": "❌ Stilfehler: {error}",
         "reset_success": "✅ Bibliothek erfolgreich bereinigt",
-        "delete_success": "✅ Hörbuch erfolgreich gelöscht"
+        "delete_success": "✅ Hörbuch erfolgreich gelöscht",
+        "no_audiobooks_title": "Library is empty",
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
     },
     "delegate": {
         "narrator_prefix": "🎙",
@@ -151,7 +153,9 @@
     "dialog": {
         "restart_title": "Sprachänderung",
         "restart_text": "Ein Neustart der Anwendung ist erforderlich, um die Änderungen vollständig zu übernehmen. Jetzt neu starten?",
-        "close": "Schließen"
+        "close": "Schließen",
+        "cancel": "Abbrechen",
+        "save": "Speichern"
     },
     "formats": {
         "duration_hours": "{hours}Std {minutes}min",
@@ -311,5 +315,25 @@
         "next": "Nächster Titel",
         "rewind": "Vorwärts 10 Sekunden",
         "forward": "Zurück 10 Sekunden"
+    },
+    "confirm": "Bestätigen",
+    "info": "Info",
+    "bookmarks": {
+        "edit_title": "Lesezeichen bearbeiten",
+        "add_title": "Lesezeichen hinzufügen",
+        "title_label": "Titel:",
+        "title_placeholder": "Titel eingeben...",
+        "desc_label": "Beschreibung:",
+        "desc_placeholder": "Beschreibung eingeben (optional)...",
+        "list_title": "Lesezeichen",
+        "button_label": "Lesez.",
+        "play": "Abspielen",
+        "edit": "Bearbeiten",
+        "delete": "Löschen",
+        "add": "Hinzufügen",
+        "confirm_delete": "Möchten Sie dieses Lesezeichen wirklich löschen?",
+        "untitled": "Unbenanntes Lesezeichen",
+        "bookmark_at": "Lesezeichen bei",
+        "no_book_playing": "Kein Hörbuch wird abgespielt."
     }
 }

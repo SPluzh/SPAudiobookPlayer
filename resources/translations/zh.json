@@ -117,7 +117,9 @@
         "styles_reloaded": "✅ 样式已重载",
         "styles_error": "❌ 样式错误：{error}",
         "reset_success": "✅ 库已成功清除",
-        "delete_success": "✅ 有声书已成功删除"
+        "delete_success": "✅ 有声书已成功删除",
+        "no_audiobooks_title": "Library is empty",
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
     },
     "delegate": {
         "narrator_prefix": "🎙",
@@ -151,7 +153,9 @@
     "dialog": {
         "restart_title": "更改语言",
         "restart_text": "需要重新启动应用程序才能完全应用更改。现在重启吗？",
-        "close": "关闭"
+        "close": "关闭",
+        "cancel": "取消",
+        "save": "保存"
     },
     "formats": {
         "duration_hours": "{hours}小时 {minutes}分",
@@ -311,5 +315,25 @@
         "next": "下一曲",
         "rewind": "前进 10 秒",
         "forward": "后退 10 秒"
+    },
+    "confirm": "确认",
+    "info": "信息",
+    "bookmarks": {
+        "edit_title": "编辑书签",
+        "add_title": "添加书签",
+        "title_label": "标题:",
+        "title_placeholder": "输入标题...",
+        "desc_label": "描述:",
+        "desc_placeholder": "输入描述 (可选)...",
+        "list_title": "书签",
+        "button_label": "书签",
+        "play": "播放",
+        "edit": "编辑",
+        "delete": "删除",
+        "add": "添加",
+        "confirm_delete": "您确定要删除此书签吗？",
+        "untitled": "无标题书签",
+        "bookmark_at": "书签位置",
+        "no_book_playing": "当前没有播放有声读物。"
     }
 }

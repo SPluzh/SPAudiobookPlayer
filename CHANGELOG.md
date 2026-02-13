@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
  
+## [1.5.0]
+- **Bookmarks**: Implemented a complete bookmarking system:
+    - Added "Mark" button to player controls.
+    - Dialogs for adding, editing, and managing bookmarks.
+    - Bookmarks are sorted by position in the book.
+    - Supports custom titles and descriptions.
+
 ## [1.4.3]
 - **Visualizer**: Implemented real-time waveform visualization.
 Visualization is integrated directly into the Play/Pause button for a seamless look.

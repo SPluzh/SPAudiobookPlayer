@@ -98,12 +98,29 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             )
         """)
 
+        # Bookmarks table
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS bookmarks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                audiobook_id INTEGER NOT NULL,
+                file_name TEXT NOT NULL,
+                time_position REAL NOT NULL,
+                title TEXT,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(audiobook_id) REFERENCES audiobooks(id)
+                    ON DELETE CASCADE
+            )
+        """)
+
         # Indexes
         c.execute("CREATE INDEX IF NOT EXISTS idx_parent_path ON audiobooks(parent_path)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_is_folder ON audiobooks(is_folder)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_is_started ON audiobooks(is_started)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_is_completed ON audiobooks(is_completed)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_audiobook_id ON audiobook_files(audiobook_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_bookmarks_audiobook_id ON bookmarks(audiobook_id)")
+
 
         # Migration: add is_expanded column if it doesn't exist
         try:
@@ -203,6 +220,99 @@ class DatabaseManager:
     def __init__(self, db_file: Path):
         """Initialize with database file path"""
         self.db_file = db_file
+
+    # --- Bookmarks Methods ---
+
+    def add_bookmark(self, audiobook_id: int, file_name: str, time_position: float, title: str = None, description: str = None) -> Optional[int]:
+        """Add a new bookmark"""
+        if not audiobook_id:
+            return None
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO bookmarks (audiobook_id, file_name, time_position, title, description)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (audiobook_id, file_name, time_position, title, description))
+            bookmark_id = cursor.lastrowid
+            conn.commit()
+            return bookmark_id
+        except sqlite3.Error as e:
+            print(f"Database error in add_bookmark: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def get_bookmarks(self, audiobook_id: int) -> List[Dict]:
+        """Get all bookmarks for a specific audiobook"""
+        if not audiobook_id:
+            return []
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, file_name, time_position, title, description, created_at
+                FROM bookmarks
+                WHERE audiobook_id = ?
+                ORDER BY time_position ASC
+            ''', (audiobook_id,))
+            
+            bookmarks = []
+            for row in cursor.fetchall():
+                bookmarks.append({
+                    'id': row[0],
+                    'file_name': row[1],
+                    'time_position': row[2],
+                    'title': row[3],
+                    'description': row[4],
+                    'created_at': row[5]
+                })
+            return bookmarks
+        except sqlite3.Error as e:
+            print(f"Database error in get_bookmarks: {e}")
+            return []
+        finally:
+            conn.close()
+
+    def update_bookmark(self, bookmark_id: int, title: str, description: str) -> bool:
+        """Update a bookmark's title and description"""
+        if not bookmark_id:
+            return False
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                UPDATE bookmarks
+                SET title = ?, description = ?
+                WHERE id = ?
+            ''', (title, description, bookmark_id))
+            conn.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Database error in update_bookmark: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def delete_bookmark(self, bookmark_id: int) -> bool:
+        """Delete a bookmark"""
+        if not bookmark_id:
+            return False
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM bookmarks WHERE id = ?', (bookmark_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Database error in delete_bookmark: {e}")
+            return False
+        finally:
+            conn.close()
 
     def clear_all_data(self):
         """Completely clear all database tables"""
@@ -1083,6 +1193,94 @@ class DatabaseManager:
         except sqlite3.Error as e:
             print(f"Database error in get_filename_for_metadata: {e}")
             return None
+        finally:
+            conn.close()
+
+    def get_bookmarks(self, audiobook_id: int) -> List[Dict]:
+        """Get all bookmarks for an audiobook, sorted by position"""
+        if not audiobook_id:
+            return []
+            
+        conn = sqlite3.connect(self.db_file)
+        # Enable row factory to access columns by name
+        conn.row_factory = sqlite3.Row 
+        try:
+            cursor = conn.cursor()
+            # Sort by track number (from joined files table) then by time position
+            # If no track number (e.g. single file book or missing metadata), fallback to file_name
+            query = """
+                SELECT b.id, b.audiobook_id, b.file_name, b.time_position, b.title, b.description, b.created_at
+                FROM bookmarks b
+                LEFT JOIN audiobook_files f ON b.audiobook_id = f.audiobook_id AND b.file_name = f.file_name
+                WHERE b.audiobook_id = ?
+                ORDER BY 
+                    CASE WHEN f.track_number IS NULL THEN 9999 ELSE f.track_number END,
+                    b.file_name,
+                    b.time_position
+            """
+            cursor.execute(query, (audiobook_id,))
+            
+            bookmarks = []
+            for row in cursor.fetchall():
+                bookmarks.append(dict(row))
+            return bookmarks
+        except sqlite3.Error as e:
+            print(f"Database error in get_bookmarks: {e}")
+            return []
+        finally:
+            conn.close()
+
+    def add_bookmark(self, audiobook_id: int, file_name: str, time_position: float, title: str, description: str) -> Optional[int]:
+        """Add a new bookmark"""
+        if not audiobook_id:
+            return None
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO bookmarks (audiobook_id, file_name, time_position, title, description)
+                VALUES (?, ?, ?, ?, ?)
+            """, (audiobook_id, file_name, time_position, title, description))
+            conn.commit()
+            return cursor.lastrowid
+        except sqlite3.Error as e:
+            print(f"Database error in add_bookmark: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def update_bookmark(self, bookmark_id: int, title: str, description: str):
+        """Update an existing bookmark"""
+        if not bookmark_id:
+            return
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE bookmarks
+                SET title = ?, description = ?
+                WHERE id = ?
+            """, (title, description, bookmark_id))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in update_bookmark: {e}")
+        finally:
+            conn.close()
+
+    def delete_bookmark(self, bookmark_id: int):
+        """Delete a bookmark"""
+        if not bookmark_id:
+            return
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM bookmarks WHERE id = ?", (bookmark_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in delete_bookmark: {e}")
         finally:
             conn.close()
 

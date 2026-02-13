@@ -117,7 +117,9 @@
         "styles_reloaded": "✅ Stiller yeniden yüklendi",
         "styles_error": "❌ Stil hatası: {error}",
         "reset_success": "✅ Kütüphane başarıyla temizlendi",
-        "delete_success": "✅ Sesli kitap başarıyla silindi"
+        "delete_success": "✅ Sesli kitap başarıyla silindi",
+        "no_audiobooks_title": "Library is empty",
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
     },
     "delegate": {
         "narrator_prefix": "🎙",
@@ -151,7 +153,9 @@
     "dialog": {
         "restart_title": "Dil Değişikliği",
         "restart_text": "Değişikliklerin tamamen uygulanması için uygulamanın yeniden başlatılması gerekiyor. Şimdi yeniden başlatılsın mı?",
-        "close": "Kapat"
+        "close": "Kapat",
+        "cancel": "İptal",
+        "save": "Kaydet"
     },
     "formats": {
         "duration_hours": "{hours}s {minutes}dk",
@@ -311,5 +315,25 @@
         "next": "Sonraki parça",
         "rewind": "10 saniye ileri",
         "forward": "10 saniye geri"
+    },
+    "confirm": "Onayla",
+    "info": "Bilgi",
+    "bookmarks": {
+        "edit_title": "Yer İşaretini Düzenle",
+        "add_title": "Yer İşareti Ekle",
+        "title_label": "Başlık:",
+        "title_placeholder": "Başlık girin...",
+        "desc_label": "Açıklama:",
+        "desc_placeholder": "Açıklama girin (isteğe bağlı)...",
+        "list_title": "Yer İşaretleri",
+        "button_label": "İşaret",
+        "play": "Oynat",
+        "edit": "Düzenle",
+        "delete": "Sil",
+        "add": "Ekle",
+        "confirm_delete": "Bu yer işaretini silmek istediğinizden emin misiniz?",
+        "untitled": "Başlıksız Yer İşareti",
+        "bookmark_at": "Şurada işaretle",
+        "no_book_playing": "Şu anda çalan sesli kitap yok."
     }
 }

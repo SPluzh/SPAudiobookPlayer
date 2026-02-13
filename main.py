@@ -29,12 +29,12 @@ from database import DatabaseManager
 from styles import DARK_STYLE, DARK_QSS_PATH, StyleManager
 from taskbar_progress import TaskbarProgress, TaskbarThumbnailButtons
 import ctypes
-from ctypes import wintypes
-from translations import tr, trf, set_language, get_language, Language, get_available_languages
 from hotkeys import HotKeyManager
-from functools import lru_cache
-from about_dialog import AboutDialog
+from player import PlayerWidget, PlaybackController
+
+from bookmarks_dialog import BookmarksListDialog
 from settings_dialog import SettingsDialog
+from translations import tr, trf, get_available_languages, get_language, set_language, Language
 from utils import (
     get_base_path, get_icon, load_icon, resize_icon, 
     format_duration, format_time, format_time_short, OutputCapture
@@ -444,7 +444,36 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.volume_changed.connect(self.player.set_volume)
         self.player_widget.speed_changed.connect(self.on_speed_changed)
         self.player_widget.file_selected.connect(self.on_file_selected)
-    
+        self.player_widget.bookmarks_clicked.connect(self.show_bookmarks)
+
+    def show_bookmarks(self):
+        """Open the bookmarks manager dialog"""
+        if not self.playback_controller.current_audiobook_id:
+            QMessageBox.information(self, tr("info"), tr("bookmarks.no_book_playing")) # We might need a key for this or just fail silently/log.
+            # Assuming we can just ignore if no book playing.
+            return
+
+        # Pause playback while managing bookmarks? iterating on user preference.
+        # Let's keep it playing unless user wants to jump.
+        # OR: capturing current position requires precision. If playing, it changes.
+        # But we capture it at the moment of opening the dialog.
+        
+        current_pos = self.playback_controller.player.get_position()
+        current_idx = self.playback_controller.current_file_index
+        current_file = self.playback_controller.files_list[current_idx]['name'] if self.playback_controller.files_list else ""
+        
+        dlg = BookmarksListDialog(
+            self, 
+            self.db_manager, 
+            self.playback_controller.current_audiobook_id,
+            current_idx,
+            current_file,
+            current_pos
+        )
+        
+        dlg.bookmark_selected.connect(self.playback_controller.jump_to_bookmark)
+        dlg.exec()
+
     def load_settings(self):
         """Retrieve and initialize application state (paths, window geometry, styles) from the 'settings.ini' file"""
         if not self.config_file.exists():

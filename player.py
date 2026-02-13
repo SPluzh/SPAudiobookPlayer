@@ -239,6 +239,53 @@ class PlaybackController:
             return name
         return "Audiobook Player"
 
+    def add_current_as_bookmark(self, title: str, description: str = "") -> bool:
+        """Save the current playback position as a bookmark"""
+        if not self.current_audiobook_id:
+            return False
+            
+        current_file = self.files_list[self.current_file_index]
+        file_name = current_file['name']
+        position = self.player.get_position()
+        
+        # If no title provided, generate one from timestamp
+        if not title:
+            timestamp = format_time_short(self.get_current_position())
+            title = f"{tr('bookmarks.bookmark_at')} {timestamp}"
+            
+        return self.db.add_bookmark(
+            self.current_audiobook_id,
+            file_name,
+            position,
+            title,
+            description
+        ) is not None
+
+    def jump_to_bookmark(self, bookmark_id: int) -> bool:
+        """Resume playback from a specific bookmark"""
+        bookmarks = self.db.get_bookmarks(self.current_audiobook_id)
+        target_bookmark = next((b for b in bookmarks if b['id'] == bookmark_id), None)
+        
+        if not target_bookmark:
+            return False
+            
+        # Find the file index matching the bookmark's file name
+        target_file_index = -1
+        for i, file_info in enumerate(self.files_list):
+            if file_info['name'] == target_bookmark['file_name']:
+                target_file_index = i
+                break
+                
+        if target_file_index == -1:
+            return False
+            
+        # Play file and seek to position
+        if self.play_file_at_index(target_file_index, start_playing=True):
+            self.player.set_position(target_bookmark['time_position'])
+            return True
+            
+        return False
+
 
 class ClickableSlider(QSlider):
     """A slider that jumps directly to the clicked position"""
@@ -303,6 +350,7 @@ class PlayerWidget(QWidget):
     compressor_preset_changed_signal = pyqtSignal(int) # 0, 1, 2
     pitch_toggled_signal = pyqtSignal(bool)
     pitch_changed_signal = pyqtSignal(float)
+    bookmarks_clicked = pyqtSignal()
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
@@ -357,6 +405,15 @@ class PlayerWidget(QWidget):
         self.id3_btn.toggled.connect(self.on_id3_toggled)
         btns_row.addWidget(self.id3_btn)
         
+        # Bookmarks Button
+        self.bookmarks_btn = QPushButton(tr("bookmarks.button_label"))
+        self.bookmarks_btn.setCheckable(False) # Unlike ID3, this opens a dialog
+        self.bookmarks_btn.setFixedWidth(40)
+        self.bookmarks_btn.setObjectName("bookmarksBtn")
+        self.bookmarks_btn.setToolTip(tr("bookmarks.list_title"))
+        self.bookmarks_btn.clicked.connect(self.bookmarks_clicked)
+        btns_row.addWidget(self.bookmarks_btn)
+
         # Auto-rewind Toggle
         self.auto_rewind_btn = QPushButton(tr("player.btn_autorewind"))
         self.auto_rewind_btn.setCheckable(True)
@@ -952,6 +1009,9 @@ class PlayerWidget(QWidget):
         # Buttons
         self.id3_btn.setText(tr("player.btn_id3"))
         self.id3_btn.setToolTip(tr("player.show_id3"))
+        
+        self.bookmarks_btn.setText(tr("bookmarks.button_label"))
+        self.bookmarks_btn.setToolTip(tr("bookmarks.list_title"))
         
         self.auto_rewind_btn.setText(tr("player.btn_autorewind"))
         self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))

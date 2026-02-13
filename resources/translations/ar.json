@@ -117,7 +117,9 @@
         "styles_reloaded": "✅ تم إعادة تحميل الأنماط",
         "styles_error": "❌ خطأ في النمط: {error}",
         "reset_success": "✅ تم مسح المكتبة بنجاح",
-        "delete_success": "✅ تم حذف الكتاب الصوتي بنجاح"
+        "delete_success": "✅ تم حذف الكتاب الصوتي بنجاح",
+        "no_audiobooks_title": "Library is empty",
+        "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update"
     },
     "delegate": {
         "narrator_prefix": "🎙",
@@ -151,7 +153,9 @@
     "dialog": {
         "restart_title": "تغيير اللغة",
         "restart_text": "مطلوب إعادة تشغيل التطبيق لتطبيق التغييرات بالكامل. هل تريد إعادة التشغيل الآن؟",
-        "close": "إغلاق"
+        "close": "إغلاق",
+        "cancel": "إلغاء",
+        "save": "حفظ"
     },
     "formats": {
         "duration_hours": "{hours}س {minutes}د",
@@ -311,5 +315,25 @@
         "next": "المسار التالي",
         "rewind": "تقديم 10 ثواني",
         "forward": "إرجاع 10 ثواني"
+    },
+    "confirm": "تأكيد",
+    "info": "معلومات",
+    "bookmarks": {
+        "edit_title": "تعديل الإشارة",
+        "add_title": "إضافة إشارة",
+        "title_label": "العنوان:",
+        "title_placeholder": "أدخل العنوان...",
+        "desc_label": "الوصف:",
+        "desc_placeholder": "أدخل الوصف (اختياري)...",
+        "list_title": "الإشارات المرجعية",
+        "button_label": "إشارة",
+        "play": "تشغيل",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "add": "إضافة",
+        "confirm_delete": "هل أنت متأكد أنك تريد حذف هذه الإشارة؟",
+        "untitled": "إشارة بدون عنوان",
+        "bookmark_at": "إشارة عند",
+        "no_book_playing": "لا يوجد كتاب صوتي قيد التشغيل حالياً."
     }
 }
