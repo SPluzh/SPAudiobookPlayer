@@ -78,6 +78,7 @@ class BookmarksListDialog(QDialog):
         self.list_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
         self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list_widget.customContextMenuRequested.connect(self.show_context_menu)
+        self.list_widget.itemSelectionChanged.connect(self.update_selection_bold)
         layout.addWidget(self.list_widget)
         
         # Buttons
@@ -139,8 +140,18 @@ class BookmarksListDialog(QDialog):
             
             item.setText(text)
             item.setData(Qt.ItemDataRole.UserRole, b['id'])
-            self.list_widget.addItem(item)
             
+            self.list_widget.addItem(item)
+        
+        self.update_selection_bold()
+
+    def update_selection_bold(self):
+        for i in range(self.list_widget.count()):
+            item = self.list_widget.item(i)
+            font = item.font()
+            font.setBold(item.isSelected())
+            item.setFont(font)
+
     def on_item_double_clicked(self, item):
         bookmark_id = item.data(Qt.ItemDataRole.UserRole)
         self.bookmark_selected.emit(bookmark_id)

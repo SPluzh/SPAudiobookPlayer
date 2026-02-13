@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from functools import lru_cache
 from PyQt6.QtWidgets import QLabel
@@ -31,6 +32,29 @@ class StyleManager:
     ]
 
     @staticmethod
+    def _process_qss(qss: str) -> str:
+        """
+        Process QSS variables defined at the top of the file.
+        Syntax: /* @var_name: #value */
+        """
+        # Find all variable definitions in comments
+        # Pattern: /* @name: value */
+        var_pattern = re.compile(r'/\*\s*@([\w-]+):\s*([^;*]+?)\s*\*/')
+        vars = dict(var_pattern.findall(qss))
+        
+        if not vars:
+            return qss
+            
+        processed_qss = qss
+        # Replace occurrences of @name with value
+        # Sort by length descending to avoid partial replacements (e.g. @bg vs @bg-dark)
+        for name in sorted(vars.keys(), key=len, reverse=True):
+            value = vars[name].strip()
+            processed_qss = processed_qss.replace(f'@{name}', value)
+            
+        return processed_qss
+
+    @staticmethod
     def init(app):
         """Initialize proxy widgets and pre-cache theme properties"""
         for obj_name in StyleManager._monitored_objects:
@@ -62,9 +86,10 @@ class StyleManager:
 
     @staticmethod
     def get_style(path: Path) -> str:
-        """Read stylesheet content from the specified file path"""
+        """Read stylesheet content from the specified file path and process variables"""
         if path.exists():
-            return path.read_text(encoding="utf-8")
+            content = path.read_text(encoding="utf-8")
+            return StyleManager._process_qss(content)
         return ""
 
     @staticmethod
@@ -102,3 +127,4 @@ class StyleManager:
         # Cache it for future use
         StyleManager._property_cache[object_name] = (font, color)
         return font, color
+
