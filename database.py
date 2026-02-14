@@ -1284,4 +1284,80 @@ class DatabaseManager:
         finally:
             conn.close()
 
+    def update_file_extension(self, old_path: str, new_path: str, bitrate: str = ""):
+        """Update file paths and names in audiobook_files and bookmarks after conversion.
+        
+        Args:
+            old_path: The original full file path (e.g., .../book/chapter1.mp3)
+            new_path: The new full file path (e.g., .../book/chapter1.opus)
+            bitrate: The target bitrate string (e.g., '48k')
+        """
+        import os
+        old_name = os.path.basename(old_path)
+        new_name = os.path.basename(new_path)
+        
+        # Parse bitrate string like '48k' -> 48
+        bitrate_value = None
+        if bitrate:
+            try:
+                bitrate_value = int(bitrate.lower().replace('k', ''))
+            except (ValueError, AttributeError):
+                pass
+        
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            # Update audiobook_files table
+            cursor.execute('''
+                UPDATE audiobook_files
+                SET file_path = ?, file_name = ?
+                WHERE file_path = ?
+            ''', (new_path, new_name, old_path))
+            
+            # Also try matching by file_name only (relative paths)
+            cursor.execute('''
+                UPDATE audiobook_files
+                SET file_path = REPLACE(file_path, ?, ?),
+                    file_name = ?
+                WHERE file_name = ?
+            ''', (old_name, new_name, new_name, old_name))
+            
+            # Update bookmarks referencing this file
+            cursor.execute('''
+                UPDATE bookmarks
+                SET file_name = ?
+                WHERE file_name = ?
+            ''', (new_name, old_name))
+            
+            # Update codec/container/bitrate for the parent audiobook
+            cursor.execute('''
+                SELECT audiobook_id FROM audiobook_files
+                WHERE file_name = ?
+                LIMIT 1
+            ''', (new_name,))
+            row = cursor.fetchone()
+            if row:
+                if bitrate_value:
+                    cursor.execute('''
+                        UPDATE audiobooks
+                        SET codec = 'opus', container = 'ogg',
+                            bitrate_min = ?, bitrate_max = ?,
+                            bitrate_mode = 'VBR'
+                        WHERE id = ?
+                    ''', (bitrate_value, bitrate_value, row[0]))
+                else:
+                    cursor.execute('''
+                        UPDATE audiobooks
+                        SET codec = 'opus', container = 'ogg',
+                            bitrate_mode = 'VBR'
+                        WHERE id = ?
+                    ''', (row[0],))
+            
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in update_file_extension: {e}")
+        finally:
+            conn.close()
+
 

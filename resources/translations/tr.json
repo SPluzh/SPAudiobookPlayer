@@ -338,5 +338,28 @@
         "untitled": "Başlıksız Yer İşareti",
         "bookmark_at": "Şurada işaretle",
         "no_book_playing": "Şu anda çalan sesli kitap yok."
+    },
+    "opus_converter": {
+        "dialog_title": "Kitaplığı Opus'a Dönüştür",
+        "settings_group": "Dönüştürme Ayarları",
+        "bitrate_label": "Bit hızı:",
+        "stereo_label": "Stereo işleme:",
+        "stereo_downmix": "Mono'ya indir",
+        "stereo_keep": "Stereo'yu koru",
+        "files_to_convert": "Dönüştürülecek dosyalar: {count}",
+        "no_files": "Tüm dosyalar zaten Opus formatında",
+        "start_btn": "Dönüştürmeyi Başlat",
+        "cancel_btn": "İptal",
+        "cancelling": "İptal ediliyor...",
+        "confirm_title": "Dönüştürmeyi Onayla",
+        "confirm_msg": "Bu işlem, Opus olmayan tüm ses dosyalarını Opus formatına dönüştürecektir.\nOrijinal dosyalar değiştirilecektir.\n\nGerekirse bir yedeğiniz olduğundan emin olun.\n\nDevam edilsin mi?",
+        "progress": "Dönüştürülüyor: {current} / {total}",
+        "success": "Dönüştürme tamamlandı! Dönüştürülen: {converted} dosya",
+        "error": "Dönüştürme hatası",
+        "conversion_done": "Opus dönüşümü bitti - kitaplık güncellendi",
+        "settings_btn": "Kitaplığı Opus'a dönüştür",
+        "settings_info": "Dosya boyutunu azaltmak için tüm sesli kitapları Opus formatına dönüştürün",
+        "bitrate_tooltip": "Önerilen ayarlar:\n- 16-20 kbps: Daha küçük dosya boyutu, kabul edilebilir konuşma kalitesi.\n- 24 kbps: İyi kalite, sesli kitaplar için standart.\n- 32 kbps: Neredeyse şeffaf kalite (Önerilen).\n- 48-64 kbps: Yüksek sadakat, müzik/efekt içeren sesli kitaplar için en iyisi.",
+        "stereo_tooltip": "Stereo işleme:\n- Mono'ya İndir: Ses kapsamı için en iyisi. Tek kanal için tüm bitleri kullanır.\n- Stereo'yu Koru: Stereo efektini korur. Aynı kalite için daha yüksek bit hızı gerektirir."
     }
 }

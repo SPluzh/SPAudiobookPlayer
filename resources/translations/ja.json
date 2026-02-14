@@ -338,5 +338,28 @@
         "untitled": "無題のブックマーク",
         "bookmark_at": "ブックマーク位置",
         "no_book_playing": "オーディオブックは再生されていません。"
+    },
+    "opus_converter": {
+        "dialog_title": "ライブラリをOpusに変換",
+        "settings_group": "変換設定",
+        "bitrate_label": "ビットレート:",
+        "stereo_label": "ステレオ処理:",
+        "stereo_downmix": "モノラルにダウンミックス",
+        "stereo_keep": "ステレオを維持",
+        "files_to_convert": "変換するファイル: {count}",
+        "no_files": "すべてのファイルはすでにOpus形式です",
+        "start_btn": "変換開始",
+        "cancel_btn": "キャンセル",
+        "cancelling": "キャンセル中...",
+        "confirm_title": "変換の確認",
+        "confirm_msg": "これにより、すべての非OpusオーディオファイルがOpus形式に変換されます。\n元のファイルは置き換えられます。\n\n必要に応じてバックアップがあることを確認してください。\n\n続行しますか？",
+        "progress": "変換中: {current} / {total}",
+        "success": "変換完了！ 変換済み: {converted} ファイル",
+        "error": "変換エラー",
+        "conversion_done": "Opus変換終了 - ライブラリが更新されました",
+        "settings_btn": "ライブラリをOpusに変換",
+        "settings_info": "すべてのオーディオブックをOpus形式に変換してファイルサイズを削減",
+        "bitrate_tooltip": "推奨設定:\n- 16-20 kbps: ファイルサイズが小さく、許容できる音声品質。\n- 24 kbps: 高品質、オーディオブックの標準。\n- 32 kbps: ほぼ透明な品質 (推奨)。\n- 48-64 kbps: 高忠実度、音楽/効果音のあるオーディオブックに最適。",
+        "stereo_tooltip": "ステレオ処理:\n- モノラルにダウンミックス: 音声のカバレッジに最適。シングルチャンネルにすべてのビットを使用。\n- ステレオを維持: ステレオ効果を保持。同じ品質のために高いビットレートが必要。"
     }
 }

@@ -338,5 +338,28 @@
         "untitled": "Marcador sem título",
         "bookmark_at": "Marcador em",
         "no_book_playing": "Nenhum audiolivro reproduzindo."
+    },
+    "opus_converter": {
+        "dialog_title": "Converter Biblioteca para Opus",
+        "settings_group": "Configurações de Conversão",
+        "bitrate_label": "Taxa de bits:",
+        "stereo_label": "Manuseio de estéreo:",
+        "stereo_downmix": "Misturar para mono",
+        "stereo_keep": "Manter estéreo",
+        "files_to_convert": "Arquivos para converter: {count}",
+        "no_files": "Todos os arquivos já estão no formato Opus",
+        "start_btn": "Iniciar Conversão",
+        "cancel_btn": "Cancelar",
+        "cancelling": "Cancelando...",
+        "confirm_title": "Confirmar Conversão",
+        "confirm_msg": "Isso converterá todos os arquivos de áudio não-Opus para o formato Opus.\nOs arquivos originais serão substituídos.\n\nCertifique-se de ter um backup, se necessário.\n\nProsseguir?",
+        "progress": "Convertendo: {current} / {total}",
+        "success": "Conversão concluída! Convertidos: {converted} arquivos",
+        "error": "Erro de conversão",
+        "conversion_done": "Conversão para Opus finalizada - biblioteca atualizada",
+        "settings_btn": "Converter biblioteca para Opus",
+        "settings_info": "Converter todos os audiolivros para o formato Opus para reduzir o tamanho do arquivo",
+        "bitrate_tooltip": "Configurações recomendadas:\n- 16-20 kbps: Tamanho de arquivo menor, qualidade de voz aceitável.\n- 24 kbps: Boa qualidade, padrão para audiolivros.\n- 32 kbps: Qualidade quase transparente (Recomendado).\n- 48-64 kbps: Alta fidelidade, melhor para audiolivros com música/efeitos.",
+        "stereo_tooltip": "Manuseio de estéreo:\n- Misturar para Mono: Melhor para cobertura de voz. Usa todos os bits para o canal único.\n- Manter Estéreo: Preserva o efeito estéreo. Requer taxa de bits mais alta para a mesma qualidade."
     }
 }

@@ -338,5 +338,28 @@
         "untitled": "Signet sans titre",
         "bookmark_at": "Signet à",
         "no_book_playing": "Aucun livre audio en cours de lecture."
+    },
+    "opus_converter": {
+        "dialog_title": "Convertir la bibliothèque en Opus",
+        "settings_group": "Paramètres de conversion",
+        "bitrate_label": "Débit binaire :",
+        "stereo_label": "Gestion stéréo :",
+        "stereo_downmix": "Mixer en mono",
+        "stereo_keep": "Garder la stéréo",
+        "files_to_convert": "Fichiers à convertir : {count}",
+        "no_files": "Tous les fichiers sont déjà au format Opus",
+        "start_btn": "Démarrer la conversion",
+        "cancel_btn": "Annuler",
+        "cancelling": "Annulation...",
+        "confirm_title": "Confirmer la conversion",
+        "confirm_msg": "Cela convertira tous les fichiers audio non Opus au format Opus.\nLes fichiers originaux seront remplacés.\n\nAssurez-vous d'avoir une sauvegarde si nécessaire.\n\nContinuer ?",
+        "progress": "Conversion : {current} / {total}",
+        "success": "Conversion terminée ! Convertis : {converted} fichiers",
+        "error": "Erreur de conversion",
+        "conversion_done": "Conversion Opus terminée - bibliothèque mise à jour",
+        "settings_btn": "Convertir la bibliothèque en Opus",
+        "settings_info": "Convertir tous les livres audio au format Opus pour réduire la taille des fichiers",
+        "bitrate_tooltip": "Paramètres recommandés :\n- 16-20 kbps : Taille de fichier plus petite, qualité vocale acceptable.\n- 24 kbps : Bonne qualité, standard pour les livres audio.\n- 32 kbps : Qualité quasi transparente (Recommandé).\n- 48-64 kbps : Haute fidélité, idéal pour les livres audio avec musique/effets.",
+        "stereo_tooltip": "Gestion stéréo :\n- Mixer en Mono : Idéal pour la couverture vocale. Utilise tous les bits pour le canal unique.\n- Garder la Stéréo : Préserve l'effet stéréo. Nécessite un débit binaire plus élevé pour la même qualité."
     }
 }

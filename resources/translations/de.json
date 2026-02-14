@@ -338,5 +338,28 @@
         "untitled": "Unbenanntes Lesezeichen",
         "bookmark_at": "Lesezeichen bei",
         "no_book_playing": "Kein Hörbuch wird abgespielt."
+    },
+    "opus_converter": {
+        "dialog_title": "Bibliothek in Opus konvertieren",
+        "settings_group": "Konvertierungseinstellungen",
+        "bitrate_label": "Bitrate:",
+        "stereo_label": "Stereo-Verarbeitung:",
+        "stereo_downmix": "Downmix zu Mono",
+        "stereo_keep": "Stereo beibehalten",
+        "files_to_convert": "Zu konvertierende Dateien: {count}",
+        "no_files": "Alle Dateien sind bereits im Opus-Format",
+        "start_btn": "Konvertierung starten",
+        "cancel_btn": "Abbrechen",
+        "cancelling": "Abbrechen...",
+        "confirm_title": "Konvertierung bestätigen",
+        "confirm_msg": "Dies konvertiert alle Nicht-Opus-Audiodateien in das Opus-Format.\nOriginaldateien werden ersetzt.\n\nStellen Sie sicher, dass Sie bei Bedarf ein Backup haben.\n\nFortfahren?",
+        "progress": "Konvertiere: {current} / {total}",
+        "success": "Konvertierung abgeschlossen! Konvertiert: {converted} Dateien",
+        "error": "Konvertierungsfehler",
+        "conversion_done": "Opus-Konvertierung beendet - Bibliothek aktualisiert",
+        "settings_btn": "Bibliothek in Opus konvertieren",
+        "settings_info": "Alle Hörbücher in das Opus-Format konvertieren, um die Dateigröße zu reduzieren",
+        "bitrate_tooltip": "Empfohlene Einstellungen:\n- 16-20 kbps: Kleinere Dateigröße, akzeptable Sprachqualität.\n- 24 kbps: Gute Qualität, Standard für Hörbücher.\n- 32 kbps: Nahezu transparente Qualität (Empfohlen).\n- 48-64 kbps: Hohe Wiedergabetreue, am besten für Hörbücher mit Musik/Effekten.",
+        "stereo_tooltip": "Stereo-Verarbeitung:\n- Downmix zu Mono: Am besten für Sprachabdeckung. Verwendet alle Bits für den einzelnen Kanal.\n- Stereo beibehalten: Bewahrt den Stereoeffekt. Erfordert höhere Bitrate für die gleiche Qualität."
     }
 }

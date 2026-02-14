@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.2]
+- **Library**: Added ability to **Convert Library to Opus** format to save space while maintaining high quality:
+    - **Performance**: Parallel multi-threaded processing using all available CPU cores.
+    - **Smart Conversion**: Adjustable bitrate (24k-64k) with intelligent stereo-to-mono downmixing.
+    - **Seamless Integration**: Preserves all metadata, covers, and playback progress; updates database in real-time.
+    - **UX**: Detailed progress dialog with cancellation support.
+
 ## [1.5.1]
 - **Drag & Drop**: Implemented comprehensive file and folder drop support
 

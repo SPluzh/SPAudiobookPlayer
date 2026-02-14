@@ -338,5 +338,28 @@
         "untitled": "제목 없음",
         "bookmark_at": "북마크 위치",
         "no_book_playing": "재생 중인 오디오북이 없습니다."
+    },
+    "opus_converter": {
+        "dialog_title": "라이브러리를 Opus로 변환",
+        "settings_group": "변환 설정",
+        "bitrate_label": "비트레이트:",
+        "stereo_label": "스테레오 처리:",
+        "stereo_downmix": "모노로 다운믹스",
+        "stereo_keep": "스테레오 유지",
+        "files_to_convert": "변환할 파일: {count}",
+        "no_files": "모든 파일이 이미 Opus 형식입니다",
+        "start_btn": "변환 시작",
+        "cancel_btn": "취소",
+        "cancelling": "취소 중...",
+        "confirm_title": "변환 확인",
+        "confirm_msg": "이 작업은 모든 비-Opus 오디오 파일을 Opus 형식으로 변환합니다.\n원본 파일은 교체됩니다.\n\n필요한 경우 백업이 있는지 확인하십시오.\n\n계속하시겠습니까?",
+        "progress": "변환 중: {current} / {total}",
+        "success": "변환 완료! 변환됨: {converted} 파일",
+        "error": "변환 오류",
+        "conversion_done": "Opus 변환 종료 - 라이브러리 업데이트됨",
+        "settings_btn": "라이브러리를 Opus로 변환",
+        "settings_info": "파일 크기를 줄이기 위해 모든 오디오북을 Opus 형식으로 변환",
+        "bitrate_tooltip": "권장 설정:\n- 16-20 kbps: 더 작은 파일 크기, 허용 가능한 음성 품질.\n- 24 kbps: 좋은 품질, 오디오북 표준.\n- 32 kbps: 거의 투명한 품질 (권장).\n- 48-64 kbps: 고충실도, 음악/효과가 있는 오디오북에 최적.",
+        "stereo_tooltip": "스테레오 처리:\n- 모노로 다운믹스: 음성 커버리지에 최적. 단일 채널에 모든 비트 사용.\n- 스테레오 유지: 스테레오 효과 보존. 동일한 품질을 위해 더 높은 비트레이트 필요."
     }
 }

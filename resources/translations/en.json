@@ -338,5 +338,28 @@
     "forward": "Back 10 seconds"
   },
   "confirm": "Confirm",
-  "info": "Information"
+  "info": "Information",
+  "opus_converter": {
+    "dialog_title": "Convert Library to Opus",
+    "settings_group": "Conversion Settings",
+    "bitrate_label": "Bitrate:",
+    "stereo_label": "Stereo handling:",
+    "stereo_downmix": "Downmix to mono",
+    "stereo_keep": "Keep stereo",
+    "files_to_convert": "Files to convert: {count}",
+    "no_files": "All files are already in Opus format",
+    "start_btn": "Start Conversion",
+    "cancel_btn": "Cancel",
+    "cancelling": "Cancelling...",
+    "confirm_title": "Confirm Conversion",
+    "confirm_msg": "This will convert all non-Opus audio files to Opus format.\nOriginal files will be replaced.\n\nMake sure you have a backup if needed.\n\nProceed?",
+    "progress": "Converting: {current} / {total}",
+    "success": "Conversion complete! Converted: {converted} files",
+    "error": "Conversion error",
+    "conversion_done": "Opus conversion finished - library updated",
+    "settings_btn": "Convert library to Opus",
+    "settings_info": "Convert all audiobooks to Opus format to reduce file size",
+    "bitrate_tooltip": "Recommended settings:\n- 16-20 kbps: Smaller file size, acceptable speech quality.\n- 24 kbps: Good quality, standard for audiobooks.\n- 32 kbps: Near-transparent quality (Recommended).\n- 48-64 kbps: High fidelity, best for audiobooks with music/effects.",
+    "stereo_tooltip": "Stereo handling:\n- Downmix to Mono: Best for voice coverage. Uses all bits for the single channel.\n- Keep Stereo: Preserves stereo effect. Requires higher bitrate for same quality."
+  }
 }

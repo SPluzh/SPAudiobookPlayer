@@ -338,5 +338,28 @@
         "untitled": "无标题书签",
         "bookmark_at": "书签位置",
         "no_book_playing": "当前没有播放有声读物。"
+    },
+    "opus_converter": {
+        "dialog_title": "将库转换为 Opus",
+        "settings_group": "转换设置",
+        "bitrate_label": "比特率：",
+        "stereo_label": "立体声处理：",
+        "stereo_downmix": "混音为单声道",
+        "stereo_keep": "保持立体声",
+        "files_to_convert": "要转换的文件：{count}",
+        "no_files": "所有文件都已是 Opus 格式",
+        "start_btn": "开始转换",
+        "cancel_btn": "取消",
+        "cancelling": "正在取消...",
+        "confirm_title": "确认转换",
+        "confirm_msg": "这将把所有非 Opus 音频文件转换为 Opus 格式。\n原始文件将被替换。\n\n如果需要，请确保您有备份。\n\n继续吗？",
+        "progress": "正在转换：{current} / {total}",
+        "success": "转换完成！ 已转换：{converted} 个文件",
+        "error": "转换错误",
+        "conversion_done": "Opus 转换结束 - 库已更新",
+        "settings_btn": "将库转换为 Opus",
+        "settings_info": "将所有有声读物转换为 Opus 格式以减小文件大小",
+        "bitrate_tooltip": "推荐设置：\n- 16-20 kbps：较小的文件大小，可接受的语音质量。\n- 24 kbps：良好的质量，有声读物的标准。\n- 32 kbps：近乎透明的质量（推荐）。\n- 48-64 kbps：高保真度，最适合带有音乐/效果的有声读物。",
+        "stereo_tooltip": "立体声处理：\n- 混音为单声道：最适合语音覆盖。使用所有位用于单个声道。\n- 保持立体声：保留立体声效果。需要更高的比特率才能达到相同的质量。"
     }
 }

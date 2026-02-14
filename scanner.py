@@ -1305,7 +1305,8 @@ class AudiobookScanner:
                         current_position,
                         playback_speed,
                         is_started,
-                        is_completed
+                        is_completed,
+                        is_merged
                     FROM temp_state
                     WHERE path = ?
                 """, (str(rel),))

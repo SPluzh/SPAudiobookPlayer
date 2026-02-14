@@ -10,6 +10,8 @@ from pathlib import Path
 import update_ffmpeg
 from translations import tr, trf
 from utils import get_icon, OutputCapture
+from opus_dialog import OpusConversionDialog
+
 
 class UpdateThread(QThread):
     """Background thread for downloading FFmpeg/ffprobe updates"""
@@ -108,15 +110,17 @@ class SettingsDialog(QDialog):
     path_saved = pyqtSignal(str)       # Library path was updated
     scan_requested = pyqtSignal(str)   # Scan process triggered with specific path
     data_reset_requested = pyqtSignal()# Request to wipe all local database and covers
+    opus_convert_requested = pyqtSignal() # Request to open Opus conversion dialog
     closed = pyqtSignal()              # Dialog closed
     
-    def __init__(self, parent=None, current_path="", ffprobe_path=None):
+    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None):
         """Initialize settings dialog with current configuration values"""
         super().__init__(parent)
         self.setWindowTitle(tr("settings.title"))
         self.setMinimumSize(720, 300)
         self.current_path = current_path
         self.ffprobe_path = ffprobe_path
+        self.db_manager = db_manager
         self.settings_path_edit = None
         self.init_ui()
     
@@ -179,6 +183,16 @@ class SettingsDialog(QDialog):
         tools_info.setWordWrap(True)
         tools_info.setObjectName("infoLabelSmall")
         tools_layout.addWidget(tools_info)
+
+        # Opus Conversion
+        opus_btn = QPushButton(tr("opus_converter.settings_btn"))
+        opus_btn.clicked.connect(self.on_convert_opus)
+        tools_layout.addWidget(opus_btn)
+        
+        opus_info = QLabel(tr("opus_converter.settings_info"))
+        opus_info.setWordWrap(True)
+        opus_info.setObjectName("infoLabelSmall")
+        tools_layout.addWidget(opus_info)
         
         # Data Reset Configuration
         reset_btn = QPushButton(tr("settings.reset_data_btn"))
@@ -258,6 +272,28 @@ class SettingsDialog(QDialog):
         dialog.exec()
         self.remove_blur()
         self.update_ffprobe_status()
+
+    def on_convert_opus(self):
+        """Open Opus conversion dialog"""
+        self.apply_blur()
+        dialog = OpusConversionDialog(
+            parent=self,
+            library_path=self.current_path,
+            ffmpeg_path=str(self.ffprobe_path).replace('ffprobe', 'ffmpeg') if self.ffprobe_path else 'ffmpeg',
+            ffprobe_path=str(self.ffprobe_path) if self.ffprobe_path else 'ffprobe'
+        )
+        # Connect file conversion signal to database update
+        if self.db_manager:
+            dialog.file_converted.connect(
+                lambda old, new, br: self.db_manager.update_file_extension(old, new, br)
+            )
+        dialog.conversion_complete.connect(lambda: self.opus_convert_requested.emit())
+        dialog.exec()
+        self.remove_blur()
+
+    def _on_opus_file_converted(self, old_path: str, new_path: str):
+        """Forward individual file conversion to whoever is listening"""
+        pass
 
     def on_reset_data(self):
         """Handle library data reset with user confirmation"""

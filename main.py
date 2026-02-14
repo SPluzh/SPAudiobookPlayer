@@ -1205,7 +1205,7 @@ class AudiobookPlayerWindow(QMainWindow):
         # Apply blur effect
         self.apply_blur()
         
-        dialog = SettingsDialog(self, self.default_path, self.ffprobe_path)
+        dialog = SettingsDialog(self, self.default_path, self.ffprobe_path, db_manager=self.db_manager)
         
         def on_path_saved(new_path):
             """Commit new root path and initiate a library refresh if the configuration has changed"""
@@ -1239,12 +1239,28 @@ class AudiobookPlayerWindow(QMainWindow):
             print(f"DEBUG: Scan requested. Updating library config path to: {new_path}")
             self.rescan_directory()
         
+        conversion_performed = False
+        def on_conversion_complete():
+            nonlocal conversion_performed
+            conversion_performed = True
+        
+        # Connect signals
         dialog.path_saved.connect(on_path_saved)
         dialog.scan_requested.connect(on_scan_requested)
         dialog.data_reset_requested.connect(self.perform_full_reset)
+        dialog.opus_convert_requested.connect(on_conversion_complete)
         
         dialog.exec()
         self.remove_blur()
+        
+        if conversion_performed:
+            self.on_opus_conversion_complete()
+
+    def on_opus_conversion_complete(self):
+        """Reload library after opus conversion to reflect updated file extensions"""
+        if hasattr(self, 'library_widget'):
+            self.library_widget.load_audiobooks()
+        self.statusBar().showMessage(tr("opus_converter.conversion_done"))
 
     def perform_full_reset(self):
         """Execute a comprehensive wipe of all library metadata, database records, and extracted cover assets while the application remains active"""
