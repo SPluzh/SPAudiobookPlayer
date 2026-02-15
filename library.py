@@ -1154,13 +1154,13 @@ class LibraryWidget(QWidget):
         self.current_playing_item = None
         _, self.highlight_color = StyleManager.get_theme_property('delegate_accent')
         self.highlight_text_color = Qt.GlobalColor.white
-        self.current_filter = 'all'
+        self.current_filter = self.config.get('filter_mode', 'all')
         self.show_folders = show_folders
         self.show_filter_labels = show_filter_labels
         self.cached_library_data = None  # Cache for fast reconstruction
         self.tag_filter_ids = self.config.get('tag_filter_ids', set())
         self.is_tag_filter_active = self.config.get('tag_filter_active', False)
-        self.is_favorites_filter_active = False
+        self.is_favorites_filter_active = self.config.get('favorites_active', False)
         self.setup_ui()
         self.load_icons()
     
@@ -1200,6 +1200,7 @@ class LibraryWidget(QWidget):
         self.btn_favorites = QPushButton("")
         self.btn_favorites.setObjectName("filterBtn")
         self.btn_favorites.setCheckable(True)
+        self.btn_favorites.setChecked(self.is_favorites_filter_active)
         self.btn_favorites.setFixedWidth(40)
         self.btn_favorites.setIcon(get_icon("favorites"))
         self.btn_favorites.setToolTip(tr("library.filter_favorites"))

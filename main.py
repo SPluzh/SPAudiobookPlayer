@@ -228,7 +228,9 @@ class AudiobookPlayerWindow(QMainWindow):
                 'default_path': self.default_path,
                 'ffprobe_path': self.ffprobe_path,
                 'tag_filter_active': self.tag_filter_active,
-                'tag_filter_ids': self.tag_filter_ids
+                'tag_filter_ids': self.tag_filter_ids,
+                'filter_mode': self.library_filter_mode,
+                'favorites_active': self.library_favorites_active
             },
             self.delegate,
             show_folders=self.show_folders,
@@ -573,6 +575,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_pitch_enabled(self.pitch_enabled)
         self.show_folders = config.getboolean('Library', 'show_folders', fallback=False)
         self.show_filter_labels = config.getboolean('Library', 'show_filter_labels', fallback=True)
+        self.library_filter_mode = config.get('Library', 'filter_mode', fallback='all')
+        self.library_favorites_active = config.getboolean('Library', 'favorites_active', fallback=False)
+
         self.tag_filter_active = config.getboolean('Library', 'tag_filter_active', fallback=False)
         tag_ids_str = config.get('Library', 'tag_filter_ids', fallback="")
         self.tag_filter_ids = set()
@@ -631,7 +636,9 @@ class AudiobookPlayerWindow(QMainWindow):
         }
         config['Library'] = {
             'show_folders': 'False',
-            'show_filter_labels': 'False'
+            'show_filter_labels': 'False',
+            'filter_mode': 'all',
+            'favorites_active': 'False'
         }
         config['LastSession'] = {
             'last_audiobook_id': '0',
@@ -691,13 +698,15 @@ class AudiobookPlayerWindow(QMainWindow):
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
         config['Library']['show_filter_labels'] = str(self.show_filter_labels)
+        config['Library']['show_filter_labels'] = str(self.show_filter_labels)
         if hasattr(self, 'library_widget'):
             config['Library']['tag_filter_active'] = str(self.library_widget.is_tag_filter_active)
             if self.library_widget.tag_filter_ids:
                 config['Library']['tag_filter_ids'] = ",".join(map(str, self.library_widget.tag_filter_ids))
             else:
                 config['Library']['tag_filter_ids'] = ""
-        config['Library']['show_filter_labels'] = str(self.show_filter_labels)
+            config['Library']['filter_mode'] = self.library_widget.current_filter
+            config['Library']['favorites_active'] = str(self.library_widget.is_favorites_filter_active)
         
         # Visual Style Persistence
         if 'Audiobook_Style' not in config: config['Audiobook_Style'] = {}
