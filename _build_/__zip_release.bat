@@ -78,4 +78,4 @@ echo  RELEASE ZIP CREATED SUCCESSFULLY
 echo  File: !ZIP_NAME!
 echo ==========================================
 echo.
-pause
+

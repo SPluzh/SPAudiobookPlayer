@@ -340,7 +340,7 @@ if !ERRORLEVEL! GEQ 8 (
     echo.
     echo [ERROR] Failed to copy files! Error code: !ERRORLEVEL!
     echo The application may need to be reinstalled.
-    pause
+    REM pause removed for invisible mode
     exit /b 1
 )
 
@@ -411,10 +411,11 @@ def apply_update(zip_path: Path, progress_callback=None) -> bool:
     if progress_callback:
         progress_callback(status="launching")
     
-    # Launch the update script in a new visible window
+    # Launch the update script invisibly (no console window)
+    # 0x08000000 is CREATE_NO_WINDOW
     subprocess.Popen(
         ['cmd', '/c', str(script_path)],
-        creationflags=subprocess.CREATE_NEW_CONSOLE,
+        creationflags=0x08000000,
         cwd=str(app_root)
     )
     

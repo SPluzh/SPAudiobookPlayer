@@ -1583,6 +1583,8 @@ def main():
         
         print("Showing window.")
         window.show()
+        window.activateWindow()
+        window.raise_()
         
         sys.exit(app.exec())
     except Exception as e:
