@@ -20,6 +20,8 @@ a = Analysis(
     ],
     hiddenimports=[
         'scanner',
+        'updater',
+        'update_dialog',
         'mutagen.mp3',
         'mutagen.mp4',
         'mutagen.flac',

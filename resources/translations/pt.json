@@ -17,7 +17,8 @@
         "reload_styles": "Recarregar Estilos",
         "theme": "Tema",
         "language": "Idioma",
-        "about": "Sobre"
+        "about": "Sobre",
+        "check_updates": "Verificar atualizações"
     },
     "library": {
         "search_placeholder": "Pesquisar por título, autor, narrador...",
@@ -151,7 +152,9 @@
         "reset_data_btn": "Redefinir Dados da Biblioteca",
         "reset_data_info": "Exclui o banco de dados e as capas extraídas. Útil para um começo limpo.",
         "reset_confirm_title": "Confirmação de Redefinição",
-        "reset_confirm_msg": "Isso excluirá todo o banco de dados e as capas. Todo o progresso será perdido. Prosseguir?"
+        "reset_confirm_msg": "Isso excluirá todo o banco de dados e as capas. Todo o progresso será perdido. Prosseguir?",
+        "auto_update_label": "Verificar atualizações ao iniciar",
+        "auto_update_info": "Se ativado, o aplicativo verificará automaticamente se há novas versões no GitHub sempre que for iniciado."
     },
     "dialog": {
         "restart_title": "Alteração de Idioma",
@@ -361,5 +364,28 @@
         "settings_info": "Converter todos os audiolivros para o formato Opus para reduzir o tamanho do arquivo",
         "bitrate_tooltip": "Configurações recomendadas:\n- 16-20 kbps: Tamanho de arquivo menor, qualidade de voz aceitável.\n- 24 kbps: Boa qualidade, padrão para audiolivros.\n- 32 kbps: Qualidade quase transparente (Recomendado).\n- 48-64 kbps: Alta fidelidade, melhor para audiolivros com música/efeitos.",
         "stereo_tooltip": "Manuseio de estéreo:\n- Misturar para Mono: Melhor para cobertura de voz. Usa todos os bits para o canal único.\n- Manter Estéreo: Preserva o efeito estéreo. Requer taxa de bits mais alta para a mesma qualidade."
+    },
+    "updater": {
+        "title": "Atualização do Aplicativo",
+        "checking": "🔄 Verificando atualizações...",
+        "new_version_available": "Atualização disponível: v{version}",
+        "version_info": "Versão atual: {current} → Nova versão: {new}",
+        "release_notes": "O que há de novo:",
+        "download_size": "Tamanho do download: {size}",
+        "update_now": "Atualizar agora",
+        "skip": "Depois",
+        "cancel": "Cancelar",
+        "close": "Fechar",
+        "retry": "Tentar novamente",
+        "downloading": "Baixando...",
+        "starting_download": "Iniciando download...",
+        "extracting": "Extraindo atualização...",
+        "restart_required": "Atualização baixada! Clique para reiniciar.",
+        "restart_now": "Reiniciar agora",
+        "up_to_date": "Você tem a versão mais recente ({version})",
+        "check_error": "Falha na verificação: {error}",
+        "download_error": "Falha no download",
+        "apply_error": "Falha ao aplicar a atualização",
+        "error": "Erro de atualização: {error}"
     }
 }

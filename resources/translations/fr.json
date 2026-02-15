@@ -17,7 +17,8 @@
         "reload_styles": "Recharger les styles",
         "theme": "Thème",
         "language": "Langue",
-        "about": "À propos"
+        "about": "À propos",
+        "check_updates": "Vérifier les mises à jour"
     },
     "library": {
         "search_placeholder": "Rechercher par titre, auteur, narrateur...",
@@ -151,7 +152,9 @@
         "reset_data_btn": "Réinitialiser les données",
         "reset_data_info": "Supprime la base de données et les couvertures extraites. Utile pour repartir à zéro.",
         "reset_confirm_title": "Confirmation de réinitialisation",
-        "reset_confirm_msg": "Cela supprimera toute la base de données et les couvertures. Tous les progrès seront perdus. Continuer ?"
+        "reset_confirm_msg": "Cela supprimera toute la base de données et les couvertures. Tous les progrès seront perdus. Continuer ?",
+        "auto_update_label": "Vérifier les mises à jour au démarrage",
+        "auto_update_info": "Si activé, l'application vérifiera automatiquement les nouvelles versions sur GitHub à chaque démarrage."
     },
     "dialog": {
         "restart_title": "Changement de langue",
@@ -361,5 +364,28 @@
         "settings_info": "Convertir tous les livres audio au format Opus pour réduire la taille des fichiers",
         "bitrate_tooltip": "Paramètres recommandés :\n- 16-20 kbps : Taille de fichier plus petite, qualité vocale acceptable.\n- 24 kbps : Bonne qualité, standard pour les livres audio.\n- 32 kbps : Qualité quasi transparente (Recommandé).\n- 48-64 kbps : Haute fidélité, idéal pour les livres audio avec musique/effets.",
         "stereo_tooltip": "Gestion stéréo :\n- Mixer en Mono : Idéal pour la couverture vocale. Utilise tous les bits pour le canal unique.\n- Garder la Stéréo : Préserve l'effet stéréo. Nécessite un débit binaire plus élevé pour la même qualité."
+    },
+    "updater": {
+        "title": "Mise à jour de l'application",
+        "checking": "🔄 Vérification des mises à jour...",
+        "new_version_available": "Mise à jour disponible : v{version}",
+        "version_info": "Version actuelle : {current} → Nouvelle version : {new}",
+        "release_notes": "Quoi de neuf :",
+        "download_size": "Taille du téléchargement : {size}",
+        "update_now": "Mettre à jour",
+        "skip": "Plus tard",
+        "cancel": "Annuler",
+        "close": "Fermer",
+        "retry": "Réessayer",
+        "downloading": "Téléchargement...",
+        "starting_download": "Démarrage du téléchargement...",
+        "extracting": "Extraction de la mise à jour...",
+        "restart_required": "Mise à jour téléchargée ! Cliquez pour redémarrer.",
+        "restart_now": "Redémarrer maintenant",
+        "up_to_date": "Vous avez la dernière version ({version})",
+        "check_error": "Échec de la vérification : {error}",
+        "download_error": "Échec du téléchargement",
+        "apply_error": "Échec de l'application de la mise à jour",
+        "error": "Erreur de mise à jour : {error}"
     }
 }

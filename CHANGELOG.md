@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.4]
+- **Settings**: Added "Check for updates at startup" toggle to Settings dialog.
+
+## [1.5.3]
+- **Auto-Update**: Added automatic update feature.
+
 ## [1.5.2]
 - **Library**: Added ability to **Convert Library to Opus** format to save space while maintaining high quality:
     - **Performance**: Parallel multi-threaded processing using all available CPU cores.

@@ -17,7 +17,8 @@
         "reload_styles": "スタイルを再読み込み",
         "theme": "テーマ",
         "language": "言語",
-        "about": "このアプリについて"
+        "about": "このアプリについて",
+        "check_updates": "アップデートを確認"
     },
     "library": {
         "search_placeholder": "タイトル、著者、ナレーターで検索...",
@@ -151,7 +152,9 @@
         "reset_data_btn": "ライブラリデータをリセット",
         "reset_data_info": "データベースと抽出されたカバー画像を削除します。クリーンスタートに便利です。",
         "reset_confirm_title": "リセットの確認",
-        "reset_confirm_msg": "データベースとカバー画像がすべて削除されます。すべての進捗が失われます。続行しますか？"
+        "reset_confirm_msg": "データベースとカバー画像がすべて削除されます。すべての進捗が失われます。続行しますか？",
+        "auto_update_label": "起動時にアップデートを確認",
+        "auto_update_info": "有効にすると、アプリケーションの起動時に毎回GitHubを確認し、新しいバージョンがあるかチェックします。"
     },
     "dialog": {
         "restart_title": "言語の変更",
@@ -361,5 +364,28 @@
         "settings_info": "すべてのオーディオブックをOpus形式に変換してファイルサイズを削減",
         "bitrate_tooltip": "推奨設定:\n- 16-20 kbps: ファイルサイズが小さく、許容できる音声品質。\n- 24 kbps: 高品質、オーディオブックの標準。\n- 32 kbps: ほぼ透明な品質 (推奨)。\n- 48-64 kbps: 高忠実度、音楽/効果音のあるオーディオブックに最適。",
         "stereo_tooltip": "ステレオ処理:\n- モノラルにダウンミックス: 音声のカバレッジに最適。シングルチャンネルにすべてのビットを使用。\n- ステレオを維持: ステレオ効果を保持。同じ品質のために高いビットレートが必要。"
+    },
+    "updater": {
+        "title": "アプリケーションの更新",
+        "checking": "🔄 アップデートを確認中...",
+        "new_version_available": "アップデートがあります: v{version}",
+        "version_info": "現在のバージョン: {current} → 最新バージョン: {new}",
+        "release_notes": "更新内容:",
+        "download_size": "ダウンロードサイズ: {size}",
+        "update_now": "更新する",
+        "skip": "後で",
+        "cancel": "キャンセル",
+        "close": "閉じる",
+        "retry": "再試行",
+        "downloading": "ダウンロード中...",
+        "starting_download": "ダウンロードを開始しています...",
+        "extracting": "アップデートを展開中...",
+        "restart_required": "ダウンロードが完了しました！クリックして再起動してください。",
+        "restart_now": "今すぐ再起動",
+        "up_to_date": "最新バージョンがインストールされています ({version})",
+        "check_error": "確認に失敗しました: {error}",
+        "download_error": "ダウンロードに失敗しました",
+        "apply_error": "アップデートの適用に失敗しました",
+        "error": "更新エラー: {error}"
     }
 }

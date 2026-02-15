@@ -17,7 +17,8 @@
     "reload_styles": "Reload Styles",
     "language": "Language",
     "theme": "Theme",
-    "about": "About"
+    "about": "About",
+    "check_updates": "Check for Updates"
   },
   "bookmarks": {
     "edit_title": "Edit Bookmark",
@@ -169,7 +170,9 @@
     "reset_data_btn": "Reset Library Data",
     "reset_data_info": "Deletes the database and extracted covers. Useful for a clean start.",
     "reset_confirm_title": "Reset Confirmation",
-    "reset_confirm_msg": "This will delete the entire database and covers. All progress will be lost. Proceed?"
+    "reset_confirm_msg": "This will delete the entire database and covers. All progress will be lost. Proceed?",
+    "auto_update_label": "Check for updates at startup",
+    "auto_update_info": "If enabled, the application will automatically check for new versions on GitHub every time it starts."
   },
   "dialog": {
     "restart_title": "Language Change",
@@ -361,5 +364,28 @@
     "settings_info": "Convert all audiobooks to Opus format to reduce file size",
     "bitrate_tooltip": "Recommended settings:\n- 16-20 kbps: Smaller file size, acceptable speech quality.\n- 24 kbps: Good quality, standard for audiobooks.\n- 32 kbps: Near-transparent quality (Recommended).\n- 48-64 kbps: High fidelity, best for audiobooks with music/effects.",
     "stereo_tooltip": "Stereo handling:\n- Downmix to Mono: Best for voice coverage. Uses all bits for the single channel.\n- Keep Stereo: Preserves stereo effect. Requires higher bitrate for same quality."
+  },
+  "updater": {
+    "title": "Application Update",
+    "checking": "🔄 Checking for updates...",
+    "new_version_available": "Update Available: v{version}",
+    "version_info": "Current version: {current} → New version: {new}",
+    "release_notes": "What's New:",
+    "download_size": "Download size: {size}",
+    "update_now": "Update",
+    "skip": "Later",
+    "cancel": "Cancel",
+    "close": "Close",
+    "retry": "Retry",
+    "downloading": "Downloading...",
+    "starting_download": "Starting download...",
+    "extracting": "Extracting update...",
+    "restart_required": "Update downloaded! Click to restart.",
+    "restart_now": "Restart Now",
+    "up_to_date": "You have the latest version ({version})",
+    "check_error": "Update check failed: {error}",
+    "download_error": "Download failed",
+    "apply_error": "Failed to apply update",
+    "error": "Update error: {error}"
   }
 }

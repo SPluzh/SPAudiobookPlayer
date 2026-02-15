@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QGroupBox, QHBoxLayout, QLineEdit, QPushButton,
-    QLabel, QFileDialog, QSizePolicy, QTextEdit, QProgressBar, QMessageBox
+    QLabel, QFileDialog, QSizePolicy, QTextEdit, QProgressBar, QMessageBox,
+    QCheckBox
 )
 from PyQt6.QtCore import pyqtSignal, QThread
 from PyQt6.QtGui import QFont, QTextCursor
@@ -111,9 +112,10 @@ class SettingsDialog(QDialog):
     scan_requested = pyqtSignal(str)   # Scan process triggered with specific path
     data_reset_requested = pyqtSignal()# Request to wipe all local database and covers
     opus_convert_requested = pyqtSignal() # Request to open Opus conversion dialog
+    auto_update_toggled = pyqtSignal(bool) # Auto-update check toggled
     closed = pyqtSignal()              # Dialog closed
     
-    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None):
+    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None, auto_check=True):
         """Initialize settings dialog with current configuration values"""
         super().__init__(parent)
         self.setWindowTitle(tr("settings.title"))
@@ -121,7 +123,9 @@ class SettingsDialog(QDialog):
         self.current_path = current_path
         self.ffprobe_path = ffprobe_path
         self.db_manager = db_manager
+        self.auto_check = auto_check
         self.settings_path_edit = None
+        self.auto_update_checkbox = None
         self.init_ui()
     
     def init_ui(self):
@@ -206,6 +210,18 @@ class SettingsDialog(QDialog):
         reset_info.setObjectName("infoLabelSmall")
         tools_layout.addWidget(reset_info)
         
+        tools_layout.addSpacing(10)
+        
+        # Auto Update Check toggle
+        self.auto_update_checkbox = QCheckBox(tr("settings.auto_update_label"))
+        self.auto_update_checkbox.setChecked(self.auto_check)
+        tools_layout.addWidget(self.auto_update_checkbox)
+        
+        auto_update_info = QLabel(tr("settings.auto_update_info"))
+        auto_update_info.setWordWrap(True)
+        auto_update_info.setObjectName("infoLabelSmall")
+        tools_layout.addWidget(auto_update_info)
+        
         tools_layout.addStretch()
         
         content_layout.addWidget(tools_group, 1)
@@ -245,6 +261,10 @@ class SettingsDialog(QDialog):
         new_path = self.get_path()
         if new_path:
             self.path_saved.emit(new_path)
+            
+        # Emit auto-update toggled signal
+        self.auto_update_toggled.emit(self.auto_update_checkbox.isChecked())
+        
         self.accept()
     
     def on_scan_requested(self):

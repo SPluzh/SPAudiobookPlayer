@@ -17,7 +17,8 @@
         "reload_styles": "스타일 새로고침",
         "theme": "테마",
         "language": "언어",
-        "about": "정보"
+        "about": "정보",
+        "check_updates": "업데이트 확인"
     },
     "library": {
         "search_placeholder": "제목, 저자, 낭독자로 검색...",
@@ -151,7 +152,9 @@
         "reset_data_btn": "라이브러리 데이터 초기화",
         "reset_data_info": "데이터베이스와 추출된 커버를 삭제합니다. 새로 시작할 때 유용합니다.",
         "reset_confirm_title": "초기화 확인",
-        "reset_confirm_msg": "데이터베이스와 커버가 모두 삭제됩니다. 모든 진행 상황이 손실됩니다. 계속하시겠습니까?"
+        "reset_confirm_msg": "데이터베이스와 커버가 모두 삭제됩니다. 모든 진행 상황이 손실됩니다. 계속하시겠습니까?",
+        "auto_update_label": "시작 시 업데이트 확인",
+        "auto_update_info": "활성화하면 애플리케이션을 시작할 때마다 GitHub에서 새로운 버전을 자동으로 확인합니다."
     },
     "dialog": {
         "restart_title": "언어 변경",
@@ -361,5 +364,28 @@
         "settings_info": "파일 크기를 줄이기 위해 모든 오디오북을 Opus 형식으로 변환",
         "bitrate_tooltip": "권장 설정:\n- 16-20 kbps: 더 작은 파일 크기, 허용 가능한 음성 품질.\n- 24 kbps: 좋은 품질, 오디오북 표준.\n- 32 kbps: 거의 투명한 품질 (권장).\n- 48-64 kbps: 고충실도, 음악/효과가 있는 오디오북에 최적.",
         "stereo_tooltip": "스테레오 처리:\n- 모노로 다운믹스: 음성 커버리지에 최적. 단일 채널에 모든 비트 사용.\n- 스테레오 유지: 스테레오 효과 보존. 동일한 품질을 위해 더 높은 비트레이트 필요."
+    },
+    "updater": {
+        "title": "애플리케이션 업데이트",
+        "checking": "🔄 업데이트 확인 중...",
+        "new_version_available": "새 버전 사용 가능: v{version}",
+        "version_info": "현재 버전: {current} → 새 버전: {new}",
+        "release_notes": "업데이트 내용:",
+        "download_size": "다운로드 크기: {size}",
+        "update_now": "지금 업데이트",
+        "skip": "나중에",
+        "cancel": "취소",
+        "close": "닫기",
+        "retry": "재시도",
+        "downloading": "다운로드 중...",
+        "starting_download": "다운로드 시작 중...",
+        "extracting": "업데이트 압축 해제 중...",
+        "restart_required": "업데이트가 다운로드되었습니다! 클릭하여 다시 시작하세요.",
+        "restart_now": "지금 다시 시작",
+        "up_to_date": "최신 버전을 사용 중입니다 ({version})",
+        "check_error": "업데이트 확인 실패: {error}",
+        "download_error": "다운로드 실패",
+        "apply_error": "업데이트 적용 실패",
+        "error": "업데이트 오류: {error}"
     }
 }

@@ -47,6 +47,8 @@ from library import (
     LibraryTree, MultiLineDelegate, LibraryWidget, CopyThread
 )
 from about_dialog import AboutDialog
+from update_dialog import UpdateCheckThread, UpdateDialog
+from updater import get_current_version
 
 
 class AudiobookPlayerWindow(QMainWindow):
@@ -173,6 +175,9 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Enable Drag and Drop
         self.setAcceptDrops(True)
+
+        # Auto-check for updates on startup (delayed)
+        QTimer.singleShot(3000, self.check_for_updates_auto)
     
     def load_language_preference(self):
         """Retrieve and apply the user's preferred application language from the configuration file"""
@@ -354,6 +359,13 @@ class AudiobookPlayerWindow(QMainWindow):
 
         help_menu = menubar.addMenu(tr("menu.help"))
         
+        # Check for Updates
+        check_update_action = QAction(tr("menu.check_updates"), self)
+        check_update_action.triggered.connect(self.check_for_updates_manual)
+        help_menu.addAction(check_update_action)
+        
+        help_menu.addSeparator()
+        
         # About Dialog Trigger
         about_action = QAction(tr("menu.about"), self)
         about_action.setIcon(get_icon("menu_about"))
@@ -532,6 +544,7 @@ class AudiobookPlayerWindow(QMainWindow):
         # Player Functional Preferences
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
         self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
+        self.auto_check_updates = config.getboolean('Player', 'auto_check_updates', fallback=True)
         
         # Audio Settings (Unified in [Audio])
         self.deesser_enabled = config.getboolean('Audio', 'deesser', fallback=config.getboolean('Player', 'deesser_enabled', fallback=False))
@@ -612,6 +625,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Player'] = {
             'show_id3': 'True',
             'auto_rewind': 'True',
+            'auto_check_updates': 'True',
             'deesser_enabled': 'False',
             'compressor_enabled': 'False'
         }
@@ -655,27 +669,25 @@ class AudiobookPlayerWindow(QMainWindow):
         if hasattr(self, 'splitter'):
             config['Layout']['splitter_state'] = self.splitter.saveState().toHex().data().decode()
         
-        # Player Functional Preferences
+        # Player and Audio Functional Preferences
         if 'Player' not in config: config['Player'] = {}
-        if hasattr(self, 'player_widget'):
-            config['Audio'] = {
-            'volume': str(self.player.vol_pos),
-            'speed': str(self.player.speed_pos),
-            'auto_rewind': str(self.auto_rewind),
-            'deesser': str(self.deesser_enabled),
-            'compressor': str(self.compressor_enabled),
-            'noise_suppression': str(self.noise_suppression_enabled),
-            'vad_threshold': str(self.vad_threshold),
-            'vad_grace_period': str(self.vad_grace_period),
-            'vad_retroactive_grace': str(self.vad_retroactive_grace),
-            'deesser_preset': str(self.deesser_preset),
-            'vac_grace_period': str(self.vad_grace_period),
-            'vad_retroactive_grace': str(self.vad_retroactive_grace),
-            'deesser_preset': str(self.deesser_preset),
-            'compressor_preset': str(self.compressor_preset),
-            'pitch_enabled': str(self.pitch_enabled),
-            'pitch_value': str(self.pitch_value)
-        }
+        config['Player']['show_id3'] = str(self.show_id3)
+        config['Player']['auto_rewind'] = str(self.auto_rewind)
+        config['Player']['auto_check_updates'] = str(self.auto_check_updates)
+        
+        if 'Audio' not in config: config['Audio'] = {}
+        config['Audio']['volume'] = str(self.player.vol_pos)
+        config['Audio']['speed'] = str(self.player.speed_pos)
+        config['Audio']['deesser'] = str(self.deesser_enabled)
+        config['Audio']['compressor'] = str(self.compressor_enabled)
+        config['Audio']['noise_suppression'] = str(self.noise_suppression_enabled)
+        config['Audio']['vad_threshold'] = str(self.vad_threshold)
+        config['Audio']['vad_grace_period'] = str(self.vad_grace_period)
+        config['Audio']['vad_retroactive_grace'] = str(self.vad_retroactive_grace)
+        config['Audio']['deesser_preset'] = str(self.deesser_preset)
+        config['Audio']['compressor_preset'] = str(self.compressor_preset)
+        config['Audio']['pitch_enabled'] = str(self.pitch_enabled)
+        config['Audio']['pitch_value'] = str(self.pitch_value)
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
         config['Library']['show_filter_labels'] = str(self.show_filter_labels)
@@ -1205,7 +1217,7 @@ class AudiobookPlayerWindow(QMainWindow):
         # Apply blur effect
         self.apply_blur()
         
-        dialog = SettingsDialog(self, self.default_path, self.ffprobe_path, db_manager=self.db_manager)
+        dialog = SettingsDialog(self, self.default_path, self.ffprobe_path, db_manager=self.db_manager, auto_check=self.auto_check_updates)
         
         def on_path_saved(new_path):
             """Commit new root path and initiate a library refresh if the configuration has changed"""
@@ -1243,12 +1255,17 @@ class AudiobookPlayerWindow(QMainWindow):
         def on_conversion_complete():
             nonlocal conversion_performed
             conversion_performed = True
+            
+        def on_auto_update_toggled(checked):
+            self.auto_check_updates = checked
+            self.save_settings()
         
         # Connect signals
         dialog.path_saved.connect(on_path_saved)
         dialog.scan_requested.connect(on_scan_requested)
         dialog.data_reset_requested.connect(self.perform_full_reset)
         dialog.opus_convert_requested.connect(on_conversion_complete)
+        dialog.auto_update_toggled.connect(on_auto_update_toggled)
         
         dialog.exec()
         self.remove_blur()
@@ -1407,6 +1424,53 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # Remove blur effect
         self.remove_blur()
+    
+    def check_for_updates_auto(self):
+        """Silently check for updates on startup"""
+        if not self.auto_check_updates:
+            return
+        self._update_check_thread = UpdateCheckThread()
+        self._update_check_thread.result_ready.connect(self._on_update_check_auto)
+        self._update_check_thread.start()
+    
+    def _on_update_check_auto(self, result):
+        """Handle auto-check result (silent - only show if update available)"""
+        if result.update_available:
+            self._show_update_dialog(result)
+    
+    def check_for_updates_manual(self):
+        """Manual check for updates from menu"""
+        self._update_check_thread = UpdateCheckThread()
+        self._update_check_thread.result_ready.connect(self._on_update_check_manual)
+        self._update_check_thread.start()
+        self.statusBar().showMessage(tr("updater.checking"))
+    
+    def _on_update_check_manual(self, result):
+        """Handle manual check result (show message even if up-to-date)"""
+        if result.error:
+            QMessageBox.warning(self, tr("error"), 
+                trf("updater.check_error", error=result.error))
+        elif result.update_available:
+            self._show_update_dialog(result)
+        else:
+            QMessageBox.information(self, tr("info"), 
+                trf("updater.up_to_date", version=result.remote_version or get_current_version()))
+    
+    def _show_update_dialog(self, result):
+        """Show the update dialog"""
+        self.apply_blur()
+        dialog = UpdateDialog(result, self)
+        dialog.update_accepted.connect(self._on_update_restart)
+        dialog.exec()
+        self.remove_blur()
+    
+    def _on_update_restart(self):
+        """Handle restart request from update dialog"""
+        # Save current session before closing
+        self.save_last_session()
+        self.save_settings()
+        # Close the application to let the update script take over
+        QApplication.quit()
     
     def save_setting(self, section: str, key: str, value: str):
         """Update a specific configuration entry in 'settings.ini' without overwriting other existing sections"""

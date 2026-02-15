@@ -17,7 +17,8 @@
         "reload_styles": "Stile neu laden",
         "theme": "Thema",
         "language": "Sprache",
-        "about": "Über"
+        "about": "Über",
+        "check_updates": "Auf Updates prüfen"
     },
     "library": {
         "search_placeholder": "Suche nach Titel, Autor, Sprecher...",
@@ -151,7 +152,9 @@
         "reset_data_btn": "Bibliotheksdaten zurücksetzen",
         "reset_data_info": "Löscht die Datenbank und extrahierte Cover. Nützlich für einen Neustart.",
         "reset_confirm_title": "Zurücksetzen bestätigen",
-        "reset_confirm_msg": "Dies löscht die gesamte Datenbank und alle Cover. Aller Fortschritt geht verloren. Fortfahren?"
+        "reset_confirm_msg": "Dies löscht die gesamte Datenbank und alle Cover. Aller Fortschritt geht verloren. Fortfahren?",
+        "auto_update_label": "Beim Start nach Updates suchen",
+        "auto_update_info": "Falls aktiviert, sucht die Anwendung bei jedem Start automatisch auf GitHub nach neuen Versionen."
     },
     "dialog": {
         "restart_title": "Sprachänderung",
@@ -361,5 +364,28 @@
         "settings_info": "Alle Hörbücher in das Opus-Format konvertieren, um die Dateigröße zu reduzieren",
         "bitrate_tooltip": "Empfohlene Einstellungen:\n- 16-20 kbps: Kleinere Dateigröße, akzeptable Sprachqualität.\n- 24 kbps: Gute Qualität, Standard für Hörbücher.\n- 32 kbps: Nahezu transparente Qualität (Empfohlen).\n- 48-64 kbps: Hohe Wiedergabetreue, am besten für Hörbücher mit Musik/Effekten.",
         "stereo_tooltip": "Stereo-Verarbeitung:\n- Downmix zu Mono: Am besten für Sprachabdeckung. Verwendet alle Bits für den einzelnen Kanal.\n- Stereo beibehalten: Bewahrt den Stereoeffekt. Erfordert höhere Bitrate für die gleiche Qualität."
+    },
+    "updater": {
+        "title": "Anwendungs-Update",
+        "checking": "🔄 Suche nach Updates...",
+        "new_version_available": "Update verfügbar: v{version}",
+        "version_info": "Aktuelle Version: {current} → Neue Version: {new}",
+        "release_notes": "Was ist neu:",
+        "download_size": "Download-Größe: {size}",
+        "update_now": "Aktualisieren",
+        "skip": "Später",
+        "cancel": "Abbrechen",
+        "close": "Schließen",
+        "retry": "Wiederholen",
+        "downloading": "Wird heruntergeladen...",
+        "starting_download": "Download wird gestartet...",
+        "extracting": "Update wird extrahiert...",
+        "restart_required": "Update heruntergeladen! Zum Neustart klicken.",
+        "restart_now": "Jetzt neu starten",
+        "up_to_date": "Sie haben die neueste Version ({version})",
+        "check_error": "Update-Prüfung fehlgeschlagen: {error}",
+        "download_error": "Download fehlgeschlagen",
+        "apply_error": "Anwenden des Updates fehlgeschlagen",
+        "error": "Update-Fehler: {error}"
     }
 }

@@ -17,7 +17,8 @@
         "reload_styles": "Stilleri Yeniden Yükle",
         "theme": "Tema",
         "language": "Dil",
-        "about": "Hakkında"
+        "about": "Hakkında",
+        "check_updates": "Güncellemeleri Denetle"
     },
     "library": {
         "search_placeholder": "Başlık, yazar, anlatıcıya göre ara...",
@@ -151,7 +152,9 @@
         "reset_data_btn": "Kütüphane Verilerini Sıfırla",
         "reset_data_info": "Veritabanını ve çıkarılan kapakları siler. Yeni bir başlangıç için kullanışlıdır.",
         "reset_confirm_title": "Sıfırlama Onayı",
-        "reset_confirm_msg": "Bu, tüm veritabanını ve kapakları silecektir. Tüm ilerleme kaybolacak. Devam edilsin mi?"
+        "reset_confirm_msg": "Bu, tüm veritabanını ve kapakları silecektir. Tüm ilerleme kaybolacak. Devam edilsin mi?",
+        "auto_update_label": "Başlangıçta güncellemeleri kontrol et",
+        "auto_update_info": "Etkinleştirilirse, uygulama her başladığında GitHub'da yeni sürümleri otomatik olarak kontrol edecektir."
     },
     "dialog": {
         "restart_title": "Dil Değişikliği",
@@ -361,5 +364,28 @@
         "settings_info": "Dosya boyutunu azaltmak için tüm sesli kitapları Opus formatına dönüştürün",
         "bitrate_tooltip": "Önerilen ayarlar:\n- 16-20 kbps: Daha küçük dosya boyutu, kabul edilebilir konuşma kalitesi.\n- 24 kbps: İyi kalite, sesli kitaplar için standart.\n- 32 kbps: Neredeyse şeffaf kalite (Önerilen).\n- 48-64 kbps: Yüksek sadakat, müzik/efekt içeren sesli kitaplar için en iyisi.",
         "stereo_tooltip": "Stereo işleme:\n- Mono'ya İndir: Ses kapsamı için en iyisi. Tek kanal için tüm bitleri kullanır.\n- Stereo'yu Koru: Stereo efektini korur. Aynı kalite için daha yüksek bit hızı gerektirir."
+    },
+    "updater": {
+        "title": "Uygulama Güncellemesi",
+        "checking": "🔄 Güncellemeler denetleniyor...",
+        "new_version_available": "Güncelleme Mevcut: v{version}",
+        "version_info": "Mevcut sürüm: {current} → Yeni sürüm: {new}",
+        "release_notes": "Yenilikler:",
+        "download_size": "İndirme boyutu: {size}",
+        "update_now": "Güncelle",
+        "skip": "Daha sonra",
+        "cancel": "İptal",
+        "close": "Kapat",
+        "retry": "Yeniden Dene",
+        "downloading": "İndiriliyor...",
+        "starting_download": "İndirme başlatılıyor...",
+        "extracting": "Güncelleme ayıklanıyor...",
+        "restart_required": "Güncelleme indirildi! Yeniden başlatmak için tıklayın.",
+        "restart_now": "Şimdi Yeniden Başlat",
+        "up_to_date": "En son sürüme sahipsiniz ({version})",
+        "check_error": "Güncelleme kontrolü başarısız oldu: {error}",
+        "download_error": "İndirme başarısız oldu",
+        "apply_error": "Güncelleme uygulanamadı",
+        "error": "Güncelleme hatası: {error}"
     }
 }
