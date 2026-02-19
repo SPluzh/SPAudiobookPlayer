@@ -59,7 +59,6 @@ https://github.com/user-attachments/assets/80126acc-8bc2-4c49-b95e-ae3a068343b0
   - **De-Esser**: Reduces harsh sibilance (s/sh sounds) with Light/Medium/Strong presets.
   - **Compressor**: Balances dynamic range for consistent volume levels.
   - **Noise Suppression**: Removes background noise for clearer speech.
-- **Voice Activity Detection (VAD)**: Skips silence in audio with customizable threshold and grace periods.
 - **Pitch Control**: Adjust playback pitch without changing speed (+/- 12 semitones).
 
 ### ⌨️ Keyboard Shortcuts
@@ -246,7 +245,6 @@ https://github.com/user-attachments/assets/0217de3d-64f2-4932-9604-54cc257d59d7
   - **De-Esser**: Уменьшает резкие свистящие звуки (с/ш) с пресетами (Лёгкий/Средний/Сильный).
   - **Компрессор**: Выравнивает динамический диапазон для равномерной громкости.
   - **Шумоподавление**: Удаляет фоновый шум для чёткости речи.
-- **Детектор тишины (VAD)**: Пропускает тишину в аудио с настраиваемым порогом.
 - **Управление высотой тона**: Изменение тона без изменения скорости (+/- 12 полутонов).
 
 ### ⌨️ Горячие клавиши
