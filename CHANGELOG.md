@@ -1,6 +1,10 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [1.5.6]
+- **Bookmarks**: Added display of bookmark markers on the progress bar.
+
 ## [1.5.5]
 - **Library**: Added **Smart Search** functionality.
     - Implemented fuzzy matching for misspelled search terms (e.g. omitted characters).
