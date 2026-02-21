@@ -1,6 +1,13 @@
 /* ============================================================
+
    HATSUNE MIKU THEME - SPAudiobookPlayer
+
    Palette: #373b3e, #bec8d1, #86cecb, #137a7f, #e12885
+
+   ============================================================ */
+
+/* ============================================================
+   MAIN WINDOW AND WIDGETS
    ============================================================ */
 
 /* @bg-main: #444444 */
@@ -12,6 +19,7 @@
 /* @bg-tabbar: #2c2c2c */
 /* @accent: #e12885 */
 /* @accent-dark: #aa1e64 */
+/* @accent-light: #cd5e96ff */
 /* @text: #eaeaea */
 /* @text-dim: #a0a0a0 */
 /* @text-bright: #ffffff */
@@ -25,10 +33,6 @@
 /* @overlay-bg: rgba(0, 0, 0, 100) */
 /* @overlay-progress-bg: rgba(0, 0, 0, 150) */
 /* @separator-dot: #646464 */
-
-/* ============================================================
-   MAIN WINDOW AND WIDGETS
-   ============================================================ */
 
 QMainWindow {
     background-color: @bg-main;
@@ -103,31 +107,6 @@ QPushButton#id3Btn:checked {
     font-weight: bold;
 }
 
-/* Auto-rewind Toggle Button */
-QPushButton#autoRewindBtn {
-    background-color: @bg-dark;
-    border: 1px solid @border;
-    color: @text;
-    padding: 2px 5px;
-    font-weight: 500;
-    font-size: 11px;
-    min-height: 18px;
-    margin-top: 2px;
-    border-radius: 3px;
-}
-
-QPushButton#autoRewindBtn:hover {
-    background-color: @accent;
-    border-color: @accent;
-    color: @text-bright;
-}
-
-QPushButton#autoRewindBtn:checked {
-    background-color: @accent;
-    border-color: @accent;
-    font-weight: bold;
-}
-
 /* Bookmarks Button */
 QPushButton#bookmarksBtn {
     background-color: @bg-dark;
@@ -152,6 +131,30 @@ QPushButton#bookmarksBtn:pressed {
     border-color: @accent-dark;
 }
 
+
+QPushButton#autoRewindBtn {
+    background-color: @bg-dark;
+    border: 1px solid @border;
+    color: @text;
+    padding: 2px 5px;
+    font-weight: 500;
+    font-size: 11px;
+    min-height: 18px;
+    margin-top: 2px;
+    border-radius: 3px;
+}
+
+QPushButton#autoRewindBtn:hover {
+    background-color: @accent;
+    border-color: @accent;
+    color: @text-bright;
+}
+
+QPushButton#autoRewindBtn:checked {
+    background-color: @accent;
+    border-color: @accent;
+    font-weight: bold;
+}
 
 /* DeEsser Toggle Button */
 QPushButton#deesserBtn {
@@ -276,6 +279,61 @@ QPushButton#filterBtn:checked {
 }
 
 /* ============================================================
+   COMBO BOXES
+   ============================================================ */
+
+QComboBox {
+    background-color: @bg-dark;
+    border: 1px solid @border;
+    border-radius: 3px;
+    padding: 5px;
+    min-width: 6em;
+    color: @text;
+}
+
+QComboBox:hover {
+    border-color: @accent;
+    background-color: @bg-hover;
+}
+
+QComboBox:on { /* shift the text when the popup opens */
+    padding-top: 3px;
+    padding-left: 4px;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left-width: 0px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    border: none;
+    width: 0; 
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid @text-dim;
+    margin-right: 5px;
+}
+
+QComboBox::down-arrow:on {
+    top: 1px;
+    left: 1px;
+}
+
+QComboBox QAbstractItemView {
+    border: 1px solid @border;
+    selection-background-color: @accent;
+    background-color: @bg-dark;
+    color: @text;
+}
+
+/* ============================================================
    INPUT FIELDS
    ============================================================ */
 
@@ -300,7 +358,6 @@ QLineEdit:hover {
 QLineEdit::placeholder {
     color: @text-disabled;
 }
-
 
 /* ============================================================
    LISTS
@@ -447,7 +504,7 @@ QSlider::handle:horizontal {
 }
 
 QSlider::handle:horizontal:hover {
-    background: @accent;
+    background: @accent-light;
 }
 
 QSlider::handle:horizontal:pressed {
@@ -475,12 +532,11 @@ QSlider#speedSlider::sub-page:horizontal {
 QProgressBar {
     background-color: @border;
     border: none;
-    border-radius: 3px;
+    text-align: center;
 }
 
 QProgressBar::chunk {
     background-color: @accent;
-    border-radius: 3px;
 }
 
 #scanProgressBar {
@@ -578,7 +634,7 @@ QSplitter::handle:hover {
 }
 
 QSplitter::handle:pressed {
-    background-color: @accent;
+    background-color: @accent-light;
 }
 
 /* ============================================================
@@ -603,7 +659,7 @@ QScrollBar::handle:vertical:hover {
 }
 
 QScrollBar::handle:vertical:pressed {
-    background-color: @accent;
+    background-color: @accent-light;
 }
 
 QScrollBar::add-line:vertical,
@@ -636,7 +692,7 @@ QScrollBar::handle:horizontal:hover {
 }
 
 QScrollBar::handle:horizontal:pressed {
-    background-color: @accent;
+    background-color: @accent-light;
 }
 
 QScrollBar::add-line:horizontal,
@@ -1027,7 +1083,7 @@ QLabel#aboutSectionContent {
 }
 
 #delegate_accent_secondary {
-    color: @accent;
+    color: @accent-light;
 }
 
 #delegate_text_dim {
@@ -1084,4 +1140,9 @@ QLabel#dropOverlay {
     font-weight: bold;
     border: 4px dashed @accent;
     border-radius: 10px;
+}
+
+
+BookProgressBar {
+    qproperty-markerColor: @accent-dark;
 }

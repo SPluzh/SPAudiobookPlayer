@@ -4,9 +4,10 @@ from typing import List, Dict, Optional
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, 
     QLabel, QProgressBar, QListWidget, QListWidgetItem, QSizePolicy,
-    QFrame, QGridLayout, QStyle, QStyleOptionSlider
+    QFrame, QGridLayout, QStyle, QStyleOptionSlider, QStyleOptionProgressBar
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QPoint
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QPoint, pyqtProperty
+from PyQt6.QtGui import QPainter, QPen, QColor, QPaintEvent
 
 from bass_player import BassPlayer
 from database import DatabaseManager
@@ -286,6 +287,30 @@ class PlaybackController:
             
         return False
 
+    def get_bookmarks_percentages(self) -> List[float]:
+        """Calculate relative positions of all bookmarks for the current audiobook as percentages (0.0 to 1.0)"""
+        if not self.current_audiobook_id or self.total_duration <= 0:
+            return []
+            
+        bookmarks = self.db.get_bookmarks(self.current_audiobook_id)
+        if not bookmarks:
+            return []
+            
+        percentages = []
+        for b in bookmarks:
+            file_name = b['file_name']
+            time_position = b['time_position']
+            
+            file_start_pos = 0.0
+            for f in self.files_list:
+                if f['name'] == file_name:
+                    bookmark_global_pos = file_start_pos + max(0, time_position - f.get('start_offset', 0))
+                    percentages.append(bookmark_global_pos / self.total_duration)
+                    break
+                file_start_pos += f['duration']
+                
+        return percentages
+
 
 class ClickableSlider(QSlider):
     """A slider that jumps directly to the clicked position"""
@@ -324,6 +349,48 @@ class ClickableSlider(QSlider):
         val = self.minimum() + (pos_x / available_width) * range_val
         
         return int(max(self.minimum(), min(self.maximum(), val)))
+
+
+class BookProgressBar(QProgressBar):
+    """A progress bar that can display markers for bookmarks"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setRange(0, 10000)
+        self.markers = []
+        self._marker_color = QColor(255, 165, 0, 200) # Default orange
+        
+    @pyqtProperty(QColor)
+    def markerColor(self):
+        return self._marker_color
+        
+    @markerColor.setter
+    def markerColor(self, color):
+        self._marker_color = color
+        self.update()
+        
+    def set_markers(self, markers: List[float]):
+        self.markers = markers
+        self.update()
+        
+    def paintEvent(self, event: QPaintEvent):
+        super().paintEvent(event)
+        
+        if not self.markers:
+            return
+            
+        opt = QStyleOptionProgressBar()
+        self.initStyleOption(opt)
+        rect = self.style().subElementRect(QStyle.SubElement.SE_ProgressBarContents, opt, self)
+        
+        painter = QPainter(self)
+        pen = QPen(self._marker_color)
+        pen.setWidth(2) # 2 pixels wide
+        painter.setPen(pen)
+        
+        for marker in self.markers:
+            marker = max(0.0, min(1.0, marker))
+            x = int(rect.left() + marker * rect.width())
+            painter.drawLine(x, rect.top(), x, rect.bottom())
 
 
 class PlayerWidget(QWidget):
@@ -702,7 +769,7 @@ class PlayerWidget(QWidget):
         total_times.addWidget(self.time_left_label)
         total_box.addLayout(total_times)
         
-        self.total_progress_bar = QProgressBar()
+        self.total_progress_bar = BookProgressBar()
         self.total_progress_bar.setTextVisible(False)
         total_box.addWidget(self.total_progress_bar)
         
@@ -788,8 +855,9 @@ class PlayerWidget(QWidget):
             self.total_duration_label.setText(format_time(total))
         
         if total > 0:
+            val = int((current / total) * 10000)
+            self.total_progress_bar.setValue(val)
             percent = int((current / total) * 100)
-            self.total_progress_bar.setValue(percent)
             self.total_percent_label.setText(trf("formats.percent", value=percent))
             
             time_left = (total - current) / speed

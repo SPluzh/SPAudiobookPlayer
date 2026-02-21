@@ -502,6 +502,7 @@ class AudiobookPlayerWindow(QMainWindow):
         
         dlg.bookmark_selected.connect(self.on_bookmark_selected)
         dlg.exec()
+        self.update_progress_bar_markers()
 
     def on_bookmark_selected(self, bookmark_id: int):
         """Handle jump to bookmark, ensuring UI and session state are updated"""
@@ -986,6 +987,14 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # Synchronize speed control slider
         self.player_widget.set_speed(self.player.speed_pos)
+        
+        # Update bookmark markers on progress bar
+        self.update_progress_bar_markers()
+        
+    def update_progress_bar_markers(self):
+        """Update the bookmarks markers on the total progress bar"""
+        percentages = self.playback_controller.get_bookmarks_percentages()
+        self.player_widget.total_progress_bar.set_markers(percentages)
     
     def toggle_play(self):
         """Toggle between active playback and paused states, updating UI indicators and background controllers accordingly"""

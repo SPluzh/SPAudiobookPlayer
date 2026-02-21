@@ -524,13 +524,11 @@ QSlider#speedSlider::sub-page:horizontal {
 QProgressBar {
     background-color: @border;
     border: none;
-    border-radius: 3px;
     text-align: center;
 }
 
 QProgressBar::chunk {
     background-color: @accent;
-    border-radius: 3px;
 }
 
 #scanProgressBar {
@@ -1137,3 +1135,6 @@ QLabel#dropOverlay {
 }
 
 
+BookProgressBar {
+    qproperty-markerColor: @accent-dark;
+}
