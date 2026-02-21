@@ -21,6 +21,7 @@ class VisualizerButton(QPushButton):
         self.bar_color.setAlpha(180) # Slightly transparent
         self.decay = [0.0] * self.bar_count
         self.decay_speed = 0.2
+        self.visualizer_enabled = True
         
         # Start animation
         self.timer.start(1000 // self.fps)
@@ -29,6 +30,12 @@ class VisualizerButton(QPushButton):
         self.player = player
         
     def update_visualization(self):
+        if not getattr(self, 'visualizer_enabled', True):
+            if any(x > 0.01 for x in self.decay):
+                self.decay = [0.0] * self.bar_count
+                self.update()
+            return
+
         if self.isVisible() and self.player and self.player.is_playing():
              self.update()
         elif self.player and not self.player.is_playing():
@@ -93,7 +100,7 @@ class VisualizerButton(QPushButton):
         # Since super() paints everything, we are painting ON TOP of everything (including text/icon).
         # We will re-paint the icon at the end to ensure it's visible.
         
-        if self.player and self.player.is_playing():
+        if getattr(self, 'visualizer_enabled', True) and self.player and self.player.is_playing():
             painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             

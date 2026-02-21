@@ -18,7 +18,8 @@
     "language": "Язык",
     "theme": "Тема",
     "about": "О программе",
-    "check_updates": "Проверить обновления"
+    "check_updates": "Проверить обновления",
+    "visualizer": "Визуализатор"
   },
   "bookmarks": {
     "edit_title": "Редактирование закладки",

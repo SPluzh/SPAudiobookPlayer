@@ -82,6 +82,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.pitch_enabled = False
         self.pitch_value = 0.0
         self.last_pause_time = None
+        self.show_visualizer = True
         
         # Load user configurations and localization settings
         self.db_manager = DatabaseManager(self.db_file)
@@ -276,6 +277,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.compressor_btn.setChecked(self.compressor_enabled)
         self.player_widget.noise_suppression_btn.setChecked(self.noise_suppression_enabled)
         self.player_widget.pitch_btn.setChecked(self.pitch_enabled)
+        self.player_widget.play_btn.visualizer_enabled = self.show_visualizer
         
         # Set initial values for sliders
         self.player_widget.set_vad_threshold_value(self.vad_threshold)
@@ -337,6 +339,13 @@ class AudiobookPlayerWindow(QMainWindow):
             self.language_actions[code] = action
         
         view_menu.addSeparator()
+        
+        # Visualizer Toggle
+        self.visualizer_action = QAction(tr("menu.visualizer", "Visualizer"), self)
+        self.visualizer_action.setCheckable(True)
+        self.visualizer_action.setChecked(self.show_visualizer)
+        self.visualizer_action.triggered.connect(self.toggle_visualizer)
+        view_menu.addAction(self.visualizer_action)
         
         # Theme Selection
         theme_menu = view_menu.addMenu(tr("menu.theme"))
@@ -404,6 +413,14 @@ class AudiobookPlayerWindow(QMainWindow):
         # Apply the new theme
         self.reload_styles()
     
+    def toggle_visualizer(self, checked: bool):
+        """Toggle the audio spectrum visualization on the play button"""
+        self.show_visualizer = checked
+        if hasattr(self, 'player_widget'):
+            self.player_widget.play_btn.visualizer_enabled = checked
+            self.player_widget.play_btn.update()
+        self.save_settings()
+
     def update_all_texts(self):
         """Synchronize window titles, menus, and sub-widget labels after a language change event"""
         # Revise window title with localized formatting
@@ -555,6 +572,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
         self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
         self.auto_check_updates = config.getboolean('Player', 'auto_check_updates', fallback=True)
+        self.show_visualizer = config.getboolean('Player', 'show_visualizer', fallback=True)
         
         # Audio Settings (Unified in [Audio])
         self.deesser_enabled = config.getboolean('Audio', 'deesser', fallback=config.getboolean('Player', 'deesser_enabled', fallback=False))
@@ -640,7 +658,8 @@ class AudiobookPlayerWindow(QMainWindow):
             'auto_rewind': 'True',
             'auto_check_updates': 'True',
             'deesser_enabled': 'False',
-            'compressor_enabled': 'False'
+            'compressor_enabled': 'False',
+            'show_visualizer': 'True'
         }
         config['Library'] = {
             'show_folders': 'False',
@@ -689,6 +708,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Player']['show_id3'] = str(self.show_id3)
         config['Player']['auto_rewind'] = str(self.auto_rewind)
         config['Player']['auto_check_updates'] = str(self.auto_check_updates)
+        config['Player']['show_visualizer'] = str(self.show_visualizer)
         
         if 'Audio' not in config: config['Audio'] = {}
         config['Audio']['volume'] = str(self.player.vol_pos)
