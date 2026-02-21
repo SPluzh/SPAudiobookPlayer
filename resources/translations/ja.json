@@ -312,7 +312,9 @@
         "description": "このプログラムを使用すると、コレクションを快適に閲覧し、読書状況を保存し、必要な本をすぐに見つけることができます。\nPyQt6とBASSライブラリを使用して構築されています。",
         "supported_formats": "サポートされている形式:",
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE サポート (チャプターマーカーとメタデータ)",
-        "close": "閉じる"
+        "close": "閉じる",
+        "hotkeys_title": "Hotkeys:",
+        "hotkeys_list": "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)"
     },
     "taskbar": {
         "prev": "前のトラック",

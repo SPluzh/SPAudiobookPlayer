@@ -312,7 +312,9 @@
         "description": "El programa le permite navegar cómodamente por su colección, guardar el progreso de escucha y encontrar rápidamente los libros que necesita.\nConstruido sobre PyQt6 y la biblioteca BASS.",
         "supported_formats": "Formatos soportados:",
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Soporte .CUE (marcadores de capítulos y metadatos)",
-        "close": "Cerrar"
+        "close": "Cerrar",
+        "hotkeys_title": "Hotkeys:",
+        "hotkeys_list": "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)"
     },
     "taskbar": {
         "prev": "Pista anterior",

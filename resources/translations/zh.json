@@ -312,7 +312,9 @@
         "description": "该程序允许您方便地浏览收藏，保存收听进度并快速找到所需的书籍。\n基于 PyQt6 和 BASS 库构建。",
         "supported_formats": "支持的格式：",
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE 支持 (章节标记和元数据)",
-        "close": "关闭"
+        "close": "关闭",
+        "hotkeys_title": "Hotkeys:",
+        "hotkeys_list": "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)"
     },
     "taskbar": {
         "prev": "上一曲",

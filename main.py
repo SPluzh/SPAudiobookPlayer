@@ -500,8 +500,15 @@ class AudiobookPlayerWindow(QMainWindow):
             current_pos
         )
         
-        dlg.bookmark_selected.connect(self.playback_controller.jump_to_bookmark)
+        dlg.bookmark_selected.connect(self.on_bookmark_selected)
         dlg.exec()
+
+    def on_bookmark_selected(self, bookmark_id: int):
+        """Handle jump to bookmark, ensuring UI and session state are updated"""
+        if self.playback_controller.jump_to_bookmark(bookmark_id):
+            self.player_widget.highlight_current_file(self.playback_controller.current_file_index)
+            self.save_last_session()
+            self.refresh_audiobook_in_tree()
 
     def load_settings(self):
         """Retrieve and initialize application state (paths, window geometry, styles) from the 'settings.ini' file"""

@@ -1,6 +1,11 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.5.5]
+- **Library**: Added **Smart Search** functionality.
+    - Implemented fuzzy matching for misspelled search terms (e.g. omitted characters).
+    - Added automatic keyword transliteration to handle incorrect keyboard layouts (RU <-> EN).
+    - Unified the search to query across author, title, narrator, codecs, and tags simultaneously.
 
 ## [1.5.4]
 - **Settings**: Added "Check for updates at startup" toggle to Settings dialog.

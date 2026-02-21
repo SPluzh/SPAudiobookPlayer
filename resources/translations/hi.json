@@ -312,7 +312,9 @@
         "description": "यह प्रोग्राम आपको आसानी से अपने संग्रह को ब्राउज़ करने, सुनने की प्रगति को सहेजने और अपनी ज़रूरत की किताबें जल्दी से खोजने की अनुमति देता है।\nPyQt6 और BASS लाइब्रेरी पर बनाया गया।",
         "supported_formats": "समर्थित प्रारूप:",
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE समर्थन (अध्याय मार्कर और मेटाडेटा)",
-        "close": "बंद करें"
+        "close": "बंद करें",
+        "hotkeys_title": "Hotkeys:",
+        "hotkeys_list": "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)"
     },
     "taskbar": {
         "prev": "पिछला ट्रैक",

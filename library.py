@@ -23,6 +23,7 @@ from utils import (
     get_base_path, get_icon, load_icon, resize_icon, 
     format_time, format_time_short, format_duration, OutputCapture
 )
+from search_utils import smart_search
 from scanner import AudiobookScanner
 from tags_dialog import TagManagerDialog
 from styles import StyleManager
@@ -1720,43 +1721,31 @@ class LibraryWidget(QWidget):
                 text_match = True
                 if search_text:
                     data = child.data(0, Qt.ItemDataRole.UserRole + 2)
-                    text_match = False
+                    
                     if data:
                         # author, title, narrator, file_count, duration, listened_duration, progress_percent, codec, b_min, b_max, b_mode, container
                         author, title, narrator = data[0:3]
                         codec, b_min, b_max, b_mode, container = data[7:12]
                         
-                        if author and search_text in author.lower():
-                            text_match = True
-                        if title and search_text in title.lower():
-                            text_match = True
-                        if narrator and search_text in narrator.lower():
-                            text_match = True
-                        if codec and search_text in codec.lower():
-                            text_match = True
-                        if container and search_text in container.lower():
-                            text_match = True
-                        if b_mode and search_text in b_mode.lower():
-                            text_match = True
-                        
-                        # Tag Search
-                        tags = child.data(0, Qt.ItemDataRole.UserRole + 4)
-                        if tags and isinstance(tags, list):
-                            for tag in tags:
-                                if isinstance(tag, dict) and 'name' in tag:
-                                    if search_text in tag['name'].lower():
-                                        text_match = True
-                                        break
-                                    
-                        # Bitrate search
-                        search_min = b_min // 1000 if b_min > 5000 else b_min
-                        search_max = b_max // 1000 if b_max > 5000 else b_max
-                        
-                        if search_min and search_text in str(search_min):
-                            text_match = True
-                        if search_max and search_text in str(search_max):
-                            text_match = True
-                
+                    # Tag Search
+                    tags = child.data(0, Qt.ItemDataRole.UserRole + 4)
+                    tag_names = []
+                    if tags and isinstance(tags, list):
+                        for tag in tags:
+                            if isinstance(tag, dict) and 'name' in tag:
+                                tag_names.append(tag['name'])
+                                
+                    # Bitrate search
+                    search_min = str(b_min // 1000) if b_min > 5000 else str(b_min)
+                    search_max = str(b_max // 1000) if b_max > 5000 else str(b_max)
+                    
+                    searchables = [author, title, narrator, codec, container, b_mode, search_min, search_max] + tag_names
+                    # filter out None and empty strings
+                    searchables = [s for s in searchables if s]
+                    combined_search_text = " ".join(searchables)
+                    
+                    text_match = smart_search(search_text, combined_search_text)
+            
                 child.setHidden(not (status_match and text_match))
                 if not child.isHidden():
                     has_visible = True

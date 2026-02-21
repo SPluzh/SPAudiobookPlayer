@@ -89,6 +89,18 @@ class AboutDialog(QDialog):
         
         container_layout.addSpacing(10)
         
+        # Hotkeys
+        hotkeys_title = QLabel(tr('about.hotkeys_title', 'Горячие клавиши:'))
+        hotkeys_title.setObjectName("aboutSectionTitle")
+        container_layout.addWidget(hotkeys_title)
+        
+        hotkeys_content = QLabel(tr('about.hotkeys_list', 'Пробел — Воспроизведение / Пауза\n[ и ] — Предыдущий / Следующий файл\nВлево / Вправо — Перемотка на 10 сек.\nShift + Влево / Вправо — Перемотка на 60 сек.\nВверх / Вниз — Изменение скорости (±0.1x)\nShift + Вверх / Вниз — Громкость (±5%)'))
+        hotkeys_content.setObjectName("aboutSectionContent")
+        hotkeys_content.setWordWrap(True)
+        container_layout.addWidget(hotkeys_content)
+        
+        container_layout.addSpacing(10)
+        
         # Close Button
         close_btn = QPushButton(tr('about.close'))
         close_btn.setObjectName("aboutCloseBtn")

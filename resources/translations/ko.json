@@ -312,7 +312,9 @@
         "description": "이 프로그램은 컬렉션을 편리하게 탐색하고 청취 진행 상황을 저장하며 필요한 책을 빠르게 찾을 수 있게 해줍니다.\nPyQt6 및 BASS 라이브러리를 기반으로 제작되었습니다.",
         "supported_formats": "지원되는 형식:",
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE 지원 (챕터 마커 및 메타데이터)",
-        "close": "닫기"
+        "close": "닫기",
+        "hotkeys_title": "Hotkeys:",
+        "hotkeys_list": "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)"
     },
     "taskbar": {
         "prev": "이전 트랙",
