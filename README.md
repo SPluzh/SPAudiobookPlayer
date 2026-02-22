@@ -203,7 +203,7 @@ To create a standalone executable:
 
 Идеальное решение для любителей аудиокниг, которым нужен функциональный плеер с интуитивным интерфейсом и широкими возможностями.
 
-<video src="attachments/SP_Audiobook_Player_lpfBcdlMAz.mp4" width="100%" controls></video>
+![](attachments/SP_Audiobook_Player_lpfBcdlMAz.gif)
 
 ## ✨ Возможности
 
