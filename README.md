@@ -18,7 +18,8 @@
 Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with an intuitive interface and robust functionality.
 
 
-https://github.com/user-attachments/assets/80126acc-8bc2-4c49-b95e-ae3a068343b0
+<video src="attachments\SP_Audiobook_Player_lpfBcdlMAz.mp4" width="100%" controls></video>
+
 
 
 ## ✨ Features
@@ -204,7 +205,7 @@ To create a standalone executable:
 
 Идеальное решение для любителей аудиокниг, которым нужен функциональный плеер с интуитивным интерфейсом и широкими возможностями.
 
-https://github.com/user-attachments/assets/0217de3d-64f2-4932-9604-54cc257d59d7
+<video src="attachments\SP_Audiobook_Player_lpfBcdlMAz.mp4" width="100%" controls></video>
 
 ## ✨ Возможности
 
