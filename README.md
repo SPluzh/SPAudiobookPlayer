@@ -17,9 +17,7 @@
 
 Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with an intuitive interface and robust functionality.
 
-
-<video src="attachments/SP_Audiobook_Player_lpfBcdlMAz.mp4" width="100%" controls></video>
-
+![](attachments/SP_Audiobook_Player_lpfBcdlMAz.gif)
 
 
 ## ✨ Features
