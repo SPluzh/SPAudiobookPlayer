@@ -538,6 +538,28 @@ class MultiLineDelegate(QStyledItemDelegate):
         """Draw a folder item with icon and display name"""
         painter.save()
         
+        # Active folder indicator: Draw accent bar if playing_path is within this folder
+        folder_path = index.data(Qt.ItemDataRole.UserRole)
+        if self.playing_path and folder_path:
+            is_active = False
+            # Normalize for comparison
+            p_path = str(self.playing_path).replace('\\', '/')
+            f_path = str(folder_path).replace('\\', '/')
+            
+            if p_path.startswith(f_path):
+                # Ensure it's a subpath or identical
+                if len(p_path) == len(f_path) or p_path[len(f_path)] == '/':
+                    is_active = True
+            
+            if is_active:
+                _, accent_color = self._get_style('delegate_accent')
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(accent_color)
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                # Draw rounded bar on the left edge with a small vertical margin for better visibility of rounding
+                bar_rect = QRectF(float(option.rect.left() + 2), float(option.rect.top() + 4), 3.0, float(option.rect.height() - 8))
+                painter.drawRoundedRect(bar_rect, 2, 2)
+
         font, color = self._get_style('delegate_folder')
         painter.setFont(font)
         painter.setPen(color)
@@ -1264,7 +1286,7 @@ class LibraryWidget(QWidget):
             self.config.get('audiobook_icon_size', 100),
             self.config.get('audiobook_icon_size', 100)
         ))
-        self.tree.setIndentation(20)
+        self.tree.setIndentation(12)
         self.tree.itemDoubleClicked.connect(self.on_item_double_clicked)
         self.tree.favorite_clicked.connect(self.on_tree_favorite_clicked)
         self.tree.description_requested.connect(self.show_description_dialog)

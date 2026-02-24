@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.7]
+- **UI**: Implemented **Active Folder Indicator** in the library:
+    - Folders containing the currently playing audiobook now display an accent pill-colored bar on the left.
+
 ## [1.5.6]
 - **Bookmarks**: Added display of bookmark markers on the progress bar.
 
