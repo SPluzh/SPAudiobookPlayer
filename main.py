@@ -1438,25 +1438,21 @@ class AudiobookPlayerWindow(QMainWindow):
                                 trf("library.delete_error", error=str(e)))
 
     def apply_blur(self):
-        """Increment blur request counter and apply graphics effect to central widget"""
+        """Increment blur request counter and apply graphics effect to the entire window"""
         self._blur_count += 1
         if self._blur_count == 1:
             if not self._blur_effect:
                 self._blur_effect = QGraphicsBlurEffect()
-                self._blur_effect.setBlurRadius(15)
+                self._blur_effect.setBlurRadius(5)
             
-            # Apply to central widget instead of QMainWindow to avoid native window conflicts
-            central = self.centralWidget()
-            if central:
-                central.setGraphicsEffect(self._blur_effect)
+            # Apply to the entire window (self) instead of centralWidget to include menu bar and status bar
+            self.setGraphicsEffect(self._blur_effect)
 
     def remove_blur(self):
         """Decrement blur request counter and remove graphics effect if zero"""
         self._blur_count = max(0, self._blur_count - 1)
         if self._blur_count == 0:
-            central = self.centralWidget()
-            if central:
-                central.setGraphicsEffect(None)
+            self.setGraphicsEffect(None)
             self._blur_effect = None
 
     def show_about(self):
