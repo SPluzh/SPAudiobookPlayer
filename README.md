@@ -37,7 +37,11 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Cover art extraction**: Automatically extracts and displays embedded album art
 - **Search functionality**: Find audiobooks by title, author, or narrator
 - **Library filters**: Quick access to recently added, started, and finished books
-- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
+- **Favorites**: Mark books for quick access
+- **Metadata Editor**: Edit book info directly in the app
+- **Tag System**: Organize library with custom tags
+- **Folder Merging**: Merge multiple folders into a single audiobook
+- **Drag & Drop**: Easily add books by dragging them into the library
 
 ### 📊 Progress Tracking
 - **Per-book progress**: Automatically saves playback position for each audiobook
@@ -51,8 +55,7 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Modern dark theme**: Elegant and eye-friendly interface
 - **Dual-pane layout**: Library browser on the left, player controls on the right
 - **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
-- **Bilingual support**: Full interface localization (English/Russian)
-- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
+- **Multilingual support**: Full interface localization (12 languages: AR, DE, EN, ES, FR, HI, JA, KO, PT, RU, TR, ZH)
 
 
 ### 🎛️ Smart Audio Processing
@@ -112,6 +115,16 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 3. Click **"Scan library"** to index your audiobooks (missing ffmpeg will be downloaded automatically)
 4. (Optional) Install ffprobe via **"Check/Update ffprobe"** for better metadata support
 
+   > [!TIP]
+   > If the automatic download fails, you can download `ffmpeg-release-essentials.zip` from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract `ffmpeg.exe` and `ffprobe.exe`, and place them as follows:
+   > ```text
+   > SP Audiobook Player/
+   > ├── SP Audiobook Player.exe
+   > └── _internal/resources/bin/
+   >     ├── ffmpeg.exe
+   >     └── ffprobe.exe
+   > ```
+
 ### Playing Audiobooks
 - **Double-click** on an audiobook to start playing
 - **Right-click** for context menu options (Play, Mark as Read, Open Folder)
@@ -164,6 +177,9 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - **Auto-updater**: Keeps your application up to date with the latest features and fixes.
 
 
+<details>
+<summary>Building from Source</summary>
+
 ## 📦 Building from Source
 
 To create a standalone executable:
@@ -179,7 +195,9 @@ To create a standalone executable:
    __build.bat
    ```
 
+
 3. The executable will be created in `_build_/dist/`
+</details>
 
 
 
@@ -226,7 +244,11 @@ To create a standalone executable:
 - **Извлечение обложек**: Автоматическое извлечение и отображение встроенных обложек
 - **Функция поиска**: Поиск аудиокниг по названию, автору или чтецу
 - **Фильтры библиотеки**: Быстрый доступ к недавно добавленным, начатым и завершённым книгам
-- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink"
+- **Избранное**: Возможность отмечать книги для быстрого доступа
+- **Редактор метаданных**: Редактирование информации о книгах прямо в приложении
+- **Система тегов**: Организация библиотеки с помощью пользовательских тегов
+- **Объединение папок**: Возможность объединять несколько папок в одну аудиокнигу
+- **Drag & Drop**: Добавление книг простым перетаскиванием в окно плеера
 
 ### 📊 Отслеживание прогресса
 - **Прогресс для каждой книги**: Автоматическое сохранение позиции воспроизведения
@@ -240,9 +262,7 @@ To create a standalone executable:
 - **Современная тёмная тема**: Элегантный и приятный для глаз интерфейс
 - **Двухпанельная компоновка**: Браузер библиотеки слева, управление плеером справа
 - **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
-- **Двуязычная поддержка**: Полная локализация интерфейса (английский/русский)
-- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink (Hatsune Miku)"
-
+- **Многоязычность**: Полная локализация интерфейса (12 языков: AR, DE, EN, ES, FR, HI, JA, KO, PT, RU, TR, ZH)
 
 
 ### 🎛️ Умная обработка звука
@@ -302,6 +322,16 @@ To create a standalone executable:
 3. Нажмите **"Сканировать библиотеку"** для индексации аудиокниг (недостающий ffmpeg будет скачан автоматически)
 4. (Опционально) Установите ffprobe через **"Проверить/Обновить ffprobe"** для лучшей поддержки метаданных
 
+   > [!TIP]
+   > Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
+   > ```text
+   > SP Audiobook Player/
+   > ├── SP Audiobook Player.exe
+   > └── _internal/resources/bin/
+   >     ├── ffmpeg.exe
+   >     └── ffprobe.exe
+   > ```
+
 ### Воспроизведение аудиокниг
 - **Двойной клик** по аудиокниге для начала воспроизведения
 - **Правый клик** для контекстного меню (Воспроизвести, Отметить прочитанным, Открыть папку)
@@ -351,6 +381,9 @@ Audiobooks/
 - **Авто-обновление**: Встроенный механизм проверки и установки обновлений приложения.
 
 
+<details>
+<summary>Сборка из исходников</summary>
+
 ## 📦 Сборка из исходников
 
 Для создания автономного исполняемого файла:
@@ -366,7 +399,9 @@ Audiobooks/
    __build.bat
    ```
 
+
 3. Исполняемый файл будет создан в `_build_/dist/`
+</details>
 
 
 ## 🙏 Благодарности
