@@ -338,7 +338,7 @@ __build.bat
 ```
 Исполняемый файл будет создан в `_build_/dist/`.
 
-> [!TIP]
+> [!NOTE]
 > Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
 > - **Запуск из исходников**: `resources/bin/`
 > - **Для собранной версии**:
@@ -359,7 +359,7 @@ __build.bat
 3. Нажмите **"Сканировать библиотеку"** для индексации аудиокниг (недостающий ffmpeg будет скачан автоматически)
 4. (Опционально) Установите ffprobe через **"Проверить/Обновить ffprobe"** для лучшей поддержки метаданных
 
-   > [!TIP]
+   > [!NOTE]
    > Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
    > ```text
    > SP Audiobook Player/
