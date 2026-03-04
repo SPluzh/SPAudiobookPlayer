@@ -33,11 +33,10 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Automatic scanning**: Recursively scans directories for audiobooks
 - **Smart organization**: Automatically groups files into audiobooks by folder
 - **Tag support**: Reads author, title, narrator from ID3 tags (MP3) and other metadata
-- **Encoding fix**: Handles various tag encodings, including Cyrillic
 - **Cover art extraction**: Automatically extracts and displays embedded album art
 - **Search functionality**: Find audiobooks by title, author, or narrator
 - **Library filters**: Quick access to recently added, started, and finished books
-- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
+- **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
 
 ### 📊 Progress Tracking
 - **Per-book progress**: Automatically saves playback position for each audiobook
@@ -45,14 +44,6 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Status filtering**: Filter by status (Not Started, In Progress, Completed)
 - **Session restoration**: Resumes the last played audiobook on startup
 - **Folder expansion state**: Remembers which folders were expanded in the library
-
-### 🎨 User Interface
-- **Modern dark theme**: Elegant and eye-friendly interface
-- **Dual-pane layout**: Library browser on the left, player controls on the right
-- **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
-- **Bilingual support**: Full interface localization (English/Russian)
-- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
-
 
 ### 🎛️ Smart Audio Processing
 - **Smart Auto-Rewind**: Automatically rewinds after a pause to help you regain context (starts at 5s, adds 2s per minute of pause, up to 30s max).
@@ -222,7 +213,7 @@ To create a standalone executable:
 - **Извлечение обложек**: Автоматическое извлечение и отображение встроенных обложек
 - **Функция поиска**: Поиск аудиокниг по названию, автору или чтецу
 - **Фильтры библиотеки**: Быстрый доступ к недавно добавленным, начатым и завершённым книгам
-- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink"
+- **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
 
 ### 📊 Отслеживание прогресса
 - **Прогресс для каждой книги**: Автоматическое сохранение позиции воспроизведения
@@ -230,15 +221,6 @@ To create a standalone executable:
 - **Фильтрация по статусу**: Фильтр по статусу (Не начато, В процессе, Завершено)
 - **Восстановление сессии**: Возобновление последней прослушанной книги при запуске
 - **Состояние раскрытия папок**: Запоминает, какие папки были раскрыты в библиотеке
-
-### 🎨 Интерфейс
-- **Современная тёмная тема**: Элегантный и приятный для глаз интерфейс
-- **Двухпанельная компоновка**: Браузер библиотеки слева, управление плеером справа
-- **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
-- **Двуязычная поддержка**: Полная локализация интерфейса (английский/русский)
-- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink (Hatsune Miku)"
-
-
 
 ### 🎛️ Умная обработка звука
 - **Smart Auto-Rewind**: Автоматическая перемотка назад после паузы для восстановления контекста (Базово 5с + 2с за минуту паузы, макс. 30с).
