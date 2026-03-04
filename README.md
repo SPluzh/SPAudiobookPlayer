@@ -34,13 +34,10 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Automatic scanning**: Recursively scans directories for audiobooks
 - **Smart organization**: Automatically groups files into audiobooks by folder
 - **Tag support**: Reads author, title, narrator from ID3 tags (MP3) and other metadata
-- **Encoding fix**: Handles various tag encodings, including Cyrillic
 - **Cover art extraction**: Automatically extracts and displays embedded album art
 - **Search functionality**: Find audiobooks by title, author, or narrator
 - **Library filters**: Quick access to recently added, started, and finished books
-- **Favorites**: Mark your favorite books for quick access
-- **Metadata Editor**: Edit book title, author, and narrator directly in the app
-- **Tag System**: Organize and filter your library using custom tags
+- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
 
 ### 📊 Progress Tracking
 - **Per-book progress**: Automatically saves playback position for each audiobook
@@ -54,7 +51,8 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Modern dark theme**: Elegant and eye-friendly interface
 - **Dual-pane layout**: Library browser on the left, player controls on the right
 - **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
-- **Multilingual support**: Full interface localization (12 languages: AR, DE, EN, ES, FR, HI, JA, KO, PT, RU, TR, ZH)
+- **Bilingual support**: Full interface localization (English/Russian)
+- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
 
 
 ### 🎛️ Smart Audio Processing
@@ -228,9 +226,7 @@ To create a standalone executable:
 - **Извлечение обложек**: Автоматическое извлечение и отображение встроенных обложек
 - **Функция поиска**: Поиск аудиокниг по названию, автору или чтецу
 - **Фильтры библиотеки**: Быстрый доступ к недавно добавленным, начатым и завершённым книгам
-- **Избранное**: Возможность отмечать любимые книги для быстрого доступа
-- **Редактор метаданных**: Редактирование названия, автора и чтеца прямо в приложении
-- **Система тегов**: Организация и фильтрация библиотеки с помощью пользовательских тегов
+- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink"
 
 ### 📊 Отслеживание прогресса
 - **Прогресс для каждой книги**: Автоматическое сохранение позиции воспроизведения
@@ -244,8 +240,8 @@ To create a standalone executable:
 - **Современная тёмная тема**: Элегантный и приятный для глаз интерфейс
 - **Двухпанельная компоновка**: Браузер библиотеки слева, управление плеером справа
 - **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
-- **Многоязычность**: Полная локализация интерфейса (12 языков: AR, DE, EN, ES, FR, HI, JA, KO, PT, RU, TR, ZH)
-- **Темы оформления**: Выбор между темами "Dark Mint"
+- **Двуязычная поддержка**: Полная локализация интерфейса (английский/русский)
+- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink (Hatsune Miku)"
 
 
 
