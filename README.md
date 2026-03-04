@@ -90,22 +90,46 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 2. Extract the archive to your desired location
 3. Run `SP Audiobook Player.exe`
 
-### Option 2: Run from Source
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/SPAudiobookPlayer.git
-   cd SPAudiobookPlayer
-   ```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+<details>
+<summary>💻 Run from Source & Building</summary>
 
-3. Run the application:
-   ```bash
-   python main.py
-   ```
+### Prerequisites
+- Python 3.8+
+- Git
+
+### 1. Clone & Setup
+```bash
+git clone https://github.com/yourusername/SPAudiobookPlayer.git
+cd SPAudiobookPlayer
+pip install -r requirements.txt
+```
+
+### 2. Run Application
+```bash
+python main.py
+```
+
+### 3. Build Executable (Optional)
+To create a standalone EXE using PyInstaller:
+```bash
+cd _build_
+__build.bat
+```
+The executable will be created in `_build_/dist/`.
+
+> [!TIP]
+> If the automatic download fails, you can download `ffmpeg-release-essentials.zip` from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract `ffmpeg.exe` and `ffprobe.exe`, and place them as follows:
+> - **Running from source**: `resources/bin/`
+> - **Using the built version**:
+>   ```text
+>   SP Audiobook Player/
+>   ├── SP Audiobook Player.exe
+>   └── _internal/resources/bin/
+>       ├── ffmpeg.exe
+>       └── ffprobe.exe
+>   ```
+</details>
 
 ## 📘 Usage
 
@@ -177,27 +201,6 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - **Auto-updater**: Keeps your application up to date with the latest features and fixes.
 
 
-<details>
-<summary>Building from Source</summary>
-
-## 📦 Building from Source
-
-To create a standalone executable:
-
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Run the build script:
-   ```bash
-   cd _build_
-   __build.bat
-   ```
-
-
-3. The executable will be created in `_build_/dist/`
-</details>
 
 
 
@@ -297,22 +300,46 @@ To create a standalone executable:
 2. Распакуйте архив в нужное место
 3. Запустите `SP Audiobook Player.exe`
 
-### Вариант 2: Запуск из исходников
-1. Клонируйте репозиторий:
-   ```bash
-   git clone https://github.com/yourusername/SPAudiobookPlayer.git
-   cd SPAudiobookPlayer
-   ```
 
-2. Установите зависимости:
-   ```bash
-   pip install -r requirements.txt
-   ```
+<details>
+<summary>💻 Запуск из исходников и сборка</summary>
 
-3. Запустите приложение:
-   ```bash
-   python main.py
-   ```
+### Предварительные условия
+- Python 3.8+
+- Git
+
+### 1. Клонирование и настройка
+```bash
+git clone https://github.com/yourusername/SPAudiobookPlayer.git
+cd SPAudiobookPlayer
+pip install -r requirements.txt
+```
+
+### 2. Запуск приложения
+```bash
+python main.py
+```
+
+### 3. Сборка EXE (опционально)
+Для создания автономного исполняемого файла:
+```bash
+cd _build_
+__build.bat
+```
+Исполняемый файл будет создан в `_build_/dist/`.
+
+> [!TIP]
+> Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
+> - **Запуск из исходников**: `resources/bin/`
+> - **Для собранной версии**:
+>   ```text
+>   SP Audiobook Player/
+>   ├── SP Audiobook Player.exe
+>   └── _internal/resources/bin/
+>       ├── ffmpeg.exe
+>       └── ffprobe.exe
+>   ```
+</details>
 
 ## 📘 Использование
 
@@ -381,27 +408,6 @@ Audiobooks/
 - **Авто-обновление**: Встроенный механизм проверки и установки обновлений приложения.
 
 
-<details>
-<summary>Сборка из исходников</summary>
-
-## 📦 Сборка из исходников
-
-Для создания автономного исполняемого файла:
-
-1. Установите зависимости:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Запустите скрипт сборки:
-   ```bash
-   cd _build_
-   __build.bat
-   ```
-
-
-3. Исполняемый файл будет создан в `_build_/dist/`
-</details>
 
 
 ## 🙏 Благодарности
