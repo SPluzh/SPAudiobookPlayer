@@ -143,7 +143,7 @@ The executable will be created in `_build_/dist/`.
 3. Click **"Scan library"** to index your audiobooks (missing ffmpeg will be downloaded automatically)
 4. (Optional) Install ffprobe via **"Check/Update ffprobe"** for better metadata support
 
-   > [!TIP]
+   > [!NOTE]
    > If the automatic download fails, you can download `ffmpeg-release-essentials.zip` from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract `ffmpeg.exe` and `ffprobe.exe`, and place them as follows:
    > ```text
    > SP Audiobook Player/
