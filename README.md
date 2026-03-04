@@ -69,14 +69,18 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 ### ⌨️ Keyboard Shortcuts
 | Action | Key |
 | :--- | :--- |
-| **Play / Pause** | `Space` or `Media Play` |
+| **Play / Pause** | `Space` or `Media Play/Pause` |
+| **Stop** | `Media Stop` |
 | **Previous / Next File** | `[` / `]` |
-| **Rewind / Forward 10s** | `Left` / `Right` |
+| **Rewind / Forward 10s** | `Left` / `Right` or `Media Prev` / `Next` |
 | **Rewind / Forward 60s** | `Shift` + `Left` / `Right` |
 | **Volume +/- 5%** | `Shift` + `Up` / `Down` |
 | **Speed +/- 0.1x** | `Up` / `Down` |
 | **Scan Library** | `Ctrl` + `R` |
 | **Settings** | `Ctrl` + `,` |
+
+> [!NOTE]
+> Multimedia keys (`Play`, `Pause`, `Stop`, `Next`, `Prev`) are **global** and work even when the application is minimized or not in focus.
 
 
 ## 🚀 Installation
@@ -281,14 +285,18 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 ### ⌨️ Горячие клавиши
 | Действие | Клавиша |
 | :--- | :--- |
-| **Воспр. / Пауза** | `Пробел` или `Media Play` |
+| **Воспр. / Пауза** | `Пробел` или `Media Play/Pause` |
+| **Стоп** | `Media Stop` |
 | **Пред. / След. файл** | `[` / `]` |
-| **Назад / Вперёд 10с** | `Влево` / `Вправо` |
+| **Назад / Вперёд 10с** | `Влево` / `Вправо` или `Media Prev` / `Next` |
 | **Назад / Вперёд 60с** | `Shift` + `Влево` / `Вправо` |
 | **Громкость +/- 5%** | `Shift` + `Вверх` / `Вниз` |
 | **Скорость +/- 0.1x** | `Вверх` / `Вниз` |
 | **Сканировать** | `Ctrl` + `R` |
 | **Настройки** | `Ctrl` + `,` |
+
+> [!NOTE]
+> Мультимедийные клавиши (`Play`, `Pause`, `Stop`, `Next`, `Prev`) являются **глобальными** и работают, даже когда приложение свёрнуто или находится не в фокусе.
 
 
 ## 🚀 Установка
