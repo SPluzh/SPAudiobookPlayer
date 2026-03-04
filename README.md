@@ -143,15 +143,15 @@ The executable will be created in `_build_/dist/`.
 3. Click **"Scan library"** to index your audiobooks (missing ffmpeg will be downloaded automatically)
 4. (Optional) Install ffprobe via **"Check/Update ffprobe"** for better metadata support
 
-   > [!NOTE]
-   > If the automatic download fails, you can download `ffmpeg-release-essentials.zip` from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract `ffmpeg.exe` and `ffprobe.exe`, and place them as follows:
-   > ```text
-   > SP Audiobook Player/
-   > ├── SP Audiobook Player.exe
-   > └── _internal/resources/bin/
-   >     ├── ffmpeg.exe
-   >     └── ffprobe.exe
-   > ```
+[!NOTE]
+If the automatic download fails, you can download `ffmpeg-release-essentials.zip` from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract `ffmpeg.exe` and `ffprobe.exe`, and place them as follows:
+```text
+SP Audiobook Player/
+├── SP Audiobook Player.exe
+└── _internal/resources/bin/
+    ├── ffmpeg.exe
+    └── ffprobe.exe
+```
 
 ### Playing Audiobooks
 - **Double-click** on an audiobook to start playing
@@ -338,17 +338,17 @@ __build.bat
 ```
 Исполняемый файл будет создан в `_build_/dist/`.
 
-> [!NOTE]
-> Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
-> - **Запуск из исходников**: `resources/bin/`
-> - **Для собранной версии**:
->   ```text
->   SP Audiobook Player/
->   ├── SP Audiobook Player.exe
->   └── _internal/resources/bin/
->       ├── ffmpeg.exe
->       └── ffprobe.exe
->   ```
+[!NOTE]
+Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
+- **Запуск из исходников**: `resources/bin/`
+- **Для собранной версии**:
+```text
+SP Audiobook Player/
+├── SP Audiobook Player.exe
+└── _internal/resources/bin/
+    ├── ffmpeg.exe
+    └── ffprobe.exe
+```
 </details>
 
 ## 📘 Использование
