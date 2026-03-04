@@ -28,6 +28,7 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Playback speed control**: Adjust from 0.5× to 3.0×
 - **Quick navigation**: Skip tracks, rewind/forward 10 or 60 seconds
 - **Windows taskbar integration**: Playback controls directly from the taskbar
+- **Visualizer**: Real-time audio spectrum visualization on the play button
 
 ### 📚 Library Management
 - **Automatic scanning**: Recursively scans directories for audiobooks
@@ -37,21 +38,23 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Cover art extraction**: Automatically extracts and displays embedded album art
 - **Search functionality**: Find audiobooks by title, author, or narrator
 - **Library filters**: Quick access to recently added, started, and finished books
-- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
+- **Favorites**: Mark your favorite books for quick access
+- **Metadata Editor**: Edit book title, author, and narrator directly in the app
+- **Tag System**: Organize and filter your library using custom tags
 
 ### 📊 Progress Tracking
 - **Per-book progress**: Automatically saves playback position for each audiobook
 - **Visual indicators**: Progress bars on cover thumbnails
 - **Status filtering**: Filter by status (Not Started, In Progress, Completed)
 - **Session restoration**: Resumes the last played audiobook on startup
+- **Bookmarks**: Create and manage bookmarks with visual markers on the progress bar
 - **Folder expansion state**: Remembers which folders were expanded in the library
 
 ### 🎨 User Interface
 - **Modern dark theme**: Elegant and eye-friendly interface
 - **Dual-pane layout**: Library browser on the left, player controls on the right
 - **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
-- **Bilingual support**: Full interface localization (English/Russian)
-- **Themes**: Choose between "Dark Mint" and "Dark Pink" styles
+- **Multilingual support**: Full interface localization (12 languages: AR, DE, EN, ES, FR, HI, JA, KO, PT, RU, TR, ZH)
 
 
 ### 🎛️ Smart Audio Processing
@@ -157,8 +160,10 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - **Library Path**: Change your audiobook library location.
 - **Rescan Library**: Manually trigger a library scan.
 - **Tools**:
+  - **Opus Converter**: Built-in tool to optimize library size by converting files to Opus format.
   - **FFmpeg/FFprobe**: Check status and download updates.
   - **Reset Data**: Clear all library data and covers (useful for clean rescans).
+- **Auto-updater**: Keeps your application up to date with the latest features and fixes.
 
 
 ## 📦 Building from Source
@@ -213,6 +218,7 @@ To create a standalone executable:
 - **Управление скоростью**: Регулировка от 0,5× до 3,0×
 - **Быстрая навигация**: Переключение треков, перемотка на 10 или 60 секунд
 - **Интеграция с Windows**: Кнопки управления прямо на панели задач
+- **Визуализатор**: Визуализация спектра аудио в реальном времени на кнопке воспроизведения
 
 ### 📚 Управление библиотекой
 - **Автоматическое сканирование**: Рекурсивный поиск аудиокниг в папках
@@ -222,21 +228,24 @@ To create a standalone executable:
 - **Извлечение обложек**: Автоматическое извлечение и отображение встроенных обложек
 - **Функция поиска**: Поиск аудиокниг по названию, автору или чтецу
 - **Фильтры библиотеки**: Быстрый доступ к недавно добавленным, начатым и завершённым книгам
-- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink"
+- **Избранное**: Возможность отмечать любимые книги для быстрого доступа
+- **Редактор метаданных**: Редактирование названия, автора и чтеца прямо в приложении
+- **Система тегов**: Организация и фильтрация библиотеки с помощью пользовательских тегов
 
 ### 📊 Отслеживание прогресса
 - **Прогресс для каждой книги**: Автоматическое сохранение позиции воспроизведения
 - **Визуальные индикаторы**: Полосы прогресса на миниатюрах обложек
 - **Фильтрация по статусу**: Фильтр по статусу (Не начато, В процессе, Завершено)
 - **Восстановление сессии**: Возобновление последней прослушанной книги при запуске
+- **Закладки**: Создание и управление закладками с визуальными метками на шкале прогресса
 - **Состояние раскрытия папок**: Запоминает, какие папки были раскрыты в библиотеке
 
 ### 🎨 Интерфейс
 - **Современная тёмная тема**: Элегантный и приятный для глаз интерфейс
 - **Двухпанельная компоновка**: Браузер библиотеки слева, управление плеером справа
 - **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
-- **Двуязычная поддержка**: Полная локализация интерфейса (английский/русский)
-- **Темы оформления**: Выбор между темами "Dark Mint" и "Dark Pink (Hatsune Miku)"
+- **Многоязычность**: Полная локализация интерфейса (12 языков: AR, DE, EN, ES, FR, HI, JA, KO, PT, RU, TR, ZH)
+- **Темы оформления**: Выбор между темами "Dark Mint"
 
 
 
@@ -340,8 +349,10 @@ Audiobooks/
 - **Путь к библиотеке**: Изменение расположения вашей библиотеки аудиокниг.
 - **Сканировать библиотеку**: Ручной запуск сканирования.
 - **Инструменты**:
+  - **Конвертер в Opus**: Встроенный инструмент для оптимизации размера библиотеки путем конвертации файлов в формат Opus.
   - **FFmpeg/FFprobe**: Проверка статуса и обновление.
   - **Сброс данных**: Очистка всей базы данных и обложек (полезно для чистого пересканирования).
+- **Авто-обновление**: Встроенный механизм проверки и установки обновлений приложения.
 
 
 ## 📦 Сборка из исходников
