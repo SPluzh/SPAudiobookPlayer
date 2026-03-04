@@ -122,7 +122,6 @@ __build.bat
 ```
 The executable will be created in `_build_/dist/`.
 
-> [!TIP]
 > If the automatic download fails, you can download `ffmpeg-release-essentials.zip` from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract `ffmpeg.exe` and `ffprobe.exe`, and place them as follows:
 > - **Running from source**: `resources/bin/`
 > - **Using the built version**:
@@ -143,15 +142,14 @@ The executable will be created in `_build_/dist/`.
 3. Click **"Scan library"** to index your audiobooks (missing ffmpeg will be downloaded automatically)
 4. (Optional) Install ffprobe via **"Check/Update ffprobe"** for better metadata support
 
-[!NOTE]
-If the automatic download fails, you can download `ffmpeg-release-essentials.zip` from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract `ffmpeg.exe` and `ffprobe.exe`, and place them as follows:
-```text
-SP Audiobook Player/
-├── SP Audiobook Player.exe
-└── _internal/resources/bin/
-    ├── ffmpeg.exe
-    └── ffprobe.exe
-```
+> If the automatic download fails, you can download `ffmpeg-release-essentials.zip` from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), extract `ffmpeg.exe` and `ffprobe.exe`, and place them as follows:
+> ```text
+> SP Audiobook Player/
+> ├── SP Audiobook Player.exe
+> └── _internal/resources/bin/
+>     ├── ffmpeg.exe
+>     └── ffprobe.exe
+> ```
 
 ### Playing Audiobooks
 - **Double-click** on an audiobook to start playing
@@ -192,7 +190,6 @@ Audiobooks/
         └── file.mp3
 ```
 
-
 The scanner will automatically find all audiobooks regardless of nesting depth.
 
 ### ⚙️ Settings
@@ -203,10 +200,6 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
   - **FFmpeg/FFprobe**: Check status and download updates.
   - **Reset Data**: Clear all library data and covers (useful for clean rescans).
 - **Auto-updater**: Keeps your application up to date with the latest features and fixes.
-
-
-
-
 
 ## 🙏 Acknowledgments
 
@@ -338,7 +331,6 @@ __build.bat
 ```
 Исполняемый файл будет создан в `_build_/dist/`.
 
-> [!NOTE]
 > Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
 > - **Запуск из исходников**: `resources/bin/`
 > - **Для собранной версии**:
@@ -359,15 +351,14 @@ __build.bat
 3. Нажмите **"Сканировать библиотеку"** для индексации аудиокниг (недостающий ffmpeg будет скачан автоматически)
 4. (Опционально) Установите ffprobe через **"Проверить/Обновить ffprobe"** для лучшей поддержки метаданных
 
-   > [!NOTE]
-   > Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
-   > ```text
-   > SP Audiobook Player/
-   > ├── SP Audiobook Player.exe
-   > └── _internal/resources/bin/
-   >     ├── ffmpeg.exe
-   >     └── ffprobe.exe
-   > ```
+> Если автоматическая загрузка не удалась, вы можете скачать `ffmpeg-release-essentials.zip` с сайта [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), извлечь `ffmpeg.exe` и `ffprobe.exe` и разместить их следующим образом:
+> ```text
+> SP Audiobook Player/
+> ├── SP Audiobook Player.exe
+> └── _internal/resources/bin/
+>     ├── ffmpeg.exe
+>     └── ffprobe.exe
+> ```
 
 ### Воспроизведение аудиокниг
 - **Двойной клик** по аудиокниге для начала воспроизведения
@@ -416,9 +407,6 @@ Audiobooks/
   - **FFmpeg/FFprobe**: Проверка статуса и обновление.
   - **Сброс данных**: Очистка всей базы данных и обложек (полезно для чистого пересканирования).
 - **Авто-обновление**: Встроенный механизм проверки и установки обновлений приложения.
-
-
-
 
 ## 🙏 Благодарности
 
