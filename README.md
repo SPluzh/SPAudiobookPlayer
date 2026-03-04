@@ -210,7 +210,7 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - **PyQt6**: Modern GUI framework
 - **Mutagen**: Audio metadata reading
 - **FFmpeg/ffprobe**: Advanced metadata extraction
-- **RNNoise**: Intelligent noise suppression (denoiser)
+- **RNNoise**: Intelligent noise suppression
 - **BASS_VST**: VST effects support for BASS
 
 ---
@@ -418,7 +418,7 @@ Audiobooks/
 - **PyQt6**: Современный фреймворк для GUI
 - **Mutagen**: Чтение метаданных аудио
 - **FFmpeg/ffprobe**: Расширенное извлечение метаданных
-- **RNNoise**: Интеллектуальное шумоподавление (денойзер)
+- **RNNoise**: Интеллектуальное шумоподавление
 - **BASS_VST**: Поддержка VST-эффектов для BASS
 
 ---
