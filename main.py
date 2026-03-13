@@ -29,6 +29,7 @@ from database import DatabaseManager
 from styles import DARK_STYLE, DARK_QSS_PATH, StyleManager
 from taskbar_progress import TaskbarProgress, TaskbarThumbnailButtons
 import ctypes
+from ctypes import wintypes
 from hotkeys import HotKeyManager
 from player import PlayerWidget, PlaybackController
 
