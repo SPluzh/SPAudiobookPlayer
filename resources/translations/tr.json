@@ -316,6 +316,7 @@
     "supported_formats": "Desteklenen formatlar:",
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE desteği (bölüm işaretleri ve meta veriler)",
     "close": "Kapat",
+    "github": "GitHub",
     "hotkeys_title": "Kısayol Tuşları:",
     "hotkeys_list": "Boşluk — Oynat / Duraklat\n[ ve ] — Önceki / Sonraki Dosya\nSol / Sağ — 10sn Geri / İleri\nShift + Sol / Sağ — 60sn Geri / İleri\nYukarı / Aşağı — Oynatma Hızı (±0.1x)\nShift + Yukarı / Aşağı — Ses Seviyesi (±5%)"
   },

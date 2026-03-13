@@ -1005,6 +1005,17 @@ QPushButton#aboutCloseBtn {
     max-width: 120px;
 }
 
+QLabel#aboutGithubLink {
+    color: @accent;
+    font-weight: bold;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+QLabel#aboutGithubLink:hover {
+    color: white;
+}
+
 QPushButton#aboutCloseBtn:hover {
     background-color: @bg-hover;
 }

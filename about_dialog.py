@@ -1,7 +1,8 @@
 import sys
 from pathlib import Path
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QFrame, QLabel, QPushButton, QApplication
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QFrame, QLabel, QPushButton, QApplication, QHBoxLayout
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QIcon
 from translations import tr, trf
 from utils import get_base_path
 
@@ -54,16 +55,42 @@ class AboutDialog(QDialog):
         title.setObjectName("aboutTitle")
         container_layout.addWidget(title)
         
+        # Version and GitHub Link Layout
+        version_github_layout = QHBoxLayout()
+        version_github_layout.setContentsMargins(0, 0, 0, 0)
+        version_github_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
         # Version
         version_text = self.get_app_version()
-        # Fallback if translation fails
         version_str = trf('about.version', version=version_text)
         if not version_str or version_str == 'about.version':
              version_str = f"Version: {version_text}"
              
         version = QLabel(version_str)
         version.setObjectName("aboutVersion")
-        container_layout.addWidget(version)
+        version_github_layout.addWidget(version)
+        
+        version_github_layout.addSpacing(2)
+        
+        # GitHub Link Group
+        github_link_group = QHBoxLayout()
+        github_link_group.setSpacing(5)
+        
+        # Icon Label
+        github_icon_label = QLabel()
+        github_icon_path = str(get_base_path() / "resources" / "icons" / "github.png")
+        github_icon_label.setPixmap(QIcon(github_icon_path).pixmap(16, 16))
+        github_link_group.addWidget(github_icon_label)
+        
+        # Text Label
+        github_text_label = QLabel(tr('about.github', 'GitHub'))
+        github_text_label.setObjectName("aboutGithubLink")
+        github_text_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        github_text_label.mousePressEvent = lambda e: self.open_github()
+        github_link_group.addWidget(github_text_label)
+        
+        version_github_layout.addLayout(github_link_group)
+        container_layout.addLayout(version_github_layout)
         
         # Separator
         line = QFrame()
@@ -123,3 +150,7 @@ class AboutDialog(QDialog):
             self_geo = self.frameGeometry()
             self_geo.moveCenter(screen.center())
             self.move(self_geo.topLeft())
+
+    def open_github(self):
+        """Open project GitHub repository in default browser"""
+        QDesktopServices.openUrl(QUrl("https://github.com/SPluzh/SPAudiobookPlayer"))
