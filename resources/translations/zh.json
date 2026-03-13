@@ -20,7 +20,8 @@
     "language": "语言",
     "about": "关于",
     "check_updates": "检查更新",
-    "visualizer": "可视化器"
+    "visualizer": "可视化器",
+    "always_on_top": "置顶"
   },
   "library": {
     "search_placeholder": "按标题、作者、朗读者搜索...",

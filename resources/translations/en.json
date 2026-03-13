@@ -20,7 +20,8 @@
     "theme": "Theme",
     "about": "About",
     "check_updates": "Check for Updates",
-    "visualizer": "Visualizer"
+    "visualizer": "Visualizer",
+    "always_on_top": "Always on Top"
   },
   "bookmarks": {
     "edit_title": "Edit Bookmark",

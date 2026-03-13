@@ -20,7 +20,8 @@
     "language": "الغة",
     "about": "حول",
     "check_updates": "التحقق من وجود تحديثات",
-    "visualizer": "عارض مرئي"
+    "visualizer": "عارض مرئي",
+    "always_on_top": "دائماً في المقدمة"
   },
   "library": {
     "search_placeholder": "بحث بالعنوان، المؤلف، الراوي...",

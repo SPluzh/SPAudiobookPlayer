@@ -20,7 +20,8 @@
     "language": "Idioma",
     "about": "Sobre",
     "check_updates": "Verificar atualizações",
-    "visualizer": "Visualizador"
+    "visualizer": "Visualizador",
+    "always_on_top": "Sempre no topo"
   },
   "library": {
     "search_placeholder": "Pesquisar por título, autor, narrador...",

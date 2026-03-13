@@ -86,6 +86,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_visualizer = True
         self.normal_geometry = None
         self.normal_splitter_state = None
+        self.always_on_top = False
         
         # Load user configurations and localization settings
         self.db_manager = DatabaseManager(self.db_file)
@@ -165,6 +166,9 @@ class AudiobookPlayerWindow(QMainWindow):
             self.resize(self.minimal_width, self.minimal_height)
         else:
             self.setMinimumSize(self.normal_min_width, self.normal_min_height)
+            
+        if self.always_on_top:
+            self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
             
         self.statusBar().showMessage(tr("status.load_library"))
         
@@ -371,6 +375,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.minimal_interface_action.triggered.connect(self.toggle_minimal_interface)
         view_menu.addAction(self.minimal_interface_action)
         
+        # Always on Top Toggle
+        self.always_on_top_action = QAction(tr("menu.always_on_top"), self)
+        self.always_on_top_action.setCheckable(True)
+        self.always_on_top_action.setChecked(self.always_on_top)
+        self.always_on_top_action.triggered.connect(self.toggle_always_on_top)
+        view_menu.addAction(self.always_on_top_action)
+        
         # Theme Selection
         theme_menu = view_menu.addMenu(tr("menu.theme"))
         self.theme_actions = {}
@@ -482,6 +493,17 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.splitter.restoreState(QByteArray.fromHex(self.normal_splitter_state.encode()))
             
         # Update settings
+        self.save_settings()
+
+    def toggle_always_on_top(self, enabled: bool):
+        """Toggle the 'Always on Top' window state using standard Qt methods"""
+        self.always_on_top = enabled
+        
+        # Changing window flags at runtime in Qt usually requires re-showing the window
+        # to ensure the desktop environment/window manager applies the change.
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, enabled)
+        self.show()
+        
         self.save_settings()
 
     def update_all_texts(self):
@@ -643,6 +665,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
         self.auto_check_updates = config.getboolean('Player', 'auto_check_updates', fallback=True)
         self.show_visualizer = config.getboolean('Player', 'show_visualizer', fallback=True)
+        self.always_on_top = config.getboolean('Display', 'always_on_top', fallback=False)
         
         # Audio Settings (Unified in [Audio])
         self.deesser_enabled = config.getboolean('Audio', 'deesser', fallback=config.getboolean('Player', 'deesser_enabled', fallback=False))
@@ -773,6 +796,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Display']['minimal_width'] = str(self.minimal_width)
         config['Display']['minimal_height'] = str(self.minimal_height)
         config['Display']['theme'] = self.current_theme
+        config['Display']['always_on_top'] = str(self.always_on_top)
         
         # Filesystem Path Configs
         if 'Paths' not in config: config['Paths'] = {}

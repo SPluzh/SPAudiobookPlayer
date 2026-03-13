@@ -20,7 +20,8 @@
     "language": "言語",
     "about": "このアプリについて",
     "check_updates": "アップデートを確認",
-    "visualizer": "ビジュアライザー"
+    "visualizer": "ビジュアライザー",
+    "always_on_top": "常に最前面に表示"
   },
   "library": {
     "search_placeholder": "タイトル、著者、ナレーターで検索...",

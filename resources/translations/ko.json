@@ -20,7 +20,8 @@
     "language": "언어",
     "about": "정보",
     "check_updates": "업데이트 확인",
-    "visualizer": "비주얼라이저"
+    "visualizer": "비주얼라이저",
+    "always_on_top": "항상 위"
   },
   "library": {
     "search_placeholder": "제목, 저자, 낭독자로 검색...",

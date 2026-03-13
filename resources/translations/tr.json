@@ -20,7 +20,8 @@
     "language": "Dil",
     "about": "Hakkında",
     "check_updates": "Güncellemeleri Denetle",
-    "visualizer": "Görselleştirici"
+    "visualizer": "Görselleştirici",
+    "always_on_top": "Her zaman üstte"
   },
   "library": {
     "search_placeholder": "Başlık, yazar, anlatıcıya göre ara...",

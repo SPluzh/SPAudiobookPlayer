@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.1]
+- **Feature**: Added **Always on Top** mode to the **View** menu.
+
 ## [1.6.0]
 - **UI**: Implemented **Minimal Interface** mode:
     - Added a "View" menu with a toggle to hide/show the library and playlist sections.

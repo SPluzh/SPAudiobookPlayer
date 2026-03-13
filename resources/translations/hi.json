@@ -20,7 +20,8 @@
     "language": "भाषा",
     "about": "के बारे में",
     "check_updates": "अपडेट की जाँच करें",
-    "visualizer": "विज़ुअलाइज़र"
+    "visualizer": "विज़ुअलाइज़र",
+    "always_on_top": "हमेशा ऊपर"
   },
   "library": {
     "search_placeholder": "शीर्षक, लेखक, वाचक द्वारा खोजें...",
