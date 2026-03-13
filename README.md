@@ -5,7 +5,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 [![Latest Release](https://img.shields.io/github/v/release/SPluzh/SPAudiobookPlayer)](https://github.com/SPluzh/SPAudiobookPlayer/releases)
 [![Downloads](https://img.shields.io/github/downloads/SPluzh/SPAudiobookPlayer/total)](https://github.com/SPluzh/SPAudiobookPlayer/releases)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 **English** | [Русский](#-sp-audiobook-player-ru)
 
