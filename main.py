@@ -83,6 +83,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.pitch_value = 0.0
         self.last_pause_time = None
         self.show_visualizer = True
+        self.normal_geometry = None
+        self.normal_splitter_state = None
         
         # Load user configurations and localization settings
         self.db_manager = DatabaseManager(self.db_file)
@@ -156,7 +158,13 @@ class AudiobookPlayerWindow(QMainWindow):
             frame_geo.moveCenter(center_point)
             self.move(frame_geo.topLeft())
         
-        self.setMinimumSize(450, 450)
+        # Apply final size constraints and force minimal dimension if active
+        if getattr(self, 'minimal_interface', False):
+            self.setMinimumSize(self.minimal_width, self.minimal_height)
+            self.resize(self.minimal_width, self.minimal_height)
+        else:
+            self.setMinimumSize(self.normal_min_width, self.normal_min_height)
+            
         self.statusBar().showMessage(tr("status.load_library"))
         
         # Blur Effect Stacking logic to handle nested modal dialogs
@@ -290,6 +298,14 @@ class AudiobookPlayerWindow(QMainWindow):
         self.splitter.addWidget(self.player_widget)
         
         main_layout.addWidget(self.splitter, 1)
+        
+        # Apply Minimal Interface state
+        if getattr(self, 'minimal_interface', False):
+            self.setMinimumSize(self.minimal_width, self.minimal_height)
+            self.library_widget.hide()
+            self.player_widget.file_list.hide()
+        else:
+            self.setMinimumSize(self.normal_min_width, self.normal_min_height)
     
     def setup_menu(self):
         """Construct the main application menu bar, including Library, View, and Help menus with localized actions"""
@@ -346,6 +362,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.visualizer_action.setChecked(self.show_visualizer)
         self.visualizer_action.triggered.connect(self.toggle_visualizer)
         view_menu.addAction(self.visualizer_action)
+        
+        # Minimal Interface Toggle
+        self.minimal_interface_action = QAction(tr("menu.minimal_interface"), self)
+        self.minimal_interface_action.setCheckable(True)
+        self.minimal_interface_action.setChecked(getattr(self, 'minimal_interface', False))
+        self.minimal_interface_action.triggered.connect(self.toggle_minimal_interface)
+        view_menu.addAction(self.minimal_interface_action)
         
         # Theme Selection
         theme_menu = view_menu.addMenu(tr("menu.theme"))
@@ -419,6 +442,45 @@ class AudiobookPlayerWindow(QMainWindow):
         if hasattr(self, 'player_widget'):
             self.player_widget.play_btn.visualizer_enabled = checked
             self.player_widget.play_btn.update()
+        self.save_settings()
+
+    def toggle_minimal_interface(self, enabled: bool):
+        """Toggle visibility of library and playlist for a minimized interface, resizing window accordingly"""
+        self.minimal_interface = enabled
+        
+        if enabled:
+            # Save current geometry and splitter state before minimizing
+            self.normal_geometry = self.saveGeometry().toHex().data().decode()
+            if hasattr(self, 'splitter'):
+                self.normal_splitter_state = self.splitter.saveState().toHex().data().decode()
+                
+            self.setMinimumSize(self.minimal_width, self.minimal_height)
+            
+            # Hide widgets
+            if hasattr(self, 'library_widget'):
+                self.library_widget.hide()
+            if hasattr(self, 'player_widget') and hasattr(self.player_widget, 'file_list'):
+                self.player_widget.file_list.hide()
+                
+            # Resize window to fit remaining elements
+            self.resize(self.minimal_width, self.minimal_height)
+        else:
+            # Restore normal UI
+            self.setMinimumSize(self.normal_min_width, self.normal_min_height)
+            
+            # Show widgets
+            if hasattr(self, 'library_widget'):
+                self.library_widget.show()
+            if hasattr(self, 'player_widget') and hasattr(self.player_widget, 'file_list'):
+                self.player_widget.file_list.show()
+                
+            # Restore saved geometry and splitter state if available
+            if self.normal_geometry:
+                self.restoreGeometry(QByteArray.fromHex(self.normal_geometry.encode()))
+            if self.normal_splitter_state and hasattr(self, 'splitter'):
+                self.splitter.restoreState(QByteArray.fromHex(self.normal_splitter_state.encode()))
+            
+        # Update settings
         self.save_settings()
 
     def update_all_texts(self):
@@ -542,6 +604,12 @@ class AudiobookPlayerWindow(QMainWindow):
         self.window_width = config.getint('Display', 'window_width', fallback=1200)
         self.window_height = config.getint('Display', 'window_height', fallback=800)
         self.saved_geometry_hex = config.get('Display', 'window_geometry', fallback=None)
+        self.normal_geometry = config.get('Display', 'normal_geometry', fallback=None)
+        self.normal_splitter_state = config.get('Display', 'normal_splitter_state', fallback=None)
+        self.normal_min_width = config.getint('Display', 'normal_min_width', fallback=450)
+        self.normal_min_height = config.getint('Display', 'normal_min_height', fallback=450)
+        self.minimal_width = config.getint('Display', 'minimal_width', fallback=450)
+        self.minimal_height = config.getint('Display', 'minimal_height', fallback=270)
         self.current_theme = config.get('Display', 'theme', fallback='dark')
         
         # Filesystem Path Configurations
@@ -570,6 +638,7 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # Player Functional Preferences
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
+        self.minimal_interface = config.getboolean('Player', 'minimal_interface', fallback=False)
         self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
         self.auto_check_updates = config.getboolean('Player', 'auto_check_updates', fallback=True)
         self.show_visualizer = config.getboolean('Player', 'show_visualizer', fallback=True)
@@ -640,6 +709,10 @@ class AudiobookPlayerWindow(QMainWindow):
             'window_height': '800',
             'window_x': '100',
             'window_y': '100',
+            'normal_min_width': '450',
+            'normal_min_height': '450',
+            'minimal_width': '450',
+            'minimal_height': '270',
             'language': 'en'
         }
         config['Audiobook_Style'] = {
@@ -690,6 +763,14 @@ class AudiobookPlayerWindow(QMainWindow):
         config['Display']['window_width'] = str(rect.width())
         config['Display']['window_height'] = str(rect.height())
         config['Display']['window_geometry'] = self.saveGeometry().toHex().data().decode()
+        if self.normal_geometry:
+            config['Display']['normal_geometry'] = self.normal_geometry
+        if self.normal_splitter_state:
+            config['Display']['normal_splitter_state'] = self.normal_splitter_state
+        config['Display']['normal_min_width'] = str(self.normal_min_width)
+        config['Display']['normal_min_height'] = str(self.normal_min_height)
+        config['Display']['minimal_width'] = str(self.minimal_width)
+        config['Display']['minimal_height'] = str(self.minimal_height)
         config['Display']['theme'] = self.current_theme
         
         # Filesystem Path Configs
@@ -706,6 +787,7 @@ class AudiobookPlayerWindow(QMainWindow):
         # Player and Audio Functional Preferences
         if 'Player' not in config: config['Player'] = {}
         config['Player']['show_id3'] = str(self.show_id3)
+        config['Player']['minimal_interface'] = str(getattr(self, 'minimal_interface', False))
         config['Player']['auto_rewind'] = str(self.auto_rewind)
         config['Player']['auto_check_updates'] = str(self.auto_check_updates)
         config['Player']['show_visualizer'] = str(self.show_visualizer)

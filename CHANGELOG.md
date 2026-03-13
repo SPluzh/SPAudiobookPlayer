@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0]
+- **UI**: Implemented **Minimal Interface** mode:
+    - Added a "View" menu with a toggle to hide/show the library and playlist sections.
+
 ## [1.5.7]
 - **UI**: Implemented **Active Folder Indicator** in the library:
     - Folders containing the currently playing audiobook now display an accent pill-colored bar on the left.

@@ -11,6 +11,7 @@
     "library": "Library",
     "view": "View",
     "help": "Help",
+    "minimal_interface": "Minimal Interface",
     "settings": "Settings",
     "open_library_folder": "Open Library Folder",
     "scan": "Scan",
