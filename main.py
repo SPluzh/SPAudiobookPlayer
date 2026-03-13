@@ -23,7 +23,6 @@ from PyQt6.QtGui import (
     QIcon, QAction, QPixmap, QBrush, QColor, QFont, QPen, QPainter, QPolygon,
     QTextCursor, QPainterPath, QFontMetrics, QDesktopServices
 )
-
 from bass_player import BassPlayer
 from database import DatabaseManager
 from styles import DARK_STYLE, DARK_QSS_PATH, StyleManager
@@ -32,7 +31,6 @@ import ctypes
 from ctypes import wintypes
 from hotkeys import HotKeyManager
 from player import PlayerWidget, PlaybackController
-
 from bookmarks_dialog import BookmarksListDialog
 from settings_dialog import SettingsDialog
 from translations import tr, trf, get_available_languages, get_language, set_language, Language
@@ -40,8 +38,6 @@ from utils import (
     get_base_path, get_icon, load_icon, resize_icon, 
     format_duration, format_time, format_time_short, OutputCapture
 )
-
-# New module imports
 from player import PlaybackController, PlayerWidget
 from library import (
     ScannerThread, ScanProgressDialog, 
