@@ -138,6 +138,10 @@ class TaskbarProgress:
         
         if sys.platform == 'win32' and COMTYPES_AVAILABLE:
             self._init_taskbar()
+
+    def refresh_state(self):
+        """Reset the current state cache to force the next update to re-apply the state to the taskbar"""
+        self._current_state = -1
     
     def _init_taskbar(self):
         """Internal initialization of the COM interface"""

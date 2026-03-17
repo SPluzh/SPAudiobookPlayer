@@ -490,6 +490,8 @@ class AudiobookPlayerWindow(QMainWindow):
             
         # Update settings
         self.save_settings()
+        if hasattr(self, 'taskbar_progress'):
+            self.taskbar_progress.refresh_state()
 
     def toggle_always_on_top(self, enabled: bool):
         """Toggle the 'Always on Top' window state using standard Qt methods"""
@@ -499,6 +501,8 @@ class AudiobookPlayerWindow(QMainWindow):
         # to ensure the desktop environment/window manager applies the change.
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, enabled)
         self.show()
+        if hasattr(self, 'taskbar_progress'):
+            self.taskbar_progress.refresh_state()
         
         self.save_settings()
 
