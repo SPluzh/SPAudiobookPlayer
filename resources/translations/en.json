@@ -14,6 +14,7 @@
     "minimal_interface": "Minimal Interface",
     "settings": "Settings",
     "open_library_folder": "Open Library Folder",
+    "reveal_current": "Reveal Current Audiobook",
     "scan": "Scan",
     "reload_styles": "Reload Styles",
     "language": "Language",
@@ -144,7 +145,8 @@
     "styles_error": "❌ Styles error: {error}",
     "reset_success": "✅ Library successfully purged",
     "delete_success": "✅ Audiobook successfully deleted",
-    "starting_copy": "Starting copy..."
+    "starting_copy": "Starting copy...",
+    "no_audiobook_playing": "No audiobook is currently playing"
   },
   "delegate": {
     "narrator_prefix": "🎙",

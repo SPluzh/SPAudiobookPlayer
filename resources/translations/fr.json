@@ -14,6 +14,7 @@
     "help": "Aide",
     "settings": "Paramètres",
     "open_library_folder": "Ouvrir dossier bibliothèque",
+    "reveal_current": "Afficher le livre audio actuel",
     "scan": "Scanner",
     "reload_styles": "Recharger les styles",
     "theme": "Thème",
@@ -126,7 +127,8 @@
     "delete_success": "✅ Livre audio supprimé avec succès",
     "no_audiobooks_title": "Library is empty",
     "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
-    "starting_copy": "Démarrage de la copie..."
+    "starting_copy": "Démarrage de la copie...",
+    "no_audiobook_playing": "Aucun livre audio en cours de lecture"
   },
   "delegate": {
     "narrator_prefix": "🎙",

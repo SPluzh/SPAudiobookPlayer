@@ -14,6 +14,7 @@
     "help": "帮助",
     "settings": "设置",
     "open_library_folder": "打开库文件夹",
+    "reveal_current": "显示当前有声书",
     "scan": "扫描",
     "reload_styles": "重载样式",
     "theme": "主题",
@@ -126,7 +127,8 @@
     "delete_success": "✅ 有声书已成功删除",
     "no_audiobooks_title": "Library is empty",
     "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
-    "starting_copy": "正在开始复制..."
+    "starting_copy": "正在开始复制...",
+    "no_audiobook_playing": "当前没有正在播放的有声书"
   },
   "delegate": {
     "narrator_prefix": "🎙",

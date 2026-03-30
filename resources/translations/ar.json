@@ -14,6 +14,7 @@
     "help": "مساعدة",
     "settings": "الإعدادات",
     "open_library_folder": "فتح مجلد المكتبة",
+    "reveal_current": "إظهار الكتاب الصوتي الحالي",
     "scan": "فحص",
     "reload_styles": "إعادة تحميل الأنماط",
     "theme": "المظهر",
@@ -126,7 +127,8 @@
     "delete_success": "✅ تم حذف الكتاب الصوتي بنجاح",
     "no_audiobooks_title": "Library is empty",
     "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
-    "starting_copy": "جارٍ بدء النسخ..."
+    "starting_copy": "جارٍ بدء النسخ...",
+    "no_audiobook_playing": "لا يوجد كتاب صوتي قيد التشغيل حاليًا"
   },
   "delegate": {
     "narrator_prefix": "🎙",

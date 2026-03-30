@@ -14,6 +14,7 @@
     "help": "Yardım",
     "settings": "Ayarlar",
     "open_library_folder": "Kütüphane Klasörünü Aç",
+    "reveal_current": "Mevcut Sesli Kitabı Göster",
     "scan": "Tara",
     "reload_styles": "Stilleri Yeniden Yükle",
     "theme": "Tema",
@@ -126,7 +127,8 @@
     "delete_success": "✅ Sesli kitap başarıyla silindi",
     "no_audiobooks_title": "Library is empty",
     "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
-    "starting_copy": "Kopyalama başlatılıyor..."
+    "starting_copy": "Kopyalama başlatılıyor...",
+    "no_audiobook_playing": "Şu anda çalan sesli kitap yok"
   },
   "delegate": {
     "narrator_prefix": "🎙",

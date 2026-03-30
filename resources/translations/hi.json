@@ -14,6 +14,7 @@
     "help": "मदद",
     "settings": "सेटिंग्स",
     "open_library_folder": "लायब्रेरी फ़ोल्डर खोलें",
+    "reveal_current": "वर्तमान ऑडियोबुक दिखाएं",
     "scan": "स्कैन करें",
     "reload_styles": "शैलियाँ पुनः लोड करें",
     "theme": "थीम",
@@ -126,7 +127,8 @@
     "delete_success": "✅ ऑडियोबुक सफलतापूर्वक हटा दी गई",
     "no_audiobooks_title": "Library is empty",
     "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
-    "starting_copy": "कॉपी शुरू हो रही है..."
+    "starting_copy": "कॉपी शुरू हो रही है...",
+    "no_audiobook_playing": "वर्तमान में कोई ऑडियोबुक नहीं चल रही है"
   },
   "delegate": {
     "narrator_prefix": "🎙",

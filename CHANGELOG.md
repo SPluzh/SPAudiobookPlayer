@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.2]
+- **Navigation**: Added **Reveal Current Audiobook** feature:
+    - New menu item: **Library → Reveal Current Audiobook (L)**.
+    - Hotkey **L** instantly scrolls to and highlights the currently playing book in the library.
+- **Hotkeys**: Added keyboard shortcuts for View menu items:
+    - **P** — Toggle Minimal Interface mode.
+    - **T** — Toggle Always on Top mode.
+
 ## [1.6.1]
 - **Feature**: Added **Always on Top** mode to the **View** menu.
 

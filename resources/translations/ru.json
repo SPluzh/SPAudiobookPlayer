@@ -14,6 +14,7 @@
     "minimal_interface": "Минималистичный интерфейс",
     "settings": "Настройки",
     "open_library_folder": "Открыть папку библиотеки",
+    "reveal_current": "Показать текущую аудиокнигу",
     "scan": "Сканировать",
     "reload_styles": "Перезагрузить стили",
     "language": "Язык",
@@ -144,7 +145,8 @@
     "styles_error": "❌ Ошибка стилей: {error}",
     "reset_success": "✅ Библиотека успешно очищена",
     "delete_success": "✅ Аудиокнига успешно удалена",
-    "starting_copy": "Начало копирования..."
+    "starting_copy": "Начало копирования...",
+    "no_audiobook_playing": "Нет воспроизводимой аудиокниги"
   },
   "delegate": {
     "narrator_prefix": "🎙",

@@ -30,14 +30,16 @@ HOTKEY_ID_STOP = 104
 # Load User32 for HotKey functions
 user32 = ctypes.windll.user32
 
+
 class HotKeyManager(QObject):
     """
     Manages application-wide hotkeys and global multimedia keys.
     """
+
     def __init__(self, window):
         """
         Initialize the hotkey manager.
-        
+
         Args:
             window: The main application window (AudiobookPlayerWindow)
         """
@@ -68,41 +70,65 @@ class HotKeyManager(QObject):
         Configures keyboard shortcuts that work when the application is in focus.
         """
         # Play/Pause: Space
-        self.shortcut_play_pause = QShortcut(QKeySequence(Qt.Key.Key_Space), self.window)
+        self.shortcut_play_pause = QShortcut(
+            QKeySequence(Qt.Key.Key_Space), self.window
+        )
         self.shortcut_play_pause.activated.connect(self.window.toggle_play)
 
         # Skip to Next/Previous File: [ and ]
-        self.shortcut_prev_file = QShortcut(QKeySequence(Qt.Key.Key_BracketLeft), self.window)
+        self.shortcut_prev_file = QShortcut(
+            QKeySequence(Qt.Key.Key_BracketLeft), self.window
+        )
         self.shortcut_prev_file.activated.connect(self.window.on_prev_clicked)
-        
-        self.shortcut_next_file = QShortcut(QKeySequence(Qt.Key.Key_BracketRight), self.window)
+
+        self.shortcut_next_file = QShortcut(
+            QKeySequence(Qt.Key.Key_BracketRight), self.window
+        )
         self.shortcut_next_file.activated.connect(self.window.on_next_clicked)
 
         # Seek: Left/Right Arrows (10s), Shift + Left/Right (60s)
         self.shortcut_rewind_10 = QShortcut(QKeySequence(Qt.Key.Key_Left), self.window)
-        self.shortcut_rewind_10.activated.connect(lambda: self.window.player.rewind(-10))
-        
-        self.shortcut_forward_10 = QShortcut(QKeySequence(Qt.Key.Key_Right), self.window)
-        self.shortcut_forward_10.activated.connect(lambda: self.window.player.rewind(10))
+        self.shortcut_rewind_10.activated.connect(
+            lambda: self.window.player.rewind(-10)
+        )
 
-        self.shortcut_rewind_60 = QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.window)
-        self.shortcut_rewind_60.activated.connect(lambda: self.window.player.rewind(-60))
-        
-        self.shortcut_forward_60 = QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Right), self.window)
-        self.shortcut_forward_60.activated.connect(lambda: self.window.player.rewind(60))
+        self.shortcut_forward_10 = QShortcut(
+            QKeySequence(Qt.Key.Key_Right), self.window
+        )
+        self.shortcut_forward_10.activated.connect(
+            lambda: self.window.player.rewind(10)
+        )
+
+        self.shortcut_rewind_60 = QShortcut(
+            QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.window
+        )
+        self.shortcut_rewind_60.activated.connect(
+            lambda: self.window.player.rewind(-60)
+        )
+
+        self.shortcut_forward_60 = QShortcut(
+            QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Right), self.window
+        )
+        self.shortcut_forward_60.activated.connect(
+            lambda: self.window.player.rewind(60)
+        )
 
         # Playback Speed: Up/Down Arrows (0.1x steps)
         self.shortcut_speed_up = QShortcut(QKeySequence(Qt.Key.Key_Up), self.window)
         self.shortcut_speed_up.activated.connect(self.speed_up)
-        
+
         self.shortcut_speed_down = QShortcut(QKeySequence(Qt.Key.Key_Down), self.window)
         self.shortcut_speed_down.activated.connect(self.speed_down)
 
         # Volume: Shift + Up/Down Arrows (5% steps)
-        self.shortcut_volume_up = QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Up), self.window)
+        self.shortcut_volume_up = QShortcut(
+            QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Up), self.window
+        )
         self.shortcut_volume_up.activated.connect(self.volume_up)
-        
-        self.shortcut_volume_down = QShortcut(QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Down), self.window)
+
+        self.shortcut_volume_down = QShortcut(
+            QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Down), self.window
+        )
         self.shortcut_volume_down.activated.connect(self.volume_down)
 
     def speed_up(self):
@@ -128,10 +154,10 @@ class HotKeyManager(QObject):
     def handle_native_event(self, msg):
         """
         Handles Windows-native events for multimedia keys (both in-focus and global).
-        
+
         Args:
             msg: The Windows MSG structure
-            
+
         Returns:
             bool: True if the event was handled, False otherwise
         """
@@ -139,7 +165,7 @@ class HotKeyManager(QObject):
             # The command is in the high word of the lParam
             command = (msg.lParam >> 16) & 0xFFFF
             return self.process_command(command)
-        
+
         elif msg.message == WM_HOTKEY:
             # The hotkey ID is in the wParam
             hotkey_id = msg.wParam
@@ -156,7 +182,7 @@ class HotKeyManager(QObject):
                 if self.window.player.is_playing():
                     self.window.toggle_play()
                 return True
-                
+
         return False
 
     def process_command(self, command):
