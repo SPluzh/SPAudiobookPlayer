@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.3]
+- **Localization**: Added comprehensive support for 3 new languages:
+    - **Vietnamese** (Tiếng Việt)
+    - **Thai** (ไทย)
+    - **Indonesian** (Indonesian)
+
 ## [1.6.2]
 - **Navigation**: Added **Reveal Current Audiobook** feature:
     - New menu item: **Library → Reveal Current Audiobook (L)**.
