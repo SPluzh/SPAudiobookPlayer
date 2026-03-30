@@ -319,7 +319,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE 支持 (章节标记和元数据)",
     "close": "关闭",
     "hotkeys_title": "快捷键:",
-    "hotkeys_list": "空格 — 播放 / 暂停\n[ 和 ] — 上一个 / 下一个文件\n左 / 右 — 后退 / 前进 10秒\nShift + 左 / 右 — 后退 / 前进 60秒\n上 / 下 — 播放速度 (±0.1x)\nShift + 上 / 下 — 音量 (±5%)"
+    "hotkeys_list": "空格 — 播放 / 暂停\n[ 和 ] — 上一个 / 下一个文件\n左 / 右 — 后退 / 前进 10秒\nShift + 左 / 右 — 后退 / 前进 60秒\n上 / 下 — 播放速度 (±0.1x)\nShift + 上 / 下 — 音量 (±5%)",
+    "github": "GitHub"
   },
   "taskbar": {
     "prev": "上一曲",

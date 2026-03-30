@@ -319,7 +319,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Soporte .CUE (marcadores de capítulos y metadatos)",
     "close": "Cerrar",
     "hotkeys_title": "Teclas de acceso rápido:",
-    "hotkeys_list": "Espacio — Reproducir / Pausar\n[ y ] — Archivo anterior / siguiente\nIzquierda / Derecha — Rebobinar / Avanzar 10s\nShift + Izquierda / Derecha — Rebobinar / Avanzar 60s\nArriba / Abajo — Velocidad de reproducción (±0.1x)\nShift + Arriba / Abajo — Volumen (±5%)"
+    "hotkeys_list": "Espacio — Reproducir / Pausar\n[ y ] — Archivo anterior / siguiente\nIzquierda / Derecha — Rebobinar / Avanzar 10s\nShift + Izquierda / Derecha — Rebobinar / Avanzar 60s\nArriba / Abajo — Velocidad de reproducción (±0.1x)\nShift + Arriba / Abajo — Volumen (±5%)",
+    "github": "GitHub"
   },
   "taskbar": {
     "prev": "Pista anterior",

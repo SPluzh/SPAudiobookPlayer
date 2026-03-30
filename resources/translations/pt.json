@@ -319,7 +319,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ suporte a .CUE (marcadores de capítulo e metadados)",
     "close": "Fechar",
     "hotkeys_title": "Atalhos de teclado:",
-    "hotkeys_list": "Espaço — Reproduzir / Pausar\n[ e ] — Arquivo anterior / seguinte\nEsquerda / Direita — Retroceder / Avançar 10s\nShift + Esquerda / Direita — Retroceder / Avançar 60s\nCima / Baixo — Velocidade de reprodução (±0.1x)\nShift + Cima / Baixo — Volume (±5%)"
+    "hotkeys_list": "Espaço — Reproduzir / Pausar\n[ e ] — Arquivo anterior / seguinte\nEsquerda / Direita — Retroceder / Avançar 10s\nShift + Esquerda / Direita — Retroceder / Avançar 60s\nCima / Baixo — Velocidade de reprodução (±0.1x)\nShift + Cima / Baixo — Volume (±5%)",
+    "github": "GitHub"
   },
   "taskbar": {
     "prev": "Faixa anterior",

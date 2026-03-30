@@ -319,7 +319,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Support .CUE (marqueurs de chapitre et métadonnées)",
     "close": "Fermer",
     "hotkeys_title": "Raccourcis clavier:",
-    "hotkeys_list": "Espace — Lecture / Pause\n[ et ] — Fichier Précédent / Suivant\nGauche / Droite — Reculer / Avancer 10s\nShift + Gauche / Droite — Reculer / Avancer 60s\nHaut / Bas — Vitesse de lecture (±0.1x)\nShift + Haut / Bas — Volume (±5%)"
+    "hotkeys_list": "Espace — Lecture / Pause\n[ et ] — Fichier Précédent / Suivant\nGauche / Droite — Reculer / Avancer 10s\nShift + Gauche / Droite — Reculer / Avancer 60s\nHaut / Bas — Vitesse de lecture (±0.1x)\nShift + Haut / Bas — Volume (±5%)",
+    "github": "GitHub"
   },
   "taskbar": {
     "prev": "Piste précédente",

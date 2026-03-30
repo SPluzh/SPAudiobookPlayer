@@ -319,7 +319,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE-Unterstützung (Kapitelmarkierungen und Metadaten)",
     "close": "Schließen",
     "hotkeys_title": "Tastenkombinationen:",
-    "hotkeys_list": "Leertaste — Abspielen / Pause\n[ und ] — Vorherige / Nächste Datei\nLinks / Rechts — 10 Sekunden zurück / vor\nShift + Links / Rechts — 60 Sekunden zurück / vor\nAuf / Ab — Wiedergabegeschwindigkeit (±0.1x)\nShift + Auf / Ab — Lautstärke (±5%)"
+    "hotkeys_list": "Leertaste — Abspielen / Pause\n[ und ] — Vorherige / Nächste Datei\nLinks / Rechts — 10 Sekunden zurück / vor\nShift + Links / Rechts — 60 Sekunden zurück / vor\nAuf / Ab — Wiedergabegeschwindigkeit (±0.1x)\nShift + Auf / Ab — Lautstärke (±5%)",
+    "github": "GitHub"
   },
   "taskbar": {
     "prev": "Vorheriger Titel",

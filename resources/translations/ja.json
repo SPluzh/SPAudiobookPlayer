@@ -319,7 +319,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE サポート (チャプターマーカーとメタデータ)",
     "close": "閉じる",
     "hotkeys_title": "ホットキー:",
-    "hotkeys_list": "スペース — 再生 / 一時停止\n[ と ] — 前/次のファイル\n左 / 右 — 10秒 巻き戻し/早送り\nShift + 左 / 右 — 60秒 巻き戻し/早送り\n上 / 下 — 再生速度 (±0.1x)\nShift + 上 / 下 — 音量 (±5%)"
+    "hotkeys_list": "スペース — 再生 / 一時停止\n[ と ] — 前/次のファイル\n左 / 右 — 10秒 巻き戻し/早送り\nShift + 左 / 右 — 60秒 巻き戻し/早送り\n上 / 下 — 再生速度 (±0.1x)\nShift + 上 / 下 — 音量 (±5%)",
+    "github": "GitHub"
   },
   "taskbar": {
     "prev": "前のトラック",

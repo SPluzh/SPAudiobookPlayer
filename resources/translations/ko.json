@@ -319,7 +319,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE 지원 (챕터 마커 및 메타데이터)",
     "close": "닫기",
     "hotkeys_title": "단축키:",
-    "hotkeys_list": "스페이스 — 재생 / 일시정지\n[ 및 ] — 이전 / 다음 파일\n왼쪽 / 오른쪽 — 10초 되감기 / 앞으로\nShift + 왼쪽 / 오른쪽 — 60초 되감기 / 앞으로\n위 / 아래 — 재생 속도 (±0.1x)\nShift + 위 / 아래 — 볼륨 (±5%)"
+    "hotkeys_list": "스페이스 — 재생 / 일시정지\n[ 및 ] — 이전 / 다음 파일\n왼쪽 / 오른쪽 — 10초 되감기 / 앞으로\nShift + 왼쪽 / 오른쪽 — 60초 되감기 / 앞으로\n위 / 아래 — 재생 속도 (±0.1x)\nShift + 위 / 아래 — 볼륨 (±5%)",
+    "github": "GitHub"
   },
   "taskbar": {
     "prev": "이전 트랙",
