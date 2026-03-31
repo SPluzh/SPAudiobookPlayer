@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.4]
+- **UI**: Added colored nesting lines to the library tree view for better visual hierarchy.
+
 ## [1.6.3]
 - **Localization**: Added comprehensive support for 3 new languages:
     - **Vietnamese** (Tiếng Việt)

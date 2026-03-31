@@ -3,6 +3,7 @@ import os
 import subprocess
 import configparser
 import shutil
+import zlib
 from functools import lru_cache
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -40,6 +41,7 @@ from PyQt6.QtCore import (
     QEvent,
     QTimer,
     QUrl,
+    QModelIndex,
 )
 from PyQt6.QtGui import (
     QIcon,
@@ -606,6 +608,19 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.hovered_index = None
         self.mouse_pos = None
 
+        # Nesting lines color palette
+        self.NESTING_COLORS = [
+            QColor("#3498db"),  # Blue
+            QColor("#9b59b6"),  # Purple
+            QColor("#e74c3c"),  # Red
+            QColor("#2ecc71"),  # Light green
+            QColor("#8e44ad"),  # Deep purple
+            QColor("#d35400"),  # Pumpkin
+            QColor("#c0392b"),  # Dark red
+            QColor("#16a085"),  # Sea green
+            QColor("#2980b9"),  # Strong blue
+        ]
+
     @lru_cache(maxsize=32)
     def _get_style(self, style_name: str) -> tuple[QFont, QColor]:
         """Fetch font and color settings from the style manager mapped to the given name"""
@@ -615,6 +630,128 @@ class MultiLineDelegate(QStyledItemDelegate):
         """Force a refresh of style properties from the loaded QSS"""
         self._get_style.cache_clear()
         # Proxy widgets in StyleManager handle themselves when ensurePolished is called
+
+    def _get_nesting_chain(self, index):
+        """
+        Get chain of parent paths for consistent color hashing and last-child info.
+
+        Returns:
+            list: List of tuples (parent_path_str, is_last_child_bool)
+        """
+        chain = []
+        current = index.parent()
+
+        while current.isValid():
+            # Get parent path (unique identifier)
+            parent_path = current.data(Qt.ItemDataRole.UserRole)
+
+            # Check if this parent is the last child in ITS parent
+            is_last = False
+            p_idx = current.parent()
+
+            if p_idx.isValid():
+                is_last = current.row() == p_idx.model().rowCount(p_idx) - 1
+            else:
+                model = current.model()
+                if model:
+                    is_last = current.row() == model.rowCount(QModelIndex()) - 1
+
+            if parent_path:
+                chain.insert(0, (str(parent_path), is_last))  # Top parents first
+            else:
+                chain.insert(0, (f"unknown_{len(chain)}", is_last))
+
+            current = p_idx
+
+        return chain
+
+    def _draw_nesting_lines(self, painter, rect, chain, index=None):
+        """
+        Draw colored vertical lines indicating nesting depth.
+        Color is uniquely determined by parent paths.
+
+        Args:
+            painter: QPainter object
+            rect: QRect of item drawing area
+            chain: List of tuples (parent_path, is_last_child) from _get_nesting_chain()
+            index: QModelIndex of current item (optional)
+
+        Returns:
+            int: Offset in pixels to shift content right
+        """
+        depth = len(chain)
+        if depth <= 0:
+            return 0
+
+        line_width = 2
+
+        # Get tree indentation for perfect line alignment
+        tree = self.parent()
+        indent = 12  # Default value matching tree.setIndentation(12)
+        if hasattr(tree, "indentation"):
+            indent = tree.indentation()
+
+        spacing = max(2, indent - line_width)
+
+        # Determine if this item is the last child of its parent
+        is_last_child = False
+        if index is not None and index.isValid() and index.parent().isValid():
+            p_idx = index.parent()
+            is_last_child = index.row() == p_idx.model().rowCount(p_idx) - 1
+
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+
+        for i in range(depth):
+            parent_path_str, _ = chain[i]
+
+            # If ancestor line already ended in previous folder, skip it for descendants
+            if i < depth - 1:
+                child_is_last = chain[i + 1][1]
+                if child_is_last:
+                    continue
+
+            # Hash path to get stable positive integer
+            path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
+            color_index = path_hash % len(self.NESTING_COLORS)
+            color = self.NESTING_COLORS[color_index]
+
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(color)
+
+            # Key trick: shift lines left by `indent` depending on their level,
+            # so they align perfectly with parent line
+            line_x = rect.left() - (depth - 1 - i) * indent
+
+            if i == depth - 1 and is_last_child:
+                # Vertical segment (top to middle)
+                painter.drawRect(
+                    QRectF(
+                        line_x,
+                        rect.top(),
+                        line_width,
+                        rect.height() / 2 + line_width / 2,
+                    )
+                )
+
+                # Horizontal segment (from middle right, pointing to thumbnail)
+                painter.drawRect(
+                    QRectF(
+                        line_x,
+                        rect.top() + (rect.height() - line_width) / 2,
+                        indent,
+                        line_width,
+                    )
+                )
+            else:
+                # Regular full vertical line
+                painter.drawRect(QRectF(line_x, rect.top(), line_width, rect.height()))
+
+        painter.restore()
+
+        # Return offset only for last line plus spacing,
+        # because other lines were drawn left, inside branching area
+        return line_width + spacing
 
     def sizeHint(self, option, index) -> QSize:
         """Determine item size based on type (folder vs audiobook)"""
@@ -649,6 +786,10 @@ class MultiLineDelegate(QStyledItemDelegate):
         """Draw a folder item with icon and display name"""
         painter.save()
 
+        # Draw nesting lines
+        chain = self._get_nesting_chain(index)
+        nesting_offset = self._draw_nesting_lines(painter, option.rect, chain, index)
+
         # Active folder indicator: Draw accent bar if playing_path is within this folder
         folder_path = index.data(Qt.ItemDataRole.UserRole)
         if self.playing_path and folder_path:
@@ -668,8 +809,9 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.setBrush(accent_color)
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 # Draw rounded bar on the left edge with a small vertical margin for better visibility of rounding
+                # Position it after nesting lines
                 bar_rect = QRectF(
-                    float(option.rect.left() + 2),
+                    float(option.rect.left() + nesting_offset + 2),
                     float(option.rect.top() + 4),
                     3.0,
                     float(option.rect.height() - 8),
@@ -683,7 +825,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         icon = index.data(Qt.ItemDataRole.DecorationRole)
         icon_size = 20
         icon_rect = QRect(
-            option.rect.left() + self.horizontal_padding,
+            option.rect.left() + nesting_offset + self.horizontal_padding,
             option.rect.top() + (option.rect.height() - icon_size) // 2,
             icon_size,
             icon_size,
@@ -701,6 +843,39 @@ class MultiLineDelegate(QStyledItemDelegate):
             option.rect.height(),
         )
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignVCenter, text or "")
+
+        # Draw horizontal line at bottom for expanded folders
+        # Get the tree widget from the option
+        tree_widget = option.widget
+        if tree_widget and isinstance(tree_widget, QTreeWidget):
+            item = tree_widget.itemFromIndex(index)
+            if item:
+                is_exp = item.isExpanded()
+                child_cnt = item.childCount()
+                if is_exp and child_cnt > 0:
+                    folder_path = index.data(Qt.ItemDataRole.UserRole)
+                    if folder_path:
+                        # Calculate color for next nesting level (children's color)
+                        path_hash = zlib.adler32(
+                            str(folder_path).encode("utf-8", errors="ignore")
+                        )
+                        color_index = path_hash % len(self.NESTING_COLORS)
+                        line_color = self.NESTING_COLORS[color_index]
+
+                        # Draw horizontal line at bottom
+                        line_width = 2
+                        painter.save()
+                        painter.setPen(QPen(line_color, line_width))
+                        painter.setBrush(Qt.BrushStyle.NoBrush)
+                        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+
+                        # Draw line at the very bottom of the item
+                        y_pos = option.rect.bottom() - 1
+                        painter.drawLine(
+                            option.rect.left(), y_pos, option.rect.right(), y_pos
+                        )
+
+                        painter.restore()
 
         painter.restore()
 
@@ -738,12 +913,16 @@ class MultiLineDelegate(QStyledItemDelegate):
         """Render detailed audiobook item with cover, progress, and metadata"""
         painter.save()
 
+        # Draw nesting lines
+        chain = self._get_nesting_chain(index)
+        nesting_offset = self._draw_nesting_lines(painter, option.rect, chain, index)
+
         icon = index.data(Qt.ItemDataRole.DecorationRole)
         icon_y = (
             option.rect.top() + (option.rect.height() - self.audiobook_icon_size) // 2
         )
         icon_rect = QRect(
-            option.rect.left() + self.horizontal_padding,
+            option.rect.left() + nesting_offset + self.horizontal_padding,
             icon_y,
             self.audiobook_icon_size,
             self.audiobook_icon_size,
