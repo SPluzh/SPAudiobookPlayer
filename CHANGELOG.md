@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.6.4]
-- **UI**: Added colored nesting lines to the library tree view for better visual hierarchy.
+- **UI**: Added colored nesting lines to the library tree view with a toggle option in **View → Show Nesting Lines**.
 
 ## [1.6.3]
 - **Localization**: Added comprehensive support for 3 new languages:
