@@ -24,7 +24,8 @@
     "visualizer": "ภาพสร้างสรรค์เสียง",
     "always_on_top": "อยู่ด้านบนเสมอ",
     "collapse_all": "ยุบโฟลเดอร์ทั้งหมด",
-    "expand_all": "ขยายโฟลเดอร์ทั้งหมด"
+    "expand_all": "ขยายโฟลเดอร์ทั้งหมด",
+    "show_nesting_lines": "แสดงเส้นซ้อน"
   },
   "bookmarks": {
     "edit_title": "แก้ไขที่คั่นหน้า",

@@ -24,7 +24,8 @@
     "visualizer": "Visualizador",
     "always_on_top": "Siempre al frente",
     "collapse_all": "Contraer todas las carpetas",
-    "expand_all": "Expandir todas las carpetas"
+    "expand_all": "Expandir todas las carpetas",
+    "show_nesting_lines": "Mostrar líneas de anidación"
   },
   "library": {
     "search_placeholder": "Buscar por título, autor, narrador...",

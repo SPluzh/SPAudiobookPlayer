@@ -24,7 +24,8 @@
     "visualizer": "Visualizer",
     "always_on_top": "Selalu di Atas",
     "collapse_all": "Ciutkan Semua Folder",
-    "expand_all": "Perluas Semua Folder"
+    "expand_all": "Perluas Semua Folder",
+    "show_nesting_lines": "Tampilkan Garis Bersarang"
   },
   "bookmarks": {
     "edit_title": "Edit Penanda",

@@ -24,7 +24,8 @@
     "visualizer": "비주얼라이저",
     "always_on_top": "항상 위",
     "collapse_all": "모든 폴더 접기",
-    "expand_all": "모든 폴더 펼치기"
+    "expand_all": "모든 폴더 펼치기",
+    "show_nesting_lines": "중첩 선 표시"
   },
   "library": {
     "search_placeholder": "제목, 저자, 낭독자로 검색...",

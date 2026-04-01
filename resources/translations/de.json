@@ -24,7 +24,8 @@
     "visualizer": "Visualisierung",
     "always_on_top": "Immer im Vordergrund",
     "collapse_all": "Alle Ordner einklappen",
-    "expand_all": "Alle Ordner ausklappen"
+    "expand_all": "Alle Ordner ausklappen",
+    "show_nesting_lines": "Verschachtelungslinien anzeigen"
   },
   "library": {
     "search_placeholder": "Suche nach Titel, Autor, Sprecher...",

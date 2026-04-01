@@ -24,7 +24,8 @@
     "visualizer": "विज़ुअलाइज़र",
     "always_on_top": "हमेशा ऊपर",
     "collapse_all": "सभी फ़ोल्डर संक्षिप्त करें",
-    "expand_all": "सभी फ़ोल्डर विस्तृत करें"
+    "expand_all": "सभी फ़ोल्डर विस्तृत करें",
+    "show_nesting_lines": "नेस्टिंग लाइनें दिखाएं"
   },
   "library": {
     "search_placeholder": "शीर्षक, लेखक, वाचक द्वारा खोजें...",

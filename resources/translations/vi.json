@@ -24,7 +24,8 @@
     "visualizer": "Bộ trực quan hóa",
     "always_on_top": "Luôn hiện trên cùng",
     "collapse_all": "Thu gọn tất cả thư mục",
-    "expand_all": "Mở rộng tất cả thư mục"
+    "expand_all": "Mở rộng tất cả thư mục",
+    "show_nesting_lines": "Hiển thị đường lồng nhau"
   },
   "bookmarks": {
     "edit_title": "Chỉnh sửa dấu trang",

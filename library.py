@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import subprocess
 import configparser
@@ -603,6 +603,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         # Playback state
         self.playing_path = None
         self.is_paused = True
+        self.show_nesting_lines = True
 
         # UI state for interaction
         self.hovered_index = None
@@ -679,6 +680,9 @@ class MultiLineDelegate(QStyledItemDelegate):
         Returns:
             int: Offset in pixels to shift content right
         """
+        if not self.show_nesting_lines:
+            return 0
+
         depth = len(chain)
         if depth <= 0:
             return 0
@@ -847,7 +851,11 @@ class MultiLineDelegate(QStyledItemDelegate):
         # Draw horizontal line at bottom for expanded folders
         # Get the tree widget from the option
         tree_widget = option.widget
-        if tree_widget and isinstance(tree_widget, QTreeWidget):
+        if (
+            tree_widget
+            and isinstance(tree_widget, QTreeWidget)
+            and self.show_nesting_lines
+        ):
             item = tree_widget.itemFromIndex(index)
             if item:
                 is_exp = item.isExpanded()

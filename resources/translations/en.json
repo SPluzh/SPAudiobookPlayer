@@ -24,7 +24,8 @@
     "visualizer": "Visualizer",
     "always_on_top": "Always on Top",
     "collapse_all": "Collapse All Folders",
-    "expand_all": "Expand All Folders"
+    "expand_all": "Expand All Folders",
+    "show_nesting_lines": "Show Nesting Lines"
   },
   "bookmarks": {
     "edit_title": "Edit Bookmark",
