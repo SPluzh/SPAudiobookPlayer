@@ -22,7 +22,9 @@
     "about": "حول",
     "check_updates": "التحقق من وجود تحديثات",
     "visualizer": "عارض مرئي",
-    "always_on_top": "دائماً في المقدمة"
+    "always_on_top": "دائماً في المقدمة",
+    "collapse_all": "طي جميع المجلدات",
+    "expand_all": "توسيع جميع المجلدات"
   },
   "library": {
     "search_placeholder": "بحث بالعنوان، المؤلف، الراوي...",

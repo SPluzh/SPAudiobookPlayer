@@ -22,7 +22,9 @@
     "about": "Über",
     "check_updates": "Auf Updates prüfen",
     "visualizer": "Visualisierung",
-    "always_on_top": "Immer im Vordergrund"
+    "always_on_top": "Immer im Vordergrund",
+    "collapse_all": "Alle Ordner einklappen",
+    "expand_all": "Alle Ordner ausklappen"
   },
   "library": {
     "search_placeholder": "Suche nach Titel, Autor, Sprecher...",

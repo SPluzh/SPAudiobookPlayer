@@ -22,7 +22,9 @@
     "about": "Tentang",
     "check_updates": "Periksa Pembaruan",
     "visualizer": "Visualizer",
-    "always_on_top": "Selalu di Atas"
+    "always_on_top": "Selalu di Atas",
+    "collapse_all": "Ciutkan Semua Folder",
+    "expand_all": "Perluas Semua Folder"
   },
   "bookmarks": {
     "edit_title": "Edit Penanda",

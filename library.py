@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 import subprocess
 import configparser
@@ -1661,7 +1661,6 @@ class LibraryWidget(QWidget):
         filter_layout.addStretch(1)
         layout.addLayout(filter_layout)
 
-        # Дерево аудиокниг
         self.tree = LibraryTree()
         self.tree.setHeaderHidden(True)
         self.tree.setFocusPolicy(
@@ -2790,3 +2789,11 @@ class LibraryWidget(QWidget):
                     tr(f"library.tooltip_filter_{filter_id}")
                 )
         self.search_edit.setPlaceholderText(tr("library.search_placeholder"))
+
+    def collapse_all_folders(self):
+        """Collapse all folders in the library tree"""
+        self.tree.collapseAll()
+
+    def expand_all_folders(self):
+        """Expand all folders in the library tree"""
+        self.tree.expandAll()

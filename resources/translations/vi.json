@@ -22,7 +22,9 @@
     "about": "Giới thiệu",
     "check_updates": "Kiểm tra bản cập nhật",
     "visualizer": "Bộ trực quan hóa",
-    "always_on_top": "Luôn hiện trên cùng"
+    "always_on_top": "Luôn hiện trên cùng",
+    "collapse_all": "Thu gọn tất cả thư mục",
+    "expand_all": "Mở rộng tất cả thư mục"
   },
   "bookmarks": {
     "edit_title": "Chỉnh sửa dấu trang",

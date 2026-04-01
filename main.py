@@ -424,6 +424,18 @@ class AudiobookPlayerWindow(QMainWindow):
         reveal_action.triggered.connect(self.reveal_current_audiobook)
         library_menu.addAction(reveal_action)
 
+        # Collapse All Folders
+        collapse_action = QAction(tr("menu.collapse_all"), self)
+        collapse_action.setShortcut("W")
+        collapse_action.triggered.connect(self.library_widget.collapse_all_folders)
+        library_menu.addAction(collapse_action)
+
+        # Expand All Folders
+        expand_action = QAction(tr("menu.expand_all"), self)
+        expand_action.setShortcut("E")
+        expand_action.triggered.connect(self.library_widget.expand_all_folders)
+        library_menu.addAction(expand_action)
+
         view_menu = menubar.addMenu(tr("menu.view"))
 
         # Language Selection Nested Menu

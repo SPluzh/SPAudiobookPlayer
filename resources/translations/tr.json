@@ -22,7 +22,9 @@
     "about": "Hakkında",
     "check_updates": "Güncellemeleri Denetle",
     "visualizer": "Görselleştirici",
-    "always_on_top": "Her zaman üstte"
+    "always_on_top": "Her zaman üstte",
+    "collapse_all": "Tüm Klasörleri Daralt",
+    "expand_all": "Tüm Klasörleri Genişlet"
   },
   "library": {
     "search_placeholder": "Başlık, yazar, anlatıcıya göre ara...",

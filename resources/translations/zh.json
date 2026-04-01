@@ -22,7 +22,9 @@
     "about": "关于",
     "check_updates": "检查更新",
     "visualizer": "可视化器",
-    "always_on_top": "置顶"
+    "always_on_top": "置顶",
+    "collapse_all": "折叠所有文件夹",
+    "expand_all": "展开所有文件夹"
   },
   "library": {
     "search_placeholder": "按标题、作者、朗读者搜索...",

@@ -22,7 +22,9 @@
     "about": "About",
     "check_updates": "Check for Updates",
     "visualizer": "Visualizer",
-    "always_on_top": "Always on Top"
+    "always_on_top": "Always on Top",
+    "collapse_all": "Collapse All Folders",
+    "expand_all": "Expand All Folders"
   },
   "bookmarks": {
     "edit_title": "Edit Bookmark",
