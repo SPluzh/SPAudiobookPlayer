@@ -94,6 +94,16 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 2. Extract the archive to your desired location
 3. Run `SP Audiobook Player.exe`
 
+### 🔄 Manual Update
+If auto-update doesn't work or you prefer to update manually:
+
+1. Download the latest `.zip` from the [Releases](../../releases) page
+2. **Close** SP Audiobook Player if it's running
+3. Extract the archive **into the existing application folder** with file replacement
+
+> [!IMPORTANT]
+> Do **not** delete or overwrite the `data` folder and `settings.ini` file — they contain your library, progress, and settings. Simply extracting the archive on top of the existing installation will safely update all application files while keeping your data intact.
+
 
 <details>
 <summary>💻 Run from Source & Building</summary>
@@ -302,6 +312,16 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 1. Скачайте последний релиз со страницы [Releases](../../releases)
 2. Распакуйте архив в нужное место
 3. Запустите `SP Audiobook Player.exe`
+
+### 🔄 Ручное обновление
+Если авто-обновление не работает или вы предпочитаете обновлять вручную:
+
+1. Скачайте последний `.zip` со страницы [Releases](../../releases)
+2. **Закройте** SP Audiobook Player, если он запущен
+3. Распакуйте архив **в существующую папку приложения** с заменой файлов
+
+> [!IMPORTANT]
+> **Не** удаляйте и не перезаписывайте папку `data` и файл `settings.ini` — в них хранятся ваша библиотека, прогресс прослушивания и настройки. Простая распаковка архива поверх существующей установки безопасно обновит все файлы приложения, сохранив ваши данные.
 
 
 <details>
