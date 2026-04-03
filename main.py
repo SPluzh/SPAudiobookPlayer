@@ -418,25 +418,6 @@ class AudiobookPlayerWindow(QMainWindow):
         open_folder_action = QAction(tr("menu.open_library_folder"), self)
         open_folder_action.setIcon(get_icon("context_open_folder"))
         open_folder_action.triggered.connect(self.open_library_folder)
-        library_menu.addAction(open_folder_action)
-
-        # Reveal Current Audiobook
-        reveal_action = QAction(tr("menu.reveal_current"), self)
-        reveal_action.setShortcut("L")
-        reveal_action.triggered.connect(self.reveal_current_audiobook)
-        library_menu.addAction(reveal_action)
-
-        # Collapse All Folders
-        collapse_action = QAction(tr("menu.collapse_all"), self)
-        collapse_action.setShortcut("W")
-        collapse_action.triggered.connect(self.library_widget.collapse_all_folders)
-        library_menu.addAction(collapse_action)
-
-        # Expand All Folders
-        expand_action = QAction(tr("menu.expand_all"), self)
-        expand_action.setShortcut("E")
-        expand_action.triggered.connect(self.library_widget.expand_all_folders)
-        library_menu.addAction(expand_action)
 
         view_menu = menubar.addMenu(tr("menu.view"))
 
@@ -454,6 +435,24 @@ class AudiobookPlayerWindow(QMainWindow):
             action.triggered.connect(lambda checked, c=code: self.change_language(c))
             language_menu.addAction(action)
             self.language_actions[code] = action
+
+        view_menu.addSeparator()
+
+        # Library Visibility & Navigation
+        reveal_action = QAction(tr("menu.reveal_current"), self)
+        reveal_action.setShortcut("L")
+        reveal_action.triggered.connect(self.reveal_current_audiobook)
+        view_menu.addAction(reveal_action)
+
+        expand_action = QAction(tr("menu.expand_all"), self)
+        expand_action.setShortcut("E")
+        expand_action.triggered.connect(self.library_widget.expand_all_folders)
+        view_menu.addAction(expand_action)
+
+        collapse_action = QAction(tr("menu.collapse_all"), self)
+        collapse_action.setShortcut("W")
+        collapse_action.triggered.connect(self.library_widget.collapse_all_folders)
+        view_menu.addAction(collapse_action)
 
         view_menu.addSeparator()
 

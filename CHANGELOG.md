@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.5]
+- **UI**: Added **Expand All Folders** (`E`) and **Collapse All Folders** (`W`) actions to the **View** menu.
+
 ## [1.6.4]
 - **UI**: Added colored nesting lines to the library tree view with a toggle option in **View → Show Nesting Lines**.
 
@@ -13,7 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.6.2]
 - **Navigation**: Added **Reveal Current Audiobook** feature:
-    - New menu item: **Library → Reveal Current Audiobook (L)**.
+    - New menu item: **View → Reveal Current Audiobook (L)**.
     - Hotkey **L** instantly scrolls to and highlights the currently playing book in the library.
 - **Hotkeys**: Added keyboard shortcuts for View menu items:
     - **P** — Toggle Minimal Interface mode.
