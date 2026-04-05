@@ -727,28 +727,47 @@ class MultiLineDelegate(QStyledItemDelegate):
             # so they align perfectly with parent line
             line_x = rect.left() - (depth - 1 - i) * indent
 
-            if i == depth - 1 and is_last_child:
-                # Vertical segment (top to middle)
-                painter.drawRect(
-                    QRectF(
-                        line_x,
-                        rect.top(),
-                        line_width,
-                        rect.height() / 2 + line_width / 2,
+            if i == depth - 1:
+                # This is the item's own nesting line
+                if is_last_child:
+                    # └ pattern: vertical from top to middle + horizontal branch
+                    # Vertical segment (top to middle)
+                    painter.drawRect(
+                        QRectF(
+                            line_x,
+                            rect.top(),
+                            line_width,
+                            rect.height() / 2 + line_width / 2,
+                        )
                     )
-                )
 
-                # Horizontal segment (from middle right, pointing to thumbnail)
-                painter.drawRect(
-                    QRectF(
-                        line_x,
-                        rect.top() + (rect.height() - line_width) / 2,
-                        indent,
-                        line_width,
+                    # Horizontal segment (from middle right, pointing to thumbnail)
+                    painter.drawRect(
+                        QRectF(
+                            line_x,
+                            rect.top() + (rect.height() - line_width) / 2,
+                            indent,
+                            line_width,
+                        )
                     )
-                )
+                else:
+                    # ├ pattern: full vertical line + horizontal branch at middle
+                    # Full vertical line
+                    painter.drawRect(
+                        QRectF(line_x, rect.top(), line_width, rect.height())
+                    )
+
+                    # Horizontal branch at middle
+                    painter.drawRect(
+                        QRectF(
+                            line_x,
+                            rect.top() + (rect.height() - line_width) / 2,
+                            indent,
+                            line_width,
+                        )
+                    )
             else:
-                # Regular full vertical line
+                # Regular full vertical line for parent levels
                 painter.drawRect(QRectF(line_x, rect.top(), line_width, rect.height()))
 
         painter.restore()
