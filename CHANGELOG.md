@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.6]
+- **Library**: Improved mouse wheel scrolling to move by single row instead of multiple rows.
+- **Library**: Added horizontal T-branches to all tree items for clearer nesting visualization.
+
 ## [1.6.5]
 - **UI**: Added **Expand All Folders** (`E`) and **Collapse All Folders** (`W`) actions to the **View** menu.
 

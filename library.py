@@ -1395,6 +1395,34 @@ class LibraryTree(QTreeWidget):
             False  # Track if DB has any items regardless of current filter
         )
 
+    def wheelEvent(self, event):
+        """Override wheel event to scroll by single row instead of multiple rows"""
+        delta = event.angleDelta().y()
+
+        if delta == 0:
+            return
+
+        # Get the topmost visible item
+        viewport_rect = self.viewport().rect()
+        top_index = self.indexAt(viewport_rect.topLeft())
+
+        if not top_index.isValid():
+            # Fallback to default behavior if no valid index
+            super().wheelEvent(event)
+            return
+
+        # Determine scroll direction and get next/previous index
+        if delta > 0:  # scroll up
+            target_index = self.indexAbove(top_index)
+        else:  # scroll down
+            target_index = self.indexBelow(top_index)
+
+        # Scroll to the target index if valid
+        if target_index.isValid():
+            self.scrollTo(target_index, QTreeWidget.ScrollHint.PositionAtTop)
+
+        event.accept()
+
     def paintEvent(self, event):
         """Paint the tree or the placeholder if empty"""
         # If the model is empty (topLevelItemCount == 0), draw the placeholder.
