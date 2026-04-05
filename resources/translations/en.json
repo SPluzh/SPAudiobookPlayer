@@ -340,6 +340,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE support (chapter markers and metadata)",
     "hotkeys_title": "Hotkeys:",
     "hotkeys_list": "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)",
+    "library_hierarchy_title": "Recommended Library Structure:",
+    "library_hierarchy_text": "Audiobooks/\n├── Author Name/\n│   ├── Series Name/\n│   │   └── Author - Book Title [Narrator]/\n│   │       ├── 01 - Chapter 1.mp3\n│   │       ├── 02 - Chapter 2.mp3\n│   │       └── cover.jpg\n│   └── Author - Standalone Book [Narrator]/\n│       └── audiobook.m4b\n└── Another Author/\n    └── Author - Book Title [Narrator]/\n        └── file.mp3\n\nThe scanner supports any folder hierarchy.\nEach folder with audio files = one audiobook.",
     "close": "Close",
     "github": "GitHub"
   },

@@ -340,6 +340,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Dukungan .CUE (penanda bab dan metadata)",
     "hotkeys_title": "Tombol Cepat:",
     "hotkeys_list": "Space — Putar / Jeda\n[ dan ] — File Sebelumnya / Berikutnya\nKiri / Kanan — Mundur / Maju 10s\nShift + Kiri / Kanan — Mundur / Maju 60s\nAtas / Bawah — Kecepatan Putar (±0.1x)\nShift + Atas / Bawah — Volume (±5%)",
+    "library_hierarchy_title": "Struktur Perpustakaan yang Disarankan:",
+    "library_hierarchy_text": "Audiobooks/\n├── Nama Penulis/\n│   ├── Nama Seri/\n│   │   └── Penulis - Judul Buku [Narator]/\n│   │       ├── 01 - Bab 1.mp3\n│   │       ├── 02 - Bab 2.mp3\n│   │       └── cover.jpg\n│   └── Penulis - Buku Mandiri [Narator]/\n│       └── audiobook.m4b\n└── Penulis Lain/\n    └── Penulis - Judul Buku [Narator]/\n        └── file.mp3\n\nPemindai mendukung hierarki folder apa pun.\nSetiap folder dengan file audio = satu audiobook.",
     "close": "Tutup",
     "github": "GitHub"
   },

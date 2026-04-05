@@ -323,6 +323,9 @@
     "close": "닫기",
     "hotkeys_title": "단축키:",
     "hotkeys_list": "스페이스 — 재생 / 일시정지\n[ 및 ] — 이전 / 다음 파일\n왼쪽 / 오른쪽 — 10초 되감기 / 앞으로\nShift + 왼쪽 / 오른쪽 — 60초 되감기 / 앞으로\n위 / 아래 — 재생 속도 (±0.1x)\nShift + 위 / 아래 — 볼륨 (±5%)",
+    
+    "library_hierarchy_title": "권장 라이브러리 구조:",
+    "library_hierarchy_text": "Audiobooks/\n├── 저자 이름/\n│   ├── 시리즈 이름/\n│   │   └── 저자 - 책 제목 [내레이터]/\n│   │       ├── 01 - 1장.mp3\n│   │       ├── 02 - 2장.mp3\n│   │       └── cover.jpg\n│   └── 저자 - 독립 책 [내레이터]/\n│       └── audiobook.m4b\n└── 다른 저자/\n    └── 저자 - 책 제목 [내레이터]/\n        └── file.mp3\n\n스캐너는 모든 폴더 계층 구조를 지원합니다.\n오디오 파일이 있는 각 폴더 = 오디오북 1개.",
     "github": "GitHub"
   },
   "taskbar": {

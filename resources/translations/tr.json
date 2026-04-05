@@ -320,10 +320,13 @@
     "description": "Program, koleksiyonunuza rahatça göz atmanıza, dinleme ilerlemesini kaydetmenize ve ihtiyacınız olan kitapları hızla bulmanıza olanak tanır.\nPyQt6 ve BASS kütüphanesi üzerine inşa edilmiştir.",
     "supported_formats": "Desteklenen formatlar:",
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE desteği (bölüm işaretleri ve meta veriler)",
+    
+    "hotkeys_title": "Kisayol Tuslari:",
+    "hotkeys_list": "Bosluk — Oynat / Duraklat\n[ ve ] — Önceki / Sonraki Dosya\nSol / Sag — 10sn Geri / Ileri\nShift + Sol / Sag — 60sn Geri / Ileri\nYukari / Asagi — Oynatma Hizi (±0.1x)\nShift + Yukari / Asagi — Ses Seviyesi (±5%)",
+    "library_hierarchy_title": "Önerilen Kütüphane Yapısı:",
+    "library_hierarchy_text": "Audiobooks/\n├── Yazar Adı/\n│   ├── Seri Adı/\n│   │   └── Yazar - Kitap Başlığı [Anlatıcı]/\n│   │       ├── 01 - Bölüm 1.mp3\n│   │       ├── 02 - Bölüm 2.mp3\n│   │       └── cover.jpg\n│   └── Yazar - Bağımsız Kitap [Anlatıcı]/\n│       └── audiobook.m4b\n└── Başka Yazar/\n    └── Yazar - Kitap Başlığı [Anlatıcı]/\n        └── file.mp3\n\nTarayıcı herhangi bir klasör hiyerarşisini destekler.\nSes dosyaları içeren her klasör = bir sesli kitap.",
     "close": "Kapat",
-    "github": "GitHub",
-    "hotkeys_title": "Kısayol Tuşları:",
-    "hotkeys_list": "Boşluk — Oynat / Duraklat\n[ ve ] — Önceki / Sonraki Dosya\nSol / Sağ — 10sn Geri / İleri\nShift + Sol / Sağ — 60sn Geri / İleri\nYukarı / Aşağı — Oynatma Hızı (±0.1x)\nShift + Yukarı / Aşağı — Ses Seviyesi (±5%)"
+    "github": "GitHub"
   },
   "taskbar": {
     "prev": "Önceki parça",

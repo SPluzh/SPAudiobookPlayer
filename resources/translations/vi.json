@@ -340,6 +340,8 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Hỗ trợ .CUE (dấu chương và siêu dữ liệu)",
     "hotkeys_title": "Phím tắt:",
     "hotkeys_list": "Space — Phát / Tạm dừng\n[ và ] — Tập trước / tiếp theo\nTrái / Phải — Lùi / Tiến 10 giây\nShift + Trái / Phải — Lùi / Tiến 60 giây\nLên / Xuống — Tốc độ phát (±0.1x)\nShift + Lên / Xuống — Âm lượng (±5%)",
+    "library_hierarchy_title": "Cấu trúc thư viện được đề xuất:",
+    "library_hierarchy_text": "Audiobooks/\n├── Tên tác giả/\n│   ├── Tên bộ truyện/\n│   │   └── Tác giả - Tên sách [Người đọc]/\n│   │       ├── 01 - Chương 1.mp3\n│   │       ├── 02 - Chương 2.mp3\n│   │       └── cover.jpg\n│   └── Tác giả - Sách độc lập [Người đọc]/\n│       └── audiobook.m4b\n└── Tác giả khác/\n    └── Tác giả - Tên sách [Người đọc]/\n        └── file.mp3\n\nTrình quét hỗ trợ mọi cấu trúc thư mục.\nMỗi thư mục có tệp âm thanh = một audiobook.",
     "close": "Đóng",
     "github": "GitHub"
   },

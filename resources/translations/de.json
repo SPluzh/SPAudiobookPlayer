@@ -323,6 +323,8 @@
     "close": "Schließen",
     "hotkeys_title": "Tastenkombinationen:",
     "hotkeys_list": "Leertaste — Abspielen / Pause\n[ und ] — Vorherige / Nächste Datei\nLinks / Rechts — 10 Sekunden zurück / vor\nShift + Links / Rechts — 60 Sekunden zurück / vor\nAuf / Ab — Wiedergabegeschwindigkeit (±0.1x)\nShift + Auf / Ab — Lautstärke (±5%)",
+    "library_hierarchy_title": "Empfohlene Bibliotheksstruktur:",
+    "library_hierarchy_text": "Audiobooks/\n├── Autorenname/\n│   ├── Serienname/\n│   │   └── Autor - Buchtitel [Sprecher]/\n│   │       ├── 01 - Kapitel 1.mp3\n│   │       ├── 02 - Kapitel 2.mp3\n│   │       └── cover.jpg\n│   └── Autor - Einzelnes Buch [Sprecher]/\n│       └── audiobook.m4b\n└── Anderer Autor/\n    └── Autor - Buchtitel [Sprecher]/\n        └── file.mp3\n\nDer Scanner unterstützt jede Ordnerhierarchie.\nJeder Ordner mit Audiodateien = ein Hörbuch.",
     "github": "GitHub"
   },
   "taskbar": {

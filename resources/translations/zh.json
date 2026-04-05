@@ -323,6 +323,9 @@
     "close": "关闭",
     "hotkeys_title": "快捷键:",
     "hotkeys_list": "空格 — 播放 / 暂停\n[ 和 ] — 上一个 / 下一个文件\n左 / 右 — 后退 / 前进 10秒\nShift + 左 / 右 — 后退 / 前进 60秒\n上 / 下 — 播放速度 (±0.1x)\nShift + 上 / 下 — 音量 (±5%)",
+    
+    "library_hierarchy_title": "推荐的库结构:",
+    "library_hierarchy_text": "Audiobooks/\n├── 作者名/\n│   ├── 系列名/\n│   │   └── 作者 - 书名 [朗读者]/\n│   │       ├── 01 - 第1章.mp3\n│   │       ├── 02 - 第2章.mp3\n│   │       └── cover.jpg\n│   └── 作者 - 独立书籍 [朗读者]/\n│       └── audiobook.m4b\n└── 其他作者/\n    └── 作者 - 书名 [朗读者]/\n        └── file.mp3\n\n扫描器支持任何文件夹层次结构。\n每个包含音频文件的文件夹 = 一本有声书。",
     "github": "GitHub"
   },
   "taskbar": {

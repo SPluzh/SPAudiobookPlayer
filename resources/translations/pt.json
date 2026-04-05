@@ -323,6 +323,9 @@
     "close": "Fechar",
     "hotkeys_title": "Atalhos de teclado:",
     "hotkeys_list": "Espaço — Reproduzir / Pausar\n[ e ] — Arquivo anterior / seguinte\nEsquerda / Direita — Retroceder / Avançar 10s\nShift + Esquerda / Direita — Retroceder / Avançar 60s\nCima / Baixo — Velocidade de reprodução (±0.1x)\nShift + Cima / Baixo — Volume (±5%)",
+    
+    "library_hierarchy_title": "Estrutura de biblioteca recomendada:",
+    "library_hierarchy_text": "Audiobooks/\n├── Nome do autor/\n│   ├── Nome da série/\n│   │   └── Autor - Título do livro [Narrador]/\n│   │       ├── 01 - Capítulo 1.mp3\n│   │       ├── 02 - Capítulo 2.mp3\n│   │       └── cover.jpg\n│   └── Autor - Livro independente [Narrador]/\n│       └── audiobook.m4b\n└── Outro autor/\n    └── Autor - Título do livro [Narrador]/\n        └── file.mp3\n\nO scanner suporta qualquer hierarquia de pastas.\nCada pasta com arquivos de áudio = um audiolivro.",
     "github": "GitHub"
   },
   "taskbar": {

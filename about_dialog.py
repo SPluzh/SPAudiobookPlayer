@@ -1,13 +1,23 @@
 import sys
 from pathlib import Path
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QFrame, QLabel, QPushButton, QApplication, QHBoxLayout
+from PyQt6.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QFrame,
+    QLabel,
+    QPushButton,
+    QApplication,
+    QHBoxLayout,
+)
 from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QDesktopServices, QIcon
+from PyQt6.QtGui import QDesktopServices, QIcon, QFont
 from translations import tr, trf
 from utils import get_base_path
 
+
 class AboutDialog(QDialog):
     """Custom themed About Dialog for the application"""
+
     def __init__(self, parent=None):
         """Initialize the frameless about dialog"""
         super().__init__(parent)
@@ -17,6 +27,7 @@ class AboutDialog(QDialog):
             self.setup_ui()
         except Exception as e:
             import traceback
+
             traceback.print_exc()
 
     def showEvent(self, event):
@@ -42,99 +53,120 @@ class AboutDialog(QDialog):
         """Build the about dialog interface"""
         # Main layout with dark background
         layout = QVBoxLayout(self)
-        
+
         # Container frame
         self.container = QFrame()
         self.container.setObjectName("aboutContainer")
-        
+
         container_layout = QVBoxLayout(self.container)
         container_layout.setSpacing(15)
-        
+
         # Title
-        title = QLabel(tr('window.title'))
+        title = QLabel(tr("window.title"))
         title.setObjectName("aboutTitle")
         container_layout.addWidget(title)
-        
+
         # Version and GitHub Link Layout
         version_github_layout = QHBoxLayout()
         version_github_layout.setContentsMargins(0, 0, 0, 0)
         version_github_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         # Version
         version_text = self.get_app_version()
-        version_str = trf('about.version', version=version_text)
-        if not version_str or version_str == 'about.version':
-             version_str = f"Version: {version_text}"
-             
+        version_str = trf("about.version", version=version_text)
+        if not version_str or version_str == "about.version":
+            version_str = f"Version: {version_text}"
+
         version = QLabel(version_str)
         version.setObjectName("aboutVersion")
         version_github_layout.addWidget(version)
-        
+
         version_github_layout.addSpacing(2)
-        
+
         # GitHub Link Group
         github_link_group = QHBoxLayout()
         github_link_group.setSpacing(5)
-        
+
         # Icon Label
         github_icon_label = QLabel()
         github_icon_path = str(get_base_path() / "resources" / "icons" / "github.png")
         github_icon_label.setPixmap(QIcon(github_icon_path).pixmap(16, 16))
         github_link_group.addWidget(github_icon_label)
-        
+
         # Text Label
-        github_text_label = QLabel(tr('about.github', 'GitHub'))
+        github_text_label = QLabel(tr("about.github", "GitHub"))
         github_text_label.setObjectName("aboutGithubLink")
         github_text_label.setCursor(Qt.CursorShape.PointingHandCursor)
         github_text_label.mousePressEvent = lambda e: self.open_github()
         github_link_group.addWidget(github_text_label)
-        
+
         version_github_layout.addLayout(github_link_group)
         container_layout.addLayout(version_github_layout)
-        
+
         # Separator
         line = QFrame()
         line.setObjectName("aboutLine")
         line.setFrameShape(QFrame.Shape.HLine)
         container_layout.addWidget(line)
-        
+
         # Description
-        desc = QLabel(tr('about.description'))
+        desc = QLabel(tr("about.description"))
         desc.setObjectName("aboutDesc")
         desc.setWordWrap(True)
         container_layout.addWidget(desc)
-        
+
         # Supported Formats
-        formats_title = QLabel(tr('about.supported_formats'))
+        formats_title = QLabel(tr("about.supported_formats"))
         formats_title.setObjectName("aboutSectionTitle")
         container_layout.addWidget(formats_title)
-        
-        formats_content = QLabel(tr('about.formats_list'))
+
+        formats_content = QLabel(tr("about.formats_list"))
         formats_content.setObjectName("aboutSectionContent")
         formats_content.setWordWrap(True)
         container_layout.addWidget(formats_content)
-        
+
         container_layout.addSpacing(10)
-        
+
         # Hotkeys
-        hotkeys_title = QLabel(tr('about.hotkeys_title', 'Горячие клавиши:'))
+        hotkeys_title = QLabel(tr("about.hotkeys_title", "Горячие клавиши:"))
         hotkeys_title.setObjectName("aboutSectionTitle")
         container_layout.addWidget(hotkeys_title)
-        
-        hotkeys_content = QLabel(tr('about.hotkeys_list', 'Пробел — Воспроизведение / Пауза\n[ и ] — Предыдущий / Следующий файл\nВлево / Вправо — Перемотка на 10 сек.\nShift + Влево / Вправо — Перемотка на 60 сек.\nВверх / Вниз — Изменение скорости (±0.1x)\nShift + Вверх / Вниз — Громкость (±5%)'))
+
+        hotkeys_content = QLabel(
+            tr(
+                "about.hotkeys_list",
+                "Пробел — Воспроизведение / Пауза\n[ и ] — Предыдущий / Следующий файл\nВлево / Вправо — Перемотка на 10 сек.\nShift + Влево / Вправо — Перемотка на 60 сек.\nВверх / Вниз — Изменение скорости (±0.1x)\nShift + Вверх / Вниз — Громкость (±5%)",
+            )
+        )
         hotkeys_content.setObjectName("aboutSectionContent")
         hotkeys_content.setWordWrap(True)
         container_layout.addWidget(hotkeys_content)
-        
+
         container_layout.addSpacing(10)
-        
+
+        # Library Hierarchy
+        hierarchy_title = QLabel(tr("about.library_hierarchy_title"))
+        hierarchy_title.setObjectName("aboutSectionTitle")
+        container_layout.addWidget(hierarchy_title)
+
+        hierarchy_text = tr("about.library_hierarchy_text")
+        hierarchy_content = QLabel(
+            f'<pre style="text-align: left;">{hierarchy_text}</pre>'
+        )
+        hierarchy_content.setObjectName("aboutSectionContent")
+        hierarchy_content.setTextFormat(Qt.TextFormat.RichText)
+        hierarchy_content.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        container_layout.addWidget(hierarchy_content)
+
+        container_layout.addSpacing(10)
+
         # Close Button
-        close_btn = QPushButton(tr('about.close'))
+        close_btn = QPushButton(tr("about.close"))
         close_btn.setObjectName("aboutCloseBtn")
         close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         close_btn.clicked.connect(self.accept)
         container_layout.addWidget(close_btn, 0, Qt.AlignmentFlag.AlignCenter)
-        
+
         layout.addWidget(self.container)
 
     def center_window(self):
