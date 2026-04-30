@@ -95,6 +95,7 @@ from utils import (
     OutputCapture,
 )
 from player import PlaybackController, PlayerWidget
+from listening_tracker import ListeningTracker
 from library import (
     ScannerThread,
     ScanProgressDialog,
@@ -160,6 +161,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.playback_controller = PlaybackController(self.player, self.db_manager)
         if self.default_path:
             self.playback_controller.library_root = Path(self.default_path)
+
+        # Initialize listening tracker for statistics
+        self.listening_tracker = ListeningTracker(self.db_manager)
+        self.playback_controller.listening_tracker = self.listening_tracker
 
         self.taskbar_progress = TaskbarProgress()
 
@@ -1550,6 +1555,12 @@ class AudiobookPlayerWindow(QMainWindow):
         # Synchronize play/pause button aesthetics
         self.player_widget.set_playing(self.player.is_playing())
 
+        # Update listening statistics tracker
+        if hasattr(self, 'listening_tracker'):
+            is_playing = self.player.is_playing()
+            current_speed = self.player.speed_pos / 10.0
+            self.listening_tracker.update_session(is_playing, current_speed)
+
         # Synchronize Windows taskbar progress metrics
         if self.playback_controller.total_duration > 0:
             self.taskbar_progress.update_for_playback(
@@ -1909,6 +1920,11 @@ class AudiobookPlayerWindow(QMainWindow):
 
         self.playback_controller.save_current_progress()
         self.save_last_session()
+        
+        # Close active listening session
+        if hasattr(self, 'listening_tracker'):
+            self.listening_tracker.end_session()
+        
         self.taskbar_progress.clear()
 
         # Unregister global hotkeys

@@ -24,6 +24,7 @@ class PlaybackController:
         self.player = player
         self.db = db_manager
         self.library_root: Optional[Path] = None
+        self.listening_tracker = None  # Will be set by main.py
         
         # Playback state
         self.current_audiobook_id: Optional[int] = None
@@ -46,6 +47,10 @@ class PlaybackController:
         # Save current progress before switching, but DO NOT update the timestamp
         # for the book we are leaving (to keep it below the new one in recency)
         self.save_current_progress(update_timestamp=False)
+        
+        # End current listening session before switching books
+        if self.listening_tracker and self.current_audiobook_id:
+            self.listening_tracker.end_session()
         
         # Retrieve audiobook metadata
         audiobook_info = self.db.get_audiobook_info(audiobook_path)
@@ -107,6 +112,13 @@ class PlaybackController:
                 
                 # Update last_updated timestamp in database
                 self.db.update_last_updated(self.current_audiobook_id)
+                
+                # Start listening session for statistics tracking
+                if self.listening_tracker:
+                    self.listening_tracker.start_session(
+                        self.current_audiobook_id,
+                        self.player.speed_pos / 10.0
+                    )
                 
                 return True
         
@@ -222,6 +234,10 @@ class PlaybackController:
             progress_percent,
             update_timestamp=update_timestamp
         )
+        
+        # Pause listening session when saving progress (e.g., on pause)
+        if self.listening_tracker and update_timestamp:
+            self.listening_tracker.pause_session()
         
         # Update library if we are in a recency-sensitive view
         if hasattr(self, 'parent_app') and hasattr(self.parent_app, 'library_widget') and \

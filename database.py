@@ -211,6 +211,39 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         """)
         c.execute("CREATE INDEX IF NOT EXISTS idx_file_cache_path ON file_metadata_cache(file_path)")
         
+        # Migration: Create listening_sessions table for tracking actual listening time
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS listening_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                audiobook_id INTEGER NOT NULL,
+                session_date DATE NOT NULL,
+                session_start TIMESTAMP NOT NULL,
+                session_end TIMESTAMP,
+                duration_seconds REAL DEFAULT 0,
+                playback_speed REAL DEFAULT 1.0,
+                is_active INTEGER DEFAULT 1,
+                FOREIGN KEY(audiobook_id) REFERENCES audiobooks(id) ON DELETE CASCADE
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_sessions_audiobook_date ON listening_sessions(audiobook_id, session_date)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_sessions_date ON listening_sessions(session_date)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_sessions_active ON listening_sessions(is_active)")
+        
+        # Migration: Create daily_listening_stats table for aggregated statistics
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS daily_listening_stats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                audiobook_id INTEGER NOT NULL,
+                listen_date DATE NOT NULL,
+                total_seconds REAL DEFAULT 0,
+                session_count INTEGER DEFAULT 0,
+                UNIQUE(audiobook_id, listen_date),
+                FOREIGN KEY(audiobook_id) REFERENCES audiobooks(id) ON DELETE CASCADE
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_listening_stats(listen_date)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_daily_stats_audiobook ON daily_listening_stats(audiobook_id)")
+        
         conn.commit()
 
 
@@ -1357,6 +1390,300 @@ class DatabaseManager:
             conn.commit()
         except sqlite3.Error as e:
             print(f"Database error in update_file_extension: {e}")
+        finally:
+            conn.close()
+
+    # --- Listening Statistics Methods ---
+
+    def create_listening_session(self, audiobook_id: int, start_time, speed: float) -> Optional[int]:
+        """Create new listening session, returns session_id
+        
+        Args:
+            audiobook_id: ID of the audiobook
+            start_time: datetime object for session start
+            speed: Playback speed
+            
+        Returns:
+            Session ID or None if failed
+        """
+        if not audiobook_id:
+            return None
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            session_date = start_time.strftime('%Y-%m-%d')
+            session_start_str = start_time.strftime('%Y-%m-%d %H:%M:%S')
+            
+            cursor.execute("""
+                INSERT INTO listening_sessions 
+                (audiobook_id, session_date, session_start, playback_speed, is_active)
+                VALUES (?, ?, ?, ?, 1)
+            """, (audiobook_id, session_date, session_start_str, speed))
+            
+            session_id = cursor.lastrowid
+            conn.commit()
+            return session_id
+        except sqlite3.Error as e:
+            print(f"Database error in create_listening_session: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def update_listening_session(self, session_id: int, duration_seconds: float, speed: float):
+        """Update session duration and speed
+        
+        Args:
+            session_id: ID of the session
+            duration_seconds: Additional seconds to add
+            speed: Current playback speed
+        """
+        if not session_id:
+            return
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE listening_sessions
+                SET duration_seconds = duration_seconds + ?,
+                    playback_speed = ?
+                WHERE id = ?
+            """, (duration_seconds, speed, session_id))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in update_listening_session: {e}")
+        finally:
+            conn.close()
+
+    def close_listening_session(self, session_id: int, end_time):
+        """Mark session as complete and update daily stats
+        
+        Args:
+            session_id: ID of the session
+            end_time: datetime object for session end
+        """
+        if not session_id:
+            return
+            
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            # Get session info
+            cursor.execute("""
+                SELECT audiobook_id, session_date, duration_seconds
+                FROM listening_sessions
+                WHERE id = ?
+            """, (session_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return
+                
+            audiobook_id, session_date, duration_seconds = row
+            end_time_str = end_time.strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Close the session
+            cursor.execute("""
+                UPDATE listening_sessions
+                SET session_end = ?,
+                    is_active = 0
+                WHERE id = ?
+            """, (end_time_str, session_id))
+            
+            # Update daily stats
+            if duration_seconds > 0:
+                cursor.execute("""
+                    INSERT INTO daily_listening_stats (audiobook_id, listen_date, total_seconds, session_count)
+                    VALUES (?, ?, ?, 1)
+                    ON CONFLICT(audiobook_id, listen_date) 
+                    DO UPDATE SET 
+                        total_seconds = total_seconds + ?,
+                        session_count = session_count + 1
+                """, (audiobook_id, session_date, duration_seconds, duration_seconds))
+            
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in close_listening_session: {e}")
+        finally:
+            conn.close()
+
+    def get_daily_stats(self, audiobook_id: int = None, start_date: str = None, end_date: str = None) -> List[Dict]:
+        """Retrieve daily listening statistics with optional filters
+        
+        Args:
+            audiobook_id: Filter by specific audiobook (optional)
+            start_date: Start date in YYYY-MM-DD format (optional)
+            end_date: End date in YYYY-MM-DD format (optional)
+            
+        Returns:
+            List of dictionaries with daily statistics
+        """
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT 
+                    d.audiobook_id,
+                    a.name as audiobook_name,
+                    d.listen_date,
+                    d.total_seconds,
+                    d.session_count
+                FROM daily_listening_stats d
+                LEFT JOIN audiobooks a ON d.audiobook_id = a.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if audiobook_id:
+                query += " AND d.audiobook_id = ?"
+                params.append(audiobook_id)
+            
+            if start_date:
+                query += " AND d.listen_date >= ?"
+                params.append(start_date)
+            
+            if end_date:
+                query += " AND d.listen_date <= ?"
+                params.append(end_date)
+            
+            query += " ORDER BY d.listen_date DESC, d.audiobook_id"
+            
+            cursor.execute(query, params)
+            
+            results = []
+            for row in cursor.fetchall():
+                results.append({
+                    'audiobook_id': row[0],
+                    'audiobook_name': row[1],
+                    'date': row[2],
+                    'total_seconds': row[3],
+                    'session_count': row[4]
+                })
+            
+            return results
+        except sqlite3.Error as e:
+            print(f"Database error in get_daily_stats: {e}")
+            return []
+        finally:
+            conn.close()
+
+    def get_monthly_stats(self, audiobook_id: int = None, year: int = None, month: int = None) -> List[Dict]:
+        """Aggregate daily stats into monthly totals
+        
+        Args:
+            audiobook_id: Filter by specific audiobook (optional)
+            year: Filter by year (optional)
+            month: Filter by month 1-12 (optional)
+            
+        Returns:
+            List of dictionaries with monthly statistics
+        """
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT 
+                    d.audiobook_id,
+                    a.name as audiobook_name,
+                    strftime('%Y-%m', d.listen_date) as month,
+                    SUM(d.total_seconds) as total_seconds,
+                    SUM(d.session_count) as session_count
+                FROM daily_listening_stats d
+                LEFT JOIN audiobooks a ON d.audiobook_id = a.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if audiobook_id:
+                query += " AND d.audiobook_id = ?"
+                params.append(audiobook_id)
+            
+            if year:
+                query += " AND strftime('%Y', d.listen_date) = ?"
+                params.append(str(year))
+            
+            if month:
+                query += " AND strftime('%m', d.listen_date) = ?"
+                params.append(f"{month:02d}")
+            
+            query += " GROUP BY d.audiobook_id, month ORDER BY month DESC, d.audiobook_id"
+            
+            cursor.execute(query, params)
+            
+            results = []
+            for row in cursor.fetchall():
+                results.append({
+                    'audiobook_id': row[0],
+                    'audiobook_name': row[1],
+                    'month': row[2],
+                    'total_seconds': row[3],
+                    'session_count': row[4]
+                })
+            
+            return results
+        except sqlite3.Error as e:
+            print(f"Database error in get_monthly_stats: {e}")
+            return []
+        finally:
+            conn.close()
+
+    def get_yearly_stats(self, audiobook_id: int = None, year: int = None) -> List[Dict]:
+        """Aggregate daily stats into yearly totals
+        
+        Args:
+            audiobook_id: Filter by specific audiobook (optional)
+            year: Filter by year (optional)
+            
+        Returns:
+            List of dictionaries with yearly statistics
+        """
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT 
+                    d.audiobook_id,
+                    a.name as audiobook_name,
+                    strftime('%Y', d.listen_date) as year,
+                    SUM(d.total_seconds) as total_seconds,
+                    SUM(d.session_count) as session_count
+                FROM daily_listening_stats d
+                LEFT JOIN audiobooks a ON d.audiobook_id = a.id
+                WHERE 1=1
+            """
+            params = []
+            
+            if audiobook_id:
+                query += " AND d.audiobook_id = ?"
+                params.append(audiobook_id)
+            
+            if year:
+                query += " AND strftime('%Y', d.listen_date) = ?"
+                params.append(str(year))
+            
+            query += " GROUP BY d.audiobook_id, year ORDER BY year DESC, d.audiobook_id"
+            
+            cursor.execute(query, params)
+            
+            results = []
+            for row in cursor.fetchall():
+                results.append({
+                    'audiobook_id': row[0],
+                    'audiobook_name': row[1],
+                    'year': row[2],
+                    'total_seconds': row[3],
+                    'session_count': row[4]
+                })
+            
+            return results
+        except sqlite3.Error as e:
+            print(f"Database error in get_yearly_stats: {e}")
+            return []
         finally:
             conn.close()
 
