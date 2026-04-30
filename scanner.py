@@ -946,19 +946,145 @@ class AudiobookScanner:
              
         return None, None
 
-    def _calculate_state_hash(self, files):
-        """Calculate a hash based on file names, sizes, and modification times"""
+    def _calculate_state_hash(self, files, cover_file=None, description_file=None):
+        """Calculate hash based on audio files, cover image, and description file
+        
+        Args:
+            files: List of audio file paths
+            cover_file: Path to cover image file (optional)
+            description_file: Path to description text file (optional)
+        
+        Returns:
+            MD5 hash string
+        """
         state_info = []
+        
+        # Audio files
         for f in files:
             try:
                 stat = f.stat()
-                state_info.append(f"{f.name}|{stat.st_size}|{stat.st_mtime}")
+                state_info.append(f"AUDIO|{f.name}|{stat.st_size}|{stat.st_mtime}")
             except Exception:
                 continue
         
-        state_str = "\n".join(state_info)
+        # Cover file (original path, not cached)
+        if cover_file:
+            try:
+                cover_path = Path(cover_file)
+                if cover_path.exists():
+                    stat = cover_path.stat()
+                    state_info.append(f"COVER|{cover_path.name}|{stat.st_size}|{stat.st_mtime}")
+            except Exception:
+                pass
+        
+        # Description file
+        if description_file:
+            try:
+                desc_path = Path(description_file)
+                if desc_path.exists():
+                    stat = desc_path.stat()
+                    state_info.append(f"DESC|{desc_path.name}|{stat.st_size}|{stat.st_mtime}")
+            except Exception:
+                pass
+        
+        # Sort for consistency
+        state_str = "\n".join(sorted(state_info))
         return hashlib.md5(state_str.encode('utf-8')).hexdigest()
 
+    def _find_cover_file(self, directory):
+        """Find original cover image file (without caching)
+        
+        Searches for cover images in the following order:
+        1. Priority names in current directory (cover.jpg, folder.png, etc.)
+        2. Any image file in current directory
+        3. Priority names in subdirectories (recursive)
+        4. Any image file in subdirectories (recursive)
+        
+        Args:
+            directory: Path to the audiobook directory
+        
+        Returns:
+            String path to cover file, or None if not found
+        """
+        path_obj = Path(directory)
+        
+        # Case 0: Standalone file - no cover file
+        if path_obj.is_file():
+            return None
+        
+        # 1. Search in current directory (priority names)
+        for name in self.cover_names:
+            p = directory / name
+            try:
+                if p.is_file():
+                    return str(p)
+            except (PermissionError, OSError):
+                continue
+        
+        # 2. Search in current directory (any image)
+        try:
+            for f in directory.iterdir():
+                if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp'}:
+                    return str(f)
+        except (PermissionError, OSError):
+            pass
+        
+        # 3. Recursive search in subdirectories (priority names)
+        for name in self.cover_names:
+            try:
+                for p in directory.rglob(name):
+                    if p.is_file():
+                        return str(p)
+            except (PermissionError, OSError):
+                continue
+        
+        # 4. Recursive search in subdirectories (any image)
+        for ext in ('.jpg', '.jpeg', '.png', '.bmp'):
+            try:
+                for p in directory.rglob(f"*{ext}"):
+                    if p.is_file():
+                        return str(p)
+            except (PermissionError, OSError):
+                continue
+        
+        return None
+
+    def _find_description_file(self, directory):
+        """Find description text file
+        
+        Searches for text files in the following priority:
+        1. description.txt
+        2. info.txt
+        3. about.txt
+        4. {folder_name}.txt
+        5. First .txt file found
+        
+        Args:
+            directory: Path to the audiobook directory
+        
+        Returns:
+            String path to description file, or None if not found
+        """
+        path_obj = Path(directory)
+        
+        # Standalone file - no description
+        if path_obj.is_file():
+            return None
+        
+        potential_desc_files = sorted([f for f in directory.glob("*.txt")])
+        if not potential_desc_files:
+            return None
+        
+        # Prioritize: 'description.txt', 'info.txt', 'about.txt', '{folder_name}.txt'
+        priority_names = ['description', 'info', 'about', directory.name.lower()]
+        
+        for p_name in priority_names:
+            for f in potential_desc_files:
+                if f.stem.lower() == p_name:
+                    return str(f)
+        
+        # Fallback to first text file
+        return str(potential_desc_files[0])
 
     def _log_book_summary(self, title, author, narrator, duration, file_count, codec, bitrate, bitrate_mode, cover, cue_count, problems):
         """Print a consolidated summary of the book"""
@@ -1123,8 +1249,19 @@ class AudiobookScanner:
                         if f.is_file() and f.suffix.lower() in self.audio_extensions
                     )
                 
-                # Calculate current state hash
-                current_state_hash = self._calculate_state_hash(files)
+                # Find cover and description files BEFORE calculating hash
+                cover_file_path = self._find_cover_file(folder)
+                description_file_path = self._find_description_file(folder)
+                
+                # Verbose logging
+                if verbose:
+                    if cover_file_path:
+                        self._log_info(f"Cover: {Path(cover_file_path).name}", indent=2)
+                    if description_file_path:
+                        self._log_info(f"Description: {Path(description_file_path).name}", indent=2)
+                
+                # Calculate current state hash (including cover and description)
+                current_state_hash = self._calculate_state_hash(files, cover_file_path, description_file_path)
                 
                 # Check for existing record and state hash
                 c.execute("SELECT id, state_hash, codec FROM audiobooks WHERE path = ?", (str(rel),))
@@ -1228,33 +1365,14 @@ class AudiobookScanner:
                 if cue_files:
                     _, cue_data_chapters = self._parse_cue_file(cue_files[0])
 
-                # Check for description file
+                # Read description content (file path already found earlier)
                 description = ""
-                potential_desc_files = sorted([f for f in folder.glob("*.txt")])
-                # Prioritize: 'description.txt', 'info.txt', '{folder_name}.txt'
-                priority_names = ['description', 'info', 'about', folder.name.lower()]
-                selected_file = None
-                
-                # Check priority
-                for p_name in priority_names:
-                    for f in potential_desc_files:
-                        if f.stem.lower() == p_name:
-                            selected_file = f
-                            break
-                    if selected_file:
-                        break
-                
-                # Fallback to first text file if any exist
-                if not selected_file and potential_desc_files:
-                    selected_file = potential_desc_files[0]
-                
-                if selected_file:
-                    description = ""
+                if description_file_path:
                     # smart encoding detection
                     encodings = ['utf-8', 'utf-16', 'utf-16-le', 'cp1251', 'cp1252', 'latin-1']
                     for enc in encodings:
                         try:
-                            with open(selected_file, 'r', encoding=enc, errors='strict') as df:
+                            with open(description_file_path, 'r', encoding=enc, errors='strict') as df:
                                 description = df.read().strip()
                             if description:
                                 break
@@ -1266,7 +1384,7 @@ class AudiobookScanner:
                     # Fallback if all strict attempts fail
                     if not description:
                         try:
-                            with open(selected_file, 'r', encoding='utf-8', errors='replace') as df:
+                            with open(description_file_path, 'r', encoding='utf-8', errors='replace') as df:
                                 description = df.read().strip()
                         except Exception:
                             pass
@@ -1610,8 +1728,12 @@ class AudiobookScanner:
         rel = file_path.relative_to(root)
         parent = '' # Root files have no parent path in our relative structure logic (or '.')
         
+        # Find cover and description files (for standalone files, these are None)
+        cover_file_path = None  # Standalone files don't have separate cover files
+        description_file_path = None  # Standalone files don't have description files
+        
         # Calculate current state hash
-        current_state_hash = self._calculate_state_hash([file_path])
+        current_state_hash = self._calculate_state_hash([file_path], cover_file_path, description_file_path)
         
         # Check for existing
         c.execute("SELECT id, state_hash, codec FROM audiobooks WHERE path = ?", (str(rel),))

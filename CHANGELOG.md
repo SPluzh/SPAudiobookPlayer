@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.7]
+- **Scanner**: Cover images (cover.jpg) and descriptions (description.txt) added or updated after initial scan are applied on next library rescan.
+
 ## [1.6.6]
 - **Library**: Improved mouse wheel scrolling to move by single row instead of multiple rows.
 - **Library**: Added horizontal T-branches to all tree items for clearer nesting visualization.
