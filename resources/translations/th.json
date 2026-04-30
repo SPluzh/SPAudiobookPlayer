@@ -16,6 +16,7 @@
     "open_library_folder": "เปิดโฟลเดอร์คลัง",
     "reveal_current": "แสดงหนังสือที่กำลังฟัง",
     "scan": "สแกน",
+    "statistics": "สถิติการฟัง",
     "reload_styles": "โหลดสไตล์ใหม่",
     "language": "ภาษา",
     "theme": "ธีม",
@@ -400,5 +401,29 @@
     "download_error": "ดาวน์โหลดล้มเหลว",
     "apply_error": "ไม่สามารถใช้การอัปเดตได้",
     "error": "ข้อผิดพลาดในการอัปเดต: {error}"
+  },
+  "statistics": {
+    "title": "สถิติการฟัง",
+    "total_time": "เวลาฟังทั้งหมด",
+    "this_year": "ปีนี้",
+    "this_month": "เดือนนี้",
+    "this_week": "สัปดาห์นี้",
+    "current_streak": "ต่อเนื่องปัจจุบัน",
+    "longest_streak": "ต่อเนื่องนานที่สุด",
+    "average_daily": "เฉลี่ยต่อวัน",
+    "days": "วัน",
+    "hours": "ชม.",
+    "minutes": "นาที",
+    "no_data": "ไม่มีข้อมูล",
+    "tooltip": "{date}: {time}",
+    "less": "น้อย",
+    "more": "มาก",
+    "mon": "จ.",
+    "tue": "อ.",
+    "wed": "พ.",
+    "thu": "พฤ.",
+    "fri": "ศ.",
+    "sat": "ส.",
+    "sun": "อา."
   }
 }

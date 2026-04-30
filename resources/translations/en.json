@@ -16,6 +16,7 @@
     "open_library_folder": "Open Library Folder",
     "reveal_current": "Reveal Current Audiobook",
     "scan": "Scan",
+    "statistics": "Listening Statistics",
     "reload_styles": "Reload Styles",
     "language": "Language",
     "theme": "Theme",
@@ -400,5 +401,29 @@
     "download_error": "Download failed",
     "apply_error": "Failed to apply update",
     "error": "Update error: {error}"
+  },
+  "statistics": {
+    "title": "Listening Statistics",
+    "total_time": "Total Listened",
+    "this_year": "This Year",
+    "this_month": "This Month",
+    "this_week": "This Week",
+    "current_streak": "Current Streak",
+    "longest_streak": "Longest Streak",
+    "average_daily": "Average Daily",
+    "days": "days",
+    "hours": "h",
+    "minutes": "m",
+    "no_data": "No data",
+    "tooltip": "{date}: {time}",
+    "less": "Less",
+    "more": "More",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
   }
 }

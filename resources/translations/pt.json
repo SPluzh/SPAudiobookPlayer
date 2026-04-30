@@ -16,6 +16,7 @@
     "open_library_folder": "Abrir Pasta da Biblioteca",
     "reveal_current": "Mostrar Audiolivro Atual",
     "scan": "Escanear",
+    "statistics": "Estatísticas de audição",
     "reload_styles": "Recarregar Estilos",
     "theme": "Tema",
     "language": "Idioma",
@@ -401,5 +402,29 @@
     "download_error": "Falha no download",
     "apply_error": "Falha ao aplicar a atualização",
     "error": "Erro de atualização: {error}"
+  },
+  "statistics": {
+    "title": "Estatísticas de audição",
+    "total_time": "Total ouvido",
+    "this_year": "Este ano",
+    "this_month": "Este mês",
+    "this_week": "Esta semana",
+    "current_streak": "Sequência atual",
+    "longest_streak": "Melhor sequência",
+    "average_daily": "Média diária",
+    "days": "dias",
+    "hours": "h",
+    "minutes": "m",
+    "no_data": "Sem dados",
+    "tooltip": "{date}: {time}",
+    "less": "Menos",
+    "more": "Mais",
+    "mon": "Seg",
+    "tue": "Ter",
+    "wed": "Qua",
+    "thu": "Qui",
+    "fri": "Sex",
+    "sat": "Sáb",
+    "sun": "Dom"
   }
 }

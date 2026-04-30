@@ -1687,4 +1687,58 @@ class DatabaseManager:
         finally:
             conn.close()
 
+    def get_heatmap_data(self, days: int = 365) -> Dict[str, float]:
+        """Get daily listening data for heatmap visualization (last N days)
+        
+        Args:
+            days: Number of days to retrieve (default 365)
+            
+        Returns:
+            Dictionary mapping date strings (YYYY-MM-DD) to total seconds listened
+            Example: {'2026-04-30': 3600.0, '2026-04-29': 1800.0, ...}
+        """
+        from datetime import datetime, timedelta
+        
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            # Calculate date range
+            end_date = datetime.now().date()
+            start_date = end_date - timedelta(days=days - 1)
+            
+            # Query aggregated daily stats (sum across all audiobooks)
+            query = """
+                SELECT listen_date, SUM(total_seconds) as total
+                FROM daily_listening_stats
+                WHERE listen_date >= ? AND listen_date <= ?
+                GROUP BY listen_date
+                ORDER BY listen_date
+            """
+            
+            cursor.execute(query, (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
+            
+            # Build result dictionary with all dates (fill missing with 0)
+            result = {}
+            current_date = start_date
+            
+            # Initialize all dates with 0
+            while current_date <= end_date:
+                result[current_date.strftime('%Y-%m-%d')] = 0.0
+                current_date += timedelta(days=1)
+            
+            # Fill in actual data
+            for row in cursor.fetchall():
+                date_str = row[0]
+                total_seconds = row[1] or 0.0
+                result[date_str] = total_seconds
+            
+            return result
+            
+        except sqlite3.Error as e:
+            print(f"Database error in get_heatmap_data: {e}")
+            return {}
+        finally:
+            conn.close()
+
 

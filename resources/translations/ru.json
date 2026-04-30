@@ -16,6 +16,7 @@
     "open_library_folder": "Открыть папку библиотеки",
     "reveal_current": "Показать текущую аудиокнигу",
     "scan": "Сканировать",
+    "statistics": "Статистика прослушивания",
     "reload_styles": "Перезагрузить стили",
     "language": "Язык",
     "theme": "Тема",
@@ -400,5 +401,29 @@
     "download_error": "Ошибка загрузки",
     "apply_error": "Не удалось применить обновление",
     "error": "Ошибка обновления: {error}"
+  },
+  "statistics": {
+    "title": "Статистика прослушивания",
+    "total_time": "Всего прослушано",
+    "this_year": "В этом году",
+    "this_month": "В этом месяце",
+    "this_week": "На этой неделе",
+    "current_streak": "Текущая серия",
+    "longest_streak": "Лучшая серия",
+    "average_daily": "Среднее в день",
+    "days": "дней",
+    "hours": "ч",
+    "minutes": "мин",
+    "no_data": "Нет данных",
+    "tooltip": "{date}: {time}",
+    "less": "Меньше",
+    "more": "Больше",
+    "mon": "Пн",
+    "tue": "Вт",
+    "wed": "Ср",
+    "thu": "Чт",
+    "fri": "Пт",
+    "sat": "Сб",
+    "sun": "Вс"
   }
 }

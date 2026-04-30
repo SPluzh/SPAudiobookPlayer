@@ -16,6 +16,7 @@
     "open_library_folder": "打开库文件夹",
     "reveal_current": "显示当前有声书",
     "scan": "扫描",
+    "statistics": "收听统计",
     "reload_styles": "重载样式",
     "theme": "主题",
     "language": "语言",
@@ -401,5 +402,29 @@
     "download_error": "下载失败",
     "apply_error": "应用更新失败",
     "error": "更新错误：{error}"
+  },
+  "statistics": {
+    "title": "收听统计",
+    "total_time": "总收听时间",
+    "this_year": "今年",
+    "this_month": "本月",
+    "this_week": "本周",
+    "current_streak": "当前连续天数",
+    "longest_streak": "最长连续天数",
+    "average_daily": "日均",
+    "days": "天",
+    "hours": "小时",
+    "minutes": "分钟",
+    "no_data": "无数据",
+    "tooltip": "{date}: {time}",
+    "less": "少",
+    "more": "多",
+    "mon": "周一",
+    "tue": "周二",
+    "wed": "周三",
+    "thu": "周四",
+    "fri": "周五",
+    "sat": "周六",
+    "sun": "周日"
   }
 }

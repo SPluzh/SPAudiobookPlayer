@@ -16,6 +16,7 @@
     "open_library_folder": "Buka Folder Perpustakaan",
     "reveal_current": "Tampilkan Buku yang Sedang Diputar",
     "scan": "Pindai",
+    "statistics": "Statistik Mendengarkan",
     "reload_styles": "Muat Ulang Gaya",
     "language": "Bahasa",
     "theme": "Tema",
@@ -400,5 +401,29 @@
     "download_error": "Unduhan gagal",
     "apply_error": "Gagal menerapkan pembaruan",
     "error": "Kesalahan pembaruan: {error}"
+  },
+  "statistics": {
+    "title": "Statistik Mendengarkan",
+    "total_time": "Total Didengarkan",
+    "this_year": "Tahun Ini",
+    "this_month": "Bulan Ini",
+    "this_week": "Minggu Ini",
+    "current_streak": "Streak Saat Ini",
+    "longest_streak": "Streak Terpanjang",
+    "average_daily": "Rata-rata Harian",
+    "days": "hari",
+    "hours": "j",
+    "minutes": "m",
+    "no_data": "Tidak ada data",
+    "tooltip": "{date}: {time}",
+    "less": "Kurang",
+    "more": "Lebih",
+    "mon": "Sen",
+    "tue": "Sel",
+    "wed": "Rab",
+    "thu": "Kam",
+    "fri": "Jum",
+    "sat": "Sab",
+    "sun": "Min"
   }
 }

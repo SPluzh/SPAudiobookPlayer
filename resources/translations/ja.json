@@ -16,6 +16,7 @@
     "open_library_folder": "ライブラリフォルダーを開く",
     "reveal_current": "現在のオーディオブックを表示",
     "scan": "スキャン",
+    "statistics": "リスニング統計",
     "reload_styles": "スタイルを再読み込み",
     "theme": "テーマ",
     "language": "言語",
@@ -401,5 +402,29 @@
     "download_error": "ダウンロードに失敗しました",
     "apply_error": "アップデートの適用に失敗しました",
     "error": "更新エラー: {error}"
+  },
+  "statistics": {
+    "title": "リスニング統計",
+    "total_time": "合計再生時間",
+    "this_year": "今年",
+    "this_month": "今月",
+    "this_week": "今週",
+    "current_streak": "現在の連続日数",
+    "longest_streak": "最長連続日数",
+    "average_daily": "1日平均",
+    "days": "日",
+    "hours": "時間",
+    "minutes": "分",
+    "no_data": "データなし",
+    "tooltip": "{date}: {time}",
+    "less": "少ない",
+    "more": "多い",
+    "mon": "月",
+    "tue": "火",
+    "wed": "水",
+    "thu": "木",
+    "fri": "金",
+    "sat": "土",
+    "sun": "日"
   }
 }

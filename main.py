@@ -419,6 +419,15 @@ class AudiobookPlayerWindow(QMainWindow):
         scan_action.triggered.connect(self.rescan_directory)
         library_menu.addAction(scan_action)
 
+        library_menu.addSeparator()
+
+        # Listening Statistics
+        statistics_action = QAction(tr("menu.statistics"), self)
+        statistics_action.setIcon(get_icon("menu_statistics"))
+        statistics_action.setShortcut("Ctrl+T")
+        statistics_action.triggered.connect(self.show_statistics)
+        library_menu.addAction(statistics_action)
+
         # Open Library Folder
         open_folder_action = QAction(tr("menu.open_library_folder"), self)
         open_folder_action.setIcon(get_icon("context_open_folder"))
@@ -692,6 +701,12 @@ class AudiobookPlayerWindow(QMainWindow):
             # but user clicked a button so they expect something.
             # Let's check if we have a better key. "settings.specify_path" is "Specify path...".
             pass
+
+    def show_statistics(self):
+        """Open the listening statistics dialog"""
+        from statistics_dialog import StatisticsDialog
+        dialog = StatisticsDialog(self, self.db_manager)
+        dialog.exec()
 
     def connect_signals(self):
         """Map signals from sub-widgets (Library and Player) to their respective handler methods in the main window"""

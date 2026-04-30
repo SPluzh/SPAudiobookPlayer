@@ -16,6 +16,7 @@
     "open_library_folder": "فتح مجلد المكتبة",
     "reveal_current": "إظهار الكتاب الصوتي الحالي",
     "scan": "فحص",
+    "statistics": "إحصائيات الاستماع",
     "reload_styles": "إعادة تحميل الأنماط",
     "theme": "المظهر",
     "language": "الغة",
@@ -401,5 +402,29 @@
     "download_error": "فشل التنزيل",
     "apply_error": "فشل تطبيق التحديث",
     "error": "خطأ في التحديث: {error}"
+  },
+  "statistics": {
+    "title": "إحصائيات الاستماع",
+    "total_time": "إجمالي الاستماع",
+    "this_year": "هذا العام",
+    "this_month": "هذا الشهر",
+    "this_week": "هذا الأسبوع",
+    "current_streak": "السلسلة الحالية",
+    "longest_streak": "أطول سلسلة",
+    "average_daily": "المتوسط اليومي",
+    "days": "أيام",
+    "hours": "ساعة",
+    "minutes": "دقيقة",
+    "no_data": "لا توجد بيانات",
+    "tooltip": "{date}: {time}",
+    "less": "أقل",
+    "more": "أكثر",
+    "mon": "الإثنين",
+    "tue": "الثلاثاء",
+    "wed": "الأربعاء",
+    "thu": "الخميس",
+    "fri": "الجمعة",
+    "sat": "السبت",
+    "sun": "الأحد"
   }
 }

@@ -16,6 +16,7 @@
     "open_library_folder": "라이브러리 폴더 열기",
     "reveal_current": "현재 오디오북 표시",
     "scan": "스캔",
+    "statistics": "청취 통계",
     "reload_styles": "스타일 새로고침",
     "theme": "테마",
     "language": "언어",
@@ -401,5 +402,29 @@
     "download_error": "다운로드 실패",
     "apply_error": "업데이트 적용 실패",
     "error": "업데이트 오류: {error}"
+  },
+  "statistics": {
+    "title": "청취 통계",
+    "total_time": "총 청취 시간",
+    "this_year": "올해",
+    "this_month": "이번 달",
+    "this_week": "이번 주",
+    "current_streak": "현재 연속 일수",
+    "longest_streak": "최장 연속 일수",
+    "average_daily": "일일 평균",
+    "days": "일",
+    "hours": "시간",
+    "minutes": "분",
+    "no_data": "데이터 없음",
+    "tooltip": "{date}: {time}",
+    "less": "적음",
+    "more": "많음",
+    "mon": "월",
+    "tue": "화",
+    "wed": "수",
+    "thu": "목",
+    "fri": "금",
+    "sat": "토",
+    "sun": "일"
   }
 }

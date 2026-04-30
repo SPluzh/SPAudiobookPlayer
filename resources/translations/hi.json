@@ -16,6 +16,7 @@
     "open_library_folder": "लायब्रेरी फ़ोल्डर खोलें",
     "reveal_current": "वर्तमान ऑडियोबुक दिखाएं",
     "scan": "स्कैन करें",
+    "statistics": "सुनने के आँकड़े",
     "reload_styles": "शैलियाँ पुनः लोड करें",
     "theme": "थीम",
     "language": "भाषा",
@@ -401,5 +402,29 @@
     "download_error": "डाउनलोड विफल",
     "apply_error": "अपडेट लागू करने में विफल",
     "error": "अपडेट त्रुटि: {error}"
+  },
+  "statistics": {
+    "title": "सुनने के आँकड़े",
+    "total_time": "कुल सुना गया",
+    "this_year": "इस वर्ष",
+    "this_month": "इस महीने",
+    "this_week": "इस सप्ताह",
+    "current_streak": "वर्तमान श्रृंखला",
+    "longest_streak": "सबसे लंबी श्रृंखला",
+    "average_daily": "दैनिक औसत",
+    "days": "दिन",
+    "hours": "घंटे",
+    "minutes": "मिनट",
+    "no_data": "कोई डेटा नहीं",
+    "tooltip": "{date}: {time}",
+    "less": "कम",
+    "more": "अधिक",
+    "mon": "सोम",
+    "tue": "मंगल",
+    "wed": "बुध",
+    "thu": "गुरु",
+    "fri": "शुक्र",
+    "sat": "शनि",
+    "sun": "रवि"
   }
 }

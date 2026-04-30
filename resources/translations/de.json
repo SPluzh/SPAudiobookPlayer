@@ -16,6 +16,7 @@
     "open_library_folder": "Bibliotheksordner öffnen",
     "reveal_current": "Aktuelles Hörbuch anzeigen",
     "scan": "Scannen",
+    "statistics": "Hörstatistiken",
     "reload_styles": "Stile neu laden",
     "theme": "Thema",
     "language": "Sprache",
@@ -400,5 +401,29 @@
     "download_error": "Download fehlgeschlagen",
     "apply_error": "Anwenden des Updates fehlgeschlagen",
     "error": "Update-Fehler: {error}"
+  },
+  "statistics": {
+    "title": "Hörstatistiken",
+    "total_time": "Gesamt gehört",
+    "this_year": "Dieses Jahr",
+    "this_month": "Diesen Monat",
+    "this_week": "Diese Woche",
+    "current_streak": "Aktuelle Serie",
+    "longest_streak": "Längste Serie",
+    "average_daily": "Durchschnitt täglich",
+    "days": "Tage",
+    "hours": "Std",
+    "minutes": "min",
+    "no_data": "Keine Daten",
+    "tooltip": "{date}: {time}",
+    "less": "Weniger",
+    "more": "Mehr",
+    "mon": "Mo",
+    "tue": "Di",
+    "wed": "Mi",
+    "thu": "Do",
+    "fri": "Fr",
+    "sat": "Sa",
+    "sun": "So"
   }
 }

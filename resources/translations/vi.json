@@ -16,6 +16,7 @@
     "open_library_folder": "Mở thư mục thư viện",
     "reveal_current": "Hiển thị sách đang nghe",
     "scan": "Quét",
+    "statistics": "Thống kê nghe",
     "reload_styles": "Tải lại giao diện",
     "language": "Ngôn ngữ",
     "theme": "Chủ đề",
@@ -400,5 +401,29 @@
     "download_error": "Tải xuống thất bại",
     "apply_error": "Không thể áp dụng bản cập nhật",
     "error": "Lỗi cập nhật: {error}"
+  },
+  "statistics": {
+    "title": "Thống kê nghe",
+    "total_time": "Tổng thời gian nghe",
+    "this_year": "Năm nay",
+    "this_month": "Tháng này",
+    "this_week": "Tuần này",
+    "current_streak": "Chuỗi hiện tại",
+    "longest_streak": "Chuỗi dài nhất",
+    "average_daily": "Trung bình mỗi ngày",
+    "days": "ngày",
+    "hours": "giờ",
+    "minutes": "phút",
+    "no_data": "Không có dữ liệu",
+    "tooltip": "{date}: {time}",
+    "less": "Ít",
+    "more": "Nhiều",
+    "mon": "T2",
+    "tue": "T3",
+    "wed": "T4",
+    "thu": "T5",
+    "fri": "T6",
+    "sat": "T7",
+    "sun": "CN"
   }
 }

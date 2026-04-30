@@ -16,6 +16,7 @@
     "open_library_folder": "Kütüphane Klasörünü Aç",
     "reveal_current": "Mevcut Sesli Kitabı Göster",
     "scan": "Tara",
+    "statistics": "Dinleme İstatistikleri",
     "reload_styles": "Stilleri Yeniden Yükle",
     "theme": "Tema",
     "language": "Dil",
@@ -401,5 +402,29 @@
     "download_error": "İndirme başarısız oldu",
     "apply_error": "Güncelleme uygulanamadı",
     "error": "Güncelleme hatası: {error}"
+  },
+  "statistics": {
+    "title": "Dinleme İstatistikleri",
+    "total_time": "Toplam Dinlenen",
+    "this_year": "Bu Yıl",
+    "this_month": "Bu Ay",
+    "this_week": "Bu Hafta",
+    "current_streak": "Mevcut Seri",
+    "longest_streak": "En Uzun Seri",
+    "average_daily": "Günlük Ortalama",
+    "days": "gün",
+    "hours": "s",
+    "minutes": "dk",
+    "no_data": "Veri yok",
+    "tooltip": "{date}: {time}",
+    "less": "Az",
+    "more": "Çok",
+    "mon": "Pzt",
+    "tue": "Sal",
+    "wed": "Çar",
+    "thu": "Per",
+    "fri": "Cum",
+    "sat": "Cmt",
+    "sun": "Paz"
   }
 }
