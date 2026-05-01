@@ -120,26 +120,24 @@ class HeatmapWidget(QWidget):
         # Parse theme accent color
         base_color = QColor(theme_accent)
         
-        # Create gradient levels (darker to brighter)
-        if intensity <= 0.25:
-            # Level 1 - 25% brightness
-            factor = 0.25
-        elif intensity <= 0.50:
-            # Level 2 - 50% brightness
-            factor = 0.50
-        elif intensity <= 0.75:
-            # Level 3 - 75% brightness
-            factor = 0.75
+        # Map intensity to 4 discrete alpha levels for better visual distinction
+        color = QColor(theme_accent)
+        # Map intensity to 5 discrete levels for better visual distinction
+        if intensity <= 0.2:
+            alpha = 60
+        elif intensity <= 0.4:
+            alpha = 110
+        elif intensity <= 0.6:
+            alpha = 160
+        elif intensity <= 0.8:
+            alpha = 210
         else:
-            # Level 4 - 100% brightness (brightest)
-            factor = 1.0
-        
-        # Apply brightness factor
-        r = int(base_color.red() * factor)
-        g = int(base_color.green() * factor)
-        b = int(base_color.blue() * factor)
-        
-        return QColor(r, g, b)
+            # Level 5: Top 20% - Radical brightness jump
+            color = color.lighter(150)
+            alpha = 255
+            
+        color.setAlpha(alpha)
+        return color
     
     def paintEvent(self, event):
         """Paint the heatmap grid"""
@@ -249,8 +247,8 @@ class HeatmapWidget(QWidget):
         painter.drawText(legend_x, legend_y + 10, tr("statistics.less"))
         legend_x += 40
         
-        # Color boxes
-        for level in [0, 0.2, 0.4, 0.6, 0.8, 1.0]:
+        # Color boxes (0, L1, L2, L3, L4, L5)
+        for level in [0, 0.1, 0.3, 0.5, 0.7, 0.9]:
             seconds = level * self.max_seconds
             color = self._get_cell_color(seconds)
             painter.fillRect(legend_x, legend_y, self.cell_size, self.cell_size, color)
@@ -285,6 +283,10 @@ class HeatmapWidget(QWidget):
     
     def _show_tooltip(self, date_str: str, seconds: float):
         """Show tooltip for a cell"""
+        if seconds < 0:
+            self.setToolTip("")
+            return
+            
         # Format time
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
@@ -403,25 +405,21 @@ class StatisticsDialog(QDialog):
         
         # Row 1
         stats_layout.addWidget(self._create_stat_card(
-            "📚",
             tr("statistics.total_time"),
             self._format_time(self.statistics['total_seconds'])
         ), 0, 0)
         
         stats_layout.addWidget(self._create_stat_card(
-            "📅",
             tr("statistics.this_year"),
             self._format_time(self.statistics['this_year_seconds'])
         ), 0, 1)
         
         stats_layout.addWidget(self._create_stat_card(
-            "🗓️",
             tr("statistics.this_month"),
             self._format_time(self.statistics['this_month_seconds'])
         ), 0, 2)
         
         stats_layout.addWidget(self._create_stat_card(
-            "📈",
             tr("statistics.this_week"),
             self._format_time(self.statistics['this_week_seconds'])
         ), 0, 3)
@@ -440,11 +438,10 @@ class StatisticsDialog(QDialog):
         
         layout.addStretch()
     
-    def _create_stat_card(self, icon: str, label: str, value: str) -> QWidget:
-        """Create a statistics card widget with an icon
+    def _create_stat_card(self, label: str, value: str) -> QWidget:
+        """Create a statistics card widget
         
         Args:
-            icon: Emoji icon
             label: Card label
             value: Card value
             
@@ -454,30 +451,19 @@ class StatisticsDialog(QDialog):
         card = QFrame()
         card.setObjectName("statCard")
         
-        card_layout = QHBoxLayout(card)
-        card_layout.setContentsMargins(15, 15, 15, 15)
-        card_layout.setSpacing(15)
-        
-        icon_label = QLabel(icon)
-        icon_label.setObjectName("statIcon")
-        icon_label.setStyleSheet("font-size: 24px;")
-        
-        text_container = QWidget()
-        text_layout = QVBoxLayout(text_container)
-        text_layout.setContentsMargins(0, 0, 0, 0)
-        text_layout.setSpacing(2)
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(15, 12, 15, 12)
+        card_layout.setSpacing(5)
         
         label_widget = QLabel(label)
         label_widget.setObjectName("statLabel")
+        label_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         value_widget = QLabel(value)
         value_widget.setObjectName("statValue")
+        value_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        text_layout.addWidget(label_widget)
-        text_layout.addWidget(value_widget)
-        
-        card_layout.addWidget(icon_label)
-        card_layout.addWidget(text_container)
-        card_layout.addStretch()
+        card_layout.addWidget(label_widget)
+        card_layout.addWidget(value_widget)
         
         return card
