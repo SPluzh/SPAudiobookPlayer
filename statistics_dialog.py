@@ -552,13 +552,6 @@ class StatisticsDialog(QDialog):
         row_layout.addWidget(time_label)
         
         return row
-        separator2 = QFrame()
-        separator2.setFrameShape(QFrame.Shape.HLine)
-        separator2.setFrameShadow(QFrame.Shadow.Sunken)
-        layout.addWidget(separator2)
-        
-        # History list
-        self._setup_history_list(layout)
     
     def _create_stat_card(self, label: str, value: str) -> QWidget:
         """Create a statistics card widget
