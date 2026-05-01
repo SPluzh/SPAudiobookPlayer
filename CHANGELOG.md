@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.8]
+- **Statistics**: Implemented comprehensive listening statistics dialog:
+    - Added GitHub-style heatmap visualization for daily listening activity.
+    - Added summary cards for total, yearly, monthly, and weekly listening time.
+    - Added scrollable chronological history of books listened to by month.
+
 ## [1.6.7]
 - **Scanner**: Cover images (cover.jpg) and descriptions (description.txt) added or updated after initial scan are applied on next library rescan.
 
