@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
     - Added GitHub-style heatmap visualization for daily listening activity.
     - Added summary cards for total, yearly, monthly, and weekly listening time.
     - Added scrollable chronological history of books listened to by month.
+    - **Note**: A full library rescan is required to populate historical data for the new statistics features.
 
 ## [1.6.7]
 - **Scanner**: Cover images (cover.jpg) and descriptions (description.txt) added or updated after initial scan are applied on next library rescan.
