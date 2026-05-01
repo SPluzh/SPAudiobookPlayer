@@ -6,15 +6,17 @@ Displays listening statistics with GitHub-style heatmap visualization.
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
 
+from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
-    QWidget, QGridLayout, QFrame
+    QWidget, QGridLayout, QFrame, QScrollArea
 )
 from PyQt6.QtCore import Qt, QRect, QPoint, QSize
-from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush
+from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPixmap, QIcon
 
 from translations import tr, trf
 from styles import StyleManager
+from utils import load_icon, get_base_path
 
 
 class HeatmapWidget(QWidget):
@@ -320,6 +322,7 @@ class StatisticsDialog(QDialog):
         
         # Load data (52 weeks = 364 days)
         self.heatmap_data = self.db.get_heatmap_data(364)
+        self.book_stats = self.db.get_book_stats_by_month()
         self.statistics = self._calculate_statistics()
         
         # Setup UI
@@ -371,19 +374,13 @@ class StatisticsDialog(QDialog):
     
 
     def _format_time(self, seconds: float) -> str:
-        """Format seconds to human-readable string
-        
-        Args:
-            seconds: Time in seconds
-            
-        Returns:
-            Formatted string like "2ч 30м"
-        """
-        if seconds == 0:
-            return "0" + tr("statistics.minutes")
+        """Format seconds to human-readable string"""
+        if seconds <= 0:
+            return "0" + tr("statistics.seconds")
         
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
         
         parts = []
         if hours > 0:
@@ -391,7 +388,11 @@ class StatisticsDialog(QDialog):
         if minutes > 0:
             parts.append(f"{minutes}{tr('statistics.minutes')}")
         
-        return " ".join(parts) if parts else "0" + tr("statistics.minutes")
+        # Show seconds if it's the only unit or if there's remaining seconds
+        if secs > 0 or not parts:
+            parts.append(f"{secs}{tr('statistics.seconds')}")
+            
+        return " ".join(parts)
     
     def _setup_ui(self):
         """Setup dialog UI"""
@@ -436,7 +437,134 @@ class StatisticsDialog(QDialog):
         heatmap_widget = HeatmapWidget(self.heatmap_data, self)
         layout.addWidget(heatmap_widget)
         
-        layout.addStretch()
+        # Separator for history
+        separator2 = QFrame()
+        separator2.setFrameShape(QFrame.Shape.HLine)
+        separator2.setFrameShadow(QFrame.Shadow.Sunken)
+        layout.addWidget(separator2)
+        
+        # History list
+        self._setup_history_list(layout)
+        
+        # Set minimum size for better scroll area visibility
+        self.setMinimumSize(850, 750)
+
+    def _setup_history_list(self, main_layout):
+        """Setup the scrollable list of books by month"""
+        if not self.book_stats:
+            main_layout.addStretch()
+            return
+            
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("background: transparent;")
+        
+        container = QWidget()
+        container.setStyleSheet("background: transparent;")
+        history_layout = QVBoxLayout(container)
+        history_layout.setContentsMargins(0, 0, 10, 0)
+        history_layout.setSpacing(8)
+        
+        # Month names for translation
+        month_names = {
+            "01": tr("statistics.jan") if tr("statistics.jan") != "statistics.jan" else "Январь",
+            "02": tr("statistics.feb") if tr("statistics.feb") != "statistics.feb" else "Февраль",
+            "03": tr("statistics.mar") if tr("statistics.mar") != "statistics.mar" else "Март",
+            "04": tr("statistics.apr") if tr("statistics.apr") != "statistics.apr" else "Апрель",
+            "05": tr("statistics.may") if tr("statistics.may") != "statistics.may" else "Май",
+            "06": tr("statistics.jun") if tr("statistics.jun") != "statistics.jun" else "Июнь",
+            "07": tr("statistics.jul") if tr("statistics.jul") != "statistics.jul" else "Июль",
+            "08": tr("statistics.aug") if tr("statistics.aug") != "statistics.aug" else "Август",
+            "09": tr("statistics.sep") if tr("statistics.sep") != "statistics.sep" else "Сентябрь",
+            "10": tr("statistics.oct") if tr("statistics.oct") != "statistics.oct" else "Октябрь",
+            "11": tr("statistics.nov") if tr("statistics.nov") != "statistics.nov" else "Ноябрь",
+            "12": tr("statistics.dec") if tr("statistics.dec") != "statistics.dec" else "Декабрь"
+        }
+        
+        for month_str in sorted(self.book_stats.keys(), reverse=True):
+            year, month = month_str.split("-")
+            month_name = month_names.get(month, month)
+            header_text = f"{month_name} {year}".upper()
+            
+            header = QLabel(header_text)
+            header.setObjectName("sectionLabel")
+            header.setContentsMargins(0, 10, 0, 5)
+            history_layout.addWidget(header)
+            
+            for book in self.book_stats[month_str]:
+                row = self._create_book_row(book)
+                history_layout.addWidget(row)
+        
+        history_layout.addStretch()
+        scroll.setWidget(container)
+        main_layout.addWidget(scroll, 1)
+
+    def _create_book_row(self, book: dict) -> QWidget:
+        """Create a single book row widget similar to library items"""
+        row = QFrame()
+        row.setObjectName("statCard")
+        row.setFixedHeight(75)
+        
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(10, 5, 20, 5)
+        row_layout.setSpacing(15)
+        
+        # Cover
+        cover_label = QLabel()
+        cover_label.setFixedSize(55, 55)
+        cover_label.setScaledContents(True)
+        
+        cover_path = book.get('cached_cover_path') or book.get('cover_path')
+        icon = None
+        if cover_path:
+            p = Path(cover_path)
+            # Try absolute or relative to script dir
+            if not p.is_absolute():
+                p = get_base_path() / p
+            icon = load_icon(p, 55, force_square=True)
+            
+        if icon:
+            cover_label.setPixmap(icon.pixmap(55, 55))
+        else:
+            # Fallback to default cover if possible
+            default_path = get_base_path() / "resources" / "icons" / "default_cover.png"
+            default_icon = load_icon(default_path, 55, force_square=True)
+            if default_icon:
+                cover_label.setPixmap(default_icon.pixmap(55, 55))
+            
+        row_layout.addWidget(cover_label)
+        
+        # Text block
+        text_layout = QVBoxLayout()
+        text_layout.setSpacing(2)
+        
+        title_label = QLabel(book['title'] or tr("delegate.no_title"))
+        title_font = title_label.font()
+        title_font.setBold(True)
+        title_font.setPointSize(10)
+        title_label.setFont(title_font)
+        
+        author_label = QLabel(book['author'] or tr("scanner.unknown_author"))
+        author_label.setObjectName("subtitleLabel")
+        
+        text_layout.addWidget(title_label)
+        text_layout.addWidget(author_label)
+        row_layout.addLayout(text_layout, 1)
+        
+        # Time
+        time_label = QLabel(self._format_time(book['seconds']))
+        time_label.setObjectName("bigTimeLabel")
+        row_layout.addWidget(time_label)
+        
+        return row
+        separator2 = QFrame()
+        separator2.setFrameShape(QFrame.Shape.HLine)
+        separator2.setFrameShadow(QFrame.Shadow.Sunken)
+        layout.addWidget(separator2)
+        
+        # History list
+        self._setup_history_list(layout)
     
     def _create_stat_card(self, label: str, value: str) -> QWidget:
         """Create a statistics card widget

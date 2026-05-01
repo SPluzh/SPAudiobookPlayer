@@ -1741,4 +1741,58 @@ class DatabaseManager:
         finally:
             conn.close()
 
+    def get_book_stats_by_month(self) -> Dict[str, list]:
+        """Get listening statistics for books grouped by month
+        
+        Returns:
+            Dictionary mapping month strings (YYYY-MM) to list of book stats:
+            {
+                '2026-05': [
+                    {'id': 1, 'title': '...', 'author': '...', 'cover': '...', 'seconds': 3600},
+                    ...
+                ],
+                ...
+            }
+        """
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT 
+                    strftime('%Y-%m', listen_date) as month_str,
+                    a.id, a.author, a.title, a.cover_path, a.cached_cover_path,
+                    SUM(d.total_seconds) as month_total
+                FROM daily_listening_stats d
+                JOIN audiobooks a ON d.audiobook_id = a.id
+                GROUP BY month_str, a.id
+                ORDER BY month_str DESC, month_total DESC
+            """
+            
+            cursor.execute(query)
+            
+            result = {}
+            for row in cursor.fetchall():
+                month_str = row[0]
+                book_data = {
+                    'id': row[1],
+                    'author': row[2] or "",
+                    'title': row[3] or "",
+                    'cover_path': row[4],
+                    'cached_cover_path': row[5],
+                    'seconds': row[6] or 0.0
+                }
+                
+                if month_str not in result:
+                    result[month_str] = []
+                result[month_str].append(book_data)
+                
+            return result
+            
+        except sqlite3.Error as e:
+            print(f"Database error in get_book_stats_by_month: {e}")
+            return {}
+        finally:
+            conn.close()
+
 

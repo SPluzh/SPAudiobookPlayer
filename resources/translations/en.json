@@ -414,6 +414,7 @@
     "days": "days",
     "hours": "h",
     "minutes": "m",
+    "seconds": "s",
     "no_data": "No data",
     "tooltip": "{date}: {time}",
     "less": "Less",
@@ -424,6 +425,18 @@
     "thu": "Thu",
     "fri": "Fri",
     "sat": "Sat",
-    "sun": "Sun"
+    "sun": "Sun",
+    "jan": "January",
+    "feb": "February",
+    "mar": "March",
+    "apr": "April",
+    "may": "May",
+    "jun": "June",
+    "jul": "July",
+    "aug": "August",
+    "sep": "September",
+    "oct": "October",
+    "nov": "November",
+    "dec": "December"
   }
 }
