@@ -133,7 +133,7 @@ class HeatmapWidget(QWidget):
             alpha = 210
         else:
             # Level 5: Top 20% - Radical brightness jump
-            color = color.lighter(150)
+            color = color.lighter(120)
             alpha = 255
             
         color.setAlpha(alpha)
