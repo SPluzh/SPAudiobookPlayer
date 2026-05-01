@@ -168,6 +168,9 @@ class PlaybackController:
                     self.current_audiobook_id, 
                     self.total_duration
                 )
+            
+            if self.listening_tracker:
+                self.listening_tracker.end_session()
             return False
     
     def prev_file(self) -> bool:

@@ -1384,6 +1384,10 @@ class AudiobookPlayerWindow(QMainWindow):
             self.player.pause()
             self.last_pause_time = __import__("time").time()
             self.taskbar_progress.set_paused()
+            
+            # End listening session on pause
+            if hasattr(self, 'listening_tracker'):
+                self.listening_tracker.end_session()
         else:
             if self.auto_rewind and self.last_pause_time:
                 pause_duration = __import__("time").time() - self.last_pause_time
@@ -1396,6 +1400,14 @@ class AudiobookPlayerWindow(QMainWindow):
             self.player.play()
             self.last_pause_time = None
             self.taskbar_progress.set_normal()
+
+            # Resume/Start listening session when playing
+            if hasattr(self, 'listening_tracker') and self.playback_controller.current_audiobook_id:
+                if not self.listening_tracker.is_active:
+                    self.listening_tracker.start_session(
+                        self.playback_controller.current_audiobook_id,
+                        self.player.speed_pos / 10.0
+                    )
 
         # Sync the session delegate for visual consistency in the library
         if self.delegate:

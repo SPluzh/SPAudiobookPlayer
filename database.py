@@ -253,6 +253,35 @@ class DatabaseManager:
     def __init__(self, db_file: Path):
         """Initialize with database file path"""
         self.db_file = db_file
+        self.recover_crashed_sessions()
+
+    def recover_crashed_sessions(self):
+        """Find any sessions that were left active (e.g. due to app crash) and close them properly, updating daily stats"""
+        import datetime
+        conn = sqlite3.connect(self.db_file)
+        active_sessions = []
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, session_start, duration_seconds
+                FROM listening_sessions
+                WHERE is_active = 1
+            """)
+            active_sessions = cursor.fetchall()
+        except sqlite3.Error as e:
+            # Table might not exist yet on fresh install
+            print(f"Database error finding crashed sessions (or table missing): {e}")
+        finally:
+            conn.close()
+            
+        for session_id, session_start, duration_seconds in active_sessions:
+            try:
+                start_dt = datetime.datetime.strptime(session_start, '%Y-%m-%d %H:%M:%S')
+            except:
+                start_dt = datetime.datetime.now()
+                
+            end_dt = start_dt + datetime.timedelta(seconds=int(duration_seconds))
+            self.close_listening_session(session_id, end_dt)
 
     # --- Bookmarks Methods ---
 
