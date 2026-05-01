@@ -34,8 +34,8 @@ class HeatmapWidget(QWidget):
         self.cell_size = 12
         self.cell_spacing = 2
         self.margin_left = 30
-        self.margin_top = 20
-        self.margin_bottom = 20
+        self.margin_top = 15
+        self.margin_bottom = 10
         
         # Calculate max value for color intensity
         self.max_seconds = max(heatmap_data.values()) if heatmap_data else 0
@@ -99,14 +99,11 @@ class HeatmapWidget(QWidget):
         """
         # Get theme colors
         try:
-            theme_accent = StyleManager.get_theme_property("accent_color")
-            # StyleManager returns a tuple, extract the color string
-            if isinstance(theme_accent, tuple) and len(theme_accent) > 0:
-                theme_accent = theme_accent[0]
-            if not theme_accent or not isinstance(theme_accent, str):
-                theme_accent = "#018574"  # Use app's teal accent
+            _, theme_accent = StyleManager.get_theme_property("theme_primary")
+            if not theme_accent or not isinstance(theme_accent, QColor):
+                theme_accent = QColor("#018574")  # Fallback
         except:
-            theme_accent = "#018574"
+            theme_accent = QColor("#018574")
         
         if seconds < 0:
             # Future date - transparent
@@ -114,17 +111,13 @@ class HeatmapWidget(QWidget):
             
         if seconds == 0:
             # No activity - background matching grid
-            return QColor("#2c2c2c")
+            return QColor(45, 45, 45) # Subtle contrast
         
         # Calculate intensity (0.0 - 1.0)
         intensity = seconds / self.max_seconds if self.max_seconds > 0 else 0
         
-        # Parse theme accent color
-        base_color = QColor(theme_accent)
-        
-        # Map intensity to 4 discrete alpha levels for better visual distinction
-        color = QColor(theme_accent)
         # Map intensity to 5 discrete levels for better visual distinction
+        color = QColor(theme_accent)
         if intensity <= 0.2:
             alpha = 60
         elif intensity <= 0.4:
@@ -148,6 +141,12 @@ class HeatmapWidget(QWidget):
         
         if not self.grid_data:
             return
+            
+        # Get label color from theme
+        try:
+            _, label_color = StyleManager.get_theme_property("delegate_text_dim")
+        except:
+            label_color = QColor(150, 150, 150)
         
         # Draw cells
         for row in range(7):
@@ -174,7 +173,7 @@ class HeatmapWidget(QWidget):
                     painter.drawRect(x, y, self.cell_size, self.cell_size)
         
         # Draw day labels (Mon, Wed, Fri)
-        painter.setPen(QColor(150, 150, 150))
+        painter.setPen(label_color)
         font = QFont()
         font.setPixelSize(9)
         painter.setFont(font)
@@ -186,17 +185,17 @@ class HeatmapWidget(QWidget):
                 painter.drawText(5, y, label)
         
         # Draw month labels
-        self._draw_month_labels(painter)
+        self._draw_month_labels(painter, label_color)
         
         # Draw legend
-        self._draw_legend(painter)
+        self._draw_legend(painter, label_color)
     
-    def _draw_month_labels(self, painter: QPainter):
+    def _draw_month_labels(self, painter: QPainter, label_color: QColor):
         """Draw month labels above the heatmap with year indicator"""
         if not self.grid_data or not self.grid_data[0]:
             return
         
-        painter.setPen(QColor(150, 150, 150))
+        painter.setPen(label_color)
         font = QFont()
         font.setPixelSize(9)
         painter.setFont(font)
@@ -237,9 +236,9 @@ class HeatmapWidget(QWidget):
                 y = self.margin_top - 5
                 painter.drawText(x, y, label)
     
-    def _draw_legend(self, painter: QPainter):
+    def _draw_legend(self, painter: QPainter, label_color: QColor):
         """Draw color legend at the bottom"""
-        painter.setPen(QColor(150, 150, 150))
+        painter.setPen(label_color)
         font = QFont()
         font.setPixelSize(9)
         painter.setFont(font)
@@ -400,7 +399,7 @@ class StatisticsDialog(QDialog):
         """Setup dialog UI"""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setSpacing(8)
         
         # Statistics cards
         stats_layout = QGridLayout()
@@ -483,7 +482,7 @@ class StatisticsDialog(QDialog):
             
             header = QLabel(header_text)
             header.setObjectName("sectionLabel")
-            header.setContentsMargins(0, 10, 0, 5)
+            header.setContentsMargins(0, 5, 0, 5)
             history_layout.addWidget(header)
             
             for book in self.book_stats[month_str]:
@@ -567,8 +566,8 @@ class StatisticsDialog(QDialog):
         card.setObjectName("statCard")
         
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(15, 12, 15, 12)
-        card_layout.setSpacing(5)
+        card_layout.setContentsMargins(15, 5, 15, 5)
+        card_layout.setSpacing(2)
         
         label_widget = QLabel(label)
         label_widget.setObjectName("statLabel")

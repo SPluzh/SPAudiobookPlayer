@@ -1013,6 +1013,17 @@ QPushButton#aboutCloseBtn {
     max-width: 120px;
 }
 
+QLabel#aboutGithubLink {
+    color: @accent;
+    font-weight: bold;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+QLabel#aboutGithubLink:hover {
+    color: white;
+}
+
 QPushButton#aboutCloseBtn:hover {
     background-color: @bg-hover;
 }
@@ -1145,4 +1156,32 @@ QLabel#dropOverlay {
 
 BookProgressBar {
     qproperty-markerColor: @accent-dark;
+}
+
+/* ============================================================
+   STATISTICS DIALOG
+   ============================================================ */
+
+QFrame#statCard {
+    background-color: @bg-dark;
+    border: 1px solid @border;
+    border-radius: 3px;
+}
+
+QFrame#statCard:hover {
+    border-color: @accent;
+    background-color: @bg-hover;
+}
+
+QLabel#statLabel {
+    color: @text-dim;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+QLabel#statValue {
+    color: @accent;
+    font-size: 16px;
+    font-weight: bold;
 }

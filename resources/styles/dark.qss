@@ -1173,7 +1173,7 @@ QLabel#statLabel {
 }
 
 QLabel#statValue {
-    color: @accent-light;
+    color: @accent;
     font-size: 16px;
     font-weight: bold;
 }
