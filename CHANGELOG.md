@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.9]
+- **Library UI**: Fixed a bug where the hit and hover areas for "i" (info), Play, and Favorite icons were misaligned when books were nested in folders.
+- **Scanner**: Fixed text encoding issues when reading book descriptions and CUE files:
+    - Implemented robust priority-based encoding detection with heuristics to prevent incorrect UTF-16 interpretation of CP1251 text.
+
 ## [1.6.8]
 - **Statistics**: Implemented comprehensive listening statistics dialog:
     - Added GitHub-style heatmap visualization for daily listening activity.

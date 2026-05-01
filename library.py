@@ -666,6 +666,31 @@ class MultiLineDelegate(QStyledItemDelegate):
 
         return chain
 
+    def get_nesting_offset(self, index: QModelIndex) -> int:
+        """Calculate horizontal offset for item content based on nesting depth"""
+        if not self.show_nesting_lines:
+            return 0
+
+        # Quick depth check without building the full chain
+        depth = 0
+        curr = index.parent()
+        while curr.isValid():
+            depth += 1
+            curr = curr.parent()
+
+        if depth <= 0:
+            return 0
+
+        # Get tree indentation
+        tree = self.parent()
+        indent = 12
+        if hasattr(tree, "indentation"):
+            indent = tree.indentation()
+
+        line_width = 2
+        spacing = max(2, indent - line_width)
+        return line_width + spacing
+
     def _draw_nesting_lines(self, painter, rect, chain, index=None):
         """
         Draw colored vertical lines indicating nesting depth.
@@ -1471,10 +1496,11 @@ class LibraryTree(QTreeWidget):
                 item_type = index.data(Qt.ItemDataRole.UserRole + 1)
                 if item_type == "audiobook":
                     rect = self.visualRect(index)
+                    nesting_offset = delegate.get_nesting_offset(index)
                     icon_size = delegate.audiobook_icon_size
                     icon_y = rect.top() + (rect.height() - icon_size) // 2
                     icon_rect = QRect(
-                        rect.left() + delegate.horizontal_padding,
+                        rect.left() + nesting_offset + delegate.horizontal_padding,
                         icon_y,
                         icon_size,
                         icon_size,
@@ -1525,10 +1551,11 @@ class LibraryTree(QTreeWidget):
                     delegate = self.itemDelegate()
                     if delegate and hasattr(delegate, "get_play_button_rect"):
                         rect = self.visualRect(index)
+                        nesting_offset = delegate.get_nesting_offset(index)
                         icon_size = delegate.audiobook_icon_size
                         icon_y = rect.top() + (rect.height() - icon_size) // 2
                         icon_rect = QRect(
-                            rect.left() + delegate.horizontal_padding,
+                            rect.left() + nesting_offset + delegate.horizontal_padding,
                             icon_y,
                             icon_size,
                             icon_size,

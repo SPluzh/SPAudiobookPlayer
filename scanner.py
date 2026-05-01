@@ -466,16 +466,8 @@ class AudiobookScanner:
             return metadata, chapters
             
         try:
-            # Try different encodings
-            content = None
-            for enc in ['utf-8-sig', 'utf-8', 'utf-16', 'utf-16-le', 'cp1251', 'latin-1']:
-
-                try:
-                    with open(cue_path, 'r', encoding=enc) as f:
-                        content = f.read()
-                    break
-                except UnicodeDecodeError:
-                    continue
+            # Use smart text reader for .cue files
+            content = self._read_text_file(cue_path)
             
             if not content:
                 return metadata, chapters
@@ -1086,6 +1078,44 @@ class AudiobookScanner:
         # Fallback to first text file
         return str(potential_desc_files[0])
 
+    def _read_text_file(self, file_path):
+        """Read text file with smart encoding detection and mojibake prevention"""
+        if not file_path or not os.path.exists(file_path):
+            return ""
+            
+        # Try encodings in priority order. 
+        # Strict/BOM-based ones first, then common 8-bit ones (CP1251 is high priority for Russian).
+        # Greedy UTF-16LE is placed after 8-bit encodings to avoid false positives.
+        encodings = ['utf-8-sig', 'utf-8', 'utf-16', 'cp1251', 'cp1252', 'utf-16-le', 'latin-1']
+        
+        for enc in encodings:
+            try:
+                with open(file_path, 'r', encoding=enc, errors='strict') as f:
+                    content = f.read().strip()
+                
+                if content:
+                    # Heuristic to detect UTF-16 interpretation of 8-bit text:
+                    # If we got a lot of Chinese characters (CJK Ideographs) in a non-Chinese context, 
+                    # it's likely a false positive for an 8-bit encoding like CP1251.
+                    if enc == 'utf-16-le':
+                        # Count characters in CJK Unified Ideographs and Extension A blocks
+                        cjk_count = sum(1 for c in content if 0x4E00 <= ord(c) <= 0x9FFF or 0x3400 <= ord(c) <= 0x4DBF)
+                        if cjk_count > len(content) * 0.2: # More than 20% CJK characters
+                            continue
+                            
+                    return content
+            except (UnicodeDecodeError, UnicodeError):
+                continue
+            except Exception:
+                break
+                
+        # Last resort fallback with replacement characters
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                return f.read().strip()
+        except Exception:
+            return ""
+
     def _log_book_summary(self, title, author, narrator, duration, file_count, codec, bitrate, bitrate_mode, cover, cue_count, problems):
         """Print a consolidated summary of the book"""
         self._log("") # Empty line before book
@@ -1366,28 +1396,7 @@ class AudiobookScanner:
                     _, cue_data_chapters = self._parse_cue_file(cue_files[0])
 
                 # Read description content (file path already found earlier)
-                description = ""
-                if description_file_path:
-                    # smart encoding detection
-                    encodings = ['utf-8', 'utf-16', 'utf-16-le', 'cp1251', 'cp1252', 'latin-1']
-                    for enc in encodings:
-                        try:
-                            with open(description_file_path, 'r', encoding=enc, errors='strict') as df:
-                                description = df.read().strip()
-                            if description:
-                                break
-                        except UnicodeDecodeError:
-                            continue
-                        except Exception:
-                            break
-                    
-                    # Fallback if all strict attempts fail
-                    if not description:
-                        try:
-                            with open(description_file_path, 'r', encoding='utf-8', errors='replace') as df:
-                                description = df.read().strip()
-                        except Exception:
-                            pass
+                description = self._read_text_file(description_file_path) if description_file_path else ""
 
                 # Log unified book summary
                 # Use max bitrate for display if no range, or just average/max? 
