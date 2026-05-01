@@ -70,7 +70,9 @@
     "tooltip_progress": "प्रगति: {percent}%",
     "tooltip_duration": "अवधि",
     "description_title": "ऑडियोबुक विवरण",
-    "no_tags_available": "कोई टैग उपलब्ध नहीं"
+    "no_tags_available": "कोई टैग उपलब्ध नहीं",
+    "tooltip_favorites": "केवल पसंदीदा पुस्तकें दिखाएं",
+    "tooltip_tags": "टैग द्वारा फ़िल्टर करें"
   },
   "player": {
     "volume": "वॉल्यूम",
@@ -437,6 +439,18 @@
     "oct": "अक्टूबर",
     "nov": "नवंबर",
     "dec": "दिसंबर",
-    "seconds": "सेकंड"
+    "seconds": "सेकंड",
+    "jan_short": "जन",
+    "feb_short": "फर",
+    "mar_short": "मार्च",
+    "apr_short": "अप्रै",
+    "may_short": "मई",
+    "jun_short": "जून",
+    "jul_short": "जुला",
+    "aug_short": "अग",
+    "sep_short": "सित",
+    "oct_short": "अक्टू",
+    "nov_short": "नव",
+    "dec_short": "दिस"
   }
 }

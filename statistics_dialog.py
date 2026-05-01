@@ -203,8 +203,10 @@ class HeatmapWidget(QWidget):
         
         current_month = None
         month_names = {
-            1: "Янв", 2: "Фев", 3: "Мар", 4: "Апр", 5: "Май", 6: "Июн",
-            7: "Июл", 8: "Авг", 9: "Сен", 10: "Окт", 11: "Ноя", 12: "Дек"
+            1: tr("statistics.jan_short"), 2: tr("statistics.feb_short"), 3: tr("statistics.mar_short"),
+            4: tr("statistics.apr_short"), 5: tr("statistics.may_short"), 6: tr("statistics.jun_short"),
+            7: tr("statistics.jul_short"), 8: tr("statistics.aug_short"), 9: tr("statistics.sep_short"),
+            10: tr("statistics.oct_short"), 11: tr("statistics.nov_short"), 12: tr("statistics.dec_short")
         }
         
         num_cols = len(self.grid_data[0])
@@ -468,18 +470,10 @@ class StatisticsDialog(QDialog):
         
         # Month names for translation
         month_names = {
-            "01": tr("statistics.jan") if tr("statistics.jan") != "statistics.jan" else "Январь",
-            "02": tr("statistics.feb") if tr("statistics.feb") != "statistics.feb" else "Февраль",
-            "03": tr("statistics.mar") if tr("statistics.mar") != "statistics.mar" else "Март",
-            "04": tr("statistics.apr") if tr("statistics.apr") != "statistics.apr" else "Апрель",
-            "05": tr("statistics.may") if tr("statistics.may") != "statistics.may" else "Май",
-            "06": tr("statistics.jun") if tr("statistics.jun") != "statistics.jun" else "Июнь",
-            "07": tr("statistics.jul") if tr("statistics.jul") != "statistics.jul" else "Июль",
-            "08": tr("statistics.aug") if tr("statistics.aug") != "statistics.aug" else "Август",
-            "09": tr("statistics.sep") if tr("statistics.sep") != "statistics.sep" else "Сентябрь",
-            "10": tr("statistics.oct") if tr("statistics.oct") != "statistics.oct" else "Октябрь",
-            "11": tr("statistics.nov") if tr("statistics.nov") != "statistics.nov" else "Ноябрь",
-            "12": tr("statistics.dec") if tr("statistics.dec") != "statistics.dec" else "Декабрь"
+            "01": tr("statistics.jan"), "02": tr("statistics.feb"), "03": tr("statistics.mar"),
+            "04": tr("statistics.apr"), "05": tr("statistics.may"), "06": tr("statistics.jun"),
+            "07": tr("statistics.jul"), "08": tr("statistics.aug"), "09": tr("statistics.sep"),
+            "10": tr("statistics.oct"), "11": tr("statistics.nov"), "12": tr("statistics.dec")
         }
         
         for month_str in sorted(self.book_stats.keys(), reverse=True):

@@ -70,7 +70,9 @@
     "tooltip_progress": "進捗: {percent}%",
     "tooltip_duration": "長さ",
     "description_title": "オーディオブックの説明",
-    "no_tags_available": "利用可能なタグはありません"
+    "no_tags_available": "利用可能なタグはありません",
+    "tooltip_favorites": "お気に入りの本のみ表示",
+    "tooltip_tags": "タグでフィルタリング"
   },
   "player": {
     "volume": "音量",
@@ -437,6 +439,18 @@
     "oct": "10月",
     "nov": "11月",
     "dec": "12月",
-    "seconds": "秒"
+    "seconds": "秒",
+    "jan_short": "1月",
+    "feb_short": "2月",
+    "mar_short": "3月",
+    "apr_short": "4月",
+    "may_short": "5月",
+    "jun_short": "6月",
+    "jul_short": "7月",
+    "aug_short": "8月",
+    "sep_short": "9月",
+    "oct_short": "10月",
+    "nov_short": "11月",
+    "dec_short": "12月"
   }
 }

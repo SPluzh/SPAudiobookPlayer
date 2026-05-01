@@ -88,7 +88,9 @@
     "tooltip_progress": "Прогресс: {percent}%",
     "tooltip_duration": "Длительность",
     "description_title": "Описание аудиокниги",
-    "no_tags_available": "Нет доступных тегов"
+    "no_tags_available": "Нет доступных тегов",
+    "tooltip_favorites": "Показать только избранные книги",
+    "tooltip_tags": "Фильтр по тегам"
   },
   "player": {
     "volume": "Громкость",
@@ -437,6 +439,18 @@
     "sep": "Сентябрь",
     "oct": "Октябрь",
     "nov": "Ноябрь",
-    "dec": "Декабрь"
+    "dec": "Декабрь",
+    "jan_short": "Янв",
+    "feb_short": "Фев",
+    "mar_short": "Мар",
+    "apr_short": "Апр",
+    "may_short": "Май",
+    "jun_short": "Июн",
+    "jul_short": "Июл",
+    "aug_short": "Авг",
+    "sep_short": "Сен",
+    "oct_short": "Окт",
+    "nov_short": "Ноя",
+    "dec_short": "Дек"
   }
 }

@@ -70,7 +70,9 @@
     "tooltip_progress": "İlerleme: %{percent}",
     "tooltip_duration": "Süre",
     "description_title": "Sesli Kitap Açıklaması",
-    "no_tags_available": "Etiket yok"
+    "no_tags_available": "Etiket yok",
+    "tooltip_favorites": "Sadece favori kitapları göster",
+    "tooltip_tags": "Etiketlere göre filtrele"
   },
   "player": {
     "volume": "Ses",
@@ -437,6 +439,18 @@
     "oct": "Ekim",
     "nov": "Kasım",
     "dec": "Aralık",
-    "seconds": "sn"
+    "seconds": "sn",
+    "jan_short": "Oca",
+    "feb_short": "Şub",
+    "mar_short": "Mar",
+    "apr_short": "Nis",
+    "may_short": "May",
+    "jun_short": "Haz",
+    "jul_short": "Tem",
+    "aug_short": "Ağu",
+    "sep_short": "Eyl",
+    "oct_short": "Eki",
+    "nov_short": "Kas",
+    "dec_short": "Ara"
   }
 }

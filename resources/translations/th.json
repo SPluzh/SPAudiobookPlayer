@@ -88,7 +88,9 @@
     "tooltip_progress": "ความคืบหน้า: {percent}%",
     "tooltip_duration": "ระยะเวลา",
     "description_title": "คำอธิบายหนังสือเสียง",
-    "no_tags_available": "ไม่มีแท็กที่พร้อมใช้งาน"
+    "no_tags_available": "ไม่มีแท็กที่พร้อมใช้งาน",
+    "tooltip_favorites": "แสดงเฉพาะหนังสือเล่มโปรด",
+    "tooltip_tags": "กรองตามแท็ก"
   },
   "player": {
     "volume": "ระดับเสียง",
@@ -437,6 +439,18 @@
     "oct": "ตุลาคม",
     "nov": "พฤศจิกายน",
     "dec": "ธันวาคม",
-    "seconds": "วินาที"
+    "seconds": "วินาที",
+    "jan_short": "ม.ค.",
+    "feb_short": "ก.พ.",
+    "mar_short": "มี.ค.",
+    "apr_short": "เม.ย.",
+    "may_short": "พ.ค.",
+    "jun_short": "มิ.ย.",
+    "jul_short": "ก.ค.",
+    "aug_short": "ส.ค.",
+    "sep_short": "ก.ย.",
+    "oct_short": "ต.ค.",
+    "nov_short": "พ.ย.",
+    "dec_short": "ธ.ค."
   }
 }

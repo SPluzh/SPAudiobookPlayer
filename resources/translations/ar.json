@@ -70,7 +70,9 @@
     "tooltip_progress": "التقدم: {percent}%",
     "tooltip_duration": "المدة",
     "description_title": "وصف الكتاب الصوتي",
-    "no_tags_available": "لا توجد علامات متاحة"
+    "no_tags_available": "لا توجد علامات متاحة",
+    "tooltip_favorites": "إظهار الكتب المفضلة فقط",
+    "tooltip_tags": "تصفية حسب الأوسمة"
   },
   "player": {
     "volume": "مستوى الصوت",
@@ -437,6 +439,18 @@
     "oct": "أكتوبر",
     "nov": "نوفمبر",
     "dec": "ديسمبر",
-    "seconds": "ثانية"
+    "seconds": "ثانية",
+    "jan_short": "ينا",
+    "feb_short": "فبر",
+    "mar_short": "مار",
+    "apr_short": "أبر",
+    "may_short": "ماي",
+    "jun_short": "يون",
+    "jul_short": "يول",
+    "aug_short": "أغس",
+    "sep_short": "سبت",
+    "oct_short": "أكت",
+    "nov_short": "نوف",
+    "dec_short": "ديس"
   }
 }

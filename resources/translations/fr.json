@@ -70,7 +70,9 @@
     "tooltip_progress": "Progression : {percent}%",
     "tooltip_duration": "Durée",
     "description_title": "Description du livre audio",
-    "no_tags_available": "Aucune étiquette disponible"
+    "no_tags_available": "Aucune étiquette disponible",
+    "tooltip_favorites": "Afficher uniquement les livres favoris",
+    "tooltip_tags": "Filtrer par tags"
   },
   "player": {
     "volume": "Volume",
@@ -437,6 +439,18 @@
     "oct": "Octobre",
     "nov": "Novembre",
     "dec": "Décembre",
-    "seconds": "s"
+    "seconds": "s",
+    "jan_short": "Janv",
+    "feb_short": "Févr",
+    "mar_short": "Mars",
+    "apr_short": "Avr",
+    "may_short": "Mai",
+    "jun_short": "Juin",
+    "jul_short": "Juil",
+    "aug_short": "Août",
+    "sep_short": "Sept",
+    "oct_short": "Oct",
+    "nov_short": "Nov",
+    "dec_short": "Déc"
   }
 }

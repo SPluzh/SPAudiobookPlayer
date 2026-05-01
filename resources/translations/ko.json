@@ -70,7 +70,9 @@
     "tooltip_progress": "진행률: {percent}%",
     "tooltip_duration": "길이",
     "description_title": "오디오북 설명",
-    "no_tags_available": "사용 가능한 태그 없음"
+    "no_tags_available": "사용 가능한 태그 없음",
+    "tooltip_favorites": "즐겨찾는 책만 표시",
+    "tooltip_tags": "태그로 필터링"
   },
   "player": {
     "volume": "음량",
@@ -437,6 +439,18 @@
     "oct": "10月",
     "nov": "11月",
     "dec": "12月",
-    "seconds": "초"
+    "seconds": "초",
+    "jan_short": "1월",
+    "feb_short": "2월",
+    "mar_short": "3월",
+    "apr_short": "4월",
+    "may_short": "5월",
+    "jun_short": "6월",
+    "jul_short": "7월",
+    "aug_short": "8월",
+    "sep_short": "9월",
+    "oct_short": "10월",
+    "nov_short": "11월",
+    "dec_short": "12월"
   }
 }

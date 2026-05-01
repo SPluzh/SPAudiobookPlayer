@@ -88,7 +88,9 @@
     "tooltip_progress": "Tiến trình: {percent}%",
     "tooltip_duration": "Thời lượng",
     "description_title": "Mô tả sách nói",
-    "no_tags_available": "Không có thẻ nào"
+    "no_tags_available": "Không có thẻ nào",
+    "tooltip_favorites": "Chỉ hiển thị sách yêu thích",
+    "tooltip_tags": "Lọc theo thẻ"
   },
   "player": {
     "volume": "Âm lượng",
@@ -437,6 +439,18 @@
     "oct": "Tháng 10",
     "nov": "Tháng 11",
     "dec": "Tháng 12",
-    "seconds": "s"
+    "seconds": "s",
+    "jan_short": "Th1",
+    "feb_short": "Th2",
+    "mar_short": "Th3",
+    "apr_short": "Th4",
+    "may_short": "Th5",
+    "jun_short": "Th6",
+    "jul_short": "Th7",
+    "aug_short": "Th8",
+    "sep_short": "Th9",
+    "oct_short": "Th10",
+    "nov_short": "Th11",
+    "dec_short": "Th12"
   }
 }

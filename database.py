@@ -1760,13 +1760,14 @@ class DatabaseManager:
             
             query = """
                 SELECT 
-                    strftime('%Y-%m', listen_date) as month_str,
+                    strftime('%Y-%m', s.session_date) as month_str,
                     a.id, a.author, a.title, a.cover_path, a.cached_cover_path,
-                    SUM(d.total_seconds) as month_total
-                FROM daily_listening_stats d
-                JOIN audiobooks a ON d.audiobook_id = a.id
+                    SUM(s.duration_seconds) as month_total,
+                    MAX(COALESCE(s.session_end, s.session_start)) as last_activity
+                FROM listening_sessions s
+                JOIN audiobooks a ON s.audiobook_id = a.id
                 GROUP BY month_str, a.id
-                ORDER BY month_str DESC, month_total DESC
+                ORDER BY month_str DESC, last_activity DESC
             """
             
             cursor.execute(query)
