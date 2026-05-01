@@ -321,7 +321,6 @@
     "description": "Program, koleksiyonunuza rahatça göz atmanıza, dinleme ilerlemesini kaydetmenize ve ihtiyacınız olan kitapları hızla bulmanıza olanak tanır.\nPyQt6 ve BASS kütüphanesi üzerine inşa edilmiştir.",
     "supported_formats": "Desteklenen formatlar:",
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE desteği (bölüm işaretleri ve meta veriler)",
-    
     "hotkeys_title": "Kisayol Tuslari:",
     "hotkeys_list": "Bosluk — Oynat / Duraklat\n[ ve ] — Önceki / Sonraki Dosya\nSol / Sag — 10sn Geri / Ileri\nShift + Sol / Sag — 60sn Geri / Ileri\nYukari / Asagi — Oynatma Hizi (±0.1x)\nShift + Yukari / Asagi — Ses Seviyesi (±5%)",
     "library_hierarchy_title": "Önerilen Kütüphane Yapısı:",
@@ -425,6 +424,19 @@
     "thu": "Per",
     "fri": "Cum",
     "sat": "Cmt",
-    "sun": "Paz"
+    "sun": "Paz",
+    "jan": "Ocak",
+    "feb": "Şubat",
+    "mar": "Mart",
+    "apr": "Nisan",
+    "may": "Mayıs",
+    "jun": "Haziran",
+    "jul": "Temmuz",
+    "aug": "Ağustos",
+    "sep": "Eylül",
+    "oct": "Ekim",
+    "nov": "Kasım",
+    "dec": "Aralık",
+    "seconds": "sn"
   }
 }

@@ -1114,6 +1114,7 @@ class PlayerWidget(QWidget):
         
         # Sliders
         self.volume_slider.setToolTip(tr("player.volume"))
+        self.speed_slider.setToolTip(tr("player.speed"))
         
         # Update dynamic labels
         speed_value = self.speed_slider.value() / 10

@@ -324,7 +324,6 @@
     "close": "Cerrar",
     "hotkeys_title": "Teclas de acceso rápido:",
     "hotkeys_list": "Espacio — Reproducir / Pausar\n[ y ] — Archivo anterior / siguiente\nIzquierda / Derecha — Rebobinar / Avanzar 10s\nShift + Izquierda / Derecha — Rebobinar / Avanzar 60s\nArriba / Abajo — Velocidad de reproducción (±0.1x)\nShift + Arriba / Abajo — Volumen (±5%)",
-    
     "library_hierarchy_title": "Estructura de biblioteca recomendada:",
     "library_hierarchy_text": "Audiobooks/\n├── Nombre del autor/\n│   ├── Nombre de la serie/\n│   │   └── Autor - Título del libro [Narrador]/\n│   │       ├── 01 - Capítulo 1.mp3\n│   │       ├── 02 - Capítulo 2.mp3\n│   │       └── cover.jpg\n│   └── Autor - Libro independiente [Narrador]/\n│       └── audiobook.m4b\n└── Otro autor/\n    └── Autor - Título del libro [Narrador]/\n        └── file.mp3\n\nEl escáner admite cualquier jerarquía de carpetas.\nCada carpeta con archivos de audio = un audiolibro.",
     "github": "GitHub"
@@ -425,6 +424,19 @@
     "thu": "Jue",
     "fri": "Vie",
     "sat": "Sáb",
-    "sun": "Dom"
+    "sun": "Dom",
+    "jan": "Enero",
+    "feb": "Febrero",
+    "mar": "Marzo",
+    "apr": "Abril",
+    "may": "Mayo",
+    "jun": "Junio",
+    "jul": "Julio",
+    "aug": "Agosto",
+    "sep": "Septiembre",
+    "oct": "Octubre",
+    "nov": "Noviembre",
+    "dec": "Diciembre",
+    "seconds": "s"
   }
 }

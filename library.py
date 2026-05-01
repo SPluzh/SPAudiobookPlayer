@@ -2837,6 +2837,11 @@ class LibraryWidget(QWidget):
     def update_texts(self):
         if hasattr(self, "btn_show_folders"):
             self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
+        if hasattr(self, "btn_favorites"):
+            self.btn_favorites.setToolTip(tr("library.tooltip_favorites"))
+        if hasattr(self, "btn_tags"):
+            self.btn_tags.setToolTip(tr("library.tooltip_tags"))
+            
         self.update_filter_labels()
         for filter_id, config in self.FILTER_CONFIG.items():
             if filter_id in self.filter_buttons:

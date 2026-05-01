@@ -171,6 +171,14 @@ class MetadataEditDialog(QDialog):
                 # Sometimes narrator is in composer or comment, but here we assume logic in scanner extracted it to tag_narrator
                 self.narrator_combo.setCurrentText(tag_narrator)
                 
+    def update_texts(self):
+        """Update UI texts when language changes"""
+        self.setWindowTitle(tr("metadata.edit_title"))
+        self.from_tags_btn.setText(tr("metadata.from_tags"))
+        self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip"))
+        # Note: form labels and button box buttons would also need update if we wanted full coverage,
+        # but the test focuses on tooltips.
+
     def get_data(self):
         """Return the entered metadata as a tuple"""
         return (

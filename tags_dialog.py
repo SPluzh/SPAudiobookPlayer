@@ -281,6 +281,25 @@ class TagManagerDialog(QDialog):
             self.db.delete_tag(data['id'])
             self.load_tags()
 
+    def update_texts(self):
+        """Update UI texts when language changes"""
+        title = tr("tags.manager_title")
+        if self.audiobook_id:
+             title = tr("tags.assign_title")
+        self.setWindowTitle(title)
+        
+        self.color_btn.setToolTip(tr("tags.select_color"))
+        self.add_btn.setToolTip(tr("tags.add_btn"))
+        self.edit_btn.setToolTip(tr("tags.edit_btn"))
+        self.del_btn.setToolTip(tr("tags.delete_btn"))
+        
+        self.name_edit.setPlaceholderText(tr("tags.name_label").replace(":", ""))
+        
+        if hasattr(self, "assign_btn"):
+            self.assign_btn.setText(tr("tags.assign_btn"))
+        if hasattr(self, "close_btn"):
+            self.close_btn.setText(tr("tags.close_btn"))
+
     def save_selection(self):
         if not self.audiobook_id:
             self.accept()
