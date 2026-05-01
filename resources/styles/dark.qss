@@ -1149,3 +1149,38 @@ QLabel#dropOverlay {
 BookProgressBar {
     qproperty-markerColor: @accent-dark;
 }
+
+/* ============================================================
+   STATISTICS DIALOG
+   ============================================================ */
+
+QFrame#statCard {
+    background-color: @bg-dark;
+    border: 1px solid @border;
+    border-radius: 3px;
+}
+
+QFrame#statCard:hover {
+    border-color: @accent;
+    background-color: @bg-hover;
+}
+
+QLabel#statLabel {
+    color: @text-dim;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+QLabel#statValue {
+    color: @accent-light;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+QLabel#statIcon {
+    background-color: @bg-black;
+    padding: 8px;
+    border: 1px solid @border;
+    border-radius: 3px;
+}

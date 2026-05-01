@@ -42,8 +42,8 @@ class HeatmapWidget(QWidget):
         self.grid_data = self._prepare_grid_data()
         
         # Calculate widget size
-        weeks = len(self.grid_data[0]) if self.grid_data else 53
-        width = self.margin_left + weeks * (self.cell_size + self.cell_spacing) + 20
+        weeks = len(self.grid_data[0]) if self.grid_data else 52
+        width = self.margin_left + weeks * (self.cell_size + self.cell_spacing) + 40
         height = self.margin_top + 7 * (self.cell_size + self.cell_spacing) + self.margin_bottom + 20
         
         self.setMinimumSize(width, height)
@@ -54,29 +54,17 @@ class HeatmapWidget(QWidget):
         self.hovered_cell = None
         
     def _prepare_grid_data(self) -> list:
-        """Prepare 2D grid data for rendering (7 rows x N weeks)
-        
-        Returns:
-            List of lists: grid[row][col] = (date_str, seconds)
+        """Prepare 2D grid data for rendering (7 rows x 53 weeks).
+        Always ends on the current week's Sunday to provide a consistent view.
         """
-        if not self.heatmap_data:
-            return [[None] * 53 for _ in range(7)]
+        # End on the Sunday of the current week
+        today = datetime.now().date()
+        days_to_sunday = 6 - today.weekday()
+        grid_end = today + timedelta(days=days_to_sunday)
         
-        # Get date range
-        dates = sorted(self.heatmap_data.keys())
-        if not dates:
-            return [[None] * 53 for _ in range(7)]
-        
-        start_date = datetime.strptime(dates[0], '%Y-%m-%d').date()
-        end_date = datetime.strptime(dates[-1], '%Y-%m-%d').date()
-        
-        # Find the Monday before start_date
-        days_since_monday = start_date.weekday()
-        grid_start = start_date - timedelta(days=days_since_monday)
-        
-        # Calculate number of weeks needed
-        total_days = (end_date - grid_start).days + 1
-        num_weeks = (total_days + 6) // 7
+        # Show exactly 52 weeks (364 days) to avoid month duplication at edges
+        num_weeks = 52
+        grid_start = grid_end - timedelta(weeks=num_weeks) + timedelta(days=1)
         
         # Initialize grid
         grid = [[None] * num_weeks for _ in range(7)]
@@ -86,8 +74,14 @@ class HeatmapWidget(QWidget):
         for week in range(num_weeks):
             for day in range(7):
                 date_str = current_date.strftime('%Y-%m-%d')
-                seconds = self.heatmap_data.get(date_str, 0.0)
-                grid[day][week] = (date_str, seconds)
+                
+                if current_date <= today:
+                    seconds = self.heatmap_data.get(date_str, 0.0)
+                    grid[day][week] = (date_str, seconds)
+                else:
+                    # Future dates in the current week (remain empty)
+                    grid[day][week] = (date_str, -1.0)
+                    
                 current_date += timedelta(days=1)
         
         return grid
@@ -108,13 +102,17 @@ class HeatmapWidget(QWidget):
             if isinstance(theme_accent, tuple) and len(theme_accent) > 0:
                 theme_accent = theme_accent[0]
             if not theme_accent or not isinstance(theme_accent, str):
-                theme_accent = "#39d353"  # Default green
+                theme_accent = "#018574"  # Use app's teal accent
         except:
-            theme_accent = "#39d353"
+            theme_accent = "#018574"
         
+        if seconds < 0:
+            # Future date - transparent
+            return QColor(0, 0, 0, 0)
+            
         if seconds == 0:
-            # No activity - dark background
-            return QColor("#1a1f1e")
+            # No activity - background matching grid
+            return QColor("#2c2c2c")
         
         # Calculate intensity (0.0 - 1.0)
         intensity = seconds / self.max_seconds if self.max_seconds > 0 else 0
@@ -181,7 +179,7 @@ class HeatmapWidget(QWidget):
         font.setPixelSize(9)
         painter.setFont(font)
         
-        day_labels = [tr("statistics.mon"), "", tr("statistics.wed"), "", tr("statistics.fri"), "", ""]
+        day_labels = [tr("statistics.mon"), "", tr("statistics.wed"), "", tr("statistics.fri"), "", tr("statistics.sun")]
         for row, label in enumerate(day_labels):
             if label:
                 y = self.margin_top + row * (self.cell_size + self.cell_spacing) + self.cell_size // 2 + 3
@@ -194,7 +192,7 @@ class HeatmapWidget(QWidget):
         self._draw_legend(painter)
     
     def _draw_month_labels(self, painter: QPainter):
-        """Draw month labels above the heatmap"""
+        """Draw month labels above the heatmap with year indicator"""
         if not self.grid_data or not self.grid_data[0]:
             return
         
@@ -209,20 +207,33 @@ class HeatmapWidget(QWidget):
             7: "Июл", 8: "Авг", 9: "Сен", 10: "Окт", 11: "Ноя", 12: "Дек"
         }
         
-        for col in range(len(self.grid_data[0])):
-            cell_data = self.grid_data[0][col]
-            if cell_data is None:
-                continue
+        num_cols = len(self.grid_data[0])
+        for col in range(num_cols):
+            # Check any day of the week to see if a new month starts here
+            month_found = None
+            year_found = None
+            for row in range(7):
+                cell_data = self.grid_data[row][col]
+                if cell_data:
+                    date_obj = datetime.strptime(cell_data[0], '%Y-%m-%d')
+                    if date_obj.month != current_month:
+                        month_found = date_obj.month
+                        year_found = date_obj.year
+                        break
             
-            date_str, _ = cell_data
-            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-            month = date_obj.month
-            
-            if month != current_month:
-                current_month = month
+            if month_found is not None:
+                current_month = month_found
+                # Add year to the label (e.g., "Янв 24")
+                label = f"{month_names.get(current_month, '')} {str(year_found)[2:]}"
+                
                 x = self.margin_left + col * (self.cell_size + self.cell_spacing)
+                
+                # Prevent the last label from going off-screen
+                if col > num_cols - 4:
+                    x -= 20
+                
                 y = self.margin_top - 5
-                painter.drawText(x, y, month_names.get(month, ""))
+                painter.drawText(x, y, label)
     
     def _draw_legend(self, painter: QPainter):
         """Draw color legend at the bottom"""
@@ -305,8 +316,8 @@ class StatisticsDialog(QDialog):
         self.setWindowTitle(tr("statistics.title"))
         self.setMinimumSize(900, 600)
         
-        # Load data
-        self.heatmap_data = self.db.get_heatmap_data(365)
+        # Load data (52 weeks = 364 days)
+        self.heatmap_data = self.db.get_heatmap_data(364)
         self.statistics = self._calculate_statistics()
         
         # Setup UI
@@ -323,10 +334,7 @@ class StatisticsDialog(QDialog):
                 'total_seconds': 0,
                 'this_year_seconds': 0,
                 'this_month_seconds': 0,
-                'this_week_seconds': 0,
-                'current_streak': 0,
-                'longest_streak': 0,
-                'average_daily': 0
+                'this_week_seconds': 0
             }
         
         total_seconds = sum(self.heatmap_data.values())
@@ -352,71 +360,14 @@ class StatisticsDialog(QDialog):
             
             if date_obj >= week_start:
                 this_week_seconds += seconds
-        
-        # Calculate streaks
-        current_streak = self._calculate_current_streak()
-        longest_streak = self._calculate_longest_streak()
-        
-        # Average daily (over 365 days)
-        average_daily = total_seconds / 365 if total_seconds > 0 else 0
-        
         return {
             'total_seconds': total_seconds,
             'this_year_seconds': this_year_seconds,
             'this_month_seconds': this_month_seconds,
-            'this_week_seconds': this_week_seconds,
-            'current_streak': current_streak,
-            'longest_streak': longest_streak,
-            'average_daily': average_daily
+            'this_week_seconds': this_week_seconds
         }
     
-    def _calculate_current_streak(self) -> int:
-        """Calculate current consecutive days streak"""
-        if not self.heatmap_data:
-            return 0
-        
-        today = datetime.now().date()
-        streak = 0
-        
-        # Check backwards from today
-        current_date = today
-        while True:
-            date_str = current_date.strftime('%Y-%m-%d')
-            if date_str in self.heatmap_data and self.heatmap_data[date_str] > 0:
-                streak += 1
-                current_date -= timedelta(days=1)
-            else:
-                break
-        
-        return streak
-    
-    def _calculate_longest_streak(self) -> int:
-        """Calculate longest consecutive days streak"""
-        if not self.heatmap_data:
-            return 0
-        
-        dates = sorted(self.heatmap_data.keys())
-        longest = 0
-        current = 0
-        prev_date = None
-        
-        for date_str in dates:
-            if self.heatmap_data[date_str] > 0:
-                date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
-                
-                if prev_date is None or (date_obj - prev_date).days == 1:
-                    current += 1
-                    longest = max(longest, current)
-                else:
-                    current = 1
-                
-                prev_date = date_obj
-            else:
-                current = 0
-                prev_date = None
-        
-        return longest
-    
+
     def _format_time(self, seconds: float) -> str:
         """Format seconds to human-readable string
         
@@ -452,40 +403,28 @@ class StatisticsDialog(QDialog):
         
         # Row 1
         stats_layout.addWidget(self._create_stat_card(
+            "📚",
             tr("statistics.total_time"),
             self._format_time(self.statistics['total_seconds'])
         ), 0, 0)
         
         stats_layout.addWidget(self._create_stat_card(
+            "📅",
             tr("statistics.this_year"),
             self._format_time(self.statistics['this_year_seconds'])
         ), 0, 1)
         
         stats_layout.addWidget(self._create_stat_card(
+            "🗓️",
             tr("statistics.this_month"),
             self._format_time(self.statistics['this_month_seconds'])
         ), 0, 2)
         
         stats_layout.addWidget(self._create_stat_card(
+            "📈",
             tr("statistics.this_week"),
             self._format_time(self.statistics['this_week_seconds'])
         ), 0, 3)
-        
-        # Row 2
-        stats_layout.addWidget(self._create_stat_card(
-            tr("statistics.current_streak"),
-            f"{self.statistics['current_streak']} {tr('statistics.days')}"
-        ), 1, 0)
-        
-        stats_layout.addWidget(self._create_stat_card(
-            tr("statistics.longest_streak"),
-            f"{self.statistics['longest_streak']} {tr('statistics.days')}"
-        ), 1, 1)
-        
-        stats_layout.addWidget(self._create_stat_card(
-            tr("statistics.average_daily"),
-            self._format_time(self.statistics['average_daily'])
-        ), 1, 2)
         
         layout.addLayout(stats_layout)
         
@@ -501,10 +440,11 @@ class StatisticsDialog(QDialog):
         
         layout.addStretch()
     
-    def _create_stat_card(self, label: str, value: str) -> QWidget:
-        """Create a statistics card widget
+    def _create_stat_card(self, icon: str, label: str, value: str) -> QWidget:
+        """Create a statistics card widget with an icon
         
         Args:
+            icon: Emoji icon
             label: Card label
             value: Card value
             
@@ -513,20 +453,31 @@ class StatisticsDialog(QDialog):
         """
         card = QFrame()
         card.setObjectName("statCard")
-        card.setFrameShape(QFrame.Shape.StyledPanel)
         
-        card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(10, 10, 10, 10)
+        card_layout = QHBoxLayout(card)
+        card_layout.setContentsMargins(15, 15, 15, 15)
+        card_layout.setSpacing(15)
+        
+        icon_label = QLabel(icon)
+        icon_label.setObjectName("statIcon")
+        icon_label.setStyleSheet("font-size: 24px;")
+        
+        text_container = QWidget()
+        text_layout = QVBoxLayout(text_container)
+        text_layout.setContentsMargins(0, 0, 0, 0)
+        text_layout.setSpacing(2)
         
         label_widget = QLabel(label)
         label_widget.setObjectName("statLabel")
-        label_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         value_widget = QLabel(value)
         value_widget.setObjectName("statValue")
-        value_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        card_layout.addWidget(label_widget)
-        card_layout.addWidget(value_widget)
+        text_layout.addWidget(label_widget)
+        text_layout.addWidget(value_widget)
+        
+        card_layout.addWidget(icon_label)
+        card_layout.addWidget(text_container)
+        card_layout.addStretch()
         
         return card
