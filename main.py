@@ -1611,9 +1611,10 @@ class AudiobookPlayerWindow(QMainWindow):
         # Automate track transition upon reaching the end of the current file or chapter
         chapter_end = start_offset + chapter_duration
         # If the file finished or we reached the end of the chapter
+        # Adjusted buffers to 1.0s and 0.2s
         if (
-            duration > 0 and pos >= duration - 0.8 and not self.player.is_playing()
-        ) or (pos >= chapter_end - 0.4):  # Small buffer for chapter transition
+            duration > 0 and pos >= duration - 1.0 and not self.player.is_playing()
+        ) or (pos >= chapter_end - 0.2):  # Buffer for chapter transition
             self.on_next_clicked()
 
     def rescan_directory(self):

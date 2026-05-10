@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.11]
+- **Playback**: Improved automatic track switching by optimizing end-of-track detection buffers and fixing audiobook completion logic.
+
 ## [1.6.10]
 - **Audio Controls**: Added a **Mono** toggle button:
     - Mixes stereo channels (Left + Right) into both speakers.
