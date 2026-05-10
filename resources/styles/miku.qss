@@ -87,7 +87,7 @@ QPushButton#id3Btn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-weight: 500;
     font-size: 11px;
     min-height: 18px;
@@ -112,7 +112,7 @@ QPushButton#bookmarksBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-weight: 500;
     font-size: 11px;
     min-height: 18px;
@@ -136,7 +136,7 @@ QPushButton#autoRewindBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-weight: 500;
     font-size: 11px;
     min-height: 18px;
@@ -161,7 +161,7 @@ QPushButton#deesserBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-weight: 500;
     font-size: 11px;
     min-height: 18px;
@@ -186,7 +186,7 @@ QPushButton#compressorBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-weight: 500;
     font-size: 11px;
     min-height: 18px;
@@ -211,7 +211,7 @@ QPushButton#noiseSuppressionBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-weight: 500;
     font-size: 11px;
     min-height: 18px;
@@ -231,12 +231,12 @@ QPushButton#noiseSuppressionBtn:checked {
     font-weight: bold;
 }
 
-/* Pitch Toggle Button */
-QPushButton#pitchBtn {
+/* Pitch and Mono Toggle Buttons */
+QPushButton#pitchBtn, QPushButton#monoBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
-    padding: 2px 5px;
+    padding: 2px 2px;
     font-weight: 500;
     font-size: 11px;
     min-height: 18px;
@@ -244,13 +244,13 @@ QPushButton#pitchBtn {
     border-radius: 3px;
 }
 
-QPushButton#pitchBtn:hover {
+QPushButton#pitchBtn:hover, QPushButton#monoBtn:hover {
     background-color: @accent;
     border-color: @accent;
     color: @text-bright;
 }
 
-QPushButton#pitchBtn:checked {
+QPushButton#pitchBtn:checked, QPushButton#monoBtn:checked {
     background-color: @accent;
     border-color: @accent;
     font-weight: bold;

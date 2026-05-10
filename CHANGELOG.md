@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.10]
+- **Audio Controls**: Added a **Mono** toggle button:
+    - Mixes stereo channels (Left + Right) into both speakers.
+    - Useful for audiobooks where the narrator is recorded on one side or for listening with a single earbud.
+
 ## [1.6.9]
 - **Library UI**: Fixed a bug where the hit and hover areas for "i" (info), Play, and Favorite icons were misaligned when books were nested in folders.
 - **Scanner**: Fixed text encoding issues when reading book descriptions and CUE files:

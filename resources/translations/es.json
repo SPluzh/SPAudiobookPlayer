@@ -103,6 +103,8 @@
     "btn_pitch": "Tono",
     "tooltip_pitch": "Cambio de tono. Clic derecho: Configuración",
     "pitch_label": "st",
+    "btn_mono": "Mono",
+    "tooltip_mono": "Mono: mezclar canales izquierdo y derecho a ambas salidas",
     "tooltip_vad_threshold": "Umbral VAD (Rec: 90%)\nNivel de señal para activar voz",
     "tooltip_vad_grace": "Periodo de gracia (Rec: 50%)\nTiempo de espera tras silencio",
     "tooltip_vad_retro": "Retroactivo (Rec: 10-20%)\nCapturar audio antes del habla",

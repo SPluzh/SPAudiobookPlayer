@@ -436,6 +436,7 @@ class PlayerWidget(QWidget):
     compressor_preset_changed_signal = pyqtSignal(int) # 0, 1, 2
     pitch_toggled_signal = pyqtSignal(bool)
     pitch_changed_signal = pyqtSignal(float)
+    mono_toggled_signal = pyqtSignal(bool)
     bookmarks_clicked = pyqtSignal()
     
     def __init__(self):
@@ -557,6 +558,15 @@ class PlayerWidget(QWidget):
         self.pitch_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.pitch_btn.customContextMenuRequested.connect(self.show_pitch_popup)
         btns_row.addWidget(self.pitch_btn)
+        
+        # Mono Toggle
+        self.mono_btn = QPushButton(tr("player.btn_mono"))
+        self.mono_btn.setCheckable(True)
+        self.mono_btn.setFixedWidth(40)
+        self.mono_btn.setObjectName("monoBtn")
+        self.mono_btn.setToolTip(tr("player.tooltip_mono"))
+        self.mono_btn.toggled.connect(self.on_mono_toggled)
+        btns_row.addWidget(self.mono_btn)
         
         # VAD Threshold Popup (Advanced Settings)
         self.vad_popup = QWidget(self, Qt.WindowType.Popup)
@@ -1026,6 +1036,9 @@ class PlayerWidget(QWidget):
         self.pitch_val_label.setText(f"{semitones:+.1f} {tr('player.pitch_label')}")
         self.pitch_slider.blockSignals(False)
 
+    def on_mono_toggled(self, checked):
+        self.mono_toggled_signal.emit(checked)
+
     
     def set_noise_suppression_active(self, active: bool):
         """Visual indicator when noise suppression is processing"""
@@ -1114,6 +1127,9 @@ class PlayerWidget(QWidget):
         
         self.pitch_btn.setText(tr("player.btn_pitch"))
         self.pitch_btn.setToolTip(tr("player.tooltip_pitch"))
+        
+        self.mono_btn.setText(tr("player.btn_mono"))
+        self.mono_btn.setToolTip(tr("player.tooltip_mono"))
         
         # Sliders
         self.volume_slider.setToolTip(tr("player.volume"))

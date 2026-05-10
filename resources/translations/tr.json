@@ -103,6 +103,8 @@
     "btn_pitch": "Perde",
     "tooltip_pitch": "Perde Kaydırma. Sağ Tık: Ayarlar",
     "pitch_label": "st",
+    "btn_mono": "Mono",
+    "tooltip_mono": "Mono: sol ve sağ kanalları her iki çıkışa karıştır",
     "tooltip_vad_threshold": "VAD Eşiği (Önerilen: %90)\nKonuşmayı etkinleştirmek için sinyal seviyesi",
     "tooltip_vad_grace": "Tolerans Süresi (Önerilen: %50)\nSessizlikten sonraki bekleme süresi",
     "tooltip_vad_retro": "Geriye Dönük (Önerilen: %10-20)\nKonuşmadan önceki sesi yakalayın",

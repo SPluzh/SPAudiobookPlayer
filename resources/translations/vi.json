@@ -121,6 +121,8 @@
     "btn_pitch": "Cao độ",
     "tooltip_pitch": "Thay đổi cao độ. RMB: Cài đặt",
     "pitch_label": "st",
+    "btn_mono": "Mono",
+    "tooltip_mono": "Mono: trộn kênh trái và phải ra cả hai đầu ra",
     "tooltip_vad_threshold": "Ngưỡng VAD (Khuyên dùng: 90%)\nMức tín hiệu để kích hoạt giọng nói",
     "tooltip_vad_grace": "Thời gian chờ (Khuyên dùng: 50%)\nThời gian chờ sau khi im lặng",
     "tooltip_vad_retro": "Truy thu (Khuyên dùng: 10-20%)\nGhi lại âm thanh trước khi nói",

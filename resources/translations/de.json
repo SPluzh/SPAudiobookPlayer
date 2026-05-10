@@ -103,6 +103,8 @@
     "btn_pitch": "Pitch",
     "tooltip_pitch": "Tonhöhenverschiebung. Rechtsklick: Einstellungen",
     "pitch_label": "st",
+    "btn_mono": "Mono",
+    "tooltip_mono": "Mono: Linken und rechten Kanal zu beiden Ausgängen mischen",
     "tooltip_vad_threshold": "VAD-Schwellenwert (Empf.: 90%)\nSignalpegel zur Sprachaktivierung",
     "tooltip_vad_grace": "Haltezeit (Empf.: 50%)\nWartezeit nach Stille",
     "tooltip_vad_retro": "Rückwirkend (Empf.: 10-20%)\nAudio vor Sprachbeginn erfassen",

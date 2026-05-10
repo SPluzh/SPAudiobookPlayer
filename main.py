@@ -139,6 +139,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.compressor_preset = 1  # 0=Light, 1=Medium, 2=Strong
         self.pitch_enabled = False
         self.pitch_value = 0.0
+        self.mono_enabled = False
         self.last_pause_time = None
         self.show_visualizer = True
         self.show_nesting_lines = True
@@ -344,6 +345,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         self.player_widget.pitch_toggled_signal.connect(self.on_pitch_toggled)
         self.player_widget.pitch_changed_signal.connect(self.on_pitch_changed)
+        self.player_widget.mono_toggled_signal.connect(self.on_mono_toggled)
 
         # VAD threshold slider
         self.player_widget.vad_threshold_changed_signal.connect(
@@ -375,6 +377,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.noise_suppression_enabled
         )
         self.player_widget.pitch_btn.setChecked(self.pitch_enabled)
+        self.player_widget.mono_btn.setChecked(self.mono_enabled)
         self.player_widget.play_btn.visualizer_enabled = self.show_visualizer
 
         # Set initial values for sliders
@@ -906,6 +909,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.compressor_preset = config.getint("Audio", "compressor_preset", fallback=1)
         self.pitch_enabled = config.getboolean("Audio", "pitch_enabled", fallback=False)
         self.pitch_value = config.getfloat("Audio", "pitch_value", fallback=0.0)
+        self.mono_enabled = config.getboolean("Audio", "mono_enabled", fallback=False)
 
         # Apply settings
         self.player.set_deesser_preset(self.deesser_preset)
@@ -920,6 +924,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_noise_suppression(self.noise_suppression_enabled)
         self.player.set_pitch(self.pitch_value)
         self.player.set_pitch_enabled(self.pitch_enabled)
+        self.player.set_mono_enabled(self.mono_enabled)
         self.show_folders = config.getboolean("Library", "show_folders", fallback=False)
         self.show_filter_labels = config.getboolean(
             "Library", "show_filter_labels", fallback=True
@@ -1073,6 +1078,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Audio"]["compressor_preset"] = str(self.compressor_preset)
         config["Audio"]["pitch_enabled"] = str(self.pitch_enabled)
         config["Audio"]["pitch_value"] = str(self.pitch_value)
+        config["Audio"]["mono_enabled"] = str(self.mono_enabled)
         if "Library" not in config:
             config["Library"] = {}
         config["Library"]["show_folders"] = str(self.show_folders)
@@ -1265,6 +1271,12 @@ class AudiobookPlayerWindow(QMainWindow):
         """Update and persist pitch value"""
         self.pitch_value = value
         self.player.set_pitch(value)
+        self.save_settings()
+
+    def on_mono_toggled(self, checked):
+        """Update and persist mono enabled state"""
+        self.mono_enabled = checked
+        self.player.set_mono_enabled(checked)
         self.save_settings()
 
     # Drag and Drop Events

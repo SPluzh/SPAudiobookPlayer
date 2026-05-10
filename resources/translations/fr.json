@@ -103,6 +103,8 @@
     "btn_pitch": "Pitch",
     "tooltip_pitch": "Changement de pitch. Clic droit : Paramètres",
     "pitch_label": "st",
+    "btn_mono": "Mono",
+    "tooltip_mono": "Mono : mélanger les canaux gauche et droit vers les deux sorties",
     "tooltip_vad_threshold": "Seuil VAD (Rec : 90%)\nNiveau de signal pour activer la parole",
     "tooltip_vad_grace": "Délai de grâce (Rec : 50%)\nTemps d'attente après silence",
     "tooltip_vad_retro": "Rétroactif (Rec : 10-20%)\nCapturer l'audio avant la parole",

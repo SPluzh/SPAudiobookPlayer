@@ -121,6 +121,8 @@
     "btn_pitch": "Pitch",
     "tooltip_pitch": "Pergeseran Nada (Pitch). RMB: Pengaturan",
     "pitch_label": "st",
+    "btn_mono": "Mono",
+    "tooltip_mono": "Mono: campurkan saluran kiri dan kanan ke kedua output",
     "tooltip_vad_threshold": "Ambang VAD (Saran: 90%)\nLevel sinyal untuk mengaktifkan ucapan",
     "tooltip_vad_grace": "Masa Tenggang (Saran: 50%)\nWaktu tunggu setelah hening",
     "tooltip_vad_retro": "Retroaktif (Saran: 10-20%)\nMenangkap audio sebelum ucapan",

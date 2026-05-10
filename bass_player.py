@@ -7,16 +7,20 @@ from ctypes import c_float, c_int, c_void_p, c_bool
 # BASS constants
 BASS_STREAM_DECODE = 0x200000
 BASS_STREAM_PRESCAN = 0x20000
+BASS_SAMPLE_FLOAT = 0x100
 BASS_UNICODE = 0x80000000
 BASS_FX_FREESOURCE = 0x10000
 BASS_ATTRIB_VOL = 2
 BASS_ATTRIB_TEMPO = 0x10000
 BASS_ATTRIB_TEMPO = 0x10000
 BASS_ATTRIB_TEMPO_PITCH = 0x10001
+BASS_ATTRIB_PAN = 6
+BASS_ATTRIB_MIX_MATRIX = 0x1020
 BASS_POS_BYTE = 0
 BASS_ACTIVE_PLAYING = 1
 BASS_FX_BFX_PEAKEQ = 0x10004
 BASS_FX_BFX_COMPRESSOR2 = 0x10011
+BASS_FX_BFX_MIX = 0x10007
 BASS_BFX_CHANALL = -1
 BASS_UNICODE = 0x80000000
 
@@ -61,6 +65,21 @@ class BASS_BFX_COMPRESSOR2(ctypes.Structure):
         ("lChannel", c_int),
     ]
 
+class BASS_CHANNELINFO(ctypes.Structure):
+    _fields_ = [
+        ("freq", c_int),
+        ("chans", c_int),
+        ("flags", c_int),
+        ("ctype", c_int),
+        ("origres", c_int),
+        ("plugin", c_int),
+        ("sample", c_int),
+        ("filename", c_void_p),
+    ]
+
+# DSP callback type
+DSPPROC = ctypes.CFUNCTYPE(None, c_int, c_int, c_void_p, c_int, c_void_p)
+
 # Define BASS functions if library is loaded
 if bass:
     bass.BASS_Init.argtypes = [c_int, c_int, c_int, c_void_p, c_void_p]
@@ -77,6 +96,8 @@ if bass:
     bass.BASS_ChannelIsActive.restype = c_int
     bass.BASS_ChannelSetAttribute.argtypes = [c_int, c_int, c_float]
     bass.BASS_ChannelSetAttribute.restype = c_bool
+    bass.BASS_ChannelSetAttributeEx.argtypes = [c_int, c_int, c_void_p, c_int]
+    bass.BASS_ChannelSetAttributeEx.restype = c_bool
     bass.BASS_ChannelGetPosition.argtypes = [c_int, c_int]
     bass.BASS_ChannelGetPosition.restype = ctypes.c_uint64
     bass.BASS_ChannelSetPosition.argtypes = [c_int, ctypes.c_uint64, c_int]
@@ -103,6 +124,12 @@ if bass:
     bass.BASS_PluginFree.restype = c_bool
     bass.BASS_ChannelGetData.argtypes = [c_int, c_void_p, c_int]
     bass.BASS_ChannelGetData.restype = c_int
+    bass.BASS_ChannelGetInfo.argtypes = [c_int, ctypes.POINTER(BASS_CHANNELINFO)]
+    bass.BASS_ChannelGetInfo.restype = c_bool
+    bass.BASS_ChannelSetDSP.argtypes = [c_int, DSPPROC, c_void_p, c_int]
+    bass.BASS_ChannelSetDSP.restype = c_int
+    bass.BASS_ChannelRemoveDSP.argtypes = [c_int, c_int]
+    bass.BASS_ChannelRemoveDSP.restype = c_bool
 
 # BASS constants for FFT
 BASS_DATA_FFT2048 = 0x80000003
@@ -155,6 +182,11 @@ class BassPlayer:
         # Pitch state
         self.pitch_enabled = False
         self.pitch_pos = 0.0
+        
+        # Mono state
+        self.mono_enabled = False
+        self.mono_dsp_handle = 0
+        self._mono_dsp_callback_ref = DSPPROC(self._mono_dsp_callback)
 
         # Initialize BASS at 48kHz (required for RNNoise VST plugin)
         if bass and bass.BASS_Init(-1, 48000, 0, 0, None):
@@ -174,6 +206,25 @@ class BassPlayer:
             if hplugin:
                 self.plugins[filename] = hplugin
 
+    def _mono_dsp_callback(self, handle, channel, buffer, length, user):
+        """DSP callback to mix stereo to mono in real-time"""
+        if not self.mono_enabled:
+            return
+            
+        # Get channel info to check channel count (only mix if stereo)
+        # We cache this or assume 2 for efficiency in the callback
+        # For now, let's just process if length is multiple of 8 (2 floats)
+        num_floats = length // 4
+        if num_floats < 2:
+            return
+            
+        ptr = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_float))
+        # Simple L+R mixing
+        for i in range(0, num_floats - 1, 2):
+            mono = (ptr[i] + ptr[i+1]) * 0.5
+            ptr[i] = mono
+            ptr[i+1] = mono
+
     def load(self, filepath: str) -> bool:
         """Load an audio file into the player"""
         if not self.initialized or not os.path.exists(filepath):
@@ -186,6 +237,7 @@ class BassPlayer:
             self.deesser_handle = 0
             self.compressor_handle = 0
             self.noise_suppression_handle = 0
+            self.mono_handle = 0
 
         # Cleanup previous temp file
         if self.temp_file and os.path.exists(self.temp_file):
@@ -197,7 +249,7 @@ class BassPlayer:
 
         # Try to load file directly
         path_bytes = filepath.encode('utf-16le') + b'\x00\x00'
-        flags0 = BASS_STREAM_DECODE | BASS_UNICODE
+        flags0 = BASS_STREAM_DECODE | BASS_UNICODE | BASS_SAMPLE_FLOAT
         self.chan0 = bass.BASS_StreamCreateFile(False, path_bytes, 0, 0, flags0)
 
         # If loading failed, check for BASS_ERROR_FILEFORM (41) and try FFmpeg fallback
@@ -264,7 +316,7 @@ class BassPlayer:
             return False
 
         if self.has_fx:
-            flags_fx = BASS_STREAM_PRESCAN | BASS_FX_FREESOURCE
+            flags_fx = BASS_STREAM_PRESCAN | BASS_FX_FREESOURCE | BASS_SAMPLE_FLOAT
             self.chan = bass_fx.BASS_FX_TempoCreate(self.chan0, flags_fx)
 
         if self.chan == 0:
@@ -274,11 +326,13 @@ class BassPlayer:
             if self.temp_file:
                  target_bytes = self.temp_file.encode('utf-16le') + b'\x00\x00'
             
-            self.chan = bass.BASS_StreamCreateFile(False, target_bytes, 0, 0, BASS_UNICODE)
+            self.chan = bass.BASS_StreamCreateFile(False, target_bytes, 0, 0, BASS_UNICODE | BASS_SAMPLE_FLOAT)
             self.has_fx = False
 
         if self.chan != 0:
             self.current_file = filepath
+            # Setup Mono DSP
+            self.mono_dsp_handle = bass.BASS_ChannelSetDSP(self.chan, self._mono_dsp_callback_ref, None, 0)
             self.apply_attributes()
             return True
         return False
@@ -321,6 +375,7 @@ class BassPlayer:
             self.current_file = ""
             self.deesser_handle = 0
             self.compressor_handle = 0
+            self.mono_dsp_handle = 0
 
         if self.temp_file and os.path.exists(self.temp_file):
             try:
@@ -385,6 +440,16 @@ class BassPlayer:
         """Enable/Disable pitch shifting"""
         self.pitch_enabled = enabled
         self.apply_attributes()
+
+    def set_mono_enabled(self, enabled: bool):
+        """Enable/Disable mono output (mix L+R to both channels)"""
+        self.mono_enabled = enabled
+        self.apply_mono()
+
+    def apply_mono(self):
+        """Apply or remove mono mixing (legacy matrix approach removed in favor of DSP)"""
+        # The actual work is done in _mono_dsp_callback when self.mono_enabled is True
+        pass
 
     def set_noise_suppression(self, enabled: bool):
         """Toggle noise suppression (RNNoise VST plugin)"""
@@ -527,6 +592,7 @@ class BassPlayer:
         self.apply_noise_suppression()  # First in chain (priority -1)
         self.apply_deesser()
         self.apply_compressor()
+        self.apply_mono()
 
     def rewind(self, seconds: float):
         """Rewind or fast forward by specified seconds"""

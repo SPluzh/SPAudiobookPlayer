@@ -121,6 +121,8 @@
     "btn_pitch": "Pitch",
     "tooltip_pitch": "Pitch Shift. RMB: Settings",
     "pitch_label": "st",
+    "btn_mono": "Mono",
+    "tooltip_mono": "Mono: mix left and right channels to both outputs",
     "tooltip_vad_threshold": "VAD Threshold (Rec: 90%)\nSignal level to activate speech",
     "tooltip_vad_grace": "Grace Period (Rec: 50%)\nWait time after silence",
     "tooltip_vad_retro": "Retroactive (Rec: 10-20%)\nCapture audio before speech",
