@@ -599,7 +599,7 @@ QLabel#statusWarning {
 
 QLabel#sectionLabel {
     font-weight: bold;
-    color: @text-bright;
+    color: @text-delegate;
     text-transform: uppercase;
     letter-spacing: 1px;
 }

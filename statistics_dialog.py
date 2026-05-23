@@ -606,6 +606,60 @@ class CoverWithProgress(QWidget):
             painter.fillRect(fill_rect, primary_color)
 
 
+class BookListScrollArea(QScrollArea):
+    """Custom scroll area that scrolls to align with child items (month headers or book rows) on wheel events"""
+    
+    def wheelEvent(self, event):
+        delta = event.angleDelta().y()
+        if delta != 0:
+            scrollbar = self.verticalScrollBar()
+            widget = self.widget()
+            if not widget or not widget.layout():
+                super().wheelEvent(event)
+                return
+                
+            layout = widget.layout()
+            positions = []
+            for i in range(layout.count()):
+                item = layout.itemAt(i)
+                w = item.widget()
+                if w and w.isVisible():
+                    positions.append(w.geometry().top())
+            
+            if not positions:
+                super().wheelEvent(event)
+                return
+                
+            positions = sorted(list(set(positions)))
+            current_val = scrollbar.value()
+            epsilon = 4  # small buffer to account for rounding errors
+            
+            # Calculate how many standard steps to scroll
+            num_steps = max(1, abs(int(delta / 120.0)))
+            
+            if delta < 0:
+                # Scroll down (scrollbar value increases)
+                candidates = [p for p in positions if p > current_val + epsilon]
+                if candidates:
+                    target_index = min(len(candidates) - 1, num_steps - 1)
+                    scrollbar.setValue(candidates[target_index])
+                else:
+                    scrollbar.setValue(scrollbar.value() + 103 * num_steps)
+            else:
+                # Scroll up (scrollbar value decreases)
+                candidates = [p for p in positions if p < current_val - epsilon]
+                if candidates:
+                    candidates.reverse()
+                    target_index = min(len(candidates) - 1, num_steps - 1)
+                    scrollbar.setValue(candidates[target_index])
+                else:
+                    scrollbar.setValue(0)
+            
+            event.accept()
+        else:
+            super().wheelEvent(event)
+
+
 class StatisticsDialog(QDialog):
     """Dialog displaying listening statistics with heatmap"""
     
@@ -757,10 +811,11 @@ class StatisticsDialog(QDialog):
             main_layout.addStretch()
             return
             
-        scroll = QScrollArea()
+        scroll = BookListScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setStyleSheet("background: transparent;")
+        scroll.verticalScrollBar().setSingleStep(103)
         
         container = QWidget()
         container.setStyleSheet("background: transparent;")
@@ -779,7 +834,23 @@ class StatisticsDialog(QDialog):
         for month_str in sorted(self.book_stats.keys(), reverse=True):
             year, month = month_str.split("-")
             month_name = month_names.get(month, month)
-            header_text = f"{month_name} {year}".upper()
+            
+            # Calculate total duration for this month
+            total_seconds = sum(book.get('seconds', 0.0) for book in self.book_stats[month_str])
+            
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            secs = int(total_seconds % 60)
+            parts = []
+            if hours > 0:
+                parts.append(f"{hours}{tr('statistics.hours')}")
+            if minutes > 0 or hours > 0:
+                parts.append(f"{minutes}{tr('statistics.minutes')}")
+            if secs > 0 or not parts:
+                parts.append(f"{secs}{tr('statistics.seconds')}")
+            total_time_str = " ".join(parts)
+            
+            header_text = f"{month_name} {year}  •  {total_time_str}".upper()
             
             header = QLabel(header_text)
             header.setObjectName("sectionLabel")

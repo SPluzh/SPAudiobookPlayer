@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.16]
+- **UI**: Added a languages icon to the language menu item.
+- **UI**: Added expand and collapse icons to the view menu items.
+- **UI**: Added a locate icon to the reveal current audiobook menu item.
+- **UI**: Added an update icon to the check for updates menu item.
+
 ## [1.6.15]
 - **Playback**: Fixed a bug where the very end of a track (around 200ms) was cut off during automatic transitions.
 - **Statistics**: Replaced default daily listening heatmap tooltips with a high-performance, lag-free custom popup.
@@ -9,6 +15,9 @@ All notable changes to this project will be documented in this file.
 - **Statistics**: Excluded the current month of the last year from the far-left heatmap column to avoid redundant month labels.
 - **Statistics**: Unified dialog labels, timestamps, card values, and heatmap cells to match the application's active text and accent colors.
 - **Statistics**: Redesigned book rows (author, title, and narrator on separate lines with unified fonts) and added progress and total duration (⏱) to the timeline.
+- **Statistics**: Replaced default multi-row mouse wheel scrolling with a smooth, coordinate-based snapping behavior that aligns perfectly to book rows and month headers.
+- **Statistics**: Styled month headers in all themes to match the dialogue's standard label colors.
+- **Statistics**: Added the total monthly listening duration (hours, minutes, and seconds) directly into the month header lines, matching the abbreviation style of the main stats cards.
 - **UI**: Added a listening statistics icon to the menu item.
 
 ## [1.6.14]

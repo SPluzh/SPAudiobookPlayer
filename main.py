@@ -440,6 +440,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Language Selection Nested Menu
         language_menu = view_menu.addMenu(tr("menu.language"))
+        language_menu.setIcon(get_icon("languages"))
 
         available_langs = get_available_languages()
         self.language_actions = {}
@@ -457,16 +458,19 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Library Visibility & Navigation
         reveal_action = QAction(tr("menu.reveal_current"), self)
+        reveal_action.setIcon(get_icon("locate"))
         reveal_action.setShortcut("L")
         reveal_action.triggered.connect(self.reveal_current_audiobook)
         view_menu.addAction(reveal_action)
 
         expand_action = QAction(tr("menu.expand_all"), self)
+        expand_action.setIcon(get_icon("expand"))
         expand_action.setShortcut("E")
         expand_action.triggered.connect(self.library_widget.expand_all_folders)
         view_menu.addAction(expand_action)
 
         collapse_action = QAction(tr("menu.collapse_all"), self)
+        collapse_action.setIcon(get_icon("collapse"))
         collapse_action.setShortcut("W")
         collapse_action.triggered.connect(self.library_widget.collapse_all_folders)
         view_menu.addAction(collapse_action)
@@ -529,6 +533,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Check for Updates
         check_update_action = QAction(tr("menu.check_updates"), self)
+        check_update_action.setIcon(get_icon("update"))
         check_update_action.triggered.connect(self.check_for_updates_manual)
         help_menu.addAction(check_update_action)
 
