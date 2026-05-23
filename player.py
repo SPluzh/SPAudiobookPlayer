@@ -39,9 +39,25 @@ class PlaybackController:
         # Saved state for session restoration
         self.saved_file_index: Optional[int] = None
         self.saved_position: Optional[float] = None
+
+        # Stream end callback flag
+        self._stream_end_pending = False
+        self.player.on_stream_end = self._on_stream_ended
+
+    def _on_stream_ended(self):
+        """Callback triggered when the BASS stream finishes playing"""
+        self._stream_end_pending = True
+
+    def check_stream_end(self) -> bool:
+        """Check if the stream end event has been triggered, resetting it in the process"""
+        if self._stream_end_pending:
+            self._stream_end_pending = False
+            return True
+        return False
     
     def load_audiobook(self, audiobook_path: str) -> bool:
         """Load audiobook data from the database and prepare the player for playback"""
+        self._stream_end_pending = False
         self.player.pause()
         
         # Save current progress before switching, but DO NOT update the timestamp
@@ -129,6 +145,7 @@ class PlaybackController:
         if not (0 <= index < len(self.files_list)):
             return False
         
+        self._stream_end_pending = False
         was_playing = self.player.is_playing()
         self.current_file_index = index
         self.calculate_global_position()

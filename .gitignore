@@ -29,7 +29,8 @@ pip-delete-this-directory.txt
 build/
 dist/
 *.spec
-_build_/
+_build_/installer_output/
+_build_/*.exe
 
 # Application Data & Logs
 data/

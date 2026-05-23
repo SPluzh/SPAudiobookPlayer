@@ -7,7 +7,8 @@ echo  SPAudiobookPlayer - CREATE ZIP RELEASE
 echo ==================================================
 
 set "DIST_DIR=dist\SP Audiobook Player"
-set "VERSION_FILE=..\resources\version.txt"
+set "VERSION_FILE=dist\SP Audiobook Player\_internal\resources\version.txt"
+if not exist "%VERSION_FILE%" set "VERSION_FILE=..\resources\version.txt"
 
 if not exist "!DIST_DIR!" (
     echo [ERROR] Distribution directory not found: !DIST_DIR!
@@ -17,8 +18,8 @@ if not exist "!DIST_DIR!" (
 )
 
 REM --- Get version from version.txt ---
-if exist "!VERSION_FILE!" (
-    set /p VERSION=<"!VERSION_FILE!"
+if exist "%VERSION_FILE%" (
+    for /f "usebackq tokens=*" %%i in ("%VERSION_FILE%") do set "VERSION=%%i"
 ) else (
     set "VERSION=unknown"
 )

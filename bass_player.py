@@ -80,6 +80,10 @@ class BASS_CHANNELINFO(ctypes.Structure):
 # DSP callback type
 DSPPROC = ctypes.CFUNCTYPE(None, c_int, c_int, c_void_p, c_int, c_void_p)
 
+# Sync callback type
+SYNCPROC = ctypes.CFUNCTYPE(None, c_int, c_int, c_int, c_void_p)
+BASS_SYNC_END = 2
+
 # Define BASS functions if library is loaded
 if bass:
     bass.BASS_Init.argtypes = [c_int, c_int, c_int, c_void_p, c_void_p]
@@ -130,6 +134,8 @@ if bass:
     bass.BASS_ChannelSetDSP.restype = c_int
     bass.BASS_ChannelRemoveDSP.argtypes = [c_int, c_int]
     bass.BASS_ChannelRemoveDSP.restype = c_bool
+    bass.BASS_ChannelSetSync.argtypes = [c_int, c_int, ctypes.c_uint64, SYNCPROC, c_void_p]
+    bass.BASS_ChannelSetSync.restype = c_int
 
 # BASS constants for FFT
 BASS_DATA_FFT2048 = 0x80000003
@@ -188,6 +194,11 @@ class BassPlayer:
         self.mono_dsp_handle = 0
         self._mono_dsp_callback_ref = DSPPROC(self._mono_dsp_callback)
 
+        # Stream end sync state
+        self.on_stream_end = None
+        self._sync_handle = 0
+        self._sync_callback_ref = SYNCPROC(self._sync_callback)
+
         # Initialize BASS at 48kHz (required for RNNoise VST plugin)
         if bass and bass.BASS_Init(-1, 48000, 0, 0, None):
             self.initialized = True
@@ -196,6 +207,11 @@ class BassPlayer:
             self.plugins = {}
             for plugin in ["bassopus.dll", "bass_aac.dll", "bassflac.dll", "bassape.dll"]:
                 self._load_plugin(plugin)
+
+    def _sync_callback(self, handle, channel, data, user):
+        """Called by BASS when stream reaches the end"""
+        if self.on_stream_end:
+            self.on_stream_end()
 
     def _load_plugin(self, filename: str):
         """Helper to load a BASS plugin"""
@@ -238,6 +254,7 @@ class BassPlayer:
             self.compressor_handle = 0
             self.noise_suppression_handle = 0
             self.mono_handle = 0
+            self._sync_handle = 0
 
         # Cleanup previous temp file
         if self.temp_file and os.path.exists(self.temp_file):
@@ -333,6 +350,13 @@ class BassPlayer:
             self.current_file = filepath
             # Setup Mono DSP
             self.mono_dsp_handle = bass.BASS_ChannelSetDSP(self.chan, self._mono_dsp_callback_ref, None, 0)
+            
+            # Setup End of Stream Sync
+            if self.initialized:
+                self._sync_handle = bass.BASS_ChannelSetSync(
+                    self.chan, BASS_SYNC_END, 0, self._sync_callback_ref, None
+                )
+                
             self.apply_attributes()
             return True
         return False
@@ -368,6 +392,8 @@ class BassPlayer:
             if self.noise_suppression_handle != 0 and self.has_vst:
                 bass_vst.BASS_VST_ChannelRemoveDSP(self.chan, self.noise_suppression_handle)
                 self.noise_suppression_handle = 0
+            
+            self._sync_handle = 0
             
             bass.BASS_StreamFree(self.chan)
             self.chan = 0
