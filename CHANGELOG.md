@@ -8,8 +8,6 @@ All notable changes to this project will be documented in this file.
 ## [1.6.13]
 - **Tags**: Added a "Remove All Tags" action to the audiobook context menu (under the Tags submenu) to quickly clear all assigned tags from the selected book.
 - **Tags**: Custom checked tag indicator dot color is now dynamically matched to the theme's active accent color.
-- **Build**: Fixed the installer compilation and release packaging scripts to correctly extract the version from the built application's internal resources and robustly pass it to Inno Setup without command-line parameter parsing conflicts.
-
 
 ## [1.6.12]
 - **Library**: Editing an audiobook's author, title, or narrator no longer bumps it to the top of "Recently Listened".
