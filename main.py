@@ -708,8 +708,10 @@ class AudiobookPlayerWindow(QMainWindow):
     def show_statistics(self):
         """Open the listening statistics dialog"""
         from statistics_dialog import StatisticsDialog
+        self.apply_blur()
         dialog = StatisticsDialog(self, self.db_manager)
         dialog.exec()
+        self.remove_blur()
 
     def connect_signals(self):
         """Map signals from sub-widgets (Library and Player) to their respective handler methods in the main window"""
