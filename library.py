@@ -931,6 +931,40 @@ class MultiLineDelegate(QStyledItemDelegate):
 
         painter.restore()
 
+    def get_icon_rect(self, rect: QRect, index) -> QRect:
+        """Calculate the rect for the cover icon, taking progress bar into account"""
+        item_type = index.data(Qt.ItemDataRole.UserRole + 1)
+        if item_type != "audiobook":
+            return QRect()
+
+        nesting_offset = self.get_nesting_offset(index)
+
+        # Check if progress bar is present
+        data = index.data(Qt.ItemDataRole.UserRole + 2)
+        progress_percent = 0
+        if data and len(data) >= 7:
+            progress_percent = data[6]
+
+        status_data = index.data(Qt.ItemDataRole.UserRole + 3)
+        is_started = False
+        if status_data and len(status_data) >= 3:
+            is_started = bool(status_data[0])
+
+        has_progress = (progress_percent > 0 or is_started)
+
+        pb_h = 5
+        if has_progress:
+            icon_y = rect.top() + (rect.height() - (self.audiobook_icon_size + pb_h)) // 2 + 2
+        else:
+            icon_y = rect.top() + (rect.height() - self.audiobook_icon_size) // 2
+
+        return QRect(
+            rect.left() + nesting_offset + self.horizontal_padding,
+            icon_y,
+            self.audiobook_icon_size,
+            self.audiobook_icon_size,
+        )
+
     def get_play_button_rect(self, icon_rect: QRectF) -> QRectF:
         """Calculate the rect for the play button overlay in high precision"""
         btn_size = 40.0
@@ -970,15 +1004,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         nesting_offset = self._draw_nesting_lines(painter, option.rect, chain, index)
 
         icon = index.data(Qt.ItemDataRole.DecorationRole)
-        icon_y = (
-            option.rect.top() + (option.rect.height() - self.audiobook_icon_size) // 2
-        )
-        icon_rect = QRect(
-            option.rect.left() + nesting_offset + self.horizontal_padding,
-            icon_y,
-            self.audiobook_icon_size,
-            self.audiobook_icon_size,
-        )
+        icon_rect = self.get_icon_rect(option.rect, index)
         data = index.data(Qt.ItemDataRole.UserRole + 2)
         if not data:
             painter.restore()
@@ -1032,12 +1058,25 @@ class MultiLineDelegate(QStyledItemDelegate):
 
             # 4. Currently Playing Highlight Border
             if is_playing_this:
-                # Dense green border for active book
+                # Dense green border for active book, enclosing both cover and progress bar
                 _, accent_color = self._get_style("delegate_accent")
                 pen = QPen(accent_color, 8)
                 painter.setPen(pen)
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-                painter.drawRoundedRect(QRectF(icon_rect).adjusted(-4, -4, 4, 4), 7, 7)
+                
+                has_progress = (progress_percent > 0 or is_started)
+                pb_h = 5
+                if has_progress:
+                    highlight_rect = QRectF(
+                        float(icon_rect.left()),
+                        float(icon_rect.top()),
+                        float(icon_rect.width()),
+                        float(icon_rect.height() + pb_h),
+                    )
+                else:
+                    highlight_rect = QRectF(icon_rect)
+                    
+                painter.drawRoundedRect(highlight_rect.adjusted(-4, -4, 4, 4), 7, 7)
 
             # 2. Under-cover Progress Indicator
             if progress_percent > 0 or is_started:
@@ -1501,15 +1540,7 @@ class LibraryTree(QTreeWidget):
                 item_type = index.data(Qt.ItemDataRole.UserRole + 1)
                 if item_type == "audiobook":
                     rect = self.visualRect(index)
-                    nesting_offset = delegate.get_nesting_offset(index)
-                    icon_size = delegate.audiobook_icon_size
-                    icon_y = rect.top() + (rect.height() - icon_size) // 2
-                    icon_rect = QRect(
-                        rect.left() + nesting_offset + delegate.horizontal_padding,
-                        icon_y,
-                        icon_size,
-                        icon_size,
-                    )
+                    icon_rect = delegate.get_icon_rect(rect, index)
                     play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
                     if play_rect.contains(QPointF(event.pos())):
                         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1556,15 +1587,7 @@ class LibraryTree(QTreeWidget):
                     delegate = self.itemDelegate()
                     if delegate and hasattr(delegate, "get_play_button_rect"):
                         rect = self.visualRect(index)
-                        nesting_offset = delegate.get_nesting_offset(index)
-                        icon_size = delegate.audiobook_icon_size
-                        icon_y = rect.top() + (rect.height() - icon_size) // 2
-                        icon_rect = QRect(
-                            rect.left() + nesting_offset + delegate.horizontal_padding,
-                            icon_y,
-                            icon_size,
-                            icon_size,
-                        )
+                        icon_rect = delegate.get_icon_rect(rect, index)
                         play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
                         if play_rect.contains(QPointF(event.pos())):
                             path = index.data(Qt.ItemDataRole.UserRole)
