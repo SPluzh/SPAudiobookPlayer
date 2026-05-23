@@ -1571,6 +1571,8 @@ class DatabaseManager:
                 SELECT 
                     d.audiobook_id,
                     a.name as audiobook_name,
+                    a.author,
+                    a.title,
                     d.listen_date,
                     d.total_seconds,
                     d.session_count
@@ -1601,9 +1603,11 @@ class DatabaseManager:
                 results.append({
                     'audiobook_id': row[0],
                     'audiobook_name': row[1],
-                    'date': row[2],
-                    'total_seconds': row[3],
-                    'session_count': row[4]
+                    'author': row[2],
+                    'title': row[3],
+                    'date': row[4],
+                    'total_seconds': row[5],
+                    'session_count': row[6]
                 })
             
             return results

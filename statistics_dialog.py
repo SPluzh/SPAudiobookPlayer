@@ -19,18 +19,159 @@ from styles import StyleManager
 from utils import load_icon, get_base_path
 
 
+
+
+class HeatmapToolTip(QFrame):
+    """Custom tooltip popup for HeatmapWidget showing detailed daily breakdown"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowDoesNotAcceptFocus)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.setObjectName("heatmapTooltip")
+        
+        # UI Layout
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(10, 10, 10, 10)
+        self.main_layout.setSpacing(6)
+        
+        # Header: Date & Total time
+        self.header_layout = QHBoxLayout()
+        self.header_layout.setSpacing(15)
+        
+        self.date_label = QLabel(self)
+        self.date_label.setObjectName("tooltipDate")
+        
+        self.total_label = QLabel(self)
+        self.total_label.setObjectName("tooltipTotal")
+        self.total_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        
+        self.header_layout.addWidget(self.date_label)
+        self.header_layout.addStretch()
+        self.header_layout.addWidget(self.total_label)
+        self.main_layout.addLayout(self.header_layout)
+        
+        # Separator line
+        self.separator = QFrame(self)
+        self.separator.setObjectName("tooltipSeparator")
+        self.separator.setFrameShape(QFrame.Shape.HLine)
+        self.separator.setFrameShadow(QFrame.Shadow.Plain)
+        self.main_layout.addWidget(self.separator)
+        
+        # Track active row widgets directly in main_layout to avoid nested layout caching lag
+        self.book_row_widgets = []
+        
+    def _format_duration(self, seconds: float) -> str:
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+        
+        parts = []
+        if hours > 0:
+            parts.append(f"{hours}{tr('statistics.hours')}")
+        if minutes > 0 or hours > 0:
+            parts.append(f"{minutes}{tr('statistics.minutes')}")
+        if hours == 0 and minutes == 0:
+            parts.append(f"{secs}{tr('statistics.seconds')}")
+            
+        return " ".join(parts)
+
+    def update_content(self, date_str: str, total_seconds: float, daily_books: list):
+        """Update tooltip content with date, total time, and per-book list"""
+        # Format Date
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            month_names = {
+                1: tr("statistics.jan"), 2: tr("statistics.feb"), 3: tr("statistics.mar"),
+                4: tr("statistics.apr"), 5: tr("statistics.may"), 6: tr("statistics.jun"),
+                7: tr("statistics.jul"), 8: tr("statistics.aug"), 9: tr("statistics.sep"),
+                10: tr("statistics.oct"), 11: tr("statistics.nov"), 12: tr("statistics.dec")
+            }
+            month_str = month_names.get(date_obj.month, "")
+            formatted_date = f"{date_obj.day} {month_str} {date_obj.year}"
+        except Exception:
+            formatted_date = date_str
+            
+        self.date_label.setText(formatted_date)
+        
+        # Format Total Time
+        total_time_str = self._format_duration(total_seconds)
+        self.total_label.setText(total_time_str)
+        
+        # Clear previous books list instantly to ensure synchronous size recalculation
+        for widget in self.book_row_widgets:
+            self.main_layout.removeWidget(widget)
+            widget.setParent(None)
+            widget.deleteLater()
+        self.book_row_widgets.clear()
+                 
+        # Add new books list
+        if not daily_books or total_seconds == 0:
+            no_act_label = QLabel(tr("statistics.no_data"), self)
+            no_act_label.setObjectName("tooltipBookTitle")
+            self.main_layout.addWidget(no_act_label)
+            self.book_row_widgets.append(no_act_label)
+        else:
+            for book in daily_books:
+                book_row = QWidget(self)
+                book_row.setObjectName("tooltipBookRow")
+                row_lay = QHBoxLayout(book_row)
+                row_lay.setContentsMargins(0, 0, 0, 0)
+                row_lay.setSpacing(15)
+                
+                # Book name (Author — Title)
+                author = book.get('author')
+                title = book.get('title')
+                if author and title:
+                    display_name = f"{author} — {title}"
+                elif title:
+                    display_name = title
+                elif author:
+                    display_name = f"{author} — {book.get('audiobook_name', tr('delegate.no_title'))}"
+                else:
+                    display_name = book.get('audiobook_name') or tr('delegate.no_title')
+                
+                # Limit length of book title so it doesn't span too wide
+                if len(display_name) > 35:
+                    display_name = display_name[:32] + "..."
+                    
+                title_lbl = QLabel(display_name, book_row)
+                title_lbl.setObjectName("tooltipBookTitle")
+                
+                # Duration for this book
+                book_seconds = book.get('total_seconds', 0.0)
+                time_lbl = QLabel(self._format_duration(book_seconds), book_row)
+                time_lbl.setObjectName("tooltipBookTime")
+                time_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                
+                row_lay.addWidget(title_lbl)
+                row_lay.addStretch()
+                row_lay.addWidget(time_lbl)
+                
+                self.main_layout.addWidget(book_row)
+                self.book_row_widgets.append(book_row)
+                
+        # Shrink to 0x0 first to force Qt to contract the window to its new minimumSizeHint
+        self.resize(0, 0)
+        self.adjustSize()
+
+
 class HeatmapWidget(QWidget):
     """GitHub-style heatmap widget showing daily listening activity"""
     
-    def __init__(self, heatmap_data: Dict[str, float], parent=None):
+    def __init__(self, heatmap_data: Dict[str, float], db_manager=None, parent=None):
         """Initialize heatmap widget
         
         Args:
             heatmap_data: Dictionary mapping date strings to seconds listened
+            db_manager: DatabaseManager instance
             parent: Parent widget
         """
         super().__init__(parent)
         self.heatmap_data = heatmap_data
+        self.db = db_manager
+        self.db_cache = {}
         self.cell_size = 12
         self.cell_spacing = 2
         self.margin_left = 30
@@ -269,45 +410,108 @@ class HeatmapWidget(QWidget):
         """Handle mouse move for tooltip"""
         pos = event.pos()
         
-        # Find cell under mouse
-        for row in range(7):
-            for col in range(len(self.grid_data[row])):
-                x = self.margin_left + col * (self.cell_size + self.cell_spacing)
-                y = self.margin_top + row * (self.cell_size + self.cell_spacing)
-                
-                if x <= pos.x() <= x + self.cell_size and y <= pos.y() <= y + self.cell_size:
-                    self.hovered_cell = (row, col)
-                    cell_data = self.grid_data[row][col]
-                    if cell_data:
-                        date_str, seconds = cell_data
-                        self._show_tooltip(date_str, seconds)
-                    self.update()
-                    return
+        # Calculate row and col in grid using division to avoid dead zones in cell spacing
+        col = (pos.x() - self.margin_left) // (self.cell_size + self.cell_spacing)
+        row = (pos.y() - self.margin_top) // (self.cell_size + self.cell_spacing)
         
-        self.hovered_cell = None
-        self.setToolTip("")
-        self.update()
-    
-    def _show_tooltip(self, date_str: str, seconds: float):
-        """Show tooltip for a cell"""
-        if seconds < 0:
-            self.setToolTip("")
+        num_weeks = len(self.grid_data[0]) if self.grid_data else 52
+        if 0 <= row < 7 and 0 <= col < num_weeks:
+            cell_data = self.grid_data[row][col]
+            if cell_data:
+                date_str, seconds = cell_data
+                if self.hovered_cell != (row, col):
+                    self.hovered_cell = (row, col)
+                    self._show_tooltip(date_str, seconds)
+                self.update()
+                return
+        
+        if self.hovered_cell is not None:
+            self.hovered_cell = None
+            if hasattr(self, 'custom_tooltip') and self.custom_tooltip:
+                self.custom_tooltip.hide()
+            self.update()
+            
+    def leaveEvent(self, event):
+        """Hide custom tooltip when mouse leaves the widget"""
+        # Double check if mouse is really outside the widget boundaries
+        # This prevents false leaveEvents triggered by OS window mapping
+        cursor_pos = self.mapFromGlobal(self.cursor().pos())
+        if self.rect().contains(cursor_pos):
             return
             
-        # Format time
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-        
-        if hours > 0:
-            time_str = f"{hours}{tr('statistics.hours')} {minutes}{tr('statistics.minutes')} {secs}{tr('statistics.seconds')}"
-        elif minutes > 0:
-            time_str = f"{minutes}{tr('statistics.minutes')} {secs}{tr('statistics.seconds')}"
+        if self.hovered_cell is not None:
+            self.hovered_cell = None
+            if hasattr(self, 'custom_tooltip') and self.custom_tooltip:
+                self.custom_tooltip.hide()
+            self.update()
+            
+    def _show_tooltip(self, date_str: str, seconds: float):
+        """Show custom floating tooltip for a cell"""
+        if seconds < 0:
+            if hasattr(self, 'custom_tooltip') and self.custom_tooltip:
+                self.custom_tooltip.hide()
+            return
+            
+        # Get books breakdown
+        if seconds == 0:
+            daily_books = []
         else:
-            time_str = f"{secs}{tr('statistics.seconds')}"
+            if date_str not in self.db_cache:
+                if self.db:
+                    daily_books = self.db.get_daily_stats(start_date=date_str, end_date=date_str)
+                    # Sort books by listen time descending
+                    daily_books.sort(key=lambda x: x.get('total_seconds', 0.0), reverse=True)
+                else:
+                    daily_books = []
+                self.db_cache[date_str] = daily_books
+            else:
+                daily_books = self.db_cache[date_str]
+                
+        # Initialize tooltip if not already done
+        if not hasattr(self, 'custom_tooltip') or not self.custom_tooltip:
+            self.custom_tooltip = HeatmapToolTip(self.window())
+            
+        self.custom_tooltip.update_content(date_str, seconds, daily_books)
+        self.custom_tooltip.resize(0, 0)
+        self.custom_tooltip.layout().activate()
+        self.custom_tooltip.adjustSize()
         
-        tooltip = trf("statistics.tooltip", date=date_str, time=time_str)
-        self.setToolTip(tooltip)
+        # Position the tooltip
+        row, col = self.hovered_cell
+        cell_x = self.margin_left + col * (self.cell_size + self.cell_spacing)
+        cell_y = self.margin_top + row * (self.cell_size + self.cell_spacing)
+        
+        # Convert local coordinate to global coordinate
+        global_pos = self.mapToGlobal(QPoint(cell_x, cell_y))
+        
+        tooltip_width = self.custom_tooltip.width()
+        tooltip_height = self.custom_tooltip.height()
+        
+        # Default: position above and to the right of the cell to avoid obscuring the cursor
+        tooltip_x = global_pos.x() + self.cell_size + 10
+        tooltip_y = global_pos.y() - tooltip_height - 10
+        
+        # Screen boundary checks
+        screen = self.screen()
+        if screen:
+            screen_geom = screen.availableGeometry()
+            
+            # If goes off the right edge, position to the left of the cell instead
+            if tooltip_x + tooltip_width > screen_geom.right():
+                tooltip_x = global_pos.x() - tooltip_width - 10
+                
+            # Keep within horizontal screen bounds
+            tooltip_x = max(screen_geom.left(), min(tooltip_x, screen_geom.right() - tooltip_width))
+            
+            # If goes off the top edge, position below the cell instead
+            if tooltip_y < screen_geom.top():
+                tooltip_y = global_pos.y() + self.cell_size + 10
+                
+            # Keep within vertical screen bounds
+            tooltip_y = max(screen_geom.top(), min(tooltip_y, screen_geom.bottom() - tooltip_height))
+                
+        self.custom_tooltip.move(tooltip_x, tooltip_y)
+        self.custom_tooltip.show()
 
 
 class CoverWithProgress(QWidget):
@@ -483,7 +687,7 @@ class StatisticsDialog(QDialog):
         layout.addWidget(separator)
         
         # Heatmap
-        heatmap_widget = HeatmapWidget(self.heatmap_data, self)
+        heatmap_widget = HeatmapWidget(self.heatmap_data, self.db, self)
         layout.addWidget(heatmap_widget)
         
         # Separator for history

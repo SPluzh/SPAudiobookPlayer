@@ -1191,3 +1191,48 @@ QLabel#statValue {
     font-size: 16px;
     font-weight: bold;
 }
+
+/* Custom Heatmap Tooltip */
+QFrame#heatmapTooltip {
+    background-color: @bg-dark;
+    border: 1px solid @accent;
+    border-radius: 6px;
+}
+
+QLabel#tooltipDate {
+    color: @text-bright;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+QLabel#tooltipTotal {
+    color: @text-delegate;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+QWidget#tooltipBooksContainer {
+    background: transparent;
+}
+
+QWidget#tooltipBookRow {
+    background: transparent;
+}
+
+QLabel#tooltipBookTitle {
+    color: @text-delegate;
+    font-size: 11px;
+}
+
+QLabel#tooltipBookTime {
+    color: @text-delegate;
+    font-weight: bold;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 11px;
+}
+
+QFrame#tooltipSeparator {
+    background-color: @border;
+    max-height: 1px;
+    min-height: 1px;
+}
