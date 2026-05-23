@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QWidget, QGridLayout, QFrame, QScrollArea
 )
-from PyQt6.QtCore import Qt, QRect, QPoint, QSize, QRectF
+from PyQt6.QtCore import Qt, QRect, QPoint, QSize, QRectF, QTimer
 from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPixmap, QIcon, QPainterPath
 
 from translations import tr, trf
@@ -30,6 +30,7 @@ class HeatmapToolTip(QFrame):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setObjectName("heatmapTooltip")
+        self.setMaximumWidth(320)
         
         # UI Layout
         self.main_layout = QVBoxLayout(self)
@@ -99,59 +100,68 @@ class HeatmapToolTip(QFrame):
         total_time_str = self._format_duration(total_seconds)
         self.total_label.setText(total_time_str)
         
-        # Clear previous books list instantly to ensure synchronous size recalculation
-        for widget in self.book_row_widgets:
-            self.main_layout.removeWidget(widget)
-            widget.setParent(None)
-            widget.deleteLater()
-        self.book_row_widgets.clear()
-                 
-        # Add new books list
+        # Determine target number of row widgets needed
         if not daily_books or total_seconds == 0:
-            no_act_label = QLabel(tr("statistics.no_data"), self)
-            no_act_label.setObjectName("tooltipBookTitle")
-            self.main_layout.addWidget(no_act_label)
-            self.book_row_widgets.append(no_act_label)
+            target_data = [(tr("statistics.no_data"), "")]
         else:
+            target_data = []
             for book in daily_books:
-                book_row = QWidget(self)
-                book_row.setObjectName("tooltipBookRow")
-                row_lay = QHBoxLayout(book_row)
-                row_lay.setContentsMargins(0, 0, 0, 0)
-                row_lay.setSpacing(15)
-                
-                # Book name (Author — Title)
+                # Book name (Author on line 1, Title on line 2)
                 author = book.get('author')
                 title = book.get('title')
                 if author and title:
-                    display_name = f"{author} — {title}"
+                    display_name = f"{author}\n{title}"
                 elif title:
                     display_name = title
                 elif author:
-                    display_name = f"{author} — {book.get('audiobook_name', tr('delegate.no_title'))}"
+                    display_name = f"{author}\n{book.get('audiobook_name', tr('delegate.no_title'))}"
                 else:
                     display_name = book.get('audiobook_name') or tr('delegate.no_title')
                 
-                # Limit length of book title so it doesn't span too wide
-                if len(display_name) > 35:
-                    display_name = display_name[:32] + "..."
-                    
-                title_lbl = QLabel(display_name, book_row)
-                title_lbl.setObjectName("tooltipBookTitle")
-                
-                # Duration for this book
                 book_seconds = book.get('total_seconds', 0.0)
-                time_lbl = QLabel(self._format_duration(book_seconds), book_row)
-                time_lbl.setObjectName("tooltipBookTime")
-                time_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                duration_str = self._format_duration(book_seconds)
+                target_data.append((display_name, duration_str))
                 
-                row_lay.addWidget(title_lbl)
-                row_lay.addStretch()
-                row_lay.addWidget(time_lbl)
-                
-                self.main_layout.addWidget(book_row)
-                self.book_row_widgets.append(book_row)
-                
+        # Ensure we have enough widgets in our pool (self.book_row_widgets)
+        while len(self.book_row_widgets) < len(target_data):
+            row_widget = QWidget(self)
+            row_widget.setObjectName("tooltipBookRow")
+            row_lay = QHBoxLayout(row_widget)
+            row_lay.setContentsMargins(0, 0, 0, 0)
+            row_lay.setSpacing(15)
+            row_lay.setAlignment(Qt.AlignmentFlag.AlignTop)
+            
+            title_lbl = QLabel(row_widget)
+            title_lbl.setObjectName("tooltipBookTitle")
+            title_lbl.setWordWrap(True)
+            
+            time_lbl = QLabel(row_widget)
+            time_lbl.setObjectName("tooltipBookTime")
+            time_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+            
+            row_lay.addWidget(title_lbl)
+            row_lay.addStretch()
+            row_lay.addWidget(time_lbl)
+            
+            # Store references directly on row_widget to avoid costly findChild queries
+            row_widget.title_lbl = title_lbl
+            row_widget.time_lbl = time_lbl
+            
+            self.main_layout.addWidget(row_widget)
+            self.book_row_widgets.append(row_widget)
+            
+        # Update and show required widgets
+        for i, (display_name, duration_str) in enumerate(target_data):
+            widget = self.book_row_widgets[i]
+            widget.title_lbl.setText(display_name)
+            widget.time_lbl.setText(duration_str)
+            widget.time_lbl.setVisible(bool(duration_str))
+            widget.show()
+            
+        # Hide any unused widgets in the pool
+        for i in range(len(target_data), len(self.book_row_widgets)):
+            self.book_row_widgets[i].hide()
+            
         # Shrink to 0x0 first to force Qt to contract the window to its new minimumSizeHint
         self.resize(0, 0)
         self.adjustSize()
@@ -195,6 +205,40 @@ class HeatmapWidget(QWidget):
         # Tooltip
         self.setMouseTracking(True)
         self.hovered_cell = None
+        
+        # Single-shot timer to debounce tooltip showing and avoid flickering/lag
+        self.tooltip_timer = QTimer(self)
+        self.tooltip_timer.setSingleShot(True)
+        self.tooltip_timer.timeout.connect(self._on_tooltip_timer)
+        self.pending_tooltip_data = None
+        
+        # Pre-cache all daily stats for the displayed range at once to avoid synchronous DB queries on hover
+        if self.grid_data and self.grid_data[0] and self.db:
+            try:
+                # Find start date from grid_data
+                first_cell = None
+                for col in range(len(self.grid_data[0])):
+                    for row in range(7):
+                        if self.grid_data[row][col]:
+                            first_cell = self.grid_data[row][col][0]
+                            break
+                    if first_cell:
+                        break
+                        
+                today_str = datetime.now().date().strftime('%Y-%m-%d')
+                if first_cell:
+                    all_stats = self.db.get_daily_stats(start_date=first_cell, end_date=today_str)
+                    for stat in all_stats:
+                        d_str = stat.get('date')
+                        if d_str not in self.db_cache:
+                            self.db_cache[d_str] = []
+                        self.db_cache[d_str].append(stat)
+                    
+                    # Sort each date's list of books by total_seconds descending
+                    for d_str in self.db_cache:
+                        self.db_cache[d_str].sort(key=lambda x: x.get('total_seconds', 0.0), reverse=True)
+            except Exception as e:
+                print(f"Error pre-caching heatmap stats: {e}")
         
     def _prepare_grid_data(self) -> list:
         """Prepare 2D grid data for rendering (7 rows x 53 weeks).
@@ -421,12 +465,15 @@ class HeatmapWidget(QWidget):
                 date_str, seconds = cell_data
                 if self.hovered_cell != (row, col):
                     self.hovered_cell = (row, col)
-                    self._show_tooltip(date_str, seconds)
-                self.update()
+                    self.pending_tooltip_data = (date_str, seconds)
+                    self.tooltip_timer.start(20)  # Debounce with a short 20ms delay
+                    self.update()
                 return
         
         if self.hovered_cell is not None:
             self.hovered_cell = None
+            self.pending_tooltip_data = None
+            self.tooltip_timer.stop()
             if hasattr(self, 'custom_tooltip') and self.custom_tooltip:
                 self.custom_tooltip.hide()
             self.update()
@@ -441,6 +488,8 @@ class HeatmapWidget(QWidget):
             
         if self.hovered_cell is not None:
             self.hovered_cell = None
+            self.pending_tooltip_data = None
+            self.tooltip_timer.stop()
             if hasattr(self, 'custom_tooltip') and self.custom_tooltip:
                 self.custom_tooltip.hide()
             self.update()
@@ -452,20 +501,11 @@ class HeatmapWidget(QWidget):
                 self.custom_tooltip.hide()
             return
             
-        # Get books breakdown
+        # Get books breakdown directly from cache (never query DB here)
         if seconds == 0:
             daily_books = []
         else:
-            if date_str not in self.db_cache:
-                if self.db:
-                    daily_books = self.db.get_daily_stats(start_date=date_str, end_date=date_str)
-                    # Sort books by listen time descending
-                    daily_books.sort(key=lambda x: x.get('total_seconds', 0.0), reverse=True)
-                else:
-                    daily_books = []
-                self.db_cache[date_str] = daily_books
-            else:
-                daily_books = self.db_cache[date_str]
+            daily_books = self.db_cache.get(date_str, [])
                 
         # Initialize tooltip if not already done
         if not hasattr(self, 'custom_tooltip') or not self.custom_tooltip:
@@ -477,6 +517,9 @@ class HeatmapWidget(QWidget):
         self.custom_tooltip.adjustSize()
         
         # Position the tooltip
+        if not self.hovered_cell:
+            return
+            
         row, col = self.hovered_cell
         cell_x = self.margin_left + col * (self.cell_size + self.cell_spacing)
         cell_y = self.margin_top + row * (self.cell_size + self.cell_spacing)
@@ -512,6 +555,12 @@ class HeatmapWidget(QWidget):
                 
         self.custom_tooltip.move(tooltip_x, tooltip_y)
         self.custom_tooltip.show()
+
+    def _on_tooltip_timer(self):
+        """Timer callback to show tooltip with dynamic cell data after debouncing"""
+        if self.pending_tooltip_data and self.hovered_cell:
+            date_str, seconds = self.pending_tooltip_data
+            self._show_tooltip(date_str, seconds)
 
 
 class CoverWithProgress(QWidget):

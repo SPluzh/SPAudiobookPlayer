@@ -4,10 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [1.6.15]
 - **Playback**: Fixed a bug where the very end of a track (around 200ms) was cut off during automatic transitions.
-- **Statistics**: Replaced standard heatmap tooltips with a high-performance custom popup showing detailed per-audiobook daily breakdowns, featuring smooth positioning, instant synchronous layout resizing, and unified styling.
-- **Statistics**: Excluded the current month of the last year from the far-left column of the activity heatmap to avoid redundant month labels.
-- **Statistics**: Heatmap cells and progress bars now dynamically use the application's active accent color.
-- **Statistics**: Unified all text labels, captions, started/completed dates, listened times, and card metric values in the statistics dialog to share the same color as the book title for a cleaner, consistent visual style.
+- **Statistics**: Replaced default daily listening heatmap tooltips with a high-performance, lag-free custom popup.
+- **Statistics**: Improved tooltip layout to display the author and title on separate lines with automatic text wrapping.
+- **Statistics**: Excluded the current month of the last year from the far-left heatmap column to avoid redundant month labels.
+- **Statistics**: Unified dialog labels, timestamps, card values, and heatmap cells to match the application's active text and accent colors.
 - **UI**: Added a listening statistics icon to the menu item.
 
 ## [1.6.14]

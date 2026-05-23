@@ -1188,7 +1188,7 @@ QLabel#statValue {
 QFrame#heatmapTooltip {
     background-color: @bg-dark;
     border: 1px solid @accent;
-    border-radius: 6px;
+    border-radius: 0px;
 }
 
 QLabel#tooltipDate {
