@@ -927,7 +927,7 @@ QFrame#aboutContainer {
 }
 
 #theme_primary {
-    color: @accent;
+    color: #2ecc71;
 }
 
 #overlay_background {
@@ -935,7 +935,7 @@ QFrame#aboutContainer {
 }
 
 #overlay_progress_bg {
-    color: @overlay-progress-bg;
+    color: #000000;
 }
 
 #separator_dot {

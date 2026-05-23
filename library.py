@@ -1047,7 +1047,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 pb_margin = 0
                 pb_rect = QRectF(
                     float(icon_rect.left() + pb_margin),
-                    float(icon_rect.bottom() + 3),
+                    float(icon_rect.bottom()),
                     float(icon_rect.width() - pb_margin * 2),
                     float(pb_h),
                 )
