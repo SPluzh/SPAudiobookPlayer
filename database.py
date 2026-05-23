@@ -1811,7 +1811,8 @@ class DatabaseManager:
                     a.id, a.author, a.title, a.cover_path, a.cached_cover_path,
                     SUM(s.duration_seconds) as month_total,
                     MAX(COALESCE(s.session_end, s.session_start)) as last_activity,
-                    a.is_completed, a.time_finished, a.time_started, a.progress_percent
+                    a.is_completed, a.time_finished, a.time_started, a.progress_percent,
+                    a.narrator, a.duration
                 FROM listening_sessions s
                 JOIN audiobooks a ON s.audiobook_id = a.id
                 GROUP BY month_str, a.id
@@ -1833,7 +1834,9 @@ class DatabaseManager:
                     'is_completed': row[8],
                     'time_finished': row[9],
                     'time_started': row[10],
-                    'progress_percent': 100 if row[8] else (row[11] or 0)
+                    'progress_percent': 100 if row[8] else (row[11] or 0),
+                    'narrator': row[12] or "",
+                    'duration': row[13] or 0.0
                 }
                 
                 if month_str not in result:

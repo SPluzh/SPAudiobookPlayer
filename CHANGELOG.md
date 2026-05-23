@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - **Statistics**: Improved tooltip layout to display the author and title on separate lines with automatic text wrapping.
 - **Statistics**: Excluded the current month of the last year from the far-left heatmap column to avoid redundant month labels.
 - **Statistics**: Unified dialog labels, timestamps, card values, and heatmap cells to match the application's active text and accent colors.
+- **Statistics**: Redesigned book rows (author, title, and narrator on separate lines with unified fonts) and added progress and total duration (⏱) to the timeline.
 - **UI**: Added a listening statistics icon to the menu item.
 
 ## [1.6.14]

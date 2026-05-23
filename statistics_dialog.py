@@ -16,7 +16,7 @@ from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPixmap, QIcon, Q
 
 from translations import tr, trf
 from styles import StyleManager
-from utils import load_icon, get_base_path
+from utils import load_icon, get_base_path, format_duration
 
 
 
@@ -798,7 +798,7 @@ class StatisticsDialog(QDialog):
         """Create a single book row widget similar to library items"""
         row = QFrame()
         row.setObjectName("statCard")
-        row.setFixedHeight(85)
+        row.setFixedHeight(95)
         
         row_layout = QHBoxLayout(row)
         row_layout.setContentsMargins(10, 5, 20, 5)
@@ -832,20 +832,33 @@ class StatisticsDialog(QDialog):
         text_layout = QVBoxLayout()
         text_layout.setSpacing(2)
         
-        title_label = QLabel(book['title'] or tr("delegate.no_title"))
-        title_font = title_label.font()
-        title_font.setBold(True)
-        title_font.setPointSize(10)
-        title_label.setFont(title_font)
+        author_label = QLabel(book.get('author') or tr("scanner.unknown_author"))
+        author_label.setObjectName("delegate_author")
         
-        author_label = QLabel(book['author'] or tr("scanner.unknown_author"))
-        author_label.setObjectName("subtitleLabel")
+        title_label = QLabel(book.get('title') or tr("delegate.no_title"))
+        title_label.setObjectName("delegate_title")
         
-        text_layout.addWidget(title_label)
         text_layout.addWidget(author_label)
+        text_layout.addWidget(title_label)
+        
+        narrator = book.get('narrator')
+        if narrator:
+            narrator_text = f"{tr('delegate.narrator_prefix')} {narrator}"
+            narrator_label = QLabel(narrator_text)
+            narrator_label.setObjectName("delegate_narrator")
+            text_layout.addWidget(narrator_label)
         
         # Timeline status (Started / Completed)
         timeline_parts = []
+        
+        # Progress and duration prefix
+        progress_str = f"{int(progress_val)}%"
+        timeline_parts.append(progress_str)
+        
+        duration_val = book.get('duration') or 0.0
+        if duration_val > 0:
+            duration_str = format_duration(duration_val)
+            timeline_parts.append(f"{tr('delegate.duration_prefix')} {duration_str}")
         
         if book.get('time_started'):
             ts = book['time_started']
