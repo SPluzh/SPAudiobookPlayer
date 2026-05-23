@@ -453,6 +453,8 @@
     "sep_short": "9月",
     "oct_short": "10月",
     "nov_short": "11月",
-    "dec_short": "12月"
+    "dec_short": "12月",
+    "completed_on": "已完成: {date}",
+    "started_on": "已开始: {date}"
   }
 }

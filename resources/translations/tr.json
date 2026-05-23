@@ -453,6 +453,8 @@
     "sep_short": "Eyl",
     "oct_short": "Eki",
     "nov_short": "Kas",
-    "dec_short": "Ara"
+    "dec_short": "Ara",
+    "completed_on": "Tamamlandı: {date}",
+    "started_on": "Başlandı: {date}"
   }
 }

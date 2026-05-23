@@ -453,6 +453,8 @@
     "sep_short": "Sep",
     "oct_short": "Okt",
     "nov_short": "Nov",
-    "dec_short": "Des"
+    "dec_short": "Des",
+    "completed_on": "Selesai: {date}",
+    "started_on": "Mulai: {date}"
   }
 }

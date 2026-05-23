@@ -453,6 +453,8 @@
     "sep_short": "Sep",
     "oct_short": "Oct",
     "nov_short": "Nov",
-    "dec_short": "Dic"
+    "dec_short": "Dic",
+    "completed_on": "Completado: {date}",
+    "started_on": "Iniciada: {date}"
   }
 }

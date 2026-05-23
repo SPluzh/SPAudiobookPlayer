@@ -453,6 +453,8 @@
     "sep_short": "Сен",
     "oct_short": "Окт",
     "nov_short": "Ноя",
-    "dec_short": "Дек"
+    "dec_short": "Дек",
+    "completed_on": "Завершена: {date}",
+    "started_on": "Начата: {date}"
   }
 }

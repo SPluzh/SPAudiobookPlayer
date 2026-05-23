@@ -1792,7 +1792,8 @@ class DatabaseManager:
                     strftime('%Y-%m', s.session_date) as month_str,
                     a.id, a.author, a.title, a.cover_path, a.cached_cover_path,
                     SUM(s.duration_seconds) as month_total,
-                    MAX(COALESCE(s.session_end, s.session_start)) as last_activity
+                    MAX(COALESCE(s.session_end, s.session_start)) as last_activity,
+                    a.is_completed, a.time_finished, a.time_started
                 FROM listening_sessions s
                 JOIN audiobooks a ON s.audiobook_id = a.id
                 GROUP BY month_str, a.id
@@ -1810,7 +1811,10 @@ class DatabaseManager:
                     'title': row[3] or "",
                     'cover_path': row[4],
                     'cached_cover_path': row[5],
-                    'seconds': row[6] or 0.0
+                    'seconds': row[6] or 0.0,
+                    'is_completed': row[8],
+                    'time_finished': row[9],
+                    'time_started': row[10]
                 }
                 
                 if month_str not in result:

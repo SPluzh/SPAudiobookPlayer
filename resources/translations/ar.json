@@ -453,6 +453,8 @@
     "sep_short": "سبت",
     "oct_short": "أكت",
     "nov_short": "نوف",
-    "dec_short": "ديس"
+    "dec_short": "ديس",
+    "completed_on": "اكتمل: {date}",
+    "started_on": "بدأت: {date}"
   }
 }

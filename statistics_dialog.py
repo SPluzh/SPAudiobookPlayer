@@ -498,7 +498,7 @@ class StatisticsDialog(QDialog):
         """Create a single book row widget similar to library items"""
         row = QFrame()
         row.setObjectName("statCard")
-        row.setFixedHeight(75)
+        row.setFixedHeight(85)
         
         row_layout = QHBoxLayout(row)
         row_layout.setContentsMargins(10, 5, 20, 5)
@@ -544,6 +544,46 @@ class StatisticsDialog(QDialog):
         
         text_layout.addWidget(title_label)
         text_layout.addWidget(author_label)
+        
+        # Timeline status (Started / Completed)
+        timeline_parts = []
+        
+        if book.get('time_started'):
+            ts = book['time_started']
+            started_date = ""
+            try:
+                dt = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+                started_date = dt.strftime('%d.%m.%Y')
+            except ValueError:
+                try:
+                    dt = datetime.strptime(ts.split()[0], '%Y-%m-%d')
+                    started_date = dt.strftime('%d.%m.%Y')
+                except:
+                    started_date = str(ts)
+            if started_date:
+                timeline_parts.append(trf("statistics.started_on", date=started_date))
+                
+        if book.get('is_completed') and book.get('time_finished'):
+            tf = book['time_finished']
+            completed_date = ""
+            try:
+                dt = datetime.strptime(tf, '%Y-%m-%d %H:%M:%S')
+                completed_date = dt.strftime('%d.%m.%Y')
+            except ValueError:
+                try:
+                    dt = datetime.strptime(tf.split()[0], '%Y-%m-%d')
+                    completed_date = dt.strftime('%d.%m.%Y')
+                except:
+                    completed_date = str(tf)
+            if completed_date:
+                timeline_parts.append(trf("statistics.completed_on", date=completed_date))
+                
+        if timeline_parts:
+            completed_text = "  •  ".join(timeline_parts)
+            completed_label = QLabel(completed_text)
+            completed_label.setObjectName("completedLabel")
+            text_layout.addWidget(completed_label)
+            
         row_layout.addLayout(text_layout, 1)
         
         # Time

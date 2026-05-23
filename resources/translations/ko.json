@@ -453,6 +453,8 @@
     "sep_short": "9월",
     "oct_short": "10월",
     "nov_short": "11월",
-    "dec_short": "12월"
+    "dec_short": "12월",
+    "completed_on": "완료: {date}",
+    "started_on": "시작: {date}"
   }
 }

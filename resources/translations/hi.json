@@ -453,6 +453,8 @@
     "sep_short": "सित",
     "oct_short": "अक्टू",
     "nov_short": "नव",
-    "dec_short": "दिस"
+    "dec_short": "दिस",
+    "completed_on": "पूर्ण: {date}",
+    "started_on": "शुरू: {date}"
   }
 }

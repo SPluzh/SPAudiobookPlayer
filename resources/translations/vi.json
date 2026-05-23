@@ -453,6 +453,8 @@
     "sep_short": "Th9",
     "oct_short": "Th10",
     "nov_short": "Th11",
-    "dec_short": "Th12"
+    "dec_short": "Th12",
+    "completed_on": "Hoàn thành: {date}",
+    "started_on": "Bắt đầu: {date}"
   }
 }

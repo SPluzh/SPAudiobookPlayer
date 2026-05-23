@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [1.6.12]
 - **Library**: Editing an audiobook's author, title, or narrator no longer bumps it to the top of "Recently Listened".
 - **Statistics**: Fixed heatmap tooltip showing "No Data" for colored cells with zero listening time — now correctly shows "0 min".
-- **Statistics**: Added seconds precision to heatmap day tooltips (e.g., "1h 30m 15s"). 
+- **Statistics**: Added seconds precision to heatmap day tooltips (e.g., "1h 30m 15s").
+- **Statistics**: Added the audiobook start and completion dates/timestamps to the chronological listening history:
+    - Displayed as a theme-accented timeline label under the author line (e.g., "Started: 12.05.2026 • Completed: 23.05.2026").
+    - Features full localized translations for all 15 supported languages.
 
 ## [1.6.11]
 - **Playback**: Improved automatic track switching by optimizing end-of-track detection buffers and fixing audiobook completion logic.

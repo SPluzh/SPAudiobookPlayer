@@ -453,6 +453,8 @@
     "sep_short": "ก.ย.",
     "oct_short": "ต.ค.",
     "nov_short": "พ.ย.",
-    "dec_short": "ธ.ค."
+    "dec_short": "ธ.ค.",
+    "completed_on": "เสร็จสิ้น: {date}",
+    "started_on": "เริ่มต้น: {date}"
   }
 }
