@@ -1,4 +1,7 @@
 # 🎧 SP Audiobook Player
+Windows audiobook player (offline) for PyQt6 desktop
+Audio book player with progress tracking, bookmarks and resume playback
+SPAudiobookPlayer — desktop application for audiobook listening on Windows
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyQt6](https://img.shields.io/badge/PyQt6-6.6.0+-green.svg)](https://pypi.org/project/PyQt6/)
