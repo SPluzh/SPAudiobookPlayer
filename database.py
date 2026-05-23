@@ -705,13 +705,14 @@ class DatabaseManager:
         
         try:
             # Determine status
-            # Do not reset is_started to 0 if it's already 1
-            cursor.execute("SELECT is_started FROM audiobooks WHERE id = ?", (audiobook_id,))
+            # Do not reset is_started or is_completed to 0 if they are already 1
+            cursor.execute("SELECT is_started, is_completed FROM audiobooks WHERE id = ?", (audiobook_id,))
             row = cursor.fetchone()
-            old_is_started = row[0] if row else 0
+            old_is_started = row[0] if (row and len(row) > 0) else 0
+            old_is_completed = row[1] if (row and len(row) > 1) else 0
             
             is_started = 1 if (old_is_started or progress_percent > 0) else 0
-            is_completed = 1 if progress_percent >= 100 else 0
+            is_completed = 1 if (old_is_completed or progress_percent >= 100) else 0
             
             update_sql = '''
                 UPDATE audiobooks

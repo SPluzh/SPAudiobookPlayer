@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - **Statistics**: Added the audiobook start and completion dates/timestamps to the chronological listening history.
 - **Statistics**: Added a mini progress bar directly below the cover art inside statistics book rows.
 - **Library**: The progress bar is now drawn at the bottom of the audiobook cover for any started book, even if the progress is 0%.
+- **Playback**: Fully completed audiobooks are no longer restored at startup or automatically rewound on exit.
 
 ## [1.6.11]
 - **Playback**: Improved automatic track switching by optimizing end-of-track detection buffers and fixing audiobook completion logic.

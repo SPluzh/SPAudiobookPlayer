@@ -1173,17 +1173,21 @@ class AudiobookPlayerWindow(QMainWindow):
         if audiobook_id <= 0:
             return
 
-        # Lookup audiobook relative path by unique identifier
+        # Lookup audiobook relative path and completion status by unique identifier
         import sqlite3
 
         connection = sqlite3.connect(self.db_file)
         cursor = connection.cursor()
-        cursor.execute("SELECT path FROM audiobooks WHERE id = ?", (audiobook_id,))
+        cursor.execute("SELECT path, is_completed FROM audiobooks WHERE id = ?", (audiobook_id,))
         row = cursor.fetchone()
         connection.close()
 
         if row:
             audiobook_path = row[0]
+            is_completed = row[1]
+            if is_completed == 1:
+                # If the audiobook was read completely, do not restore it
+                return
             if self.playback_controller.load_audiobook(audiobook_path):
                 # Inform the delegate of the active playback path for visual feedback
                 if self.delegate:
@@ -1957,7 +1961,23 @@ class AudiobookPlayerWindow(QMainWindow):
     def closeEvent(self, event):
         """Perform cleanup operations upon application termination, including session saving and engine release"""
         self.save_settings()
-        if self.auto_rewind:
+
+        # Check if the current audiobook is completed to skip automatic rewinding
+        is_completed = False
+        if self.playback_controller.current_audiobook_id:
+            try:
+                import sqlite3
+                connection = sqlite3.connect(self.db_file)
+                cursor = connection.cursor()
+                cursor.execute("SELECT is_completed FROM audiobooks WHERE id = ?", (self.playback_controller.current_audiobook_id,))
+                row = cursor.fetchone()
+                connection.close()
+                if row and row[0] == 1:
+                    is_completed = True
+            except Exception as e:
+                print(f"Error checking is_completed in closeEvent: {e}")
+
+        if self.auto_rewind and not is_completed:
             self.player.rewind(-30)
 
         self.playback_controller.save_current_progress()
