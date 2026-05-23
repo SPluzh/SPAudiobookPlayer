@@ -568,11 +568,17 @@ class CoverWithProgress(QWidget):
     def __init__(self, progress_percent: int = 0, parent=None):
         super().__init__(parent)
         self.progress_percent = progress_percent
-        self.setFixedSize(55, 62)  # 55px width, 62px height (55 cover + 3 gap + 4 pb)
+        self.setFixedSize(75, 82)  # 75px width, 82px height (75 cover + 3 gap + 4 pb)
         self._pixmap = None
+        self._icon = None
         
-    def setPixmap(self, pixmap):
-        self._pixmap = pixmap
+    def setPixmap(self, pixmap_or_icon):
+        if isinstance(pixmap_or_icon, QIcon):
+            self._icon = pixmap_or_icon
+            self._pixmap = None
+        else:
+            self._pixmap = pixmap_or_icon
+            self._icon = None
         self.update()
         
     def paintEvent(self, event):
@@ -580,19 +586,27 @@ class CoverWithProgress(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         
-        # 1. Draw Cover Image (top 55x55)
-        cover_rect = QRectF(0, 0, 55, 55)
+        # 1. Draw Cover Image (top 75x75)
+        cover_rect = QRectF(0, 0, 75, 75)
         path = QPainterPath()
         path.addRoundedRect(cover_rect, 3.0, 3.0)
         
         painter.save()
         painter.setClipPath(path)
-        if self._pixmap and not self._pixmap.isNull():
-            painter.drawPixmap(QRect(0, 0, 55, 55), self._pixmap)
+        if self._icon and not self._icon.isNull():
+            # Pixel-perfect High-DPI rendering:
+            # Query the pixmap at the exact physical resolution and set its device pixel ratio
+            dpr = self.devicePixelRatioF()
+            physical_size = int(75 * dpr)
+            pixmap = self._icon.pixmap(physical_size, physical_size)
+            pixmap.setDevicePixelRatio(dpr)
+            painter.drawPixmap(QRect(0, 0, 75, 75), pixmap)
+        elif self._pixmap and not self._pixmap.isNull():
+            painter.drawPixmap(QRect(0, 0, 75, 75), self._pixmap)
         painter.restore()
         
-        # 2. Draw Progress Bar below cover (Y starts at 58, height is 4)
-        pb_rect = QRectF(0, 58, 55, 4)
+        # 2. Draw Progress Bar below cover (Y starts at 78, height is 4)
+        pb_rect = QRectF(0, 78, 75, 4)
         
         # Background
         _, bg_color = StyleManager.get_theme_property("overlay_progress_bg")
@@ -886,16 +900,16 @@ class StatisticsDialog(QDialog):
             # Try absolute or relative to script dir
             if not p.is_absolute():
                 p = get_base_path() / p
-            icon = load_icon(p, 55, force_square=True)
+            icon = load_icon(p, 150, force_square=True)
             
         if icon:
-            cover_label.setPixmap(icon.pixmap(55, 55))
+            cover_label.setPixmap(icon)
         else:
             # Fallback to default cover if possible
             default_path = get_base_path() / "resources" / "icons" / "default_cover.png"
-            default_icon = load_icon(default_path, 55, force_square=True)
+            default_icon = load_icon(default_path, 150, force_square=True)
             if default_icon:
-                cover_label.setPixmap(default_icon.pixmap(55, 55))
+                cover_label.setPixmap(default_icon)
             
         row_layout.addWidget(cover_label)
         
