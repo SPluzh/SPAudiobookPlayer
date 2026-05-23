@@ -237,6 +237,7 @@
     "menu_title": "แท็ก",
     "menu_assign": "กำหนดแท็ก...",
     "menu_manage": "จัดการแท็ก...",
+    "menu_clear_all": "ลบแท็กทั้งหมด",
     "assign_help": "เลือกแท็กที่จะกำหนดให้กับหนังสือเสียงนี้",
     "assign_btn": "กำหนด",
     "close_btn": "ปิด"

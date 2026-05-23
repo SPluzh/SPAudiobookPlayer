@@ -1009,6 +1009,10 @@ class MultiLineDelegate(QStyledItemDelegate):
             is_favorite = status_data[2]
 
         if icon:
+            # Calculate playing status early
+            playing_file = index.data(Qt.ItemDataRole.UserRole)
+            is_playing_this = self.playing_path and playing_file == self.playing_path
+
             painter.save()
             path = QPainterPath()
             path.addRoundedRect(QRectF(icon_rect), 3.0, 3.0)
@@ -1019,34 +1023,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             # 1. Main Cover
             icon.paint(painter, icon_rect)
 
-            # 2. In-cover Progress Indicator
-            if progress_percent > 0 or is_started:
-                pb_h = 5
-                pb_margin = 0
-                pb_rect = QRect(
-                    icon_rect.left() + pb_margin,
-                    icon_rect.bottom() - pb_h - pb_margin,
-                    icon_rect.width() - pb_margin * 2,
-                    pb_h,
-                )
-
-                # Background
-                _, bg_color = StyleManager.get_theme_property("overlay_progress_bg")
-                painter.fillRect(pb_rect, bg_color)
-
-                # Fill
-                fill_w = int(pb_rect.width() * progress_percent / 100)
-                if fill_w > 0:
-                    fill_rect = QRect(
-                        pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height()
-                    )
-                    _, primary_color = StyleManager.get_theme_property("theme_primary")
-                    painter.fillRect(fill_rect, primary_color)
-
             # 3. Hover Background
-            playing_file = index.data(Qt.ItemDataRole.UserRole)
-            is_playing_this = self.playing_path and playing_file == self.playing_path
-
             if self.hovered_index == index:
                 _, overlay_bg = StyleManager.get_theme_property("overlay_background")
                 painter.fillRect(icon_rect, overlay_bg)
@@ -1061,6 +1038,34 @@ class MultiLineDelegate(QStyledItemDelegate):
                 painter.setPen(pen)
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 painter.drawRoundedRect(QRectF(icon_rect).adjusted(-4, -4, 4, 4), 7, 7)
+
+            # 2. Under-cover Progress Indicator
+            if progress_percent > 0 or is_started:
+                painter.save()
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                pb_h = 5
+                pb_margin = 0
+                pb_rect = QRectF(
+                    float(icon_rect.left() + pb_margin),
+                    float(icon_rect.bottom() + 3),
+                    float(icon_rect.width() - pb_margin * 2),
+                    float(pb_h),
+                )
+
+                # Background
+                _, bg_color = StyleManager.get_theme_property("overlay_progress_bg")
+                painter.fillRect(pb_rect, bg_color)
+
+                # Fill
+                fill_w = pb_rect.width() * progress_percent / 100.0
+                if fill_w > 0:
+                    fill_rect = QRectF(
+                        pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height()
+                    )
+                    _, primary_color = StyleManager.get_theme_property("theme_primary")
+                    painter.fillRect(fill_rect, primary_color)
+
+                painter.restore()
 
             # Draw Favorite Heart
             if is_favorite:
@@ -2369,7 +2374,23 @@ class LibraryWidget(QWidget):
                     # Set color icon if available
                     if tag.get("color"):
                         pixmap = QPixmap(14, 14)
-                        pixmap.fill(QColor(tag["color"]))
+                        pixmap.fill(Qt.GlobalColor.transparent)
+
+                        painter = QPainter(pixmap)
+                        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+                        # Draw colored rounded rect background
+                        painter.setBrush(QColor(tag["color"]))
+                        painter.setPen(Qt.PenStyle.NoPen)
+                        painter.drawRoundedRect(0, 0, 14, 14, 3, 3)
+
+                        # Draw an accent-colored dot in the middle if the tag is checked
+                        if tag["id"] in current_tag_ids:
+                            _, accent_color = StyleManager.get_theme_property("theme_primary")
+                            painter.setBrush(accent_color)
+                            painter.drawEllipse(5, 5, 4, 4)
+
+                        painter.end()
                         tag_action.setIcon(QIcon(pixmap))
 
                     # Connect signal
@@ -2389,6 +2410,13 @@ class LibraryWidget(QWidget):
                 lambda _: self.open_tag_assignment(audiobook_id, path)
             )
             tags_menu.addAction(assign_action)
+
+            clear_tags_action = QAction(tr("tags.menu_clear_all"), self)
+            clear_tags_action.triggered.connect(
+                lambda _: self.clear_all_tags(audiobook_id, path)
+            )
+            clear_tags_action.setEnabled(bool(current_tag_ids))
+            tags_menu.addAction(clear_tags_action)
 
             menu.addSeparator()
 
@@ -2531,6 +2559,12 @@ class LibraryWidget(QWidget):
         else:
             self.db.remove_tag_from_audiobook(audiobook_id, tag_id)
 
+        # Refresh the UI for this item
+        self.refresh_audiobook_item(path)
+
+    def clear_all_tags(self, audiobook_id: int, path: str):
+        """Remove all tags from an audiobook"""
+        self.db.remove_all_tags_from_audiobook(audiobook_id)
         # Refresh the UI for this item
         self.refresh_audiobook_item(path)
 

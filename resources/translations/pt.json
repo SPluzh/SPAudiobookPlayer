@@ -219,6 +219,7 @@
     "menu_title": "Tags",
     "menu_assign": "Atribuir Tags...",
     "menu_manage": "Gerenciar Tags...",
+    "menu_clear_all": "Remover todas as tags",
     "assign_help": "Marque as tags para atribuir a este audiolivro.",
     "assign_btn": "Atribuir",
     "close_btn": "Fechar"

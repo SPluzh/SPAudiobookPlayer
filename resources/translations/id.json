@@ -237,6 +237,7 @@
     "menu_title": "Tag",
     "menu_assign": "Tetapkan Tag...",
     "menu_manage": "Kelola Tag...",
+    "menu_clear_all": "Hapus Semua Tag",
     "assign_help": "Centang tag untuk ditetapkan ke audiobook ini.",
     "assign_btn": "Tetapkan",
     "close_btn": "Tutup"

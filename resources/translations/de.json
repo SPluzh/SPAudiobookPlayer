@@ -219,6 +219,7 @@
     "menu_title": "Tags",
     "menu_assign": "Tags zuweisen...",
     "menu_manage": "Tags verwalten...",
+    "menu_clear_all": "Alle Tags entfernen",
     "assign_help": "Wählen Sie die Tags aus, die diesem Hörbuch zugewiesen werden sollen.",
     "assign_btn": "Zuweisen",
     "close_btn": "Schließen"

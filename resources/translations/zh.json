@@ -219,6 +219,7 @@
     "menu_title": "标签",
     "menu_assign": "分配标签...",
     "menu_manage": "管理标签...",
+    "menu_clear_all": "删除所有标签",
     "assign_help": "勾选要分配给此有声书的标签。",
     "assign_btn": "分配",
     "close_btn": "关闭"

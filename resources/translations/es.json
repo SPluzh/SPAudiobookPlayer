@@ -219,6 +219,7 @@
     "menu_title": "Etiquetas",
     "menu_assign": "Asignar etiquetas...",
     "menu_manage": "Gestionar etiquetas...",
+    "menu_clear_all": "Eliminar todas las etiquetas",
     "assign_help": "Marque las etiquetas para asignar a este audiolibro.",
     "assign_btn": "Asignar",
     "close_btn": "Cerrar"

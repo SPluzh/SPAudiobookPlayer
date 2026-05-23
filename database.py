@@ -1031,6 +1031,19 @@ class DatabaseManager:
         finally:
             conn.close()
 
+    def remove_all_tags_from_audiobook(self, audiobook_id: int):
+        """Remove all tags from an audiobook."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM audiobook_tags WHERE audiobook_id = ?", 
+                           (audiobook_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in remove_all_tags_from_audiobook: {e}")
+        finally:
+            conn.close()
+
     def get_all_tags(self) -> List[Dict]:
         """Get all defined tags."""
         conn = sqlite3.connect(self.db_file)

@@ -237,6 +237,7 @@
     "menu_title": "Thẻ",
     "menu_assign": "Gán thẻ...",
     "menu_manage": "Quản lý thẻ...",
+    "menu_clear_all": "Xóa tất cả các thẻ",
     "assign_help": "Đánh dấu các thẻ để gán cho sách nói này.",
     "assign_btn": "Gán",
     "close_btn": "Đóng"

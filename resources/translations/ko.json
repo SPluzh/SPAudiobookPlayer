@@ -219,6 +219,7 @@
     "menu_title": "태그",
     "menu_assign": "태그 할당...",
     "menu_manage": "태그 관리...",
+    "menu_clear_all": "모든 태그 제거",
     "assign_help": "이 오디오북에 할당할 태그를 선택하세요.",
     "assign_btn": "할당",
     "close_btn": "닫기"

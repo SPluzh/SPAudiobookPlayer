@@ -219,6 +219,7 @@
     "menu_title": "Étiquettes",
     "menu_assign": "Attribuer...",
     "menu_manage": "Gérer...",
+    "menu_clear_all": "Supprimer tous les tags",
     "assign_help": "Cochez les étiquettes à attribuer à ce livre audio.",
     "assign_btn": "Attribuer",
     "close_btn": "Fermer"

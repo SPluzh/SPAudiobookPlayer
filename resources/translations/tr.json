@@ -219,6 +219,7 @@
     "menu_title": "Etiketler",
     "menu_assign": "Etiketleri Ata...",
     "menu_manage": "Etiketleri Yönet...",
+    "menu_clear_all": "Tüm Etiketleri Kaldır",
     "assign_help": "Bu sesli kitaba atanacak etiketleri işaretleyin.",
     "assign_btn": "Ata",
     "close_btn": "Kapat"

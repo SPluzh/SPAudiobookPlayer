@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [1.6.13]
+- **Tags**: Added a "Remove All Tags" action to the audiobook context menu (under the Tags submenu) to quickly clear all assigned tags from the selected book.
+- **Tags**: Custom checked tag indicator dot color is now dynamically matched to the theme's active accent color.
 
 ## [1.6.12]
 - **Library**: Editing an audiobook's author, title, or narrator no longer bumps it to the top of "Recently Listened".
@@ -8,8 +11,9 @@ All notable changes to this project will be documented in this file.
 - **Statistics**: Added seconds precision to heatmap day tooltips (e.g., "1h 30m 15s").
 - **Statistics**: Added the audiobook start and completion dates/timestamps to the chronological listening history.
 - **Statistics**: Added a mini progress bar directly below the cover art inside statistics book rows.
-- **Library**: The progress bar is now drawn at the bottom of the audiobook cover for any started book, even if the progress is 0%.
+- **Library**: The progress bar is now drawn beautifully directly below the audiobook cover (instead of on top of it) for any started book, even if the progress is 0%.
 - **Playback**: Fully completed audiobooks are no longer restored at startup or automatically rewound on exit.
+- **Tags**: Checked/assigned tags in the context menu now draw a centered theme-accented dot inside a beautifully rounded tag color icon.
 
 ## [1.6.11]
 - **Playback**: Improved automatic track switching by optimizing end-of-track detection buffers and fixing audiobook completion logic.

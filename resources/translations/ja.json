@@ -219,6 +219,7 @@
     "menu_title": "タグ",
     "menu_assign": "タグを割り当て...",
     "menu_manage": "タグを管理...",
+    "menu_clear_all": "すべてのタグを削除",
     "assign_help": "このオーディオブックに割り当てるタグにチェックを入れてください。",
     "assign_btn": "割り当て",
     "close_btn": "閉じる"
