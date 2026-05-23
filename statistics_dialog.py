@@ -11,8 +11,8 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QWidget, QGridLayout, QFrame, QScrollArea
 )
-from PyQt6.QtCore import Qt, QRect, QPoint, QSize
-from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPixmap, QIcon
+from PyQt6.QtCore import Qt, QRect, QPoint, QSize, QRectF
+from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPixmap, QIcon, QPainterPath
 
 from translations import tr, trf
 from styles import StyleManager
@@ -306,6 +306,49 @@ class HeatmapWidget(QWidget):
         self.setToolTip(tooltip)
 
 
+class CoverWithProgress(QWidget):
+    """Custom cover widget that renders a cover image and a progress bar below it"""
+    def __init__(self, progress_percent: int = 0, parent=None):
+        super().__init__(parent)
+        self.progress_percent = progress_percent
+        self.setFixedSize(55, 62)  # 55px width, 62px height (55 cover + 3 gap + 4 pb)
+        self._pixmap = None
+        
+    def setPixmap(self, pixmap):
+        self._pixmap = pixmap
+        self.update()
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        
+        # 1. Draw Cover Image (top 55x55)
+        cover_rect = QRectF(0, 0, 55, 55)
+        path = QPainterPath()
+        path.addRoundedRect(cover_rect, 3.0, 3.0)
+        
+        painter.save()
+        painter.setClipPath(path)
+        if self._pixmap and not self._pixmap.isNull():
+            painter.drawPixmap(QRect(0, 0, 55, 55), self._pixmap)
+        painter.restore()
+        
+        # 2. Draw Progress Bar below cover (Y starts at 58, height is 4)
+        pb_rect = QRectF(0, 58, 55, 4)
+        
+        # Background
+        _, bg_color = StyleManager.get_theme_property("overlay_progress_bg")
+        painter.fillRect(pb_rect, bg_color)
+        
+        # Fill
+        fill_w = pb_rect.width() * min(100, max(0, self.progress_percent)) / 100.0
+        if fill_w > 0:
+            fill_rect = QRectF(pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height())
+            _, primary_color = StyleManager.get_theme_property("theme_primary")
+            painter.fillRect(fill_rect, primary_color)
+
+
 class StatisticsDialog(QDialog):
     """Dialog displaying listening statistics with heatmap"""
     
@@ -505,9 +548,8 @@ class StatisticsDialog(QDialog):
         row_layout.setSpacing(15)
         
         # Cover
-        cover_label = QLabel()
-        cover_label.setFixedSize(55, 55)
-        cover_label.setScaledContents(True)
+        progress_val = book.get('progress_percent') or 0
+        cover_label = CoverWithProgress(progress_percent=progress_val)
         
         cover_path = book.get('cached_cover_path') or book.get('cover_path')
         icon = None
