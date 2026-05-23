@@ -293,13 +293,14 @@ class HeatmapWidget(QWidget):
         # Format time
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
         
         if hours > 0:
-            time_str = f"{hours}{tr('statistics.hours')} {minutes}{tr('statistics.minutes')}"
+            time_str = f"{hours}{tr('statistics.hours')} {minutes}{tr('statistics.minutes')} {secs}{tr('statistics.seconds')}"
         elif minutes > 0:
-            time_str = f"{minutes}{tr('statistics.minutes')}"
+            time_str = f"{minutes}{tr('statistics.minutes')} {secs}{tr('statistics.seconds')}"
         else:
-            time_str = tr("statistics.no_data")
+            time_str = f"{secs}{tr('statistics.seconds')}"
         
         tooltip = trf("statistics.tooltip", date=date_str, time=time_str)
         self.setToolTip(tooltip)
