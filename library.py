@@ -1000,12 +1000,12 @@ class MultiLineDelegate(QStyledItemDelegate):
         ) = data[:12]
         description = data[12] if len(data) > 12 else ""
 
-        # Unpack status data for favorites
-
-        # Unpack status data for favorites
+        # Unpack status data for favorites and progress tracking
         status_data = index.data(Qt.ItemDataRole.UserRole + 3)
         is_favorite = False
+        is_started = False
         if status_data and len(status_data) >= 3:
+            is_started = bool(status_data[0])
             is_favorite = status_data[2]
 
         if icon:
@@ -1020,7 +1020,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             icon.paint(painter, icon_rect)
 
             # 2. In-cover Progress Indicator
-            if progress_percent > 0:
+            if progress_percent > 0 or is_started:
                 pb_h = 5
                 pb_margin = 0
                 pb_rect = QRect(
