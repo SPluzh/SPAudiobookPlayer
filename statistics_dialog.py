@@ -99,7 +99,7 @@ class HeatmapWidget(QWidget):
         """
         # Get theme colors
         try:
-            _, theme_accent = StyleManager.get_theme_property("theme_primary")
+            _, theme_accent = StyleManager.get_theme_property("delegate_accent")
             if not theme_accent or not isinstance(theme_accent, QColor):
                 theme_accent = QColor("#018574")  # Fallback
         except:
@@ -144,9 +144,9 @@ class HeatmapWidget(QWidget):
             
         # Get label color from theme
         try:
-            _, label_color = StyleManager.get_theme_property("delegate_text_dim")
+            _, label_color = StyleManager.get_theme_property("delegate_title")
         except:
-            label_color = QColor(150, 150, 150)
+            label_color = QColor(204, 204, 204)
         
         # Draw cells
         for row in range(7):
@@ -224,6 +224,10 @@ class HeatmapWidget(QWidget):
             
             if month_found is not None:
                 current_month = month_found
+                # Skip drawing the current month of last year on the far left to avoid duplication
+                today = datetime.now().date()
+                if col == 0 and month_found == today.month:
+                    continue
                 # Add year to the label (e.g., "Янв 24")
                 label = f"{month_names.get(current_month, '')} {str(year_found)[2:]}"
                 
@@ -345,7 +349,7 @@ class CoverWithProgress(QWidget):
         fill_w = pb_rect.width() * min(100, max(0, self.progress_percent)) / 100.0
         if fill_w > 0:
             fill_rect = QRectF(pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height())
-            _, primary_color = StyleManager.get_theme_property("theme_primary")
+            _, primary_color = StyleManager.get_theme_property("delegate_accent")
             painter.fillRect(fill_rect, primary_color)
 
 

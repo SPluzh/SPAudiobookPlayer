@@ -426,7 +426,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Listening Statistics
         statistics_action = QAction(tr("menu.statistics"), self)
-        statistics_action.setIcon(get_icon("menu_statistics"))
+        statistics_action.setIcon(get_icon("statistics"))
         statistics_action.setShortcut("Ctrl+T")
         statistics_action.triggered.connect(self.show_statistics)
         library_menu.addAction(statistics_action)
