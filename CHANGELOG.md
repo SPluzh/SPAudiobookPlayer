@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.12]
+- **Library**: Editing an audiobook's author, title, or narrator no longer bumps it to the top of "Recently Listened".
+
 ## [1.6.11]
 - **Playback**: Improved automatic track switching by optimizing end-of-track detection buffers and fixing audiobook completion logic.
 

@@ -1132,7 +1132,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute('''
                 UPDATE audiobooks
-                SET author = ?, title = ?, narrator = ?, last_updated = CURRENT_TIMESTAMP
+                SET author = ?, title = ?, narrator = ?
                 WHERE id = ?
             ''', (author, title, narrator, audiobook_id))
             conn.commit()
