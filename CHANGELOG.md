@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.15]
+- **Playback**: Fixed a bug where the very end of a track (around 200ms) was cut off during automatic transitions.
+
 ## [1.6.14]
 - **Playback**: Fixed track switching to be instant and reliable when a track finishes, even if the file stops playing a few seconds early.
 

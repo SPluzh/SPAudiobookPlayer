@@ -1623,10 +1623,9 @@ class AudiobookPlayerWindow(QMainWindow):
             return
 
         # 2. Fallback: position-based detection (safety net if callback fails or file stops early)
-        # Adjusted fallback buffer to 3.0s for stopped files and 0.2s for chapter transition
-        if (
-            duration > 0 and pos >= duration - 3.0 and not self.player.is_playing()
-        ) or (pos >= chapter_end - 0.2):
+        # Only trigger when playback has actually stopped AND we are near the end.
+        # This avoids cutting off audio that is still playing.
+        if not self.player.is_playing() and duration > 0 and pos >= chapter_end - 1.5:
             self.on_next_clicked()
 
     def rescan_directory(self):
