@@ -9,7 +9,7 @@ from typing import Dict, Optional, Tuple
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
-    QWidget, QGridLayout, QFrame, QScrollArea
+    QWidget, QGridLayout, QFrame, QScrollArea, QApplication
 )
 from PyQt6.QtCore import Qt, QRect, QPoint, QSize, QRectF, QTimer
 from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPixmap, QIcon, QPainterPath
@@ -30,7 +30,8 @@ class HeatmapToolTip(QFrame):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setObjectName("heatmapTooltip")
-        self.setMaximumWidth(320)
+        self.setMinimumWidth(280)
+        self.setMaximumWidth(280)
         
         # UI Layout
         self.main_layout = QVBoxLayout(self)
@@ -139,9 +140,8 @@ class HeatmapToolTip(QFrame):
             time_lbl.setObjectName("tooltipBookTime")
             time_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
             
-            row_lay.addWidget(title_lbl)
-            row_lay.addStretch()
-            row_lay.addWidget(time_lbl)
+            row_lay.addWidget(title_lbl, 1)  # Stretch factor 1 - takes available space
+            row_lay.addWidget(time_lbl, 0)  # Stretch factor 0 - minimal space
             
             # Store references directly on row_widget to avoid costly findChild queries
             row_widget.title_lbl = title_lbl
@@ -162,8 +162,10 @@ class HeatmapToolTip(QFrame):
         for i in range(len(target_data), len(self.book_row_widgets)):
             self.book_row_widgets[i].hide()
             
-        # Shrink to 0x0 first to force Qt to contract the window to its new minimumSizeHint
-        self.resize(0, 0)
+        # Force complete size recalculation with fixed width
+        self.setFixedWidth(280)
+        self.updateGeometry()
+        QApplication.processEvents()
         self.adjustSize()
 
 
@@ -512,9 +514,13 @@ class HeatmapWidget(QWidget):
             self.custom_tooltip = HeatmapToolTip(self.window())
             
         self.custom_tooltip.update_content(date_str, seconds, daily_books)
-        self.custom_tooltip.resize(0, 0)
+        
+        # Force complete layout recalculation with event processing
+        self.custom_tooltip.updateGeometry()
+        QApplication.processEvents()  # Process all pending layout events
         self.custom_tooltip.layout().activate()
         self.custom_tooltip.adjustSize()
+        QApplication.processEvents()  # Ensure size is applied before positioning
         
         # Position the tooltip
         if not self.hovered_cell:
