@@ -20,6 +20,7 @@
 **SP Audiobook Player** is a modern and elegant audiobook player for Windows designed for a seamless listening experience. Built with PyQt6 and BASS audio library, it offers automatic library scanning, smart progress tracking per book, and a refined user interface that handles various audio formats and tag encodings effortlessly.
 
 Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with an intuitive interface and robust functionality.
+<img width="2150" height="1035" alt="image" src="https://github.com/user-attachments/assets/658f8bdc-5188-4e20-a599-efd8c816a965" />
 
 ![](attachments/SP_Audiobook_Player_lpfBcdlMAz.gif)
 
