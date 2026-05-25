@@ -921,10 +921,17 @@ class MultiLineDelegate(QStyledItemDelegate):
                         painter.setBrush(Qt.BrushStyle.NoBrush)
                         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
 
+                        # Calculate starting X position to avoid intersection with parent's vertical line
+                        start_x = option.rect.left()
+                        depth = len(chain)
+                        if depth > 0:
+                            gap = 4
+                            start_x += line_width + gap
+
                         # Draw line at the very bottom of the item
                         y_pos = option.rect.bottom() - 1
                         painter.drawLine(
-                            option.rect.left(), y_pos, option.rect.right(), y_pos
+                            start_x, y_pos, option.rect.right(), y_pos
                         )
 
                         painter.restore()
