@@ -72,7 +72,8 @@
     "description_title": "オーディオブックの説明",
     "no_tags_available": "利用可能なタグはありません",
     "tooltip_favorites": "お気に入りの本のみ表示",
-    "tooltip_tags": "タグでフィルタリング"
+    "tooltip_tags": "タグでフィルタリング",
+    "folder_books_count": "{count} 冊のオーディオブック"
   },
   "player": {
     "volume": "音量",

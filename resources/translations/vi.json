@@ -90,7 +90,8 @@
     "description_title": "Mô tả sách nói",
     "no_tags_available": "Không có thẻ nào",
     "tooltip_favorites": "Chỉ hiển thị sách yêu thích",
-    "tooltip_tags": "Lọc theo thẻ"
+    "tooltip_tags": "Lọc theo thẻ",
+    "folder_books_count": "{count} sách nói"
   },
   "player": {
     "volume": "Âm lượng",

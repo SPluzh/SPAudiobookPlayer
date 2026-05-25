@@ -72,7 +72,8 @@
     "description_title": "Sesli Kitap Açıklaması",
     "no_tags_available": "Etiket yok",
     "tooltip_favorites": "Sadece favori kitapları göster",
-    "tooltip_tags": "Etiketlere göre filtrele"
+    "tooltip_tags": "Etiketlere göre filtrele",
+    "folder_books_count": "{count} sesli kitap"
   },
   "player": {
     "volume": "Ses",

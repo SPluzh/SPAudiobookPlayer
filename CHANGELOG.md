@@ -3,13 +3,14 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.6.16]
+- **Library**: Added display of total audiobook count and cumulative duration recursively to folder items in the library tree.
+- **Library**: Fixed visual overlapping of horizontal folder separator lines with vertical hierarchy lines.
+- **Statistics**: Increased the size of book covers in the history list from 55px to 75px for better visibility.
+- **Statistics**: Enhanced book cover image rendering using high-resolution scaling to ensure crisp, blur-free, and perfectly scaled images on all displays.
 - **UI**: Added a languages icon to the language menu item.
 - **UI**: Added expand and collapse icons to the view menu items.
 - **UI**: Added a locate icon to the reveal current audiobook menu item.
 - **UI**: Added an update icon to the check for updates menu item.
-- **Statistics**: Increased the size of book covers in the history list from 55px to 75px for better visibility.
-- **Statistics**: Enhanced book cover image rendering using high-resolution scaling to ensure crisp, blur-free, and perfectly scaled images on all displays.
-- **UI**: Added a visual gap between the horizontal folder separator line and the vertical hierarchy line to enhance readability.
 
 ## [1.6.15]
 - **Playback**: Fixed a bug where the very end of a track (around 200ms) was cut off during automatic transitions.

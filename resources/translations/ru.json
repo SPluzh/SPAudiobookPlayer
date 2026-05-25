@@ -47,6 +47,7 @@
     "no_book_playing": "Нет воспроизводимой аудиокниги."
   },
   "library": {
+    "folder_books_count": "{count} книг",
     "search_placeholder": "Поиск по названию, автору, рассказчику...",
     "context_play": "Воспроизвести",
     "menu_edit_metadata": "Редактировать метаданные",

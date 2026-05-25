@@ -90,7 +90,8 @@
     "description_title": "Deskripsi Audiobook",
     "no_tags_available": "Tidak ada tag tersedia",
     "tooltip_favorites": "Tampilkan hanya buku favorit",
-    "tooltip_tags": "Filter berdasarkan tag"
+    "tooltip_tags": "Filter berdasarkan tag",
+    "folder_books_count": "{count} audiobook"
   },
   "player": {
     "volume": "Volume",

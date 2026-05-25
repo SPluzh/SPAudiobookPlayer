@@ -2152,6 +2152,13 @@ class LibraryWidget(QWidget):
                 # Prune empty folders (if no children were added or all were filtered out)
                 if item.childCount() == 0:
                     parent_item.removeChild(item)
+                else:
+                    # Calculate and add statistics to the folder name
+                    books_count, total_seconds = self._get_folder_stats(item)
+                    if books_count > 0:
+                        duration_str = format_duration(total_seconds)
+                        books_str = self._format_books_count(books_count)
+                        item.setText(0, f"{data['name']} ({books_str}, {duration_str})")
             else:
                 self._create_item_from_data(parent_item, data)
 
@@ -2213,6 +2220,46 @@ class LibraryWidget(QWidget):
             item.setData(0, Qt.ItemDataRole.UserRole + 4, data["tags"])
 
         return item
+
+    def _get_folder_stats(self, folder_item: QTreeWidgetItem) -> tuple[int, float]:
+        """Recursively calculate the number of audiobooks and total duration under this folder item"""
+        books_count = 0
+        total_seconds = 0.0
+
+        for i in range(folder_item.childCount()):
+            child = folder_item.child(i)
+            item_type = child.data(0, Qt.ItemDataRole.UserRole + 1)
+            if item_type == "audiobook":
+                books_count += 1
+                data = child.data(0, Qt.ItemDataRole.UserRole + 2)
+                if data and len(data) >= 5:
+                    total_seconds += (data[4] or 0.0)
+            elif item_type == "folder":
+                sub_count, sub_seconds = self._get_folder_stats(child)
+                books_count += sub_count
+                total_seconds += sub_seconds
+
+        return books_count, total_seconds
+
+    def _format_books_count(self, count: int) -> str:
+        """Format the number of books in a folder with proper language-specific rules"""
+        from translations import get_language, trf
+        lang = get_language()
+        if lang == "ru":
+            if count % 10 == 1 and count % 100 != 11:
+                return f"{count} книга"
+            elif count % 10 in (2, 3, 4) and not (count % 100 in (12, 13, 14)):
+                return f"{count} книги"
+            else:
+                return f"{count} книг"
+        elif lang == "en":
+            return f"{count} book" if count == 1 else f"{count} books"
+
+        # Fallback to general translations if defined, or English default
+        val = trf("library.folder_books_count", count=count)
+        if val == "library.folder_books_count":
+            return f"{count} book" if count == 1 else f"{count} books"
+        return val
 
     def filter_audiobooks(self):
         """Handle real-time search queries by filtering tree items based on text matching"""

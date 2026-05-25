@@ -72,7 +72,8 @@
     "description_title": "有声书简介",
     "no_tags_available": "无可用标签",
     "tooltip_favorites": "仅显示收藏书籍",
-    "tooltip_tags": "按标签过滤"
+    "tooltip_tags": "按标签过滤",
+    "folder_books_count": "{count} 本有声书"
   },
   "player": {
     "volume": "音量",

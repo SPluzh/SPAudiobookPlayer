@@ -72,7 +72,8 @@
     "description_title": "ऑडियोबुक विवरण",
     "no_tags_available": "कोई टैग उपलब्ध नहीं",
     "tooltip_favorites": "केवल पसंदीदा पुस्तकें दिखाएं",
-    "tooltip_tags": "टैग द्वारा फ़िल्टर करें"
+    "tooltip_tags": "टैग द्वारा फ़िल्टर करें",
+    "folder_books_count": "{count} ऑडियोबुक्स"
   },
   "player": {
     "volume": "वॉल्यूम",

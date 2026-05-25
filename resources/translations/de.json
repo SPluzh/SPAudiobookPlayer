@@ -72,7 +72,8 @@
     "description_title": "Hörbuchbeschreibung",
     "no_tags_available": "Keine Tags verfügbar",
     "tooltip_favorites": "Nur Favoriten anzeigen",
-    "tooltip_tags": "Nach Tags filtern"
+    "tooltip_tags": "Nach Tags filtern",
+    "folder_books_count": "{count} Hörbücher"
   },
   "player": {
     "volume": "Lautstärke",

@@ -47,6 +47,7 @@
     "no_book_playing": "No audiobook is currently playing."
   },
   "library": {
+    "folder_books_count": "{count} books",
     "search_placeholder": "Search by title, author, narrator...",
     "context_play": "Play",
     "menu_edit_metadata": "Edit Metadata",

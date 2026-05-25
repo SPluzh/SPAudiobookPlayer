@@ -72,7 +72,8 @@
     "description_title": "وصف الكتاب الصوتي",
     "no_tags_available": "لا توجد علامات متاحة",
     "tooltip_favorites": "إظهار الكتب المفضلة فقط",
-    "tooltip_tags": "تصفية حسب الأوسمة"
+    "tooltip_tags": "تصفية حسب الأوسمة",
+    "folder_books_count": "{count} كتب"
   },
   "player": {
     "volume": "مستوى الصوت",

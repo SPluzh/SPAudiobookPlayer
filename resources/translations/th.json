@@ -90,7 +90,8 @@
     "description_title": "คำอธิบายหนังสือเสียง",
     "no_tags_available": "ไม่มีแท็กที่พร้อมใช้งาน",
     "tooltip_favorites": "แสดงเฉพาะหนังสือเล่มโปรด",
-    "tooltip_tags": "กรองตามแท็ก"
+    "tooltip_tags": "กรองตามแท็ก",
+    "folder_books_count": "หนังสือเสียง {count} เล่ม"
   },
   "player": {
     "volume": "ระดับเสียง",
