@@ -106,6 +106,8 @@
     "pitch_label": "st",
     "btn_mono": "单声道",
     "tooltip_mono": "单声道：将左右声道混合到两个输出",
+    "btn_volume_boost": "音增",
+    "tooltip_volume_boost": "音量增强：放大至400%。右键：设置",
     "tooltip_vad_threshold": "VAD 阈值 (推荐：90%)\n激活语音的信号电平",
     "tooltip_vad_grace": "保持时间 (推荐：50%)\n静音后的等待时间",
     "tooltip_vad_retro": "回溯录音 (推荐：10-20%)\n捕捉语音开始前的音频",

@@ -193,6 +193,10 @@ class BassPlayer:
         self.mono_enabled = False
         self.mono_dsp_handle = 0
         self._mono_dsp_callback_ref = DSPPROC(self._mono_dsp_callback)
+        
+        # Volume boost state
+        self.volume_boost_enabled = False
+        self.volume_boost_level = 4.0  # 400% по умолчанию
 
         # Stream end sync state
         self.on_stream_end = None
@@ -477,6 +481,16 @@ class BassPlayer:
         # The actual work is done in _mono_dsp_callback when self.mono_enabled is True
         pass
 
+    def set_volume_boost(self, enabled: bool):
+        """Enable/Disable volume boost above 100%"""
+        self.volume_boost_enabled = enabled
+        self.apply_attributes()
+
+    def set_volume_boost_level(self, level: float):
+        """Set volume boost level (2.0-4.0 where 4.0 = 400%)"""
+        self.volume_boost_level = max(2.0, min(4.0, level))
+        self.apply_attributes()
+
     def set_noise_suppression(self, enabled: bool):
         """Toggle noise suppression (RNNoise VST plugin)"""
         self.noise_suppression_enabled = enabled
@@ -607,7 +621,13 @@ class BassPlayer:
         """Apply volume and tempo attributes to the channel"""
         if self.chan == 0:
             return
-        bass.BASS_ChannelSetAttribute(self.chan, BASS_ATTRIB_VOL, c_float(self.vol_pos / 100.0))
+        
+        # Apply volume with boost multiplier if enabled
+        effective_volume = self.vol_pos / 100.0
+        if self.volume_boost_enabled:
+            effective_volume *= self.volume_boost_level
+        bass.BASS_ChannelSetAttribute(self.chan, BASS_ATTRIB_VOL, c_float(effective_volume))
+        
         if self.has_fx:
             tempo_percent = (self.speed_pos * 10) - 100.0
             bass.BASS_ChannelSetAttribute(self.chan, BASS_ATTRIB_TEMPO, c_float(tempo_percent))

@@ -106,6 +106,8 @@
     "pitch_label": "st",
     "btn_mono": "Mono",
     "tooltip_mono": "Mono: Linken und rechten Kanal zu beiden Ausgängen mischen",
+    "btn_volume_boost": "LV",
+    "tooltip_volume_boost": "Lautstärkeverstärkung: bis zu 400%. RMT: Einstellungen",
     "tooltip_vad_threshold": "VAD-Schwellenwert (Empf.: 90%)\nSignalpegel zur Sprachaktivierung",
     "tooltip_vad_grace": "Haltezeit (Empf.: 50%)\nWartezeit nach Stille",
     "tooltip_vad_retro": "Rückwirkend (Empf.: 10-20%)\nAudio vor Sprachbeginn erfassen",

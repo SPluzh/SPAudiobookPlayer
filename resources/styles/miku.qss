@@ -256,6 +256,31 @@ QPushButton#pitchBtn:checked, QPushButton#monoBtn:checked {
     font-weight: bold;
 }
 
+/* Volume Boost Button */
+QPushButton#volumeBoostBtn {
+    background-color: @bg-dark;
+    border: 1px solid @border;
+    color: @text;
+    padding: 2px 2px;
+    font-weight: 500;
+    font-size: 11px;
+    min-height: 18px;
+    margin-top: 2px;
+    border-radius: 3px;
+}
+
+QPushButton#volumeBoostBtn:hover {
+    background-color: @accent;
+    border-color: @accent;
+    color: @text-bright;
+}
+
+QPushButton#volumeBoostBtn:checked {
+    background-color: @accent;
+    border-color: @accent;
+    font-weight: bold;
+}
+
 /* Filter buttons in tab style */
 QPushButton#filterBtn {
     background-color: transparent;
@@ -1065,7 +1090,7 @@ QLabel#aboutSectionContent {
 /* ============================================================
    POPUPS AND DIALOGS
    ============================================================ */
-#TagPopupFrame, #vadPopup, #deesserPopup, #compressorPopup, #pitchPopup {
+#TagPopupFrame, #vadPopup, #deesserPopup, #compressorPopup, #pitchPopup, #volumeBoostPopup {
     background-color: @bg-dark;
     border: 1px solid @border;
     border-radius: 3px;

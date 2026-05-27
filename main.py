@@ -346,6 +346,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.pitch_toggled_signal.connect(self.on_pitch_toggled)
         self.player_widget.pitch_changed_signal.connect(self.on_pitch_changed)
         self.player_widget.mono_toggled_signal.connect(self.on_mono_toggled)
+        self.player_widget.volume_boost_toggled_signal.connect(self.player.set_volume_boost)
+        self.player_widget.volume_boost_level_changed_signal.connect(self.player.set_volume_boost_level)
 
         # VAD threshold slider
         self.player_widget.vad_threshold_changed_signal.connect(
@@ -378,6 +380,8 @@ class AudiobookPlayerWindow(QMainWindow):
         )
         self.player_widget.pitch_btn.setChecked(self.pitch_enabled)
         self.player_widget.mono_btn.setChecked(self.mono_enabled)
+        self.player_widget.volume_boost_btn.setChecked(self.volume_boost_enabled)
+        self.player_widget.set_volume_boost_level_value(self.volume_boost_level)
         self.player_widget.play_btn.visualizer_enabled = self.show_visualizer
 
         # Set initial values for sliders
@@ -917,6 +921,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.pitch_enabled = config.getboolean("Audio", "pitch_enabled", fallback=False)
         self.pitch_value = config.getfloat("Audio", "pitch_value", fallback=0.0)
         self.mono_enabled = config.getboolean("Audio", "mono_enabled", fallback=False)
+        
+        # Volume Boost
+        self.volume_boost_enabled = config.getboolean("Audio", "volume_boost_enabled", fallback=False)
+        self.volume_boost_level = config.getfloat("Audio", "volume_boost_level", fallback=4.0)
 
         # Apply settings
         self.player.set_deesser_preset(self.deesser_preset)
@@ -932,6 +940,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_pitch(self.pitch_value)
         self.player.set_pitch_enabled(self.pitch_enabled)
         self.player.set_mono_enabled(self.mono_enabled)
+        self.player.set_volume_boost(self.volume_boost_enabled)
+        self.player.set_volume_boost_level(self.volume_boost_level)
         self.show_folders = config.getboolean("Library", "show_folders", fallback=False)
         self.show_filter_labels = config.getboolean(
             "Library", "show_filter_labels", fallback=True
@@ -1086,6 +1096,8 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Audio"]["pitch_enabled"] = str(self.pitch_enabled)
         config["Audio"]["pitch_value"] = str(self.pitch_value)
         config["Audio"]["mono_enabled"] = str(self.mono_enabled)
+        config["Audio"]["volume_boost_enabled"] = str(self.player.volume_boost_enabled)
+        config["Audio"]["volume_boost_level"] = str(self.player.volume_boost_level)
         if "Library" not in config:
             config["Library"] = {}
         config["Library"]["show_folders"] = str(self.show_folders)

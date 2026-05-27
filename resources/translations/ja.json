@@ -106,6 +106,8 @@
     "pitch_label": "st",
     "btn_mono": "モノラル",
     "tooltip_mono": "モノラル：左右のチャンネルを両方の出力にミックス",
+    "btn_volume_boost": "VB",
+    "tooltip_volume_boost": "音量ブースト: 最大400%まで増幅。右クリック: 設定",
     "tooltip_vad_threshold": "VAD閾値（推奨: 90%）\n音声をアクティブにする信号レベル",
     "tooltip_vad_grace": "猶予期間（推奨: 50%）\n無音後の待機時間",
     "tooltip_vad_retro": "遡及キャプチャ（推奨: 10-20%）\n話し始める前の音声をキャプチャ",

@@ -106,6 +106,8 @@
     "pitch_label": "st",
     "btn_mono": "أحادي",
     "tooltip_mono": "أحادي: مزج القنوات اليسرى واليمنى إلى كلا المخرجين",
+    "btn_volume_boost": "تع",
+    "tooltip_volume_boost": "تعزيز الصوت: تضخيم حتى 400٪. زر الماوس الأيمن: الإعدادات",
     "tooltip_vad_threshold": "عتبة VAD (Rec: 90%)\nمستوى الإشارة لتنشيط الكلام",
     "tooltip_vad_grace": "فترة السماح (Rec: 50%)\nوقت الانتظار بعد الصمت",
     "tooltip_vad_retro": "بأثر رجعي (Rec: 10-20%)\nالتقاط الصوت قبل الكلام",

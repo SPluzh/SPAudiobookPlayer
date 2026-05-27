@@ -106,6 +106,8 @@
     "pitch_label": "st",
     "btn_mono": "Mono",
     "tooltip_mono": "Mono: mezclar canales izquierdo y derecho a ambas salidas",
+    "btn_volume_boost": "AV",
+    "tooltip_volume_boost": "Amplificación de volumen: hasta 400%. Clic derecho: Ajustes",
     "tooltip_vad_threshold": "Umbral VAD (Rec: 90%)\nNivel de señal para activar voz",
     "tooltip_vad_grace": "Periodo de gracia (Rec: 50%)\nTiempo de espera tras silencio",
     "tooltip_vad_retro": "Retroactivo (Rec: 10-20%)\nCapturar audio antes del habla",

@@ -124,6 +124,8 @@
     "pitch_label": "st",
     "btn_mono": "Mono",
     "tooltip_mono": "Mono: trộn kênh trái và phải ra cả hai đầu ra",
+    "btn_volume_boost": "TÂ",
+    "tooltip_volume_boost": "Tăng âm lượng: khuếch đại lên đến 400%. Chuột phải: Cài đặt",
     "tooltip_vad_threshold": "Ngưỡng VAD (Khuyên dùng: 90%)\nMức tín hiệu để kích hoạt giọng nói",
     "tooltip_vad_grace": "Thời gian chờ (Khuyên dùng: 50%)\nThời gian chờ sau khi im lặng",
     "tooltip_vad_retro": "Truy thu (Khuyên dùng: 10-20%)\nGhi lại âm thanh trước khi nói",

@@ -454,6 +454,8 @@ class PlayerWidget(QWidget):
     pitch_toggled_signal = pyqtSignal(bool)
     pitch_changed_signal = pyqtSignal(float)
     mono_toggled_signal = pyqtSignal(bool)
+    volume_boost_toggled_signal = pyqtSignal(bool)
+    volume_boost_level_changed_signal = pyqtSignal(float)
     bookmarks_clicked = pyqtSignal()
     
     def __init__(self):
@@ -466,6 +468,7 @@ class PlayerWidget(QWidget):
         # State variables for presets (default to Medium=1)
         self.deesser_preset = 1
         self.compressor_preset = 1
+        self.volume_boost_level = 4.0  # 400%
         
         # Icon resources
         self.play_icon = None
@@ -528,6 +531,18 @@ class PlayerWidget(QWidget):
         btns_row.addWidget(self.bookmarks_btn)
 
         btns_row.addStretch()
+        
+        # Volume Boost Toggle
+        self.volume_boost_btn = QPushButton(tr("player.btn_volume_boost"))
+        self.volume_boost_btn.setCheckable(True)
+        self.volume_boost_btn.setFixedWidth(40)
+        self.volume_boost_btn.setObjectName("volumeBoostBtn")
+        self.volume_boost_btn.setToolTip(tr("player.tooltip_volume_boost"))
+        self.volume_boost_btn.toggled.connect(self.on_volume_boost_toggled)
+        # Right-click for Volume Boost level
+        self.volume_boost_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.volume_boost_btn.customContextMenuRequested.connect(self.show_volume_boost_popup)
+        btns_row.addWidget(self.volume_boost_btn)
         
         # DeEsser Toggle
         self.deesser_btn = QPushButton(tr("player.btn_deesser"))
@@ -687,6 +702,28 @@ class PlayerWidget(QWidget):
         self.pitch_val_label.setFixedWidth(60)
         self.pitch_val_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         pitch_layout.addWidget(self.pitch_val_label)
+        
+        # Volume Boost Popup
+        self.volume_boost_popup = QWidget(self, Qt.WindowType.Popup)
+        self.volume_boost_popup.setObjectName("volumeBoostPopup")
+        vb_layout = QHBoxLayout(self.volume_boost_popup)
+        vb_layout.setContentsMargins(8, 4, 8, 4)
+        
+        self.volume_boost_slider = QSlider(Qt.Orientation.Horizontal)
+        self.volume_boost_slider.setRange(200, 400)  # 200% to 400%
+        self.volume_boost_slider.setValue(400)  # Default 400%
+        self.volume_boost_slider.setSingleStep(100)
+        self.volume_boost_slider.setPageStep(100)
+        self.volume_boost_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        self.volume_boost_slider.setTickInterval(100)
+        self.volume_boost_slider.setFixedWidth(120)
+        self.volume_boost_slider.valueChanged.connect(self.on_volume_boost_level_changed)
+        vb_layout.addWidget(self.volume_boost_slider)
+        
+        self.volume_boost_label = QLabel("400%")
+        self.volume_boost_label.setFixedWidth(50)
+        self.volume_boost_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        vb_layout.addWidget(self.volume_boost_label)
 
         settings_layout.addLayout(btns_row)
         
@@ -1056,6 +1093,35 @@ class PlayerWidget(QWidget):
     def on_mono_toggled(self, checked):
         self.mono_toggled_signal.emit(checked)
 
+    def on_volume_boost_toggled(self, checked):
+        self.volume_boost_toggled_signal.emit(checked)
+
+    def show_volume_boost_popup(self, pos):
+        """Show Volume Boost level popup below the button"""
+        global_pos = self.volume_boost_btn.mapToGlobal(QPoint(0, self.volume_boost_btn.height()))
+        self.volume_boost_popup.move(global_pos)
+        self.volume_boost_popup.show()
+
+    def on_volume_boost_level_changed(self, value: int):
+        """Handle volume boost level slider change (200-400)"""
+        snapped = round(value / 100) * 100
+        if snapped != value:
+            self.volume_boost_slider.blockSignals(True)
+            self.volume_boost_slider.setValue(snapped)
+            self.volume_boost_slider.blockSignals(False)
+            value = snapped
+        self.volume_boost_level = value / 100.0
+        self.volume_boost_label.setText(f"{value}%")
+        self.volume_boost_level_changed_signal.emit(self.volume_boost_level)
+
+    def set_volume_boost_level_value(self, level: float):
+        """Programmatically set volume boost level (2.0-4.0)"""
+        self.volume_boost_slider.blockSignals(True)
+        value = int(level * 100)
+        self.volume_boost_slider.setValue(value)
+        self.volume_boost_label.setText(f"{value}%")
+        self.volume_boost_slider.blockSignals(False)
+
     
     def set_noise_suppression_active(self, active: bool):
         """Visual indicator when noise suppression is processing"""
@@ -1147,6 +1213,9 @@ class PlayerWidget(QWidget):
         
         self.mono_btn.setText(tr("player.btn_mono"))
         self.mono_btn.setToolTip(tr("player.tooltip_mono"))
+        
+        self.volume_boost_btn.setText(tr("player.btn_volume_boost"))
+        self.volume_boost_btn.setToolTip(tr("player.tooltip_volume_boost"))
         
         # Sliders
         self.volume_slider.setToolTip(tr("player.volume"))

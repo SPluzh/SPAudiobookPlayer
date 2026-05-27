@@ -106,6 +106,8 @@
     "pitch_label": "st",
     "btn_mono": "모노",
     "tooltip_mono": "모노: 좌우 채널을 양쪽 출력으로 믹스",
+    "btn_volume_boost": "VB",
+    "tooltip_volume_boost": "볼륨 부스트: 최대 400%까지 증폭. 우클릭: 설정",
     "tooltip_vad_threshold": "VAD 임계값 (권장: 90%)\n음성 활성화를 위한 신호 레벨",
     "tooltip_vad_grace": "유예 기간 (권장: 50%)\n무음 후 대기 시간",
     "tooltip_vad_retro": "소급 적용 (권장: 10-20%)\n음성 시작 전 오디오 캡처",
