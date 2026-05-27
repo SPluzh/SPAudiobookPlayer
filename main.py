@@ -616,7 +616,8 @@ class AudiobookPlayerWindow(QMainWindow):
                     self.splitter.saveState().toHex().data().decode()
                 )
 
-            self.setMinimumSize(self.minimal_width, self.minimal_height)
+            mh = 245 if not self.show_statusbar else self.minimal_height
+            self.setMinimumSize(self.minimal_width, mh)
 
             # Hide widgets
             if hasattr(self, "library_widget"):
@@ -627,7 +628,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.player_widget.file_list.hide()
 
             # Resize window to fit remaining elements
-            self.resize(self.minimal_width, self.minimal_height)
+            self.resize(self.minimal_width, mh)
         else:
             # Restore normal UI
             self.setMinimumSize(self.normal_min_width, self.normal_min_height)
@@ -670,6 +671,10 @@ class AudiobookPlayerWindow(QMainWindow):
         """Toggle the visibility of the status bar"""
         self.show_statusbar = enabled
         self.statusBar().setVisible(enabled)
+        if getattr(self, "minimal_interface", False):
+            h = 270 if enabled else 245
+            self.setMinimumSize(self.minimal_width, h)
+            self.resize(self.minimal_width, h)
         self.save_settings()
 
     def update_all_texts(self):
