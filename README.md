@@ -1,8 +1,7 @@
 # 🎧 SP Audiobook Player
 
-> Windows audiobook player for offline listening
+> Windows audiobook player for offline listening.
 > Audio book player with progress tracking, bookmarks and resume playback
-> SP AudiobookPlayer — desktop application for Windows
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyQt6](https://img.shields.io/badge/PyQt6-6.6.0+-green.svg)](https://pypi.org/project/PyQt6/)
@@ -13,6 +12,8 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 **English** | [Русский](#-sp-audiobook-player-ru)
+
+<img width="1522" height="1151" alt="image" src="https://github.com/user-attachments/assets/a86c41ee-424d-4743-9d34-a8974b59a593" />
 
 ---
 
