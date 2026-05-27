@@ -143,6 +143,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.last_pause_time = None
         self.show_visualizer = True
         self.show_nesting_lines = True
+        self.show_statusbar = True
         self.normal_geometry = None
         self.normal_splitter_state = None
         self.always_on_top = False
@@ -513,6 +514,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.always_on_top_action.triggered.connect(self.toggle_always_on_top)
         view_menu.addAction(self.always_on_top_action)
 
+        # Show Status Bar Toggle
+        self.statusbar_action = QAction(tr("menu.show_statusbar"), self)
+        self.statusbar_action.setCheckable(True)
+        self.statusbar_action.setChecked(self.show_statusbar)
+        self.statusbar_action.triggered.connect(self.toggle_statusbar)
+        view_menu.addAction(self.statusbar_action)
+
         # Theme Selection
         theme_menu = view_menu.addMenu(tr("menu.theme"))
         self.theme_actions = {}
@@ -658,6 +666,12 @@ class AudiobookPlayerWindow(QMainWindow):
 
         self.save_settings()
 
+    def toggle_statusbar(self, enabled: bool):
+        """Toggle the visibility of the status bar"""
+        self.show_statusbar = enabled
+        self.statusBar().setVisible(enabled)
+        self.save_settings()
+
     def update_all_texts(self):
         """Synchronize window titles, menus, and sub-widget labels after a language change event"""
         # Revise window title with localized formatting
@@ -678,6 +692,8 @@ class AudiobookPlayerWindow(QMainWindow):
         # Reconstruct the menu bar to apply new translations
         self.menuBar().clear()
         self.setup_menu()
+        if hasattr(self, "statusbar_action"):
+            self.statusbar_action.setChecked(self.show_statusbar)
 
         # Refresh player controls
         if hasattr(self, "player_widget"):
@@ -882,6 +898,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.always_on_top = config.getboolean(
             "Display", "always_on_top", fallback=False
         )
+        self.show_statusbar = config.getboolean(
+            "Display", "show_statusbar", fallback=True
+        )
 
         # Audio Settings (Unified in [Audio])
         self.deesser_enabled = config.getboolean(
@@ -974,6 +993,8 @@ class AudiobookPlayerWindow(QMainWindow):
             else:
                 self.playback_controller.library_root = None
 
+        self.statusBar().setVisible(self.show_statusbar)
+
     def create_default_settings(self):
         """Generate a fresh 'settings.ini' file with standard defaults for first-time application launch"""
         config = configparser.ConfigParser()
@@ -999,6 +1020,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "minimal_width": "450",
             "minimal_height": "270",
             "language": "en",
+            "show_statusbar": "False",
         }
         config["Audiobook_Style"] = {"icon_size": "100", "row_height": "120"}
         config["Folder_Style"] = {"icon_size": "35", "row_height": "45"}
@@ -1054,6 +1076,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Display"]["minimal_height"] = str(self.minimal_height)
         config["Display"]["theme"] = self.current_theme
         config["Display"]["always_on_top"] = str(self.always_on_top)
+        config["Display"]["show_statusbar"] = str(self.show_statusbar)
 
         # Filesystem Path Configs
         if "Paths" not in config:

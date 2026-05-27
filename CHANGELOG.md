@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.6.17]
 - **Audio Controls**: Added **Volume Boost** button (**VB**) — amplifies volume up to 400%, adjustable via right-click slider (200/300/400%).
+- **UI**: Added **Show Status Bar** toggle to the **View** menu — status bar visibility is now remembered across restarts.
 
 ## [1.6.16]
 - **Library**: Added display of total audiobook count and cumulative duration recursively to folder items in the library tree.

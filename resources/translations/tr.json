@@ -26,7 +26,8 @@
     "always_on_top": "Her zaman üstte",
     "collapse_all": "Tüm Klasörleri Daralt",
     "expand_all": "Tüm Klasörleri Genişlet",
-    "show_nesting_lines": "İç İçe Geçme Çizgilerini Göster"
+    "show_nesting_lines": "İç İçe Geçme Çizgilerini Göster",
+    "show_statusbar": "Durum Çubuğunu Göster"
   },
   "library": {
     "search_placeholder": "Başlık, yazar, anlatıcıya göre ara...",

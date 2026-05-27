@@ -26,7 +26,8 @@
     "always_on_top": "دائماً في المقدمة",
     "collapse_all": "طي جميع المجلدات",
     "expand_all": "توسيع جميع المجلدات",
-    "show_nesting_lines": "إظهار خطوط التداخل"
+    "show_nesting_lines": "إظهار خطوط التداخل",
+    "show_statusbar": "إظهار شريط الحالة"
   },
   "library": {
     "search_placeholder": "بحث بالعنوان، المؤلف، الراوي...",

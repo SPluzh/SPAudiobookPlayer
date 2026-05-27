@@ -26,7 +26,8 @@
     "always_on_top": "Toujours au-dessus",
     "collapse_all": "Réduire tous les dossiers",
     "expand_all": "Développer tous les dossiers",
-    "show_nesting_lines": "Afficher les lignes d'imbrication"
+    "show_nesting_lines": "Afficher les lignes d'imbrication",
+    "show_statusbar": "Afficher la barre d'état"
   },
   "library": {
     "search_placeholder": "Rechercher par titre, auteur, narrateur...",

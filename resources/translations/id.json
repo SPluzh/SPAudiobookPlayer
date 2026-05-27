@@ -26,7 +26,8 @@
     "always_on_top": "Selalu di Atas",
     "collapse_all": "Ciutkan Semua Folder",
     "expand_all": "Perluas Semua Folder",
-    "show_nesting_lines": "Tampilkan Garis Bersarang"
+    "show_nesting_lines": "Tampilkan Garis Bersarang",
+    "show_statusbar": "Tampilkan Bilah Status"
   },
   "bookmarks": {
     "edit_title": "Edit Penanda",
