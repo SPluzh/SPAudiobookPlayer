@@ -60,6 +60,9 @@ a = Analysis(
     cipher=block_cipher,
 )
 
+# Exclude Qt6 standard translation files (~6MB) to save space
+a.datas = [x for x in a.datas if 'pyqt6/qt6/translations' not in x[1].lower().replace('\\', '/')]
+
 # Exclude large unused binaries to save space
 a.binaries = [x for x in a.binaries if not (
     x[0].lower().endswith('opengl32sw.dll') or 

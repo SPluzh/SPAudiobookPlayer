@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.6.18]
 - **Statistics**: Guarded listening session recording against system sleep, hibernation, and OS freezes by ignoring sudden elapsed time jumps greater than 30 seconds.
+- **Build**: Significantly reduced the installer and application size by cleaning up unused internal files, while keeping all built-in features fully intact.
 
 ## [1.6.17]
 - **Audio Controls**: Added **Volume Boost** button (**VB**) — amplifies volume up to 400%, adjustable via right-click slider (200/300/400%).
