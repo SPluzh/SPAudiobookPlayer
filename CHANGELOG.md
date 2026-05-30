@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.6.20]
 - **Playback**: Added a floating real-time time tooltip that appears above the progress slider handle during manual seeking/scrubbing to show the target position.
 - **Playback**: Fixed an issue where dragging the seek slider all the way to the right edge would cause it to bounce back to the beginning or switch chapters.
+- **Taskbar**: Fixed taskbar progress bar turning green after computer wake from sleep while playback was paused.
 
 ## [1.6.19]
 - **Metadata**: Added support for choosing a book cover in the metadata edit dialog when multiple covers are available.

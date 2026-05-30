@@ -2061,7 +2061,7 @@ class TaskbarEventFilter(QAbstractNativeEventFilter):
         self.window = window
 
     def nativeEventFilter(self, eventType, message):
-        """Monitor for WM_COMMAND messages originating from taskbar thumbnail clicks to trigger corresponding playback actions"""
+        """Monitor for native Windows messages, including WM_COMMAND and WM_POWERBROADCAST for sleep/wake recovery"""
         if eventType == b"windows_generic_MSG" and message:
             try:
                 msg_ptr = int(message)
@@ -2071,6 +2071,13 @@ class TaskbarEventFilter(QAbstractNativeEventFilter):
                     # Handle multimedia keys and other global hotkeys via HotKeyManager
                     if self.window.hotkey_manager.handle_native_event(msg):
                         return True, 0
+
+                    # Handle system resume from sleep to refresh taskbar progress state cache
+                    if msg.message == 0x0218:  # WM_POWERBROADCAST
+                        # PBT_APMRESUMEAUTOMATIC = 0x0012, PBT_APMRESUMESUSPEND = 0x0007
+                        if msg.wParam in (0x0012, 0x0007):
+                            if hasattr(self.window, "taskbar_progress"):
+                                self.window.taskbar_progress.refresh_state()
 
                     if msg.message == 0x0111:  # WM_COMMAND
                         if (msg.wParam >> 16) & 0xFFFF == 0x1800:  # THBN_CLICKED

@@ -224,13 +224,14 @@ class TaskbarProgress:
         if not self.is_available:
             return
         
+        # Set progress first, because SetProgressValue can reset or affect the progress state
+        self.set_progress(current, total)
+        
         # Set state based on playing status
         new_state = self.TBPF_NORMAL if is_playing else self.TBPF_PAUSED
         
         if new_state != self._current_state:
             self.set_state(new_state)
-        
-        self.set_progress(current, total)
 
 
 class TaskbarThumbnailButtons:
