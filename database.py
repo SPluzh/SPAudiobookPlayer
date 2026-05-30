@@ -289,6 +289,11 @@ class DatabaseManager:
     def __init__(self, db_file: Path):
         """Initialize with database file path"""
         self.db_file = db_file
+        # Ensure database and migrations are initialized on startup for backward compatibility
+        try:
+            init_database(self.db_file, log_func=None)
+        except Exception as e:
+            print(f"Error during DatabaseManager startup migration: {e}")
         self.recover_crashed_sessions()
 
     def recover_crashed_sessions(self):
