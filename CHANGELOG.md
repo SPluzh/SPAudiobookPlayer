@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [1.6.19]
 - **Metadata**: Added support for choosing a book cover in the metadata edit dialog when multiple covers are available.
 - **Metadata**: Unified all action buttons (Open Folder, Refresh, and From Tags) into a compact vertical panel.
+- **Metadata**: Added support for `.webp` audiobook cover images.
+- **Metadata**: Fixed an issue where custom selected covers could be reset or overwritten during library rescans.
 
 ## [1.6.18]
 - **Statistics**: Guarded listening session recording against system sleep, hibernation, and OS freezes by ignoring sudden elapsed time jumps greater than 30 seconds.
