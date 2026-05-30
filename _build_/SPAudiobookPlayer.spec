@@ -41,11 +41,31 @@ a = Analysis(
         'distutils',
         'setuptools',
         'multiprocessing',
+        'numpy',
+        'matplotlib',
+        'PyQt6.QtPdf',
+        'PyQt6.QtNetwork',
+        'PyQt6.QtQml',
+        'PyQt6.QtQuick',
+        'PyQt6.QtSql',
+        'PyQt6.QtTest',
+        'PyQt6.QtXml',
+        'PyQt6.Qt3D',
+        'PyQt6.QtWebEngineCore',
+        'PyQt6.QtWebEngineWidgets',
+        'PyQt6.QtWebChannel',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
 )
+
+# Exclude large unused binaries to save space
+a.binaries = [x for x in a.binaries if not (
+    x[0].lower().endswith('opengl32sw.dll') or 
+    x[0].lower().endswith('qt6pdf.dll') or 
+    x[0].lower().endswith('qt6network.dll')
+)]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
