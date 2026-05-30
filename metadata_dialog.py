@@ -82,7 +82,7 @@ class MetadataEditDialog(QDialog):
         
         self.setWindowTitle(tr("metadata.edit_title"))
         self.setModal(True)
-        self.resize(480, 450)
+        self.resize(480, 380)
         
         self.current_data = self.db.get_audiobook_metadata(self.audiobook_id)
         if not self.current_data:
@@ -106,15 +106,15 @@ class MetadataEditDialog(QDialog):
         
         # Vertical button layout
         buttons_layout = QVBoxLayout()
-        buttons_layout.setSpacing(10)
+        buttons_layout.setSpacing(4)
         buttons_layout.setContentsMargins(0, 0, 0, 0)
         
         # Open folder button
         self.open_folder_btn = QPushButton()
         self.open_folder_btn.setObjectName("openFolderBtn")
         self.open_folder_btn.setIcon(get_icon("context_open_folder"))
-        self.open_folder_btn.setIconSize(QSize(24, 24))
-        self.open_folder_btn.setFixedSize(50, 50)
+        self.open_folder_btn.setIconSize(QSize(20, 20))
+        self.open_folder_btn.setFixedSize(36, 36)
         self.open_folder_btn.setToolTip(tr("metadata.open_folder_tooltip", default="Open folder containing this book"))
         self.open_folder_btn.clicked.connect(self.on_open_folder)
         buttons_layout.addWidget(self.open_folder_btn)
@@ -123,11 +123,21 @@ class MetadataEditDialog(QDialog):
         self.refresh_btn = QPushButton()
         self.refresh_btn.setObjectName("refreshCoversBtn")
         self.refresh_btn.setIcon(get_icon("menu_reload"))
-        self.refresh_btn.setIconSize(QSize(24, 24))
-        self.refresh_btn.setFixedSize(50, 50)
+        self.refresh_btn.setIconSize(QSize(20, 20))
+        self.refresh_btn.setFixedSize(36, 36)
         self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
         self.refresh_btn.clicked.connect(self.on_refresh_covers)
         buttons_layout.addWidget(self.refresh_btn)
+        
+        # From Tags button under the refresh button
+        self.from_tags_btn = QPushButton()
+        self.from_tags_btn.setObjectName("fromTagsBtn")
+        self.from_tags_btn.setIcon(get_icon("context_tags"))
+        self.from_tags_btn.setIconSize(QSize(20, 20))
+        self.from_tags_btn.setFixedSize(36, 36)
+        self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip", default="Fill fields from file tags (ID3)"))
+        self.from_tags_btn.clicked.connect(self.fill_from_tags)
+        buttons_layout.addWidget(self.from_tags_btn)
         
         covers_layout.addLayout(buttons_layout)
         
@@ -188,17 +198,6 @@ class MetadataEditDialog(QDialog):
         form_layout.addRow(tr("metadata.narrator"), self.narrator_combo)
         
         layout.addLayout(form_layout)
-        
-        # Action Buttons
-        
-        # "Fill from Tags" Button
-        tags_layout = QHBoxLayout()
-        self.from_tags_btn = QPushButton(tr("metadata.from_tags"))
-        self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip"))
-        self.from_tags_btn.clicked.connect(self.fill_from_tags)
-        tags_layout.addWidget(self.from_tags_btn)
-        tags_layout.addStretch()
-        layout.addLayout(tags_layout)
         
         layout.addStretch()
         
@@ -276,8 +275,8 @@ class MetadataEditDialog(QDialog):
     def update_texts(self):
         """Update UI texts when language changes"""
         self.setWindowTitle(tr("metadata.edit_title"))
-        self.from_tags_btn.setText(tr("metadata.from_tags"))
-        self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip"))
+        if hasattr(self, 'from_tags_btn') and self.from_tags_btn:
+            self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip", default="Fill fields from file tags (ID3)"))
         if hasattr(self, 'refresh_btn') and self.refresh_btn:
             self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
         if hasattr(self, 'open_folder_btn') and self.open_folder_btn:
