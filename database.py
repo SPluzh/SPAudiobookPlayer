@@ -195,6 +195,33 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 log_func("scanner.db_added_description")
         except sqlite3.OperationalError:
             pass
+
+        # Table: audiobook_covers
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS audiobook_covers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                audiobook_id INTEGER NOT NULL,
+                original_path TEXT,
+                cached_path TEXT NOT NULL,
+                is_selected INTEGER DEFAULT 0,
+                source_type TEXT NOT NULL,
+                FOREIGN KEY(audiobook_id) REFERENCES audiobooks(id) ON DELETE CASCADE
+            )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_covers_book_id ON audiobook_covers(audiobook_id)")
+
+        # Migration: populate audiobook_covers with existing covers
+        try:
+            c.execute("SELECT COUNT(*) FROM audiobook_covers")
+            if c.fetchone()[0] == 0:
+                c.execute("""
+                    INSERT INTO audiobook_covers (audiobook_id, original_path, cached_path, is_selected, source_type)
+                    SELECT id, cover_path, cached_cover_path, 1, 'file'
+                    FROM audiobooks
+                    WHERE (cover_path IS NOT NULL AND cover_path != '') OR (cached_cover_path IS NOT NULL AND cached_cover_path != '')
+                """)
+        except sqlite3.OperationalError:
+            pass
             
         # File Metadata Cache table for faster rescanning
         c.execute("""
@@ -867,7 +894,8 @@ class DatabaseManager:
                 SELECT author, title, narrator, file_count, duration, 
                        listened_duration, progress_percent, is_started, is_completed,
                        codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                       time_added, time_started, time_finished, is_favorite, description
+                       time_added, time_started, time_finished, is_favorite, description,
+                       cover_path, cached_cover_path
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -893,7 +921,9 @@ class DatabaseManager:
                     'time_started': row[15],
                     'time_finished': row[16],
                     'is_favorite': bool(row[17]),
-                    'description': row[18]
+                    'description': row[18],
+                    'cover_path': row[19],
+                    'cached_cover_path': row[20]
                 }
             return None
         except sqlite3.Error as e:
@@ -1152,6 +1182,90 @@ class DatabaseManager:
             conn.commit()
         except sqlite3.Error as e:
             print(f"Database error in update_audiobook_metadata: {e}")
+        finally:
+            conn.close()
+
+    def get_audiobook_covers(self, audiobook_id: int) -> List[Dict]:
+        """Get all cover options for an audiobook"""
+        if not audiobook_id:
+            return []
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, original_path, cached_path, is_selected, source_type
+                FROM audiobook_covers
+                WHERE audiobook_id = ?
+            ''', (audiobook_id,))
+            rows = cursor.fetchall()
+            return [
+                {
+                    'id': r[0],
+                    'original_path': r[1],
+                    'cached_path': r[2],
+                    'is_selected': bool(r[3]),
+                    'source_type': r[4]
+                }
+                for r in rows
+            ]
+        except sqlite3.Error as e:
+            print(f"Database error in get_audiobook_covers: {e}")
+            return []
+        finally:
+            conn.close()
+
+    def set_selected_audiobook_cover(self, audiobook_id: int, cover_id: Optional[int]):
+        """Set which cover is selected for the audiobook and update the main table"""
+        if not audiobook_id:
+            return
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            if cover_id is not None:
+                # 1. Reset all covers for this book to is_selected = 0
+                cursor.execute('''
+                    UPDATE audiobook_covers
+                    SET is_selected = 0
+                    WHERE audiobook_id = ?
+                ''', (audiobook_id,))
+                
+                # 2. Set the target cover to is_selected = 1
+                cursor.execute('''
+                    UPDATE audiobook_covers
+                    SET is_selected = 1
+                    WHERE id = ? AND audiobook_id = ?
+                ''', (cover_id, audiobook_id))
+                
+                # 3. Retrieve the selected cover's paths
+                cursor.execute('''
+                    SELECT original_path, cached_path
+                    FROM audiobook_covers
+                    WHERE id = ? AND audiobook_id = ?
+                ''', (cover_id, audiobook_id))
+                row = cursor.fetchone()
+                if row:
+                    orig_path, cached_path = row
+                    # 4. Update the main audiobooks table
+                    cursor.execute('''
+                        UPDATE audiobooks
+                        SET cover_path = ?, cached_cover_path = ?
+                        WHERE id = ?
+                    ''', (orig_path, cached_path, audiobook_id))
+            else:
+                # Option "no cover" selected
+                cursor.execute('''
+                    UPDATE audiobook_covers
+                    SET is_selected = 0
+                    WHERE audiobook_id = ?
+                ''', (audiobook_id,))
+                cursor.execute('''
+                    UPDATE audiobooks
+                    SET cover_path = NULL, cached_cover_path = NULL
+                    WHERE id = ?
+                ''', (audiobook_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in set_selected_audiobook_cover: {e}")
         finally:
             conn.close()
 

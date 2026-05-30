@@ -2926,6 +2926,25 @@ class LibraryWidget(QWidget):
                 tags = self.db.get_tags_for_audiobook(info[0])
                 item.setData(0, Qt.ItemDataRole.UserRole + 4, tags)
 
+            # Refresh and scale the audiobook cover
+            cover_icon = None
+            cover_p_str = data.get("cached_cover_path")
+            if not cover_p_str:
+                cover_p_str = data.get("cover_path")
+
+            if cover_p_str:
+                cover_p = Path(cover_p_str)
+                if not cover_p.is_absolute() and self.config.get("default_path"):
+                    cover_p = Path(self.config.get("default_path")) / cover_p
+
+                from utils import load_icon
+                # Clear LRU cache of load_icon to force reload of the potentially updated/overwritten image
+                load_icon.cache_clear()
+                cover_icon = load_icon(
+                    cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
+                )
+            item.setIcon(0, cover_icon or self.default_audiobook_icon)
+
             item.setText(0, item.text(0))
             self.update_cache_item_status(
                 audiobook_path, data["is_started"], data["is_completed"]

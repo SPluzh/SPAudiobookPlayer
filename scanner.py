@@ -938,6 +938,233 @@ class AudiobookScanner:
              
         return None, None
 
+    def _get_embedded_image_data(self, f):
+        """Extract raw embedded cover image data from a file"""
+        try:
+            from mutagen.id3 import ID3, APIC
+            from mutagen.mp4 import MP4
+            from mutagen.flac import FLAC
+            
+            suffix = f.suffix.lower()
+            if suffix == '.mp3':
+                tags = ID3(f)
+                for tag in tags.values():
+                    if isinstance(tag, APIC):
+                        return tag.data
+            elif suffix in ('.m4a', '.m4b', '.mp4'):
+                audio = MP4(f)
+                if 'covr' in audio:
+                    return audio['covr'][0]
+            elif suffix == '.flac':
+                audio = FLAC(f)
+                if audio.pictures:
+                    return audio.pictures[0].data
+            elif suffix == '.ape':
+                from mutagen.monkeysaudio import MonkeysAudio
+                audio = MonkeysAudio(f)
+                if 'Cover Art (Front)' in audio:
+                    return audio['Cover Art (Front)'].value
+        except Exception:
+            pass
+        return None
+
+    def _scan_and_save_all_covers(self, conn, directory, key, audiobook_id, selected_cover_cached_path):
+        """
+        Scan for all available covers, cache them, and save to audiobook_covers table.
+        """
+        c = conn.cursor()
+        
+        # 1. Clear existing covers for this audiobook to avoid duplicate entries
+        c.execute("DELETE FROM audiobook_covers WHERE audiobook_id = ?", (audiobook_id,))
+        
+        path_obj = Path(directory)
+        safe_name = hashlib.md5(key.encode()).hexdigest()
+        
+        # Let's keep track of cached paths to prevent duplicate entries
+        seen_cached_paths = set()
+        
+        # 2. Gather all image files
+        file_covers = []
+        if not path_obj.is_file():
+            try:
+                for ext in ('.jpg', '.jpeg', '.png', '.bmp'):
+                    for p in path_obj.rglob(f"*{ext}"):
+                        if p.is_file():
+                            file_covers.append(p)
+            except Exception:
+                pass
+                
+            # Deduplicate original paths
+            unique_paths = []
+            seen_original_paths = set()
+            for p in file_covers:
+                try:
+                    resolved = p.resolve()
+                    if resolved not in seen_original_paths:
+                        seen_original_paths.add(resolved)
+                        unique_paths.append(p)
+                except Exception:
+                    pass
+            file_covers = unique_paths
+            
+            # Sort by priority using the same logic
+            def get_path_priority(p):
+                try:
+                    rel_p = p.relative_to(path_obj)
+                    is_root = (len(rel_p.parts) == 1)
+                except ValueError:
+                    is_root = False
+                    
+                name = p.name.lower()
+                is_priority_name = name in [cn.lower() for cn in self.cover_names]
+                
+                if is_root and is_priority_name:
+                    return (0, name) # Top priority
+                elif is_root:
+                    return (1, name)
+                elif is_priority_name:
+                    return (2, name)
+                else:
+                    return (3, name)
+            
+            file_covers.sort(key=lambda p: (get_path_priority(p), str(p)))
+
+        # Define a helper function to scale and cache file-based images
+        def cache_original_file(src_path, dest_path):
+            try:
+                dest_path_obj = Path(dest_path)
+                if not dest_path_obj.exists():
+                    image = QImage(str(src_path))
+                    if not image.isNull():
+                        scaled = image.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                        scaled.save(str(dest_path))
+                    else:
+                        shutil.copy2(src_path, dest_path)
+                return True
+            except Exception as e:
+                self._log_error(f"Error caching all-cover file {src_path}: {e}")
+                try:
+                    dest_path_obj = Path(dest_path)
+                    if not dest_path_obj.exists():
+                        shutil.copy2(src_path, dest_path)
+                    return True
+                except:
+                    return False
+
+        # Define a helper to scale and cache embedded covers
+        def cache_embedded_data(img_data, dest_path):
+            try:
+                dest_path_obj = Path(dest_path)
+                if not dest_path_obj.exists():
+                    image = QImage.fromData(img_data)
+                    if not image.isNull():
+                        scaled = image.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                        scaled.save(str(dest_path), "JPG")
+                        return True
+                else:
+                    return True
+            except Exception as e:
+                self._log_error(f"Error caching embedded cover: {e}")
+            return False
+
+        # 3. Process the file covers
+        inserted_covers = []
+        
+        for idx, p in enumerate(file_covers):
+            ext = p.suffix.lower()
+            original_path_str = str(p)
+            
+            # The selected/first cover uses the standard non-prefixed name to align with audiobooks table
+            if idx == 0:
+                if selected_cover_cached_path and Path(selected_cover_cached_path).exists():
+                    cached_path_str = selected_cover_cached_path
+                    is_selected = 1
+                else:
+                    dest_path = self.covers_dir / f"{safe_name}{ext}"
+                    success = cache_original_file(p, dest_path)
+                    if success:
+                        cached_path_str = str(dest_path)
+                        is_selected = 1
+                    else:
+                        continue
+            else:
+                image_hash = hashlib.md5(original_path_str.encode()).hexdigest()[:8]
+                dest_path = self.covers_dir / f"{safe_name}_{image_hash}{ext}"
+                
+                # Cache the file
+                success = cache_original_file(p, dest_path)
+                if success:
+                    cached_path_str = str(dest_path)
+                    is_selected = 0
+                else:
+                    continue
+            
+            # Prevent duplicates in database
+            if cached_path_str not in seen_cached_paths:
+                seen_cached_paths.add(cached_path_str)
+                inserted_covers.append((
+                    audiobook_id,
+                    original_path_str,
+                    cached_path_str,
+                    is_selected,
+                    'file'
+                ))
+
+        # 4. Process embedded covers (scan all audio files up to 10 files)
+        if len(inserted_covers) < 10:
+            audio_files = []
+            if path_obj.is_file():
+                audio_files = [path_obj]
+            else:
+                try:
+                    audio_files = sorted(
+                        [f for f in path_obj.iterdir()
+                        if f.is_file() and f.suffix.lower() in self.audio_extensions]
+                    )
+                except Exception:
+                    pass
+            
+            seen_embedded_hashes = set()
+            for f in audio_files[:10]:
+                img_data = self._get_embedded_image_data(f)
+                if img_data:
+                    data_hash = hashlib.md5(img_data).hexdigest()
+                    if data_hash not in seen_embedded_hashes:
+                        seen_embedded_hashes.add(data_hash)
+                        
+                        # Cache embedded file
+                        # If selected (meaning no file covers and this is the first embedded cover)
+                        is_selected = 0
+                        if not inserted_covers:
+                            if selected_cover_cached_path and Path(selected_cover_cached_path).exists():
+                                cached_path_str = selected_cover_cached_path
+                                is_selected = 1
+                            else:
+                                cached_path_str = str(self.covers_dir / f"{safe_name}.jpg")
+                                is_selected = 1
+                        else:
+                            short_hash = data_hash[:8]
+                            cached_path_str = str(self.covers_dir / f"{safe_name}_emb_{short_hash}.jpg")
+                            
+                        success = cache_embedded_data(img_data, cached_path_str)
+                        if success:
+                            if cached_path_str not in seen_cached_paths:
+                                seen_cached_paths.add(cached_path_str)
+                                inserted_covers.append((
+                                    audiobook_id,
+                                    None, # No original file path for embedded covers
+                                    cached_path_str,
+                                    is_selected,
+                                    'embedded'
+                                ))
+                                
+        # 5. Insert all found covers into the database
+        if inserted_covers:
+            c.executemany("""
+                INSERT INTO audiobook_covers (audiobook_id, original_path, cached_path, is_selected, source_type)
+                VALUES (?, ?, ?, ?, ?)
+            """, inserted_covers)
+
     def _calculate_state_hash(self, files, cover_file=None, description_file=None):
         """Calculate hash based on audio files, cover image, and description file
         
@@ -1571,6 +1798,9 @@ class AudiobookScanner:
                     c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
                     book_id = c.fetchone()[0]
 
+                # Scan and cache all available covers, and save to audiobook_covers table
+                self._scan_and_save_all_covers(conn, folder, str(rel), book_id, cover_cached)
+
                 # Update files list: remove old and insert current files
                 c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
                 
@@ -1935,6 +2165,9 @@ class AudiobookScanner:
             ))
             c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
             book_id = c.fetchone()[0]
+
+        # Scan and cache all available covers, and save to audiobook_covers table
+        self._scan_and_save_all_covers(conn, file_path, str(rel), book_id, cover_cached)
 
         # Files (Chapters)
         c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
