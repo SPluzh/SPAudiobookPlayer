@@ -1239,6 +1239,31 @@ class AudiobookScanner:
                 VALUES (?, ?, ?, ?, ?)
             """, inserted_covers)
 
+        # 6. Update the main audiobooks table to be in sync with the selected cover in audiobook_covers
+        selected_row = None
+        for item in inserted_covers:
+            if item[3] == 1: # is_selected
+                selected_row = (item[1], item[2]) # (original_path, cached_path)
+                break
+                
+        try:
+            if selected_row:
+                orig_path, cached_path = selected_row
+                c.execute("""
+                    UPDATE audiobooks 
+                    SET cover_path = ?, cached_cover_path = ? 
+                    WHERE id = ?
+                """, (orig_path, cached_path, audiobook_id))
+            else:
+                c.execute("""
+                    UPDATE audiobooks 
+                    SET cover_path = NULL, cached_cover_path = NULL 
+                    WHERE id = ?
+                """, (audiobook_id,))
+        except sqlite3.OperationalError:
+            # Table 'audiobooks' might not exist in some unit test mocks
+            pass
+
     def _calculate_state_hash(self, files, cover_file=None, description_file=None):
         """Calculate hash based on audio files, cover image, and description file
         

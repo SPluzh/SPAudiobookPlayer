@@ -172,3 +172,52 @@ class TestScanAndSaveAllCovers:
         assert cover_jpg_row is not None
         # Check that it is NOT selected (is_selected = 0)
         assert cover_jpg_row[2] == 0
+
+    def test_scan_and_save_covers_clears_when_no_covers_exist(self, mock_scanner, conn, temp_dir):
+        # Create audiobooks table in connection to verify synchronization
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE audiobooks (
+                id INTEGER PRIMARY KEY,
+                path TEXT,
+                cover_path TEXT,
+                cached_cover_path TEXT
+            )
+        """)
+        
+        audiobook_id = 42
+        key = "test_key"
+        
+        # Insert a book row with a stale cover path and cached cover path
+        c.execute("""
+            INSERT INTO audiobooks (id, path, cover_path, cached_cover_path)
+            VALUES (?, ?, ?, ?)
+        """, (audiobook_id, "some_path", "stale_cover.jpg", "stale_cached.jpg"))
+        conn.commit()
+        
+        # Setup empty book directory (no images, no embedded covers)
+        book_dir = temp_dir / "empty_book"
+        book_dir.mkdir()
+        
+        # Run scan and save all covers (with no images or embedded covers available)
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+        
+        mock_scanner._scan_and_save_all_covers(
+            conn=conn,
+            directory=str(book_dir),
+            key=key,
+            audiobook_id=audiobook_id,
+            selected_cover_cached_path="stale_cached.jpg"
+        )
+        
+        # Verify audiobook_covers table is empty
+        c.execute("SELECT COUNT(*) FROM audiobook_covers WHERE audiobook_id = ?", (audiobook_id,))
+        assert c.fetchone()[0] == 0
+        
+        # Verify that the cover paths in the main audiobooks table have been cleared (synchronized) to NULL
+        c.execute("SELECT cover_path, cached_cover_path FROM audiobooks WHERE id = ?", (audiobook_id,))
+        row = c.fetchone()
+        assert row[0] is None
+        assert row[1] is None
+
