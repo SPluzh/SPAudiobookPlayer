@@ -178,7 +178,7 @@ class AudiobookScanner:
         covers = config.get(
             'Covers',
             'names',
-            fallback='cover.jpg,cover.png,cover.jpeg,folder.jpg,folder.png'
+            fallback='cover.jpg,cover.png,cover.jpeg,cover.webp,folder.jpg,folder.png,folder.webp'
         )
         self.cover_names = [c.strip() for c in covers.split(',') if c.strip()]
 
@@ -903,7 +903,7 @@ class AudiobookScanner:
         # 2. Search in current directory (any image)
         try:
             for f in directory.iterdir():
-                if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp'}:
+                if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.webp'}:
                      cached = cache_file(str(f))
                      return str(f), cached
         except (PermissionError, OSError):
@@ -920,7 +920,7 @@ class AudiobookScanner:
                 continue
         
         # 4. Recursive search in subdirectories (any image)
-        for ext in ('.jpg', '.jpeg', '.png', '.bmp'):
+        for ext in ('.jpg', '.jpeg', '.png', '.bmp', '.webp'):
             try:
                 for p in directory.rglob(f"*{ext}"):
                     if p.is_file():
@@ -987,7 +987,7 @@ class AudiobookScanner:
         file_covers = []
         if not path_obj.is_file():
             try:
-                for ext in ('.jpg', '.jpeg', '.png', '.bmp'):
+                for ext in ('.jpg', '.jpeg', '.png', '.bmp', '.webp'):
                     for p in path_obj.rglob(f"*{ext}"):
                         if p.is_file():
                             file_covers.append(p)
@@ -1267,7 +1267,7 @@ class AudiobookScanner:
         # 2. Search in current directory (any image)
         try:
             for f in directory.iterdir():
-                if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp'}:
+                if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.webp'}:
                     return str(f)
         except (PermissionError, OSError):
             pass
@@ -1282,7 +1282,7 @@ class AudiobookScanner:
                 continue
         
         # 4. Recursive search in subdirectories (any image)
-        for ext in ('.jpg', '.jpeg', '.png', '.bmp'):
+        for ext in ('.jpg', '.jpeg', '.png', '.bmp', '.webp'):
             try:
                 for p in directory.rglob(f"*{ext}"):
                     if p.is_file():
@@ -1707,10 +1707,18 @@ class AudiobookScanner:
                     is_completed = 0
                 
                 # Check if record already exists
-                c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
+                c.execute("SELECT id, cover_path, cached_cover_path FROM audiobooks WHERE path = ?", (str(rel),))
                 existing_row = c.fetchone()
                 
                 if existing_row:
+                    book_id, existing_cover_path, existing_cached_cover_path = existing_row
+                    
+                    # If there was a previously selected cover and it still exists/is valid, preserve it
+                    if existing_cached_cover_path and Path(existing_cached_cover_path).exists():
+                        if not existing_cover_path or Path(existing_cover_path).exists():
+                            cover = existing_cover_path
+                            cover_cached = existing_cached_cover_path
+                            
                     # Update metadata only, preserve progress and status
                     c.execute("""
                         UPDATE audiobooks
@@ -1999,7 +2007,7 @@ class AudiobookScanner:
         current_state_hash = self._calculate_state_hash([file_path], cover_file_path, description_file_path)
         
         # Check for existing
-        c.execute("SELECT id, state_hash, codec FROM audiobooks WHERE path = ?", (str(rel),))
+        c.execute("SELECT id, state_hash, codec, cover_path, cached_cover_path FROM audiobooks WHERE path = ?", (str(rel),))
         existing_row_data = c.fetchone()
         
         if existing_row_data:
@@ -2045,6 +2053,13 @@ class AudiobookScanner:
         
         # Cover
         cover, cover_cached = self._find_cover(file_path, str(rel))
+        
+        if existing_row_data:
+            _, _, _, existing_cover_path, existing_cached_cover_path = existing_row_data
+            if existing_cached_cover_path and Path(existing_cached_cover_path).exists():
+                if not existing_cover_path or Path(existing_cover_path).exists():
+                    cover = existing_cover_path
+                    cover_cached = existing_cached_cover_path
         
         # Check matching chapters
         chapters = []
