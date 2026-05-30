@@ -151,7 +151,8 @@
     "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "بدون عنوان",
-    "separator": "•"
+    "separator": "•",
+    "size_prefix": "💾"
   },
   "settings": {
     "title": "الإعدادات",
@@ -295,7 +296,9 @@
     "db_file": "  قاعدة البيانات: {path}",
     "cli_start": " بدء الفحص",
     "cli_path": "مسار المسح: {path}",
-    "cli_done": "تم! الكتب الصوتية المعالجة: {count}"
+    "cli_done": "تم! الكتب الصوتية المعالجة: {count}",
+    "db_added_description": "  + Added field: description",
+    "db_added_total_size": "  + Added field: total_size"
   },
   "ffmpeg_updater": {
     "title": "تحديث FFPROBE (FFMPEG)",

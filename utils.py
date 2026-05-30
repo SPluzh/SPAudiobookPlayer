@@ -155,6 +155,17 @@ def format_time_short(seconds):
     secs = int(seconds % 60)
     return trf("formats.time_ms", minutes=minutes, seconds=secs)
 
+def format_size(size_bytes: int) -> str:
+    """Format bytes into human readable string"""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+    else:
+        return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
+
 class OutputCapture(io.StringIO):
     """Intercepts print output and sends it via signals"""
     def __init__(self, signal):

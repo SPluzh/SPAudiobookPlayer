@@ -169,7 +169,8 @@
     "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "Tanpa judul",
-    "separator": "•"
+    "separator": "•",
+    "size_prefix": "💾"
   },
   "settings": {
     "title": "Pengaturan",
@@ -313,7 +314,9 @@
     "db_file": "  Database: {path}",
     "cli_start": "MELUNCURKAN PEMINDAIAN",
     "cli_path": "Jalur pemindaian: {path}",
-    "cli_done": "Selesai! Audiobook diproses: {count}"
+    "cli_done": "Selesai! Audiobook diproses: {count}",
+    "db_added_description": "  + Added field: description",
+    "db_added_total_size": "  + Added field: total_size"
   },
   "ffmpeg_updater": {
     "title": "PEMBARUAN FFPROBE (FFMPEG)",

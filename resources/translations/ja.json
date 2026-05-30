@@ -151,7 +151,8 @@
     "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "タイトルなし",
-    "separator": "•"
+    "separator": "•",
+    "size_prefix": "💾"
   },
   "settings": {
     "title": "設定",
@@ -295,7 +296,9 @@
     "db_file": "  データベース: {path}",
     "cli_start": "スキャンの開始",
     "cli_path": "スキャンパス: {path}",
-    "cli_done": "完了！処理された本: {count}"
+    "cli_done": "完了！処理された本: {count}",
+    "db_added_description": "  + Added field: description",
+    "db_added_total_size": "  + Added field: total_size"
   },
   "ffmpeg_updater": {
     "title": "FFPROBEの更新 (FFMPEG)",

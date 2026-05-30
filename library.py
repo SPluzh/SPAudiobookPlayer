@@ -67,6 +67,7 @@ from utils import (
     format_time,
     format_time_short,
     format_duration,
+    format_size,
     OutputCapture,
 )
 from search_utils import smart_search
@@ -1032,6 +1033,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             container,
         ) = data[:12]
         description = data[12] if len(data) > 12 else ""
+        total_size = data[13] if len(data) > 13 else 0
 
         # Unpack status data for favorites and progress tracking
         status_data = index.data(Qt.ItemDataRole.UserRole + 3)
@@ -1315,6 +1317,11 @@ class MultiLineDelegate(QStyledItemDelegate):
         # STATUS INFO LINE (Files, Duration, Progress)
         info_parts = []
 
+        # Listening progress percentage
+        font_prog, color_prog = self._get_style("delegate_progress")
+        progress_text = trf("delegate.progress", percent=int(progress_percent))
+        info_parts.append((progress_text, font_prog, color_prog))
+
         # File list count
         if file_count:
             font_fc, color_fc = self._get_style("delegate_file_count")
@@ -1329,10 +1336,12 @@ class MultiLineDelegate(QStyledItemDelegate):
             )
             info_parts.append((duration_text, font_dur, color_dur))
 
-        # Listening progress percentage
-        font_prog, color_prog = self._get_style("delegate_progress")
-        progress_text = trf("delegate.progress", percent=int(progress_percent))
-        info_parts.append((progress_text, font_prog, color_prog))
+        # Total size metadata
+        if total_size:
+            font_sz, color_sz = self._get_style("delegate_file_count")
+            size_prefix = tr("delegate.size_prefix", default="💾")
+            size_text = f"{size_prefix} {format_size(total_size)}"
+            info_parts.append((size_text, font_sz, color_sz))
 
         # Technical Metadata (Bitrate, Mode, Codec/Container)
         if b_min or codec or container:
@@ -2187,6 +2196,7 @@ class LibraryWidget(QWidget):
                 data["bitrate_mode"],
                 data["container"],
                 data.get("description", ""),
+                data.get("total_size", 0),
             ),
         )
         # Store status flags for client-side filtering
@@ -2913,6 +2923,7 @@ class LibraryWidget(QWidget):
                     data["bitrate_mode"],
                     data["container"],
                     data.get("description", ""),
+                    data.get("total_size", 0),
                 ),
             )
             if "is_started" in data and "is_completed" in data:

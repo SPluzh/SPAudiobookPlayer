@@ -151,7 +151,8 @@
     "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "Kein Titel",
-    "separator": "•"
+    "separator": "•",
+    "size_prefix": "💾"
   },
   "settings": {
     "title": "Einstellungen",
@@ -295,7 +296,9 @@
     "db_file": "  Datenbank: {path}",
     "cli_start": "SCAN STARTEN",
     "cli_path": "Pfad zum Scannen: {path}",
-    "cli_done": "Fertig! Hörbücher verarbeitet: {count}"
+    "cli_done": "Fertig! Hörbücher verarbeitet: {count}",
+    "db_added_description": "  + Added field: description",
+    "db_added_total_size": "  + Added field: total_size"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE UPDATE (FFMPEG)",

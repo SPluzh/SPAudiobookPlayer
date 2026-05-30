@@ -151,7 +151,8 @@
     "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "Sans titre",
-    "separator": "•"
+    "separator": "•",
+    "size_prefix": "💾"
   },
   "settings": {
     "title": "Paramètres",
@@ -295,7 +296,9 @@
     "db_file": "  Base de données : {path}",
     "cli_start": "LANCEMENT DU SCAN",
     "cli_path": "Chemin à scanner : {path}",
-    "cli_done": "Terminé ! Livres audio traités : {count}"
+    "cli_done": "Terminé ! Livres audio traités : {count}",
+    "db_added_description": "  + Added field: description",
+    "db_added_total_size": "  + Added field: total_size"
   },
   "ffmpeg_updater": {
     "title": "MISE À JOUR FFPROBE (FFMPEG)",

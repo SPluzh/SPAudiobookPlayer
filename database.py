@@ -53,7 +53,8 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 state_hash TEXT,
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 is_favorite INTEGER DEFAULT 0,
-                is_merged INTEGER DEFAULT 0
+                is_merged INTEGER DEFAULT 0,
+                total_size INTEGER DEFAULT 0
             )
         """)
         
@@ -193,6 +194,14 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             c.execute("ALTER TABLE audiobooks ADD COLUMN description TEXT")
             if log_func:
                 log_func("scanner.db_added_description")
+        except sqlite3.OperationalError:
+            pass
+
+        # Migration: add total_size column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN total_size INTEGER DEFAULT 0")
+            if log_func:
+                log_func("scanner.db_added_total_size")
         except sqlite3.OperationalError:
             pass
 
@@ -435,7 +444,7 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent,
                 is_started, is_completed, is_available, is_expanded, last_updated,
                 codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                time_added, time_started, time_finished, is_favorite, is_merged, description, id
+                time_added, time_started, time_finished, is_favorite, is_merged, description, total_size, id
             '''
             
             columns_with_prefix = '''
@@ -443,7 +452,7 @@ class DatabaseManager:
                 p.is_folder, p.file_count, p.duration, p.listened_duration, p.progress_percent,
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
                 p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
-                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.description, p.id
+                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.description, p.total_size, p.id
             '''
             
             if filter_type == 'all':
@@ -517,7 +526,7 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent, \
                 is_started, is_completed, is_available, is_expanded, last_updated, \
                 codec, bitrate_min, bitrate_max, bitrate_mode, container, \
-                time_added, time_started, time_finished, is_favorite, is_merged, description, audiobook_id = row
+                time_added, time_started, time_finished, is_favorite, is_merged, description, total_size, audiobook_id = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -548,6 +557,7 @@ class DatabaseManager:
                     'is_favorite': bool(is_favorite),
                     'is_merged': bool(is_merged),
                     'description': description,
+                    'total_size': total_size or 0,
                     'id': audiobook_id
                 })
             
@@ -895,7 +905,7 @@ class DatabaseManager:
                        listened_duration, progress_percent, is_started, is_completed,
                        codec, bitrate_min, bitrate_max, bitrate_mode, container,
                        time_added, time_started, time_finished, is_favorite, description,
-                       cover_path, cached_cover_path
+                       cover_path, cached_cover_path, total_size
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -923,7 +933,8 @@ class DatabaseManager:
                     'is_favorite': bool(row[17]),
                     'description': row[18],
                     'cover_path': row[19],
-                    'cached_cover_path': row[20]
+                    'cached_cover_path': row[20],
+                    'total_size': row[21]
                 }
             return None
         except sqlite3.Error as e:

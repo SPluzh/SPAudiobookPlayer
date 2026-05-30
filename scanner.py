@@ -1620,16 +1620,25 @@ class AudiobookScanner:
                 current_state_hash = self._calculate_state_hash(files, cover_file_path, description_file_path)
                 
                 # Check for existing record and state hash
-                c.execute("SELECT id, state_hash, codec FROM audiobooks WHERE path = ?", (str(rel),))
+                c.execute("SELECT id, state_hash, codec, total_size FROM audiobooks WHERE path = ?", (str(rel),))
                 existing_row_data = c.fetchone()
                 
                 # Skip if valid existing record found and codec is populated
                 if existing_row_data:
+                    db_id = existing_row_data[0]
                     db_hash = existing_row_data[1]
                     db_codec = existing_row_data[2]
+                    db_total_size = existing_row_data[3]
                     
                     if db_hash == current_state_hash and db_codec is not None:
-                        c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing_row_data[0],))
+                        if not db_total_size:
+                            try:
+                                total_size = sum(f.stat().st_size for f in files)
+                            except Exception:
+                                total_size = 0
+                            c.execute("UPDATE audiobooks SET is_available = 1, total_size = ? WHERE id = ?", (total_size, db_id))
+                        else:
+                            c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (db_id,))
                         if verbose:
                             self._log_info(self.tr('scanner.skip_existing', path=rel), indent=2)
                         continue
@@ -1683,6 +1692,14 @@ class AudiobookScanner:
                     elif info['bitrate'] > 0:
                         cbr_detected = True
                 
+                # Calculate total aggregate file size
+                total_size = 0
+                for f in files:
+                    try:
+                        total_size += f.stat().st_size
+                    except Exception:
+                        pass
+
                 # Calculate aggregated stats
                 listened = 0 # Default if new
                 
@@ -1820,6 +1837,7 @@ class AudiobookScanner:
                             is_available = 1,
                             is_merged = ?,
                             description = ?,
+                            total_size = ?,
                             is_folder = 0
                         WHERE path = ?
                     """, (
@@ -1844,6 +1862,7 @@ class AudiobookScanner:
                         container,
                         1 if is_merged else 0,
                         description,
+                        total_size,
                         str(rel)
                     ))
                     book_id = existing_row[0]
@@ -1868,9 +1887,9 @@ class AudiobookScanner:
                             is_available,
                             state_hash,
                             codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                            time_added, is_merged, description
+                            time_added, is_merged, description, total_size
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
                     """, (
                         str(rel),
                         str(parent),
@@ -1900,7 +1919,8 @@ class AudiobookScanner:
                         bitrate_mode,
                         container,
                         1 if is_merged else 0,
-                        description
+                        description,
+                        total_size
                     ))
                     c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
                     book_id = c.fetchone()[0]
@@ -2082,14 +2102,23 @@ class AudiobookScanner:
         current_state_hash = self._calculate_state_hash([file_path], cover_file_path, description_file_path)
         
         # Check for existing
-        c.execute("SELECT id, state_hash, codec, cover_path, cached_cover_path FROM audiobooks WHERE path = ?", (str(rel),))
+        c.execute("SELECT id, state_hash, codec, cover_path, cached_cover_path, total_size FROM audiobooks WHERE path = ?", (str(rel),))
         existing_row_data = c.fetchone()
         
         if existing_row_data:
+            db_id = existing_row_data[0]
             db_hash = existing_row_data[1]
             db_codec = existing_row_data[2]
+            db_total_size = existing_row_data[5]
             if db_hash == current_state_hash and db_codec is not None:
-                c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing_row_data[0],))
+                if not db_total_size:
+                    try:
+                        total_size = file_path.stat().st_size
+                    except Exception:
+                        total_size = 0
+                    c.execute("UPDATE audiobooks SET is_available = 1, total_size = ? WHERE id = ?", (total_size, db_id))
+                else:
+                    c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (db_id,))
                 if verbose:
                     self._log_info(self.tr('scanner.skip_existing', path=rel), indent=2)
                 return
@@ -2169,6 +2198,13 @@ class AudiobookScanner:
             is_started = 0
             is_completed = 0
 
+        # Get standalone file size
+        total_size = 0
+        try:
+            total_size = file_path.stat().st_size
+        except Exception:
+            pass
+
         # Create/Update DB Record
         
         # Check if record already exists (again, to get ID)
@@ -2198,6 +2234,7 @@ class AudiobookScanner:
                     is_available = 1,
                     is_merged = 0,
                     description = ?,
+                    total_size = ?,
                     is_folder = 0
                 WHERE path = ?
             """, (
@@ -2221,6 +2258,7 @@ class AudiobookScanner:
                 bitrate_mode,
                 container,
                 tags.get('comment', ''),
+                total_size,
                 str(rel)
             ))
              book_id = existing_row_data[0]
@@ -2244,9 +2282,9 @@ class AudiobookScanner:
                     is_available,
                     state_hash,
                     codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                    time_added, is_merged, description
+                    time_added, is_merged, description, total_size
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?)
             """, (
                 str(rel),
                 str(parent),
@@ -2275,7 +2313,8 @@ class AudiobookScanner:
                 bitrate,
                 bitrate_mode,
                 container,
-                tags.get('comment', '')
+                tags.get('comment', ''),
+                total_size
             ))
             c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
             book_id = c.fetchone()[0]

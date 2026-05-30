@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.21]
+- **Library**: Added total file size tracking for audiobooks, displaying the formatted total book size (e.g. `💾 120.4 MB`) within the tree view.
+
 ## [1.6.20]
 - **Playback**: Added a floating real-time time tooltip that appears above the progress slider handle during manual seeking/scrubbing to show the target position.
 - **Playback**: Fixed an issue where dragging the seek slider all the way to the right edge would cause it to bounce back to the beginning or switch chapters.

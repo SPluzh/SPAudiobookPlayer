@@ -167,6 +167,7 @@
     "codec_prefix": "💽",
     "bitrate_prefix": "📊",
     "container_prefix": "📦",
+    "size_prefix": "💾",
     "progress": "▶ {percent}%",
     "no_title": "Без названия",
     "separator": "•"
@@ -273,6 +274,8 @@
     "db_added_column": "Добавлена колонка: {column}",
     "db_added_started": "Добавлена колонка is_started для отслеживания прогресса",
     "db_added_completed": "  + Добавлено поле: is_completed",
+    "db_added_description": "  + Добавлено поле: description",
+    "db_added_total_size": "  + Добавлено поле: total_size",
     "db_tables_ready": "  + Таблицы созданы/обновлены: audiobooks, audiobook_files",
     "db_indexes_ready": "  + Индексы созданы: parent_path, is_folder, is_started, is_completed, audiobook_id",
     "db_cascade_on": "  + Каскадное удаление: включено",

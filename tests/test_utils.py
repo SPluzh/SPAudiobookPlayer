@@ -1,5 +1,5 @@
 import pytest
-from utils import format_duration, format_time, format_time_short
+from utils import format_duration, format_time, format_time_short, format_size
 
 # Mocking trf for testing purposes since it depends on translations
 import utils
@@ -71,3 +71,21 @@ class TestFormatTimeShort:
     def test_large_duration(self):
         # 1 hour 5 sec -> 61:05 in MM:SS
         assert format_time_short(3665) == "61:05"
+
+
+class TestFormatSize:
+    def test_bytes(self):
+        assert format_size(500) == "500 B"
+        assert format_size(0) == "0 B"
+        
+    def test_kb(self):
+        assert format_size(1024) == "1.0 KB"
+        assert format_size(1536) == "1.5 KB"
+        
+    def test_mb(self):
+        assert format_size(1024 * 1024) == "1.0 MB"
+        assert format_size(int(2.5 * 1024 * 1024)) == "2.5 MB"
+        
+    def test_gb(self):
+        assert format_size(1024 * 1024 * 1024) == "1.0 GB"
+        assert format_size(int(10.25 * 1024 * 1024 * 1024)) == "10.2 GB"

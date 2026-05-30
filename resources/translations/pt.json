@@ -151,7 +151,8 @@
     "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "Sem título",
-    "separator": "•"
+    "separator": "•",
+    "size_prefix": "💾"
   },
   "settings": {
     "title": "Configurações",
@@ -295,7 +296,9 @@
     "db_file": "  Banco de dados: {path}",
     "cli_start": "INICIANDO ESCANEAMENTO",
     "cli_path": "Caminho para escanear: {path}",
-    "cli_done": "Concluído! Audiolivros processados: {count}"
+    "cli_done": "Concluído! Audiolivros processados: {count}",
+    "db_added_description": "  + Added field: description",
+    "db_added_total_size": "  + Added field: total_size"
   },
   "ffmpeg_updater": {
     "title": "ATUALIZAÇÃO DO FFPROBE (FFMPEG)",

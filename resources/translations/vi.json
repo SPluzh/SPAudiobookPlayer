@@ -169,7 +169,8 @@
     "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "Không tiêu đề",
-    "separator": "•"
+    "separator": "•",
+    "size_prefix": "💾"
   },
   "settings": {
     "title": "Cài đặt",
@@ -313,7 +314,9 @@
     "db_file": "  Cơ sở dữ liệu: {path}",
     "cli_start": "ĐANG KHỞI CHẠY QUÉT",
     "cli_path": "Đường dẫn quét: {path}",
-    "cli_done": "Xong! Số sách nói đã xử lý: {count}"
+    "cli_done": "Xong! Số sách nói đã xử lý: {count}",
+    "db_added_description": "  + Added field: description",
+    "db_added_total_size": "  + Added field: total_size"
   },
   "ffmpeg_updater": {
     "title": "CẬP NHẬT FFPROBE (FFMPEG)",

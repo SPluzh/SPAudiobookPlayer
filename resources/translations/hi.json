@@ -151,7 +151,8 @@
     "container_prefix": "📦",
     "progress": "▶ {percent}%",
     "no_title": "कोई शीर्षक नहीं",
-    "separator": "•"
+    "separator": "•",
+    "size_prefix": "💾"
   },
   "settings": {
     "title": "सेटिंग्स",
@@ -295,7 +296,9 @@
     "db_file": "  डेटाबेस: {path}",
     "cli_start": "स्कैन लॉन्च कर रहा है",
     "cli_path": "स्कैन करने के लिए पथ: {path}",
-    "cli_done": "हो गया! संसाधित ऑडियोबुक्स: {count}"
+    "cli_done": "हो गया! संसाधित ऑडियोबुक्स: {count}",
+    "db_added_description": "  + Added field: description",
+    "db_added_total_size": "  + Added field: total_size"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE अपडेट (FFMPEG)",
