@@ -202,7 +202,11 @@
     "from_tags": "Depuis les tags",
     "from_tags_tooltip": "Remplir les champs à partir des tags (ID3)",
     "save": "Enregistrer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "no_cover_text": "Pas de couverture",
+    "select_cover": "Sélectionner la couverture :",
+    "open_folder_tooltip": "Ouvrir le dossier contenant ce livre",
+    "refresh_covers_tooltip": "Rechercher de nouvelles couvertures dans le dossier"
   },
   "tags": {
     "edit_title": "Modifier l'étiquette",

@@ -202,7 +202,11 @@
     "from_tags": "从标签",
     "from_tags_tooltip": "从文件标签 (ID3) 填充字段",
     "save": "保存",
-    "cancel": "取消"
+    "cancel": "取消",
+    "no_cover_text": "无封面",
+    "select_cover": "选择封面:",
+    "open_folder_tooltip": "打开包含此书的文件夹",
+    "refresh_covers_tooltip": "扫描文件夹以获取新封面"
   },
   "tags": {
     "edit_title": "编辑标签",

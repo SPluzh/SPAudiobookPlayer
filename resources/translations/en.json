@@ -222,7 +222,9 @@
     "refresh_covers_tooltip": "Scan folder for new covers",
     "open_folder_tooltip": "Open folder containing this book",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "no_cover_text": "No Cover",
+    "select_cover": "Select Cover:"
   },
   "tags": {
     "edit_title": "Edit Tag",

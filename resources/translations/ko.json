@@ -202,7 +202,11 @@
     "from_tags": "태그에서 가져오기",
     "from_tags_tooltip": "파일 태그(ID3)에서 필드 채우기",
     "save": "저장",
-    "cancel": "취소"
+    "cancel": "취소",
+    "no_cover_text": "커버 없음",
+    "select_cover": "커버 선택:",
+    "open_folder_tooltip": "이 책이 포함된 폴더 열기",
+    "refresh_covers_tooltip": "새 커버를 위해 폴더 스캔"
   },
   "tags": {
     "edit_title": "태그 편집",

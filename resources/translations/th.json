@@ -220,7 +220,11 @@
     "from_tags": "จากแท็ก",
     "from_tags_tooltip": "ใส่ค่าจากแท็กไฟล์ (ID3)",
     "save": "บันทึก",
-    "cancel": "ยกเลิก"
+    "cancel": "ยกเลิก",
+    "no_cover_text": "ไม่มีปก",
+    "select_cover": "เลือกปก:",
+    "open_folder_tooltip": "เปิดโฟลเดอร์ที่มีหนังสือเล่มนี้",
+    "refresh_covers_tooltip": "สแกนโฟลเดอร์สำหรับปกใหม่"
   },
   "tags": {
     "edit_title": "แก้ไขแท็ก",

@@ -202,7 +202,11 @@
     "from_tags": "Aus Tags",
     "from_tags_tooltip": "Felder aus Datei-Tags (ID3) füllen",
     "save": "Speichern",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "no_cover_text": "Kein Cover",
+    "select_cover": "Cover auswählen:",
+    "open_folder_tooltip": "Ordner mit diesem Buch öffnen",
+    "refresh_covers_tooltip": "Ordner nach neuen Covern durchsuchen"
   },
   "tags": {
     "edit_title": "Tag bearbeiten",

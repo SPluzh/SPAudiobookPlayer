@@ -220,7 +220,11 @@
     "from_tags": "Từ Thẻ",
     "from_tags_tooltip": "Điền các trường từ thẻ tệp (ID3)",
     "save": "Lưu",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "no_cover_text": "Không có bìa",
+    "select_cover": "Chọn bìa:",
+    "open_folder_tooltip": "Mở thư mục chứa sách này",
+    "refresh_covers_tooltip": "Quét thư mục để tìm bìa mới"
   },
   "tags": {
     "edit_title": "Sửa thẻ",

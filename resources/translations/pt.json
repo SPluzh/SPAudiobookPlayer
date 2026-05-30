@@ -202,7 +202,11 @@
     "from_tags": "Das Tags",
     "from_tags_tooltip": "Preencher campos a partir das tags do arquivo (ID3)",
     "save": "Salvar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "no_cover_text": "Sem capa",
+    "select_cover": "Selecionar capa:",
+    "open_folder_tooltip": "Abrir pasta contendo este livro",
+    "refresh_covers_tooltip": "Escanear pasta para novas capas"
   },
   "tags": {
     "edit_title": "Editar Tag",

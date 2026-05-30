@@ -202,7 +202,11 @@
     "from_tags": "タグから取得",
     "from_tags_tooltip": "ファイルのタグ (ID3) からフィールドを埋める",
     "save": "保存",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "no_cover_text": "カバーなし",
+    "select_cover": "カバーを選択:",
+    "open_folder_tooltip": "この本が含まれるフォルダーを開く",
+    "refresh_covers_tooltip": "フォルダーをスキャンして新しいカバーを探す"
   },
   "tags": {
     "edit_title": "タグを編集",

@@ -220,7 +220,11 @@
     "from_tags": "Dari Tag",
     "from_tags_tooltip": "Isi bidang dari tag file (ID3)",
     "save": "Simpan",
-    "cancel": "Batal"
+    "cancel": "Batal",
+    "no_cover_text": "Tanpa Sampul",
+    "select_cover": "Pilih Sampul:",
+    "open_folder_tooltip": "Buka folder yang berisi buku ini",
+    "refresh_covers_tooltip": "Pindai folder untuk sampul baru"
   },
   "tags": {
     "edit_title": "Edit Tag",

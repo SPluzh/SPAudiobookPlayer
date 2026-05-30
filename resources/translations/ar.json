@@ -202,7 +202,11 @@
     "from_tags": "من العلامات",
     "from_tags_tooltip": "ملء الحقول من علامات الملف (ID3)",
     "save": "حفظ",
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "no_cover_text": "بدون غلاف",
+    "select_cover": "اختر الغلاف:",
+    "open_folder_tooltip": "افتح المجلد الذي يحتوي على هذا الكتاب",
+    "refresh_covers_tooltip": "مسح المجلد بحثًا عن أغلفة جديدة"
   },
   "tags": {
     "edit_title": "تعديل العلامة",

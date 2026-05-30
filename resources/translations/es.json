@@ -202,7 +202,11 @@
     "from_tags": "Desde etiquetas",
     "from_tags_tooltip": "Rellenar campos desde etiquetas de archivo (ID3)",
     "save": "Guardar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "no_cover_text": "Sin portada",
+    "select_cover": "Seleccionar portada:",
+    "open_folder_tooltip": "Abrir carpeta que contiene este libro",
+    "refresh_covers_tooltip": "Buscar nuevas portadas en la carpeta"
   },
   "tags": {
     "edit_title": "Editar etiqueta",

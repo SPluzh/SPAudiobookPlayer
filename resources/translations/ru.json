@@ -222,7 +222,9 @@
     "refresh_covers_tooltip": "Просканировать папку на наличие новых обложек",
     "open_folder_tooltip": "Открыть папку с книгой",
     "save": "Сохранить",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "no_cover_text": "Без обложки",
+    "select_cover": "Выберите обложку:"
   },
   "tags": {
     "edit_title": "Редактирование тега",

@@ -202,7 +202,11 @@
     "from_tags": "Etiketlerden",
     "from_tags_tooltip": "Alanları dosya etiketlerinden (ID3) doldur",
     "save": "Kaydet",
-    "cancel": "İptal"
+    "cancel": "İptal",
+    "no_cover_text": "Kapak Yok",
+    "select_cover": "Kapak Seç:",
+    "open_folder_tooltip": "Bu kitabı içeren klasörü aç",
+    "refresh_covers_tooltip": "Yeni kapaklar için klasörü tara"
   },
   "tags": {
     "edit_title": "Etiketi Düzenle",
