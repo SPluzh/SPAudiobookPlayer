@@ -115,22 +115,32 @@ class AboutDialog(QDialog):
         desc.setWordWrap(True)
         container_layout.addWidget(desc)
 
+        # Columns layout
+        columns_layout = QHBoxLayout()
+        columns_layout.setSpacing(30)
+        columns_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Left Column: Supported Formats & Hotkeys
+        left_column = QVBoxLayout()
+        left_column.setSpacing(10)
+        left_column.setAlignment(Qt.AlignmentFlag.AlignTop)
+
         # Supported Formats
         formats_title = QLabel(tr("about.supported_formats"))
         formats_title.setObjectName("aboutSectionTitle")
-        container_layout.addWidget(formats_title)
+        left_column.addWidget(formats_title)
 
         formats_content = QLabel(tr("about.formats_list"))
         formats_content.setObjectName("aboutSectionContent")
         formats_content.setWordWrap(True)
-        container_layout.addWidget(formats_content)
+        left_column.addWidget(formats_content)
 
-        container_layout.addSpacing(10)
+        left_column.addSpacing(15)
 
         # Hotkeys
         hotkeys_title = QLabel(tr("about.hotkeys_title", "Горячие клавиши:"))
         hotkeys_title.setObjectName("aboutSectionTitle")
-        container_layout.addWidget(hotkeys_title)
+        left_column.addWidget(hotkeys_title)
 
         hotkeys_content = QLabel(
             tr(
@@ -140,25 +150,34 @@ class AboutDialog(QDialog):
         )
         hotkeys_content.setObjectName("aboutSectionContent")
         hotkeys_content.setWordWrap(True)
-        container_layout.addWidget(hotkeys_content)
+        left_column.addWidget(hotkeys_content)
 
-        container_layout.addSpacing(10)
+        # Right Column: Recommended Library Structure
+        right_column = QVBoxLayout()
+        right_column.setSpacing(10)
+        right_column.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Library Hierarchy
         hierarchy_title = QLabel(tr("about.library_hierarchy_title"))
         hierarchy_title.setObjectName("aboutSectionTitle")
-        container_layout.addWidget(hierarchy_title)
+        right_column.addWidget(hierarchy_title)
 
         hierarchy_text = tr("about.library_hierarchy_text")
         hierarchy_content = QLabel(
-            f'<pre style="text-align: left;">{hierarchy_text}</pre>'
+            f'<pre style="text-align: left; margin: 0; font-family: monospace;">{hierarchy_text}</pre>'
         )
-        hierarchy_content.setObjectName("aboutSectionContent")
+        hierarchy_content.setObjectName("aboutRightContent")
         hierarchy_content.setTextFormat(Qt.TextFormat.RichText)
         hierarchy_content.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        container_layout.addWidget(hierarchy_content)
+        right_column.addWidget(hierarchy_content)
 
-        container_layout.addSpacing(10)
+        # Add columns to the main columns layout
+        columns_layout.addLayout(left_column, 1)
+        columns_layout.addLayout(right_column, 1)
+
+        container_layout.addLayout(columns_layout)
+
+        container_layout.addSpacing(15)
 
         # Close Button
         close_btn = QPushButton(tr("about.close"))

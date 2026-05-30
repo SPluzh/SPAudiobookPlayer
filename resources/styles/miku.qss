@@ -956,7 +956,7 @@ QFrame#aboutContainer {
     border: 1px solid @bg-main;
     border-radius: 3px;
     padding: 40px 30px 30px 30px; /* Replacing layout margins (T, R, B, L) */
-    min-width: 400px;
+    min-width: 780px;
 }
 
 #aboutContainer QLabel {
@@ -1086,12 +1086,21 @@ QLabel#aboutSectionTitle {
     font-weight: bold;
     color: @text-delegate;
     margin-top: 10px;
+    qproperty-alignment: 'AlignCenter';
 }
 
 QLabel#aboutSectionContent {
     font-size: 12px;
     color: @text-delegate;
+    qproperty-alignment: 'AlignCenter';
 }
+
+QLabel#aboutRightContent {
+    font-size: 12px;
+    color: @text-delegate;
+    qproperty-alignment: 'AlignLeft | AlignTop';
+}
+
 
 /* ============================================================
    TAGS DIALOG

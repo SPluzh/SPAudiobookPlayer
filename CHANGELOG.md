@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - **Metadata**: Added support for `.webp` audiobook cover images.
 - **Metadata**: Fixed an issue where custom selected covers could be reset or overwritten during library rescans.
 - **Metadata**: Fixed a bug where scanning or refreshing the folder of an audiobook could result in duplicate covers, prevent newly added covers (e.g., `cover.jpg`) from appearing, or fail to clear the cover image in the library after all cover images are deleted from the folder.
+- **UI**: Redesigned the "About" dialog into a wider two-column layout.
 
 ## [1.6.18]
 - **Statistics**: Guarded listening session recording against system sleep, hibernation, and OS freezes by ignoring sudden elapsed time jumps greater than 30 seconds.
