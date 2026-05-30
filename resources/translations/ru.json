@@ -27,6 +27,7 @@
     "collapse_all": "Свернуть все папки",
     "expand_all": "Развернуть все папки",
     "show_nesting_lines": "Показывать линии вложенности",
+    "show_detailed_info": "Показывать строку сведений у книг",
     "show_statusbar": "Показать строку статуса"
   },
   "bookmarks": {

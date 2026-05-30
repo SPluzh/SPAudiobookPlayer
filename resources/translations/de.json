@@ -27,7 +27,8 @@
     "collapse_all": "Alle Ordner einklappen",
     "expand_all": "Alle Ordner ausklappen",
     "show_nesting_lines": "Verschachtelungslinien anzeigen",
-    "show_statusbar": "Statusleiste anzeigen"
+    "show_statusbar": "Statusleiste anzeigen",
+    "show_detailed_info": "Buch-Informationszeile anzeigen"
   },
   "library": {
     "search_placeholder": "Suche nach Titel, Autor, Sprecher...",

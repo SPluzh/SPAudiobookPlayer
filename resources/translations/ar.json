@@ -27,7 +27,8 @@
     "collapse_all": "طي جميع المجلدات",
     "expand_all": "توسيع جميع المجلدات",
     "show_nesting_lines": "إظهار خطوط التداخل",
-    "show_statusbar": "إظهار شريط الحالة"
+    "show_statusbar": "إظهار شريط الحالة",
+    "show_detailed_info": "إظهار سطر معلومات الكتاب"
   },
   "library": {
     "search_placeholder": "بحث بالعنوان، المؤلف، الراوي...",

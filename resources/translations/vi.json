@@ -27,7 +27,8 @@
     "collapse_all": "Thu gọn tất cả thư mục",
     "expand_all": "Mở rộng tất cả thư mục",
     "show_nesting_lines": "Hiển thị đường lồng nhau",
-    "show_statusbar": "Hiển thị thanh trạng thái"
+    "show_statusbar": "Hiển thị thanh trạng thái",
+    "show_detailed_info": "Hiển thị dòng thông tin sách"
   },
   "bookmarks": {
     "edit_title": "Chỉnh sửa dấu trang",

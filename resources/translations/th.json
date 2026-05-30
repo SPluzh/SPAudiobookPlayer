@@ -27,7 +27,8 @@
     "collapse_all": "ยุบโฟลเดอร์ทั้งหมด",
     "expand_all": "ขยายโฟลเดอร์ทั้งหมด",
     "show_nesting_lines": "แสดงเส้นซ้อน",
-    "show_statusbar": "แสดงแถบสถานะ"
+    "show_statusbar": "แสดงแถบสถานะ",
+    "show_detailed_info": "แสดงแถบข้อมูลหนังสือ"
   },
   "bookmarks": {
     "edit_title": "แก้ไขที่คั่นหน้า",

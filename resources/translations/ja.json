@@ -27,7 +27,8 @@
     "collapse_all": "すべてのフォルダを折りたたむ",
     "expand_all": "すべてのフォルダを展開",
     "show_nesting_lines": "ネストラインを表示",
-    "show_statusbar": "ステータスバーを表示"
+    "show_statusbar": "ステータスバーを表示",
+    "show_detailed_info": "書籍情報行を表示"
   },
   "library": {
     "search_placeholder": "タイトル、著者、ナレーターで検索...",

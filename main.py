@@ -143,6 +143,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.last_pause_time = None
         self.show_visualizer = True
         self.show_nesting_lines = True
+        self.show_detailed_info = True
         self.show_statusbar = True
         self.normal_geometry = None
         self.normal_splitter_state = None
@@ -178,6 +179,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.delegate.folder_row_height = self.folder_row_height
             self.delegate.audiobook_icon_size = self.audiobook_icon_size
             self.delegate.show_nesting_lines = self.show_nesting_lines
+            self.delegate.show_detailed_info = self.show_detailed_info
         except Exception as e:
             print(f"Failed to create delegate: {e}")
 
@@ -496,6 +498,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.nesting_lines_action.triggered.connect(self.toggle_nesting_lines)
         view_menu.addAction(self.nesting_lines_action)
 
+        # Show Detailed Info Toggle
+        self.detailed_info_action = QAction(tr("menu.show_detailed_info"), self)
+        self.detailed_info_action.setCheckable(True)
+        self.detailed_info_action.setChecked(self.show_detailed_info)
+        self.detailed_info_action.triggered.connect(self.toggle_detailed_info)
+        view_menu.addAction(self.detailed_info_action)
+
         # Minimal Interface Toggle
         self.minimal_interface_action = QAction(tr("menu.minimal_interface"), self)
         self.minimal_interface_action.setCheckable(True)
@@ -600,6 +609,15 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_nesting_lines = checked
         if hasattr(self, "delegate") and self.delegate:
             self.delegate.show_nesting_lines = checked
+            if hasattr(self, "library_widget"):
+                self.library_widget.tree.viewport().update()
+        self.save_settings()
+
+    def toggle_detailed_info(self, checked: bool):
+        """Toggle the visibility of detailed info row in the library tree"""
+        self.show_detailed_info = checked
+        if hasattr(self, "delegate") and self.delegate:
+            self.delegate.show_detailed_info = checked
             if hasattr(self, "library_widget"):
                 self.library_widget.tree.viewport().update()
         self.save_settings()
@@ -973,6 +991,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_nesting_lines = config.getboolean(
             "Library", "show_nesting_lines", fallback=True
         )
+        self.show_detailed_info = config.getboolean(
+            "Library", "show_detailed_info", fallback=True
+        )
         self.library_filter_mode = config.get("Library", "filter_mode", fallback="all")
         self.library_favorites_active = config.getboolean(
             "Library", "favorites_active", fallback=False
@@ -1044,6 +1065,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "filter_mode": "all",
             "favorites_active": "False",
             "show_nesting_lines": "True",
+            "show_detailed_info": "True",
         }
         config["LastSession"] = {
             "last_audiobook_id": "0",
@@ -1131,6 +1153,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Library"]["show_folders"] = str(self.show_folders)
         config["Library"]["show_filter_labels"] = str(self.show_filter_labels)
         config["Library"]["show_nesting_lines"] = str(self.show_nesting_lines)
+        config["Library"]["show_detailed_info"] = str(self.show_detailed_info)
         if hasattr(self, "library_widget"):
             config["Library"]["tag_filter_active"] = str(
                 self.library_widget.is_tag_filter_active

@@ -605,6 +605,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.playing_path = None
         self.is_paused = True
         self.show_nesting_lines = True
+        self.show_detailed_info = True
 
         # UI state for interaction
         self.hovered_index = None
@@ -1382,7 +1383,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 info_parts.append((full_tech_text, font_tech, color_tech))
 
         # Draw consolidated info line with custom formatting/spacing
-        if info_parts:
+        if info_parts and getattr(self, "show_detailed_info", True):
             current_x = text_x
             for i, (text, font, color) in enumerate(info_parts):
                 painter.setFont(font)
@@ -1410,7 +1411,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                         tr("delegate.separator"),
                     )
 
-        text_y += line_height + self.line_spacing
+            text_y += line_height + self.line_spacing
 
         # Tags rendering
         tags = index.data(Qt.ItemDataRole.UserRole + 4)
