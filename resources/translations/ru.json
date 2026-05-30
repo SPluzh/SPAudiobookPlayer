@@ -169,7 +169,7 @@
     "bitrate_prefix": "📊",
     "container_prefix": "📦",
     "size_prefix": "💾",
-    "progress": "▶ {percent}%",
+    "progress": "{percent}%",
     "no_title": "Без названия",
     "separator": "•"
   },

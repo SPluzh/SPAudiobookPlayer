@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.6.21]
 - **Library**: Added total file size tracking for audiobooks, displaying the formatted total book size (e.g. `💾 120.4 MB`) within the tree view (requires a library rescan to populate sizes for existing audiobooks).
 - **UI**: Added a checkable option in the View menu to show or hide the detailed metadata row (progress, file count, duration, and size) for audiobooks in the library.
+- **UI**: Removed the triangle play icon (`▶`) prefix before progress percentages in the library view and refined the Russian translation for the toggle menu option to sound more natural.
 
 ## [1.6.20]
 - **Playback**: Added a floating real-time time tooltip that appears above the progress slider handle during manual seeking/scrubbing to show the target position.

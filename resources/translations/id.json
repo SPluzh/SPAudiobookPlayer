@@ -168,7 +168,7 @@
     "codec_prefix": "💽",
     "bitrate_prefix": "📊",
     "container_prefix": "📦",
-    "progress": "▶ {percent}%",
+    "progress": "{percent}%",
     "no_title": "Tanpa judul",
     "separator": "•",
     "size_prefix": "💾"

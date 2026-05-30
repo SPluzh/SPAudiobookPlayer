@@ -150,7 +150,7 @@
     "codec_prefix": "💽",
     "bitrate_prefix": "📊",
     "container_prefix": "📦",
-    "progress": "▶ {percent}%",
+    "progress": "{percent}%",
     "no_title": "无标题",
     "separator": "•",
     "size_prefix": "💾"
