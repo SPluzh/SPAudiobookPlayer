@@ -303,6 +303,24 @@ QPushButton#filterBtn:checked {
     font-weight: bold;
 }
 
+/* Metadata Cover Refresh Button */
+QPushButton#refreshCoversBtn {
+    background-color: @bg-dark;
+    border: 1px solid @border;
+    border-radius: 4px;
+    padding: 0px;
+}
+
+QPushButton#refreshCoversBtn:hover {
+    background-color: @accent;
+    border-color: @accent;
+}
+
+QPushButton#refreshCoversBtn:pressed {
+    background-color: @accent-dark;
+    border-color: @accent-dark;
+}
+
 /* ============================================================
    COMBO BOXES
    ============================================================ */

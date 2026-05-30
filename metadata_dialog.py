@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, 
     QPushButton, QDialogButtonBox, QMessageBox, QFormLayout,
-    QScrollArea, QWidget
+    QScrollArea, QWidget, QApplication
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, QRectF
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QPen, QColor
@@ -96,12 +96,23 @@ class MetadataEditDialog(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
-        # Cover selection section (at the top of the dialog)
-        self.covers = self.db.get_audiobook_covers(self.audiobook_id)
-        
         # Title/label for cover selection
         cover_label = QLabel(tr("metadata.select_cover", default="Select Cover:"))
         layout.addWidget(cover_label)
+        
+        # Horizontal layout to hold refresh button on the left and scroll_area on the right
+        covers_layout = QHBoxLayout()
+        covers_layout.setSpacing(10)
+        
+        # Refresh button to the left of the cover list
+        self.refresh_btn = QPushButton()
+        self.refresh_btn.setObjectName("refreshCoversBtn")
+        self.refresh_btn.setIcon(get_icon("menu_reload"))
+        self.refresh_btn.setIconSize(QSize(24, 24))
+        self.refresh_btn.setFixedSize(50, 50)
+        self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
+        self.refresh_btn.clicked.connect(self.on_refresh_covers)
+        covers_layout.addWidget(self.refresh_btn, 0, Qt.AlignmentFlag.AlignVCenter)
         
         # Scroll area for thumbnails
         scroll_area = QScrollArea()
@@ -113,44 +124,18 @@ class MetadataEditDialog(QDialog):
         
         scroll_content = QWidget()
         scroll_content.setObjectName("coverScrollContent")
-        scroll_layout = QHBoxLayout(scroll_content)
-        scroll_layout.setContentsMargins(5, 5, 5, 5)
-        scroll_layout.setSpacing(10)
+        self.scroll_layout = QHBoxLayout(scroll_content)
+        self.scroll_layout.setContentsMargins(5, 5, 5, 5)
+        self.scroll_layout.setSpacing(10)
         
         self.thumbnail_widgets = []
         
-        # Find currently selected cover
-        self.selected_cover_id = None
-        for cov in self.covers:
-            if cov['is_selected']:
-                self.selected_cover_id = cov['id']
-                
-        # Add covers
-        for cov in self.covers:
-            thumb = CoverThumbnailWidget(
-                cover_id=cov['id'],
-                image_path=cov['cached_path'],
-                is_selected=(cov['id'] == self.selected_cover_id),
-                parent=self
-            )
-            thumb.clicked.connect(self.on_cover_clicked)
-            scroll_layout.addWidget(thumb)
-            self.thumbnail_widgets.append(thumb)
-            
-        # Add "No Cover" option at the end
-        no_cover_thumb = CoverThumbnailWidget(
-            cover_id=None,
-            image_path=None,
-            is_selected=(self.selected_cover_id is None),
-            parent=self
-        )
-        no_cover_thumb.clicked.connect(self.on_cover_clicked)
-        scroll_layout.addWidget(no_cover_thumb)
-        self.thumbnail_widgets.append(no_cover_thumb)
+        # Load cover thumbnails
+        self.populate_covers()
         
-        scroll_layout.addStretch()
         scroll_area.setWidget(scroll_content)
-        layout.addWidget(scroll_area)
+        covers_layout.addWidget(scroll_area, 1)
+        layout.addLayout(covers_layout)
         
         # Form fields
         form_layout = QFormLayout()
@@ -276,6 +261,8 @@ class MetadataEditDialog(QDialog):
         self.setWindowTitle(tr("metadata.edit_title"))
         self.from_tags_btn.setText(tr("metadata.from_tags"))
         self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip"))
+        if hasattr(self, 'refresh_btn') and self.refresh_btn:
+            self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
 
     def get_data(self):
         """Return the entered metadata as a tuple"""
@@ -296,6 +283,110 @@ class MetadataEditDialog(QDialog):
         # Update selection status for all thumbnails
         for thumb in self.thumbnail_widgets:
             thumb.set_selected(thumb.cover_id == self.selected_cover_id)
+
+    def populate_covers(self):
+        """Load cover thumbnails from database and construct widgets"""
+        # Clear existing thumbnail widgets
+        if hasattr(self, 'thumbnail_widgets') and self.thumbnail_widgets:
+            for widget in self.thumbnail_widgets:
+                widget.deleteLater()
+        self.thumbnail_widgets = []
+        
+        # Clear layout contents
+        if hasattr(self, 'scroll_layout') and self.scroll_layout:
+            while self.scroll_layout.count():
+                item = self.scroll_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
+                    
+        # Load covers from database
+        self.covers = self.db.get_audiobook_covers(self.audiobook_id)
+        
+        # Find currently selected cover
+        self.selected_cover_id = None
+        for cov in self.covers:
+            if cov['is_selected']:
+                self.selected_cover_id = cov['id']
+                
+        # Add covers
+        for cov in self.covers:
+            thumb = CoverThumbnailWidget(
+                cover_id=cov['id'],
+                image_path=cov['cached_path'],
+                is_selected=(cov['id'] == self.selected_cover_id),
+                parent=self
+            )
+            thumb.clicked.connect(self.on_cover_clicked)
+            self.scroll_layout.addWidget(thumb)
+            self.thumbnail_widgets.append(thumb)
+            
+        # Add "No Cover" option at the end
+        no_cover_thumb = CoverThumbnailWidget(
+            cover_id=None,
+            image_path=None,
+            is_selected=(self.selected_cover_id is None),
+            parent=self
+        )
+        no_cover_thumb.clicked.connect(self.on_cover_clicked)
+        self.scroll_layout.addWidget(no_cover_thumb)
+        self.thumbnail_widgets.append(no_cover_thumb)
+        
+        self.scroll_layout.addStretch()
+
+    def on_refresh_covers(self):
+        """Scan the current audiobook folder for new covers and refresh the list"""
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        
+        try:
+            import sqlite3
+            from scanner import AudiobookScanner
+            
+            # Fetch the audiobook path and selected cover path from DB
+            conn = sqlite3.connect(self.db.db_file)
+            cursor = conn.cursor()
+            cursor.execute("SELECT path, cached_cover_path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+            row = cursor.fetchone()
+            
+            if row:
+                relative_path, current_cached_cover = row[0], row[1]
+                
+                # Reconstruct the absolute path of the audiobook
+                library_root = ""
+                if self.parent() and hasattr(self.parent(), 'config') and self.parent().config:
+                    library_root = self.parent().config.get("default_path", "")
+                
+                if not library_root:
+                    import configparser
+                    from utils import get_base_path
+                    config = configparser.ConfigParser()
+                    config_file = get_base_path() / "resources" / "settings.ini"
+                    if config_file.exists():
+                        config.read(config_file, encoding='utf-8')
+                        library_root = config.get('Paths', 'library_path', fallback='')
+                
+                if library_root:
+                    absolute_path = Path(library_root) / relative_path
+                    if absolute_path.exists():
+                        # Instantiate AudiobookScanner and run rescanning of covers
+                        scanner = AudiobookScanner()
+                        scanner._scan_and_save_all_covers(
+                            conn=conn,
+                            directory=absolute_path,
+                            key=relative_path,
+                            audiobook_id=self.audiobook_id,
+                            selected_cover_cached_path=current_cached_cover
+                        )
+                        conn.commit()
+            conn.close()
+            
+            # Refresh UI
+            self.populate_covers()
+            
+        except Exception as e:
+            QMessageBox.critical(self, tr("error"), f"Failed to refresh covers: {e}")
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def accept(self):
         """Save selected cover and close the dialog"""

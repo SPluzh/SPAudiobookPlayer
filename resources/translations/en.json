@@ -219,6 +219,7 @@
     "narrator": "Narrator:",
     "from_tags": "From Tags",
     "from_tags_tooltip": "Fill fields from file tags (ID3)",
+    "refresh_covers_tooltip": "Scan folder for new covers",
     "save": "Save",
     "cancel": "Cancel"
   },

@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.6.19]
 - **Metadata**: Added support for choosing a book cover in the metadata edit dialog when multiple covers are available.
+- **Metadata**: Added a **Refresh** button next to covers in the metadata edit dialog to rescan the audiobook's directory for new cover files on demand.
 
 ## [1.6.18]
 - **Statistics**: Guarded listening session recording against system sleep, hibernation, and OS freezes by ignoring sudden elapsed time jumps greater than 30 seconds.
