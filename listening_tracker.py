@@ -71,7 +71,17 @@ class ListeningTracker:
         if self.last_update_time:
             # Calculate elapsed real time (wall clock time)
             elapsed = (now - self.last_update_time).total_seconds()
-            
+
+            # Guard against time jumps caused by system sleep/hibernation or OS freeze.
+            # The timer fires every ~100ms, so any gap larger than MAX_ELAPSED_SECONDS
+            # means the system was suspended and the interval should be discarded.
+            MAX_ELAPSED_SECONDS = 30.0
+            if elapsed > MAX_ELAPSED_SECONDS:
+                print(f"[ListeningTracker] Time jump detected ({elapsed:.1f}s). "
+                      f"Discarding interval (sleep/hibernation guard).")
+                self.last_update_time = now
+                return
+
             # Accumulate actual listening time (not affected by playback speed)
             # We track REAL time spent listening, not content time
             self.accumulated_seconds += elapsed

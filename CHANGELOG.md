@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.18]
+- **Statistics**: Guarded listening session recording against system sleep, hibernation, and OS freezes by ignoring sudden elapsed time jumps greater than 30 seconds.
+
 ## [1.6.17]
 - **Audio Controls**: Added **Volume Boost** button (**VB**) — amplifies volume up to 400%, adjustable via right-click slider (200/300/400%).
 - **UI**: Added **Show Status Bar** toggle to the **View** menu — status bar visibility is now remembered across restarts.
