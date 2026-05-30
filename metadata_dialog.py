@@ -428,6 +428,16 @@ class MetadataEditDialog(QDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+    def apply_blur(self):
+        """Proxy blur request to parent window if supported"""
+        if self.parent() and hasattr(self.parent(), 'apply_blur'):
+            self.parent().apply_blur()
+
+    def remove_blur(self):
+        """Proxy blur remove request to parent window if supported"""
+        if self.parent() and hasattr(self.parent(), 'remove_blur'):
+            self.parent().remove_blur()
+
     def accept(self):
         """Save selected cover and close the dialog"""
         self.db.set_selected_audiobook_cover(self.audiobook_id, self.selected_cover_id)

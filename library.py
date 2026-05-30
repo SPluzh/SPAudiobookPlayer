@@ -2648,6 +2648,7 @@ class LibraryWidget(QWidget):
     def open_metadata_editor(self, audiobook_id: int, path: str):
         """Open dialog to edit audiobook metadata (author, title, narrator)"""
         dialog = MetadataEditDialog(self.db, audiobook_id, self)
+        self.apply_blur()
         if dialog.exec():
             # Get updated data
             author, title, narrator = dialog.get_data()
@@ -2661,6 +2662,7 @@ class LibraryWidget(QWidget):
             # If currently filtered by text, re-apply filter in case metadata changed visibility
             if self.search_edit.text():
                 self.filter_audiobooks()
+        self.remove_blur()
 
     def confirm_delete(self, audiobook_id: int, path: str):
         """Ask for user confirmation before proceeding with book deletion"""
@@ -3006,6 +3008,24 @@ class LibraryWidget(QWidget):
                     tr(f"library.tooltip_filter_{filter_id}")
                 )
         self.search_edit.setPlaceholderText(tr("library.search_placeholder"))
+
+    def apply_blur(self):
+        """Walk parent chain to find and call apply_blur on the main window"""
+        p = self.parent()
+        while p:
+            if hasattr(p, 'apply_blur'):
+                p.apply_blur()
+                return
+            p = p.parent()
+
+    def remove_blur(self):
+        """Walk parent chain to find and call remove_blur on the main window"""
+        p = self.parent()
+        while p:
+            if hasattr(p, 'remove_blur'):
+                p.remove_blur()
+                return
+            p = p.parent()
 
     def collapse_all_folders(self):
         """Collapse all folders in the library tree"""
