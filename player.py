@@ -464,6 +464,8 @@ class PlayerWidget(QWidget):
         self.show_id3 = False
         self.visualizer = None # Deprecated
         self.slider_dragging = False
+        self.current_file_duration = 0.0
+        self.current_speed = 1.0
         
         # State variables for presets (default to Medium=1)
         self.deesser_preset = 1
@@ -865,6 +867,12 @@ class PlayerWidget(QWidget):
         self.file_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.file_list.itemDoubleClicked.connect(self.on_file_double_clicked)
         layout.addWidget(self.file_list)
+        
+        # Seek Tooltip
+        self.seek_tooltip = QLabel(self)
+        self.seek_tooltip.setObjectName("seekTooltip")
+        self.seek_tooltip.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.seek_tooltip.hide()
     
     def create_button(self, object_name: str, tooltip: str, icon_size: QSize) -> QPushButton:
         btn = QPushButton()
@@ -895,15 +903,71 @@ class PlayerWidget(QWidget):
         self.speed_changed.emit(value)
     
     def on_position_pressed(self):
+        if self.current_file_duration <= 0:
+            return
         self.slider_dragging = True
+        self._update_seek_tooltip(self.position_slider.value())
+        self.seek_tooltip.show()
     
     def on_position_released(self):
+        self.seek_tooltip.hide()
+        if not self.slider_dragging:
+            return
         self.slider_dragging = False
         val = min(self.position_slider.value(), 999)
         self.position_changed.emit(val / 1000.0)
     
     def on_position_moved(self, value: int):
-        pass
+        if self.current_file_duration <= 0:
+            return
+        self._update_seek_tooltip(value)
+        self.seek_tooltip.show()
+        
+    def _update_seek_tooltip(self, value: int):
+        """Calculate, format, and position the seek tooltip above the slider handle"""
+        if self.current_file_duration <= 0:
+            return
+
+        # Calculate time based on slider value (0-1000 range)
+        fraction = value / 1000.0
+        time_sec = fraction * self.current_file_duration
+
+        # Adjust display time by speed for real listening time, to match time_current
+        display_time = time_sec / self.current_speed if self.current_speed > 0 else time_sec
+
+        # Format text
+        if self.current_file_duration >= 3600:
+            text = format_time(display_time)
+        else:
+            text = format_time_short(display_time)
+        self.seek_tooltip.setText(text)
+        self.seek_tooltip.adjustSize()
+
+        # Calculate horizontal handle position
+        opt = QStyleOptionSlider()
+        self.position_slider.initStyleOption(opt)
+        slider_len = self.position_slider.style().pixelMetric(
+            QStyle.PixelMetric.PM_SliderLength, opt, self.position_slider
+        )
+        available_width = self.position_slider.width() - slider_len
+        
+        if available_width > 0:
+            x_local = int(fraction * available_width) + (slider_len // 2)
+        else:
+            x_local = slider_len // 2
+
+        # Map local slider coordinates to PlayerWidget (self)
+        tooltip_width = self.seek_tooltip.sizeHint().width()
+        tooltip_height = self.seek_tooltip.sizeHint().height()
+
+        parent_pos = self.position_slider.mapTo(self, QPoint(x_local, 0))
+        x_parent = parent_pos.x() - (tooltip_width // 2)
+        y_parent = parent_pos.y() - tooltip_height - 6  # 6px spacing above the slider
+
+        # Ensure the tooltip stays within PlayerWidget horizontal bounds
+        x_parent = max(5, min(x_parent, self.width() - tooltip_width - 5))
+
+        self.seek_tooltip.move(x_parent, y_parent)
     
     def on_file_double_clicked(self, item):
         index = self.file_list.row(item)
@@ -914,6 +978,8 @@ class PlayerWidget(QWidget):
         self.play_btn.setToolTip(tr("player.pause") if is_playing else tr("player.play"))
     
     def update_file_progress(self, position: float, duration: float, speed: float = 1.0):
+        self.current_file_duration = duration
+        self.current_speed = speed
         if not self.slider_dragging:
             display_pos = position / speed if speed > 0 else position
             if duration >= 3600:

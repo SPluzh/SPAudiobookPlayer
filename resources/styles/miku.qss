@@ -1300,3 +1300,14 @@ QScrollArea#coverScrollArea {
 QWidget#coverScrollContent {
     background-color: transparent;
 }
+
+QLabel#seekTooltip {
+    background-color: @bg-dark;
+    color: @text-bright;
+    border: 1px solid @accent;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: bold;
+}

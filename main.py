@@ -1529,6 +1529,9 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def on_position_changed(self, normalized: float):
         """Seek to a specific temporal position within the active chapter based on normalized slider input"""
+        if not self.playback_controller.files_list or self.playback_controller.current_file_index < 0 or self.playback_controller.current_file_index >= len(self.playback_controller.files_list):
+            return
+            
         current_file_info = self.playback_controller.files_list[
             self.playback_controller.current_file_index
         ]
