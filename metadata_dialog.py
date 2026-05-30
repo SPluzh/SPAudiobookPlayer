@@ -100,9 +100,24 @@ class MetadataEditDialog(QDialog):
         cover_label = QLabel(tr("metadata.select_cover", default="Select Cover:"))
         layout.addWidget(cover_label)
         
-        # Horizontal layout to hold refresh button on the left and scroll_area on the right
+        # Horizontal layout to hold button panel on the left and scroll_area on the right
         covers_layout = QHBoxLayout()
         covers_layout.setSpacing(10)
+        
+        # Vertical button layout
+        buttons_layout = QVBoxLayout()
+        buttons_layout.setSpacing(10)
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Open folder button
+        self.open_folder_btn = QPushButton()
+        self.open_folder_btn.setObjectName("openFolderBtn")
+        self.open_folder_btn.setIcon(get_icon("context_open_folder"))
+        self.open_folder_btn.setIconSize(QSize(24, 24))
+        self.open_folder_btn.setFixedSize(50, 50)
+        self.open_folder_btn.setToolTip(tr("metadata.open_folder_tooltip", default="Open folder containing this book"))
+        self.open_folder_btn.clicked.connect(self.on_open_folder)
+        buttons_layout.addWidget(self.open_folder_btn)
         
         # Refresh button to the left of the cover list
         self.refresh_btn = QPushButton()
@@ -112,7 +127,9 @@ class MetadataEditDialog(QDialog):
         self.refresh_btn.setFixedSize(50, 50)
         self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
         self.refresh_btn.clicked.connect(self.on_refresh_covers)
-        covers_layout.addWidget(self.refresh_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+        buttons_layout.addWidget(self.refresh_btn)
+        
+        covers_layout.addLayout(buttons_layout)
         
         # Scroll area for thumbnails
         scroll_area = QScrollArea()
@@ -263,6 +280,8 @@ class MetadataEditDialog(QDialog):
         self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip"))
         if hasattr(self, 'refresh_btn') and self.refresh_btn:
             self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
+        if hasattr(self, 'open_folder_btn') and self.open_folder_btn:
+            self.open_folder_btn.setToolTip(tr("metadata.open_folder_tooltip", default="Open folder containing this book"))
 
     def get_data(self):
         """Return the entered metadata as a tuple"""
@@ -333,6 +352,28 @@ class MetadataEditDialog(QDialog):
         self.thumbnail_widgets.append(no_cover_thumb)
         
         self.scroll_layout.addStretch()
+
+    def on_open_folder(self):
+        """Open the folder containing the current audiobook in the OS file explorer by reusing the parent's open_folder method"""
+        try:
+            import sqlite3
+            from utils import tr
+            
+            conn = sqlite3.connect(self.db.db_file)
+            cursor = conn.cursor()
+            cursor.execute("SELECT path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+            row = cursor.fetchone()
+            conn.close()
+            
+            if row:
+                relative_path = row[0]
+                if self.parent() and hasattr(self.parent(), 'open_folder'):
+                    self.parent().open_folder(relative_path)
+                else:
+                    QMessageBox.warning(self, tr("window.title"), "Parent window cannot open the folder.")
+        except Exception as e:
+            from utils import tr
+            QMessageBox.critical(self, tr("window.title"), f"Error opening folder: {e}")
 
     def on_refresh_covers(self):
         """Scan the current audiobook folder for new covers and refresh the list"""

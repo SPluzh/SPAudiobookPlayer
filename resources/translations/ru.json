@@ -220,6 +220,7 @@
     "from_tags": "Из тегов",
     "from_tags_tooltip": "Заполнить из тегов файла (ID3)",
     "refresh_covers_tooltip": "Просканировать папку на наличие новых обложек",
+    "open_folder_tooltip": "Открыть папку с книгой",
     "save": "Сохранить",
     "cancel": "Отмена"
   },
