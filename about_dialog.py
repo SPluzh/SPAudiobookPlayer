@@ -163,9 +163,8 @@ class AboutDialog(QDialog):
         right_column.addWidget(hierarchy_title)
 
         hierarchy_text = tr("about.library_hierarchy_text")
-        hierarchy_content = QLabel(
-            f'<pre style="text-align: left; margin: 0; font-family: monospace;">{hierarchy_text}</pre>'
-        )
+        hierarchy_html = hierarchy_text.replace(" ", "&nbsp;").replace("\n", "<br>")
+        hierarchy_content = QLabel(hierarchy_html)
         hierarchy_content.setObjectName("aboutRightContent")
         hierarchy_content.setTextFormat(Qt.TextFormat.RichText)
         hierarchy_content.setAlignment(Qt.AlignmentFlag.AlignLeft)
