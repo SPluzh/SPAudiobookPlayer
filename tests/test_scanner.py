@@ -91,3 +91,84 @@ class TestTranslation:
     def test_formatting(self, mock_scanner):
         mock_scanner.translations = {"greet": "Hello {name}"}
         assert mock_scanner.tr("greet", name="World") == "Hello World"
+
+
+class TestScanAndSaveAllCovers:
+    """Tests for _scan_and_save_all_covers method"""
+    
+    @pytest.fixture
+    def conn(self):
+        import sqlite3
+        conn = sqlite3.connect(":memory:")
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE audiobook_covers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                audiobook_id INTEGER,
+                original_path TEXT,
+                cached_path TEXT,
+                is_selected INTEGER,
+                source_type TEXT
+            )
+        """)
+        conn.commit()
+        yield conn
+        conn.close()
+
+    def test_scan_and_save_covers_embedded_to_file_transition(self, mock_scanner, conn, temp_dir):
+        # Setup temporary directories and files
+        audiobook_id = 42
+        key = "test_key"
+        
+        # Mock covers_dir
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+        
+        # Create an existing embedded cover row that is selected
+        c = conn.cursor()
+        import hashlib
+        safe_name = hashlib.md5(key.encode()).hexdigest()
+        
+        old_cached_path = str(mock_scanner.covers_dir / f"{safe_name}.jpg")
+        # Touch the old cached file so Path.exists() is true
+        with open(old_cached_path, 'wb') as f:
+            f.write(b"fake image data")
+            
+        c.execute("""
+            INSERT INTO audiobook_covers (audiobook_id, original_path, cached_path, is_selected, source_type)
+            VALUES (?, ?, ?, ?, ?)
+        """, (audiobook_id, None, old_cached_path, 1, 'embedded'))
+        conn.commit()
+        
+        # Now place a new cover.jpg in the audiobook directory
+        book_dir = temp_dir / "my_book"
+        book_dir.mkdir()
+        new_cover_path = book_dir / "cover.jpg"
+        with open(new_cover_path, 'wb') as f:
+            f.write(b"new fake image data")
+            
+        # Run scan and save all covers
+        mock_scanner._scan_and_save_all_covers(
+            conn=conn,
+            directory=str(book_dir),
+            key=key,
+            audiobook_id=audiobook_id,
+            selected_cover_cached_path=old_cached_path
+        )
+        
+        # Query covers
+        c.execute("SELECT original_path, cached_path, is_selected, source_type FROM audiobook_covers ORDER BY id")
+        rows = c.fetchall()
+        
+        # We expect the newly discovered cover.jpg, which should NOT be selected because the old selected cover was embedded.
+        assert len(rows) > 0
+        
+        cover_jpg_row = None
+        for r in rows:
+            if r[0] == str(new_cover_path):
+                cover_jpg_row = r
+                break
+                
+        assert cover_jpg_row is not None
+        # Check that it is NOT selected (is_selected = 0)
+        assert cover_jpg_row[2] == 0

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - **Metadata**: Unified all action buttons (Open Folder, Refresh, and From Tags) into a compact vertical panel.
 - **Metadata**: Added support for `.webp` audiobook cover images.
 - **Metadata**: Fixed an issue where custom selected covers could be reset or overwritten during library rescans.
+- **Metadata**: Fixed a bug where scanning or refreshing the folder of an audiobook with an embedded cover could result in duplicate old covers or prevent a newly added cover (e.g., `cover.jpg`) from appearing.
 
 ## [1.6.18]
 - **Statistics**: Guarded listening session recording against system sleep, hibernation, and OS freezes by ignoring sudden elapsed time jumps greater than 30 seconds.

@@ -974,6 +974,37 @@ class AudiobookScanner:
         """
         c = conn.cursor()
         
+        # Get existing covers to match them and preserve details before deleting
+        selected_orig_path = None
+        selected_source_type = None
+        selected_cached_path = None
+        
+        try:
+            c.execute("""
+                SELECT original_path, cached_path, source_type, is_selected 
+                FROM audiobook_covers 
+                WHERE audiobook_id = ?
+            """, (audiobook_id,))
+            existing_covers = c.fetchall()
+            
+            for orig_p, cached_p, src_type, is_sel in existing_covers:
+                if is_sel:
+                    selected_orig_path = orig_p
+                    selected_cached_path = cached_p
+                    selected_source_type = src_type
+                    break
+                    
+            if not selected_cached_path and selected_cover_cached_path:
+                for orig_p, cached_p, src_type, is_sel in existing_covers:
+                    if cached_p == selected_cover_cached_path:
+                        selected_orig_path = orig_p
+                        selected_cached_path = cached_p
+                        selected_source_type = src_type
+                        break
+        except Exception as e:
+            self._log_error(f"Error querying existing covers: {e}")
+            existing_covers = []
+            
         # 1. Clear existing covers for this audiobook to avoid duplicate entries
         c.execute("DELETE FROM audiobook_covers WHERE audiobook_id = ?", (audiobook_id,))
         
@@ -1077,14 +1108,24 @@ class AudiobookScanner:
         if selected_cover_cached_path and Path(selected_cover_cached_path).exists():
             has_selected_cover = True
             selected_filename = Path(selected_cover_cached_path).name.lower()
-            for idx, p in enumerate(file_covers):
-                ext = p.suffix.lower()
-                image_hash = hashlib.md5(str(p).encode()).hexdigest()[:8]
-                filename_hashed = f"{safe_name}_{image_hash}{ext}".lower()
-                filename_default = f"{safe_name}{ext}".lower()
-                if selected_filename in (filename_hashed, filename_default):
-                    selected_file_idx = idx
-                    break
+            
+            # Try to match by original path first if we have the existing covers info and the type matches
+            if selected_orig_path and selected_source_type == 'file':
+                for idx, p in enumerate(file_covers):
+                    if str(p) == selected_orig_path:
+                        selected_file_idx = idx
+                        break
+            
+            # Fallback to name/hash matching only if not matched by original path AND old cover was not embedded
+            if selected_file_idx == -1 and selected_source_type != 'embedded':
+                for idx, p in enumerate(file_covers):
+                    ext = p.suffix.lower()
+                    image_hash = hashlib.md5(str(p).encode()).hexdigest()[:8]
+                    filename_hashed = f"{safe_name}_{image_hash}{ext}".lower()
+                    filename_default = f"{safe_name}{ext}".lower()
+                    if selected_filename in (filename_hashed, filename_default):
+                        selected_file_idx = idx
+                        break
         
         # If there is no pre-selected cover at all (fresh scan), default to idx 0 of file covers (if any)
         if not has_selected_cover and file_covers:
@@ -1157,8 +1198,17 @@ class AudiobookScanner:
                         
                         is_selected = 0
                         if has_selected_cover:
-                            if selected_filename in (filename_hashed, filename_default):
-                                is_selected = 1
+                            cand_hashed = str(self.covers_dir / f"{safe_name}_emb_{short_hash}.jpg")
+                            cand_default = str(self.covers_dir / f"{safe_name}.jpg")
+                            
+                            # If we have existing cover records, prefer matching by source type and cached path
+                            if selected_source_type == 'embedded' and selected_cached_path:
+                                if selected_cached_path in (cand_hashed, cand_default):
+                                    is_selected = 1
+                            elif selected_source_type != 'file':
+                                # Fallback to filename matching only if the old cover was not a file cover
+                                if selected_filename in (filename_hashed, filename_default):
+                                    is_selected = 1
                         elif not inserted_covers:
                             is_selected = 1
                             
