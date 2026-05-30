@@ -1070,21 +1070,40 @@ class AudiobookScanner:
         # 3. Process the file covers
         inserted_covers = []
         
+        # Determine if any of the files is the selected one
+        selected_file_idx = -1
+        has_selected_cover = False
+        selected_filename = None
+        if selected_cover_cached_path and Path(selected_cover_cached_path).exists():
+            has_selected_cover = True
+            selected_filename = Path(selected_cover_cached_path).name.lower()
+            for idx, p in enumerate(file_covers):
+                ext = p.suffix.lower()
+                image_hash = hashlib.md5(str(p).encode()).hexdigest()[:8]
+                filename_hashed = f"{safe_name}_{image_hash}{ext}".lower()
+                filename_default = f"{safe_name}{ext}".lower()
+                if selected_filename in (filename_hashed, filename_default):
+                    selected_file_idx = idx
+                    break
+        
+        # If there is no pre-selected cover at all (fresh scan), default to idx 0 of file covers (if any)
+        if not has_selected_cover and file_covers:
+            selected_file_idx = 0
+            
         for idx, p in enumerate(file_covers):
             ext = p.suffix.lower()
             original_path_str = str(p)
             
-            # The selected/first cover uses the standard non-prefixed name to align with audiobooks table
-            if idx == 0:
+            is_selected = 1 if idx == selected_file_idx else 0
+            
+            if is_selected:
                 if selected_cover_cached_path and Path(selected_cover_cached_path).exists():
                     cached_path_str = selected_cover_cached_path
-                    is_selected = 1
                 else:
                     dest_path = self.covers_dir / f"{safe_name}{ext}"
                     success = cache_original_file(p, dest_path)
                     if success:
                         cached_path_str = str(dest_path)
-                        is_selected = 1
                     else:
                         continue
             else:
@@ -1095,7 +1114,6 @@ class AudiobookScanner:
                 success = cache_original_file(p, dest_path)
                 if success:
                     cached_path_str = str(dest_path)
-                    is_selected = 0
                 else:
                     continue
             
@@ -1133,17 +1151,23 @@ class AudiobookScanner:
                         seen_embedded_hashes.add(data_hash)
                         
                         # Cache embedded file
-                        # If selected (meaning no file covers and this is the first embedded cover)
+                        short_hash = data_hash[:8]
+                        filename_hashed = f"{safe_name}_emb_{short_hash}.jpg".lower()
+                        filename_default = f"{safe_name}.jpg".lower()
+                        
                         is_selected = 0
-                        if not inserted_covers:
+                        if has_selected_cover:
+                            if selected_filename in (filename_hashed, filename_default):
+                                is_selected = 1
+                        elif not inserted_covers:
+                            is_selected = 1
+                            
+                        if is_selected:
                             if selected_cover_cached_path and Path(selected_cover_cached_path).exists():
                                 cached_path_str = selected_cover_cached_path
-                                is_selected = 1
                             else:
                                 cached_path_str = str(self.covers_dir / f"{safe_name}.jpg")
-                                is_selected = 1
                         else:
-                            short_hash = data_hash[:8]
                             cached_path_str = str(self.covers_dir / f"{safe_name}_emb_{short_hash}.jpg")
                             
                         success = cache_embedded_data(img_data, cached_path_str)
