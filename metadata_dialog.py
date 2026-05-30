@@ -64,9 +64,9 @@ class CoverThumbnailWidget(QLabel):
                 except Exception:
                     accent_color = QColor("#2ecc71") # Fallback emerald green
                 
-                pen = QPen(accent_color, 3)
+                pen = QPen(accent_color, 4)
                 painter.setPen(pen)
-                border_rect = QRectF(1.5, 1.5, self.width() - 3, self.height() - 3)
+                border_rect = QRectF(2.0, 2.0, self.width() - 4.0, self.height() - 4.0)
                 painter.drawRoundedRect(border_rect, 4, 4)
             finally:
                 painter.end()
@@ -96,51 +96,6 @@ class MetadataEditDialog(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
-        # Title/label for cover selection
-        cover_label = QLabel(tr("metadata.select_cover", default="Select Cover:"))
-        layout.addWidget(cover_label)
-        
-        # Horizontal layout to hold button panel on the left and scroll_area on the right
-        covers_layout = QHBoxLayout()
-        covers_layout.setSpacing(10)
-        
-        # Vertical button layout
-        buttons_layout = QVBoxLayout()
-        buttons_layout.setSpacing(4)
-        buttons_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # Open folder button
-        self.open_folder_btn = QPushButton()
-        self.open_folder_btn.setObjectName("openFolderBtn")
-        self.open_folder_btn.setIcon(get_icon("context_open_folder"))
-        self.open_folder_btn.setIconSize(QSize(20, 20))
-        self.open_folder_btn.setFixedSize(36, 36)
-        self.open_folder_btn.setToolTip(tr("metadata.open_folder_tooltip", default="Open folder containing this book"))
-        self.open_folder_btn.clicked.connect(self.on_open_folder)
-        buttons_layout.addWidget(self.open_folder_btn)
-        
-        # Refresh button to the left of the cover list
-        self.refresh_btn = QPushButton()
-        self.refresh_btn.setObjectName("refreshCoversBtn")
-        self.refresh_btn.setIcon(get_icon("menu_reload"))
-        self.refresh_btn.setIconSize(QSize(20, 20))
-        self.refresh_btn.setFixedSize(36, 36)
-        self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
-        self.refresh_btn.clicked.connect(self.on_refresh_covers)
-        buttons_layout.addWidget(self.refresh_btn)
-        
-        # From Tags button under the refresh button
-        self.from_tags_btn = QPushButton()
-        self.from_tags_btn.setObjectName("fromTagsBtn")
-        self.from_tags_btn.setIcon(get_icon("context_tags"))
-        self.from_tags_btn.setIconSize(QSize(20, 20))
-        self.from_tags_btn.setFixedSize(36, 36)
-        self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip", default="Fill fields from file tags (ID3)"))
-        self.from_tags_btn.clicked.connect(self.fill_from_tags)
-        buttons_layout.addWidget(self.from_tags_btn)
-        
-        covers_layout.addLayout(buttons_layout)
-        
         # Scroll area for thumbnails
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -161,8 +116,7 @@ class MetadataEditDialog(QDialog):
         self.populate_covers()
         
         scroll_area.setWidget(scroll_content)
-        covers_layout.addWidget(scroll_area, 1)
-        layout.addLayout(covers_layout)
+        layout.addWidget(scroll_area)
         
         # Form fields
         form_layout = QFormLayout()
@@ -202,18 +156,58 @@ class MetadataEditDialog(QDialog):
         layout.addStretch()
         
         # Standard Dialog Buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save)
         buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
         
         # Customize button text via translation keys
         save_btn = buttons.button(QDialogButtonBox.StandardButton.Save)
         save_btn.setText(tr("metadata.save", default="Save"))
         
-        cancel_btn = buttons.button(QDialogButtonBox.StandardButton.Cancel)
-        cancel_btn.setText(tr("metadata.cancel", default="Cancel"))
+        # Get standard button height from the style or size hint
+        std_height = save_btn.sizeHint().height()
+        if std_height <= 0:
+            std_height = 36
+            
+        # Custom cover/tags buttons
+        # Open folder button
+        self.open_folder_btn = QPushButton()
+        self.open_folder_btn.setObjectName("openFolderBtn")
+        self.open_folder_btn.setIcon(get_icon("context_open_folder"))
+        self.open_folder_btn.setIconSize(QSize(20, 20))
+        self.open_folder_btn.setFixedSize(std_height, std_height)
+        self.open_folder_btn.setToolTip(tr("metadata.open_folder_tooltip", default="Open folder containing this book"))
+        self.open_folder_btn.clicked.connect(self.on_open_folder)
         
-        layout.addWidget(buttons)
+        # Refresh button
+        self.refresh_btn = QPushButton()
+        self.refresh_btn.setObjectName("refreshCoversBtn")
+        self.refresh_btn.setIcon(get_icon("menu_reload"))
+        self.refresh_btn.setIconSize(QSize(20, 20))
+        self.refresh_btn.setFixedSize(std_height, std_height)
+        self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
+        self.refresh_btn.clicked.connect(self.on_refresh_covers)
+        
+        # From Tags button
+        self.from_tags_btn = QPushButton()
+        self.from_tags_btn.setObjectName("fromTagsBtn")
+        self.from_tags_btn.setIcon(get_icon("context_tags"))
+        self.from_tags_btn.setIconSize(QSize(20, 20))
+        self.from_tags_btn.setFixedSize(std_height, std_height)
+        self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip", default="Fill fields from file tags (ID3)"))
+        self.from_tags_btn.clicked.connect(self.fill_from_tags)
+        
+        # Combine buttons at the bottom: custom buttons on the left, standard on the right
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setSpacing(6)
+        
+        bottom_layout.addWidget(self.open_folder_btn)
+        bottom_layout.addWidget(self.refresh_btn)
+        bottom_layout.addWidget(self.from_tags_btn)
+        bottom_layout.addStretch()
+        bottom_layout.addWidget(buttons)
+        
+        layout.addLayout(bottom_layout)
         
     def load_suggestions(self):
         """Populate comboboxes with existing values from the database"""
