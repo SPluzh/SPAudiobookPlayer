@@ -899,7 +899,8 @@ class PlayerWidget(QWidget):
     
     def on_position_released(self):
         self.slider_dragging = False
-        self.position_changed.emit(self.position_slider.value() / 1000.0)
+        val = min(self.position_slider.value(), 999)
+        self.position_changed.emit(val / 1000.0)
     
     def on_position_moved(self, value: int):
         pass
