@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.20]
+- **Playback**: Fixed an issue where dragging the seek slider all the way to the right edge would cause it to bounce back to the beginning or switch chapters.
+
 ## [1.6.19]
 - **Metadata**: Added support for choosing a book cover in the metadata edit dialog when multiple covers are available.
 - **Metadata**: Unified all action buttons (Open Folder, Refresh, and From Tags) into a compact vertical panel.
