@@ -75,7 +75,8 @@
     "no_tags_available": "No hay etiquetas disponibles",
     "tooltip_favorites": "Mostrar solo libros favoritos",
     "tooltip_tags": "Filtrar por etiquetas",
-    "folder_books_count": "{count} audiolibros"
+    "folder_books_count": "{count} audiolibros",
+    "tooltip_tile_view": "Show books as grid/tiles"
   },
   "player": {
     "volume": "Volumen",

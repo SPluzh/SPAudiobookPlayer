@@ -148,6 +148,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.normal_geometry = None
         self.normal_splitter_state = None
         self.always_on_top = False
+        self.show_grid = False
 
         # Load user configurations and localization settings
         self.db_manager = DatabaseManager(self.db_file)
@@ -316,6 +317,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 "tag_filter_ids": self.tag_filter_ids,
                 "filter_mode": self.library_filter_mode,
                 "favorites_active": self.library_favorites_active,
+                "show_grid": self.show_grid,
             },
             self.delegate,
             show_folders=self.show_folders,
@@ -610,7 +612,7 @@ class AudiobookPlayerWindow(QMainWindow):
         if hasattr(self, "delegate") and self.delegate:
             self.delegate.show_nesting_lines = checked
             if hasattr(self, "library_widget"):
-                self.library_widget.tree.viewport().update()
+                self.library_widget.trigger_viewport_update()
         self.save_settings()
 
     def toggle_detailed_info(self, checked: bool):
@@ -619,7 +621,7 @@ class AudiobookPlayerWindow(QMainWindow):
         if hasattr(self, "delegate") and self.delegate:
             self.delegate.show_detailed_info = checked
             if hasattr(self, "library_widget"):
-                self.library_widget.tree.viewport().update()
+                self.library_widget.trigger_viewport_update()
         self.save_settings()
 
     def toggle_minimal_interface(self, enabled: bool):
@@ -769,6 +771,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.on_library_play_clicked
         )
         self.library_widget.show_folders_toggled.connect(self.on_show_folders_toggled)
+        self.library_widget.show_grid_toggled.connect(self.on_show_grid_toggled)
         self.library_widget.delete_requested.connect(self.on_delete_requested)
         self.library_widget.delete_requested.connect(self.on_delete_requested)
         self.library_widget.folder_delete_requested.connect(
@@ -985,6 +988,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_volume_boost(self.volume_boost_enabled)
         self.player.set_volume_boost_level(self.volume_boost_level)
         self.show_folders = config.getboolean("Library", "show_folders", fallback=False)
+        self.show_grid = config.getboolean("Library", "show_grid", fallback=False)
         self.show_filter_labels = config.getboolean(
             "Library", "show_filter_labels", fallback=True
         )
@@ -1061,6 +1065,7 @@ class AudiobookPlayerWindow(QMainWindow):
         }
         config["Library"] = {
             "show_folders": "False",
+            "show_grid": "False",
             "show_filter_labels": "False",
             "filter_mode": "all",
             "favorites_active": "False",
@@ -1151,6 +1156,7 @@ class AudiobookPlayerWindow(QMainWindow):
         if "Library" not in config:
             config["Library"] = {}
         config["Library"]["show_folders"] = str(self.show_folders)
+        config["Library"]["show_grid"] = str(self.show_grid)
         config["Library"]["show_filter_labels"] = str(self.show_filter_labels)
         config["Library"]["show_nesting_lines"] = str(self.show_nesting_lines)
         config["Library"]["show_detailed_info"] = str(self.show_detailed_info)
@@ -1271,7 +1277,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.update_ui_for_audiobook()
 
                 # Force library refresh to reflect session state
-                self.library_widget.tree.viewport().update()
+                self.library_widget.trigger_viewport_update()
                 self.library_widget.load_audiobooks()
                 self.statusBar().showMessage(tr("status.restored_session"))
 
@@ -1414,6 +1420,11 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_folders = checked
         self.save_settings()
 
+    def on_show_grid_toggled(self, checked):
+        """Update and persist the grid view visibility preference"""
+        self.show_grid = checked
+        self.save_settings()
+
     def on_audiobook_selected(self, audiobook_path: str):
         """Handle the user's selection of an audiobook from the library, initiating playback and updating status"""
         if self.playback_controller.load_audiobook(audiobook_path):
@@ -1498,7 +1509,7 @@ class AudiobookPlayerWindow(QMainWindow):
         # Sync the session delegate for visual consistency in the library
         if self.delegate:
             self.delegate.is_paused = not self.player.is_playing()
-            self.library_widget.tree.viewport().update()
+            self.library_widget.trigger_viewport_update()
 
         self.player_widget.set_playing(self.player.is_playing())
 
@@ -1588,7 +1599,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.refresh_audiobook_in_tree()
 
         # Trigger an immediate viewport update to reflect the changed play/pause status in the overlay
-        self.library_widget.tree.viewport().update()
+        self.library_widget.trigger_viewport_update()
 
     def showEvent(self, event):
         """Integrate with the Windows shell upon window display, configuring taskbar progress and thumbnail control buttons"""

@@ -1304,3 +1304,28 @@ QLabel#seekTooltip {
     font-size: 12px;
     font-weight: bold;
 }
+
+/* ============================================================
+   TILE VIEW AND BOOK GRID LIST STYLING
+   ============================================================ */
+#libraryTileView, BookGridList {
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+
+#libraryTileView::item, BookGridList::item {
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 4px;
+    margin: 0px;
+}
+
+#libraryTileView::item:hover, BookGridList::item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+#libraryTileView::item:selected, BookGridList::item:selected {
+    background-color: rgba(255, 255, 255, 0.1);
+}

@@ -28,6 +28,9 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
     QStyleOptionViewItem,
     QFrame,
+    QStackedWidget,
+    QListView,
+    QAbstractItemView,
 )
 from PyQt6.QtCore import (
     Qt,
@@ -55,6 +58,7 @@ from PyQt6.QtGui import (
     QPainterPath,
     QFontMetrics,
     QTextCursor,
+    QCursor,
 )
 
 from database import DatabaseManager
@@ -1463,6 +1467,500 @@ class MultiLineDelegate(QStyledItemDelegate):
         painter.restore()
 
 
+
+class TileDelegate(QStyledItemDelegate):
+    def __init__(self, config, parent_list):
+        super().__init__(parent_list)
+        self.config = config
+        self.parent_list = parent_list
+        
+    def get_icon_rect(self, rect: QRectF) -> QRectF:
+        icon_size = self.config.get("audiobook_icon_size", 100)
+        icon_y = rect.top() + (rect.height() - icon_size) / 2.0
+        return QRectF(
+            rect.left() + (rect.width() - icon_size) / 2.0,
+            icon_y,
+            icon_size,
+            icon_size
+        )
+
+    def get_play_rect(self, rect: QRectF) -> QRectF:
+        icon_rect = self.get_icon_rect(rect)
+        btn_size = 40.0
+        center = icon_rect.center()
+        return QRectF(
+            center.x() - btn_size / 2.0,
+            center.y() - btn_size / 2.0,
+            btn_size,
+            btn_size
+        )
+
+    def get_fav_rect(self, rect: QRectF) -> QRectF:
+        icon_rect = self.get_icon_rect(rect)
+        heart_size = 18.0
+        return QRectF(
+            icon_rect.right() - heart_size - 4,
+            icon_rect.top() + 4,
+            heart_size,
+            heart_size
+        )
+
+    def paint(self, painter, option, index):
+        try:
+            item_type = index.data(Qt.ItemDataRole.UserRole + 1)
+            if item_type == "audiobook":
+                self._paint_audiobook(painter, option, index)
+            else:
+                super().paint(painter, option, index)
+        except Exception as e:
+            import traceback
+            print(f"ERROR: Exception in TileDelegate.paint: {e}")
+            traceback.print_exc()
+
+    def _paint_audiobook(self, painter, option, index):
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        rect = QRectF(option.rect)
+        
+        # Deduce status from library delegate
+        tree_delegate = self.parent_list.library.delegate
+        playing_path = tree_delegate.playing_path if tree_delegate else None
+        is_paused = tree_delegate.is_paused if tree_delegate else False
+        
+        path = index.data(Qt.ItemDataRole.UserRole)
+        is_playing_this = playing_path and path == playing_path
+        
+        icon = index.data(Qt.ItemDataRole.DecorationRole)
+        
+        is_hovered = (self.parent_list.hovered_item and self.parent_list.hovered_item == self.parent_list.itemFromIndex(index))
+        
+        data = index.data(Qt.ItemDataRole.UserRole + 2)
+        progress_percent = 0
+        if data and len(data) >= 7:
+            progress_percent = data[6]
+            
+        status_data = index.data(Qt.ItemDataRole.UserRole + 3)
+        is_started = False
+        is_completed = False
+        is_favorite = False
+        if status_data and len(status_data) >= 3:
+            is_started = bool(status_data[0])
+            is_completed = bool(status_data[1])
+            is_favorite = bool(status_data[2])
+            
+        icon_size = self.config.get("audiobook_icon_size", 100)
+        has_progress = (progress_percent > 0 or is_started)
+        pb_h = 5.0
+        
+        # Center icon (with progress bar) vertically within the actual rect height
+        total_content_height = icon_size + (pb_h if has_progress else 0)
+        icon_y = rect.top() + (rect.height() - total_content_height) / 2.0
+        
+        icon_rect = QRectF(
+            rect.left() + (rect.width() - icon_size) / 2.0,
+            icon_y,
+            icon_size,
+            icon_size
+        )
+        
+        # Draw rounded cover with clipping (matching 3px list view rounding)
+        if icon:
+            painter.save()
+            path_clipper = QPainterPath()
+            path_clipper.addRoundedRect(icon_rect, 3.0, 3.0)
+            painter.setClipPath(path_clipper)
+            icon.paint(painter, icon_rect.toRect())
+            
+            # Hover overlay (semi-transparent gray tint)
+            if is_hovered:
+                _, overlay_bg = StyleManager.get_theme_property("overlay_background")
+                painter.fillRect(icon_rect, overlay_bg)
+                
+            painter.restore()
+            
+        # Draw Active Highlight Border (matching list view glowing border)
+        if is_playing_this:
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            pen = QPen(accent_color, 8)
+            painter.save()
+            painter.setPen(pen)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            
+            if has_progress:
+                highlight_rect = QRectF(
+                    icon_rect.left(),
+                    icon_rect.top(),
+                    icon_rect.width(),
+                    icon_rect.height() + pb_h,
+                )
+            else:
+                highlight_rect = QRectF(icon_rect)
+                
+            painter.drawRoundedRect(highlight_rect.adjusted(-4, -4, 4, 4), 7.0, 7.0)
+            painter.restore()
+            
+        # Draw Progress Bar at the bottom (matching list view flat bar below cover)
+        if has_progress:
+            painter.save()
+            pb_rect = QRectF(
+                icon_rect.left(),
+                icon_rect.bottom(),
+                icon_rect.width(),
+                pb_h
+            )
+            
+            # Background
+            _, bg_color = StyleManager.get_theme_property("overlay_progress_bg")
+            painter.fillRect(pb_rect, bg_color)
+            
+            # Fill progress
+            fill_w = pb_rect.width() * progress_percent / 100.0
+            if fill_w > 0:
+                fill_rect = QRectF(
+                    pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height()
+                )
+                _, primary_color = StyleManager.get_theme_property("theme_primary")
+                painter.fillRect(fill_rect, primary_color)
+                
+            painter.restore()
+            
+        # Draw Favorite (Heart) in top-right corner
+        if is_favorite:
+            painter.save()
+            heart_size = 18.0
+            heart_rect = QRectF(
+                icon_rect.right() - heart_size - 4,
+                icon_rect.top() + 4,
+                heart_size,
+                heart_size
+            )
+            _, bg_color = StyleManager.get_theme_property("icon_background")
+            painter.setBrush(bg_color)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(heart_rect)
+            
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            painter.setBrush(accent_color)
+            hr = heart_rect.adjusted(1, 2, -1, -2)
+            
+            path_heart = QPainterPath()
+            path_heart.moveTo(hr.center().x(), hr.bottom())
+            path_heart.cubicTo(hr.right(), hr.center().y(), hr.right(), hr.top(), hr.center().x(), hr.top() + hr.height() * 0.2)
+            path_heart.cubicTo(hr.left(), hr.top(), hr.left(), hr.center().y(), hr.center().x(), hr.bottom())
+            
+            painter.drawPath(path_heart)
+            painter.restore()
+            
+        # Draw Completed checkmark in top-left corner
+        if is_completed:
+            painter.save()
+            check_size = 18.0
+            check_rect = QRectF(
+                icon_rect.left() + 4,
+                icon_rect.top() + 4,
+                check_size,
+                check_size
+            )
+            _, bg_color = StyleManager.get_theme_property("icon_background")
+            painter.setBrush(bg_color)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(check_rect)
+            
+            painter.setPen(QPen(QColor("#2ecc71"), 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            cx = check_rect.left() + check_size * 0.25
+            cy = check_rect.top() + check_size * 0.5
+            painter.drawLine(QPointF(cx, cy), QPointF(cx + check_size * 0.2, cy + check_size * 0.2))
+            painter.drawLine(QPointF(cx + check_size * 0.2, cy + check_size * 0.2), QPointF(cx + check_size * 0.55, cy - check_size * 0.15))
+            painter.restore()
+            
+        # Draw Play/Pause Overlay in center when hovered or active
+        if is_hovered or is_playing_this:
+            play_btn_rect = self.get_play_rect(rect)
+
+            # Precise mouse hover check
+            is_over_btn = False
+            mouse_pos = getattr(self.parent_list, "mouse_pos", None)
+            if mouse_pos and play_btn_rect.contains(QPointF(mouse_pos)):
+                is_over_btn = True
+
+            painter.save()
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            # Button circle
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            btn_color = QColor(accent_color)
+            if not is_over_btn:
+                btn_color.setAlpha(200)
+            else:
+                btn_color = btn_color.lighter(110)
+
+            painter.setBrush(btn_color)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(play_btn_rect)
+
+            # Play/Pause Icon shapes
+            painter.setBrush(Qt.GlobalColor.white)
+            painter.setPen(Qt.PenStyle.NoPen)
+            if is_playing_this and not is_paused:
+                # Draw Pause bars
+                w = play_btn_rect.width() // 5
+                h = play_btn_rect.height() // 2
+                gap = w // 2
+
+                total_w = w * 2 + gap
+                start_x = (
+                    play_btn_rect.left() + (play_btn_rect.width() - total_w) // 2
+                )
+                start_y = play_btn_rect.top() + (play_btn_rect.height() - h) // 2
+
+                painter.drawRect(QRectF(start_x, start_y, w, h))
+                painter.drawRect(QRectF(start_x + w + gap, start_y, w, h))
+            else:
+                # Draw Play triangle
+                side = play_btn_rect.width() // 2
+                center_f = QPointF(play_btn_rect.center())
+
+                # Optical balancing adjustment
+                h_offset = play_btn_rect.width() / 20.0
+
+                tri_path = QPainterPath()
+                tri_path.moveTo(
+                    center_f.x() - side / 3.0 + h_offset, center_f.y() - side / 2.0
+                )
+                tri_path.lineTo(
+                    center_f.x() - side / 3.0 + h_offset, center_f.y() + side / 2.0
+                )
+                tri_path.lineTo(center_f.x() + side / 2.0 + h_offset, center_f.y())
+                tri_path.closeSubpath()
+
+                painter.fillPath(tri_path, Qt.GlobalColor.white)
+
+            painter.restore()
+            
+        painter.restore()
+
+
+class BookGridList(QListWidget):
+    def __init__(self, books, library, parent_item, parent=None):
+        super().__init__(parent)
+        self.books = books
+        self.library = library
+        self.parent_item = parent_item
+        self.hovered_item = None
+        self.mouse_pos = None
+        
+        self.setViewMode(QListView.ViewMode.IconMode)
+        self.setResizeMode(QListView.ResizeMode.Adjust)
+        self.setMovement(QListView.Movement.Static)
+        self.setWrapping(True)
+        self.setWordWrap(False)
+        self.setSpacing(8)
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setMouseTracking(True)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._updating_height = False
+        self.setObjectName("folderGridList")
+        
+        self.setItemDelegate(TileDelegate(self.library.config, self))
+        
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.on_context_menu_requested)
+        
+        self.itemClicked.connect(self.on_item_clicked)
+        self.itemDoubleClicked.connect(self.on_item_double_clicked)
+        self.itemEntered.connect(self.on_item_entered)
+        
+        self.populate_books()
+
+    def populate_books(self):
+        self.clear()
+        for data in self.books:
+            item = QListWidgetItem(self)
+            item.setData(Qt.ItemDataRole.UserRole, data["path"])
+            item.setData(Qt.ItemDataRole.UserRole + 1, "audiobook")
+            item.setData(
+                Qt.ItemDataRole.UserRole + 2,
+                (
+                    data["author"],
+                    data["title"],
+                    data["narrator"],
+                    data["file_count"],
+                    data["duration"],
+                    data["listened_duration"],
+                    data["progress_percent"],
+                    data["codec"],
+                    data["bitrate_min"],
+                    data["bitrate_max"],
+                    data["bitrate_mode"],
+                    data["container"],
+                    data.get("description", ""),
+                    data.get("total_size", 0),
+                )
+            )
+            item.setData(
+                Qt.ItemDataRole.UserRole + 3,
+                (data["is_started"], data["is_completed"], data["is_favorite"])
+            )
+            if "tags" in data:
+                item.setData(Qt.ItemDataRole.UserRole + 4, data["tags"])
+                
+            cover_icon = None
+            cover_p_str = data.get("cached_cover_path") or data.get("cover_path")
+            if cover_p_str:
+                cover_p = Path(str(cover_p_str))
+                if not cover_p.is_absolute() and self.library.config.get("default_path"):
+                    cover_p = Path(self.library.config.get("default_path")) / cover_p
+                cover_icon = load_icon(
+                    cover_p, self.library.config.get("audiobook_icon_size", 100), force_square=True
+                )
+            item.setIcon(cover_icon or self.library.default_audiobook_icon)
+            
+            icon_size = self.library.config.get("audiobook_icon_size", 100)
+            item.setSizeHint(QSize(icon_size, icon_size + 10))
+
+    def doItemsLayout(self):
+        super().doItemsLayout()
+        self.update_height()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if event.oldSize().width() != event.size().width():
+            self.update_height()
+
+    def update_height(self):
+        if self._updating_height:
+            return
+        self._updating_height = True
+        try:
+            width = self.library.tree.viewport().width() - 24
+            if width <= 0:
+                width = self.width() or self.library.tree.width() or 300
+
+            max_bottom = 0
+            for i in range(self.count()):
+                if not self.item(i).isHidden():
+                    r = self.visualItemRect(self.item(i))
+                    if r.bottom() > max_bottom:
+                        max_bottom = r.bottom()
+
+            new_height = max_bottom + self.spacing() if max_bottom > 0 else 0
+
+            if self.height() != int(new_height):
+                self.setFixedHeight(int(new_height))
+                self.setMinimumHeight(int(new_height))
+                self.setMaximumHeight(int(new_height))
+                self.parent_item.setSizeHint(0, QSize(width, int(new_height)))
+                self.library.tree.scheduleDelayedItemsLayout()
+        finally:
+            self._updating_height = False
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self.hovered_item = None
+        self.mouse_pos = None
+        self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+        self.viewport().update()
+        
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        self.mouse_pos = event.position().toPoint()
+        item = self.itemAt(self.mouse_pos)
+        if item != self.hovered_item:
+            self.hovered_item = item
+        self.viewport().update()
+        
+        # Cursor shape update
+        cursor_set = False
+        if item:
+            delegate = self.itemDelegate()
+            if isinstance(delegate, TileDelegate):
+                rect = self.visualItemRect(item)
+                play_rect = delegate.get_play_rect(rect)
+                fav_rect = delegate.get_fav_rect(rect)
+                if play_rect.contains(QPointF(self.mouse_pos)) or fav_rect.contains(QPointF(self.mouse_pos)):
+                    self.viewport().setCursor(Qt.CursorShape.PointingHandCursor)
+                    cursor_set = True
+        
+        if not cursor_set:
+            self.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+            
+    def wheelEvent(self, event):
+        """Forward mouse wheel events to the parent tree widget"""
+        if self.library and self.library.tree:
+            self.library.tree.wheelEvent(event)
+        else:
+            super().wheelEvent(event)
+            
+    def on_item_entered(self, item):
+        self.hovered_item = item
+        self.viewport().update()
+        
+    def on_item_clicked(self, item):
+        try:
+            self.library.clear_other_grid_selections(self)
+            
+            path = item.data(Qt.ItemDataRole.UserRole)
+            delegate = self.itemDelegate()
+            if isinstance(delegate, TileDelegate):
+                event_pos = self.viewport().mapFromGlobal(QCursor.pos())
+                rect = self.visualItemRect(item)
+                
+                # Check Play button
+                play_rect = delegate.get_play_rect(rect)
+                if play_rect.contains(QPointF(event_pos)):
+                    self.library.tree.play_button_clicked.emit(path)
+                    return
+                    
+                # Check Favorite button
+                fav_rect = delegate.get_fav_rect(rect)
+                if fav_rect.contains(QPointF(event_pos)):
+                    status_data = item.data(Qt.ItemDataRole.UserRole + 3)
+                    if status_data:
+                        is_fav = status_data[2]
+                        audiobook_id = None
+                        for p, items in (self.library.cached_library_data or {}).items():
+                            for it in items:
+                                if it["path"] == path:
+                                    audiobook_id = it["id"]
+                                    break
+                            if audiobook_id:
+                                break
+                        if audiobook_id:
+                            self.library.toggle_favorite(audiobook_id, path)
+                    return
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+        
+    def on_item_double_clicked(self, item):
+        try:
+            path = item.data(Qt.ItemDataRole.UserRole)
+            delegate = self.itemDelegate()
+            if isinstance(delegate, TileDelegate):
+                event_pos = self.viewport().mapFromGlobal(QCursor.pos())
+                rect = self.visualItemRect(item)
+                if delegate.get_play_rect(rect).contains(QPointF(event_pos)) or delegate.get_fav_rect(rect).contains(QPointF(event_pos)):
+                    return
+            self.library.audiobook_selected.emit(path)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+        
+    def on_context_menu_requested(self, pos):
+        try:
+            item = self.itemAt(pos)
+            if item:
+                path = item.data(Qt.ItemDataRole.UserRole)
+                self.library.show_context_menu_for_path(path, self.viewport().mapToGlobal(pos))
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+
 class LibraryTree(QTreeWidget):
     """Customized tree widget that handles hover detection and direct interaction with audiobook 'Play' buttons"""
 
@@ -1480,6 +1978,21 @@ class LibraryTree(QTreeWidget):
         self.has_any_content = (
             False  # Track if DB has any items regardless of current filter
         )
+
+    def resizeEvent(self, event):
+        """Recursively update height for all nested grid lists when the tree width changes"""
+        super().resizeEvent(event)
+        
+        def traverse(item):
+            item_type = item.data(0, Qt.ItemDataRole.UserRole + 1)
+            if item_type == "grid_placeholder":
+                widget = self.itemWidget(item, 0)
+                if isinstance(widget, BookGridList):
+                    widget.update_height()
+            for i in range(item.childCount()):
+                traverse(item.child(i))
+                
+        traverse(self.invisibleRootItem())
 
     def wheelEvent(self, event):
         """Override wheel event to scroll by single row instead of multiple rows"""
@@ -1650,6 +2163,7 @@ class LibraryWidget(QWidget):
         str
     )  # Emits the relative path of the selected audiobook
     show_folders_toggled = pyqtSignal(bool)  # Emits the new state of the folders toggle
+    show_grid_toggled = pyqtSignal(bool)  # Emits the new state of the grid toggle
     delete_requested = pyqtSignal(int, str)  # Emits (audiobook_id, rel_path)
     folder_delete_requested = pyqtSignal(str)  # Emits folder relative path
     scan_requested = pyqtSignal()
@@ -1689,6 +2203,7 @@ class LibraryWidget(QWidget):
         self.highlight_text_color = Qt.GlobalColor.white
         self.current_filter = self.config.get("filter_mode", "all")
         self.show_folders = show_folders
+        self.show_grid = self.config.get("show_grid", False)
         self.show_filter_labels = show_filter_labels
         self.cached_library_data = None  # Cache for fast reconstruction
         self.tag_filter_ids = self.config.get("tag_filter_ids", set())
@@ -1728,6 +2243,17 @@ class LibraryWidget(QWidget):
         self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
         self.btn_show_folders.clicked.connect(self.on_show_folders_toggled)
         filter_layout.addWidget(self.btn_show_folders)
+
+        # Grid View Toggle
+        self.btn_show_grid = QPushButton("")
+        self.btn_show_grid.setObjectName("filterBtn")
+        self.btn_show_grid.setCheckable(True)
+        self.btn_show_grid.setChecked(self.show_grid)
+        self.btn_show_grid.setIcon(get_icon("view_grid"))
+        self.btn_show_grid.setFixedWidth(40)
+        self.btn_show_grid.setToolTip(tr("library.tooltip_tile_view"))
+        self.btn_show_grid.clicked.connect(self.on_show_grid_toggled)
+        filter_layout.addWidget(self.btn_show_grid)
 
         # Favorites Filter (Icon-only)
         self.btn_favorites = QPushButton("")
@@ -1788,6 +2314,8 @@ class LibraryWidget(QWidget):
         filter_layout.addStretch(1)
         layout.addLayout(filter_layout)
 
+        self.stacked_widget = QStackedWidget()
+
         self.tree = LibraryTree()
         self.tree.setHeaderHidden(True)
         self.tree.setFocusPolicy(
@@ -1812,7 +2340,42 @@ class LibraryWidget(QWidget):
         if self.delegate:
             self.tree.setItemDelegate(self.delegate)
 
-        layout.addWidget(self.tree)
+        # Clear other selections when clicking on tree
+        self.tree.itemClicked.connect(lambda item: self.clear_other_grid_selections(self.tree))
+
+        # Flat Grid View
+        self.tile_view = QListWidget()
+        self.tile_view.setObjectName("libraryTileView")
+        self.tile_view.library = self
+        self.tile_view.hovered_item = None
+        self.tile_view.mouse_pos = None
+        self.tile_view.setViewMode(QListView.ViewMode.IconMode)
+        self.tile_view.setResizeMode(QListView.ResizeMode.Adjust)
+        self.tile_view.setMovement(QListView.Movement.Static)
+        self.tile_view.setWrapping(True)
+        self.tile_view.setWordWrap(False)
+        self.tile_view.setSpacing(15)
+        self.tile_view.setMouseTracking(True)
+        self.tile_view.setItemDelegate(TileDelegate(self.config, self.tile_view))
+        
+        self.tile_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tile_view.customContextMenuRequested.connect(self.on_tile_view_context_menu)
+        self.tile_view.itemClicked.connect(self.on_tile_view_item_clicked)
+        self.tile_view.itemDoubleClicked.connect(self.on_tile_view_item_double_clicked)
+        
+        self.tile_view.leaveEvent = lambda event, tv=self.tile_view: self.on_tile_view_leave(tv, event)
+        self.tile_view.mouseMoveEvent = lambda event, tv=self.tile_view: self.on_tile_view_mouse_move(tv, event)
+
+        self.stacked_widget.addWidget(self.tree)
+        self.stacked_widget.addWidget(self.tile_view)
+
+        # Update initial stack display
+        if self.show_grid and not self.show_folders:
+            self.stacked_widget.setCurrentWidget(self.tile_view)
+        else:
+            self.stacked_widget.setCurrentWidget(self.tree)
+
+        layout.addWidget(self.stacked_widget)
 
     def resizeEvent(self, event):
         """Update button labels when the widget is resized to avoid layout overflow"""
@@ -1945,7 +2508,8 @@ class LibraryWidget(QWidget):
         else:
             # Refresh current view to reflect change (e.g. remove item if unfavorited)
             self.refresh_audiobook_item(path)
-            if not self.db.is_favorite(audiobook_id):
+            updated_data = self.db.get_audiobook_by_path(path)
+            if updated_data and not updated_data.get("is_favorite"):
                 # actually, refresh_audiobook_item updates data. But if filter active and item NOT favorite,
                 # we should hide it.
                 # The simplest is full reload if we are removing from active favorites filter.
@@ -2000,6 +2564,26 @@ class LibraryWidget(QWidget):
         """Toggle folder visibility and refresh the library"""
         self.show_folders = checked
         self.show_folders_toggled.emit(checked)
+        
+        # Adjust stacked widget view based on new folder and grid state
+        if self.show_grid and not self.show_folders:
+            self.stacked_widget.setCurrentWidget(self.tile_view)
+        else:
+            self.stacked_widget.setCurrentWidget(self.tree)
+            
+        self.load_audiobooks(use_cache=True)
+
+    def on_show_grid_toggled(self, checked):
+        """Toggle grid/tile view and refresh the library"""
+        self.show_grid = checked
+        self.show_grid_toggled.emit(checked)
+        
+        # Adjust stacked widget view based on new folder and grid state
+        if self.show_grid and not self.show_folders:
+            self.stacked_widget.setCurrentWidget(self.tile_view)
+        else:
+            self.stacked_widget.setCurrentWidget(self.tree)
+            
         self.load_audiobooks(use_cache=True)
 
     def refresh_library(self):
@@ -2010,6 +2594,7 @@ class LibraryWidget(QWidget):
         """Retrieve and display audiobooks from the database according to the active filter"""
         self.current_playing_item = None
         self.tree.clear()
+        self.tile_view.clear()
 
         # Check cache or force reload
         # Always load all audiobooks to enable fast client-side filtering
@@ -2029,10 +2614,95 @@ class LibraryWidget(QWidget):
         self.tree.setUpdatesEnabled(False)
         self.tree.blockSignals(True)
         try:
+            if self.show_grid and not self.show_folders:
+                all_items = []
+                for parent_path, items in self.cached_library_data.items():
+                    for item_data in items:
+                        if not item_data["is_folder"]:
+                            # Get tags
+                            item_tags = all_tags.get(item_data["id"], [])
+                            if "id" in item_data:
+                                item_data["tags"] = item_tags
+
+                            # Apply Tag Filter
+                            if self.is_tag_filter_active and self.tag_filter_ids:
+                                item_tag_ids = {t["id"] for t in item_tags}
+                                if not self.tag_filter_ids.intersection(item_tag_ids):
+                                    continue
+
+                            # Apply Favorites Filter
+                            if self.is_favorites_filter_active:
+                                if not item_data.get("is_favorite"):
+                                    continue
+
+                            all_items.append(item_data)
+
+                # Re-sort at client side to ensure absolute order
+                sort_key = "name"
+                if self.current_filter == "in_progress":
+                    sort_key = "last_updated"
+                elif self.current_filter == "completed":
+                    sort_key = "time_finished"
+                elif self.current_filter == "not_started":
+                    sort_key = "time_added"
+
+                all_items.sort(
+                    key=lambda x: (x.get(sort_key) or "", x.get("name") or ""),
+                    reverse=(sort_key != "name"),
+                )
+
+                # Populate self.tile_view
+                for data in all_items:
+                    item = QListWidgetItem(self.tile_view)
+                    item.setData(Qt.ItemDataRole.UserRole, data["path"])
+                    item.setData(Qt.ItemDataRole.UserRole + 1, "audiobook")
+                    item.setData(
+                        Qt.ItemDataRole.UserRole + 2,
+                        (
+                            data["author"],
+                            data["title"],
+                            data["narrator"],
+                            data["file_count"],
+                            data["duration"],
+                            data["listened_duration"],
+                            data["progress_percent"],
+                            data["codec"],
+                            data["bitrate_min"],
+                            data["bitrate_max"],
+                            data["bitrate_mode"],
+                            data["container"],
+                            data.get("description", ""),
+                            data.get("total_size", 0),
+                        )
+                    )
+                    item.setData(
+                        Qt.ItemDataRole.UserRole + 3,
+                        (data["is_started"], data["is_completed"], data["is_favorite"]),
+                    )
+                    if "tags" in data:
+                        item.setData(Qt.ItemDataRole.UserRole + 4, data["tags"])
+
+                    # Fetch and scale cover
+                    cover_icon = None
+                    cover_p_str = data.get("cached_cover_path") or data.get("cover_path")
+                    if cover_p_str:
+                        cover_p = Path(str(cover_p_str))
+                        default_path = self.config.get("default_path")
+                        if not cover_p.is_absolute() and default_path:
+                            cover_p = Path(str(default_path)) / cover_p
+                        cover_icon = load_icon(
+                            cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
+                        )
+                    
+                    item.setIcon(cover_icon or self.default_audiobook_icon)
+                    
+                    icon_size = self.config.get("audiobook_icon_size", 100)
+                    item.setSizeHint(QSize(icon_size, icon_size + 14))
+            
             # If folders are hidden and we are in a non-'all' filter,
             # we should populate as a flat list to guarantee the SQL sort order
             # is visually preserved across the entire library.
-            if not self.show_folders and self.current_filter != "all":
+            elif not self.show_folders and self.current_filter != "all":
                 all_items = []
                 for parent_path, items in self.cached_library_data.items():
                     for item_data in items:
@@ -2140,37 +2810,61 @@ class LibraryWidget(QWidget):
         if parent_path not in data_by_parent:
             return
 
+        # Separate items into folders and audiobooks
+        folders_list = []
+        books_list = []
         for data in data_by_parent[parent_path]:
             if data["is_folder"]:
-                if not self.show_folders:
-                    # If folders are hidden by default, recursively add children to the SAME parent
-                    self.add_items_from_db(parent_item, data["path"], data_by_parent)
-                    continue
-
-                item = QTreeWidgetItem(parent_item)
-                item.setData(0, Qt.ItemDataRole.UserRole, data["path"])
-                item.setText(0, data["name"])
-                item.setData(0, Qt.ItemDataRole.UserRole + 1, "folder")
-                item.setIcon(0, self.folder_icon)
-                # Restore the expansion state of the folder from previous sessions
-                if data.get("is_expanded"):
-                    item.setExpanded(True)
-
-                # Sub-items traversal
-                self.add_items_from_db(item, data["path"], data_by_parent)
-
-                # Prune empty folders (if no children were added or all were filtered out)
-                if item.childCount() == 0:
-                    parent_item.removeChild(item)
-                else:
-                    # Calculate and add statistics to the folder name
-                    books_count, total_seconds = self._get_folder_stats(item)
-                    if books_count > 0:
-                        duration_str = format_duration(total_seconds)
-                        books_str = self._format_books_count(books_count)
-                        item.setText(0, f"{data['name']} ({books_str}, {duration_str})")
+                folders_list.append(data)
             else:
-                self._create_item_from_data(parent_item, data)
+                books_list.append(data)
+
+        # 1. Process Folders
+        for data in folders_list:
+            if not self.show_folders:
+                # If folders are hidden by default, recursively add children to the SAME parent
+                self.add_items_from_db(parent_item, data["path"], data_by_parent)
+                continue
+
+            item = QTreeWidgetItem(parent_item)
+            item.setData(0, Qt.ItemDataRole.UserRole, data["path"])
+            item.setText(0, data["name"])
+            item.setData(0, Qt.ItemDataRole.UserRole + 1, "folder")
+            item.setIcon(0, self.folder_icon)
+            # Restore the expansion state of the folder from previous sessions
+            if data.get("is_expanded"):
+                item.setExpanded(True)
+
+            # Sub-items traversal
+            self.add_items_from_db(item, data["path"], data_by_parent)
+
+            # Prune empty folders (if no children were added or all were filtered out)
+            if item.childCount() == 0:
+                parent_item.removeChild(item)
+            else:
+                # Calculate and add statistics to the folder name
+                books_count, total_seconds = self._get_folder_stats(item)
+                if books_count > 0:
+                    duration_str = format_duration(total_seconds)
+                    books_str = self._format_books_count(books_count)
+                    item.setText(0, f"{data['name']} ({books_str}, {duration_str})")
+
+        # 2. Process Books: if show_grid is enabled, put all direct child books inside a single nested list widget
+        if books_list:
+            if self.show_grid:
+                placeholder_item = QTreeWidgetItem(parent_item)
+                placeholder_item.setData(0, Qt.ItemDataRole.UserRole + 1, "grid_placeholder")
+                
+                # Create BookGridList widget
+                grid_widget = BookGridList(books_list, self, placeholder_item)
+                self.tree.setItemWidget(placeholder_item, 0, grid_widget)
+                
+                # Set initial size hint
+                grid_widget.update_height()
+            else:
+                # Standard rows
+                for data in books_list:
+                    self._create_item_from_data(parent_item, data)
 
     def _create_item_from_data(self, parent_item, data):
         """Shared helper to create a tree item for an audiobook with all its metadata and icons"""
@@ -2216,10 +2910,11 @@ class LibraryWidget(QWidget):
             cover_p_str = data.get("cover_path")
 
         if cover_p_str:
-            cover_p = Path(cover_p_str)
+            cover_p = Path(str(cover_p_str))
             # For relative paths (legacy or uncached), resolve them against the library's root directory
-            if not cover_p.is_absolute() and self.config.get("default_path"):
-                cover_p = Path(self.config.get("default_path")) / cover_p
+            default_path = self.config.get("default_path")
+            if not cover_p.is_absolute() and default_path:
+                cover_p = Path(str(default_path)) / cover_p
 
             cover_icon = load_icon(
                 cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
@@ -2245,6 +2940,12 @@ class LibraryWidget(QWidget):
                 data = child.data(0, Qt.ItemDataRole.UserRole + 2)
                 if data and len(data) >= 5:
                     total_seconds += (data[4] or 0.0)
+            elif item_type == "grid_placeholder":
+                widget = self.tree.itemWidget(child, 0)
+                if isinstance(widget, BookGridList):
+                    for b in widget.books:
+                        books_count += 1
+                        total_seconds += (b.get("duration") or 0.0)
             elif item_type == "folder":
                 sub_count, sub_seconds = self._get_folder_stats(child)
                 books_count += sub_count
@@ -2276,6 +2977,63 @@ class LibraryWidget(QWidget):
         """Handle real-time search queries by filtering tree items based on text matching"""
         search_text = self.search_edit.text().lower().strip()
 
+        # If flat tile view is active
+        if self.show_grid and not self.show_folders:
+            for i in range(self.tile_view.count()):
+                t_item = self.tile_view.item(i)
+                
+                # Apply Status Filter
+                status_data = t_item.data(Qt.ItemDataRole.UserRole + 3)
+                status_match = True
+                if status_data and len(status_data) >= 2:
+                    is_started = status_data[0]
+                    is_completed = status_data[1]
+                    if self.current_filter == "not_started":
+                        status_match = not is_started
+                    elif self.current_filter == "in_progress":
+                        status_match = is_started and not is_completed
+                    elif self.current_filter == "completed":
+                        status_match = is_completed
+
+                # Apply Text Search
+                text_match = True
+                if search_text:
+                    data = t_item.data(Qt.ItemDataRole.UserRole + 2)
+                    author, title, narrator = "", "", ""
+                    codec, b_min, b_max, b_mode, container = "", 0, 0, "", ""
+                    if data:
+                        author, title, narrator = data[0:3]
+                        codec, b_min, b_max, b_mode, container = data[7:12]
+
+                    # Tag Search
+                    tags = t_item.data(Qt.ItemDataRole.UserRole + 4)
+                    tag_names = []
+                    if tags and isinstance(tags, list):
+                        for tag in tags:
+                            if isinstance(tag, dict) and "name" in tag:
+                                tag_names.append(tag["name"])
+
+                    # Bitrate search
+                    search_min = str(b_min // 1000) if b_min > 5000 else str(b_min)
+                    search_max = str(b_max // 1000) if b_max > 5000 else str(b_max)
+
+                    searchables = [
+                        author,
+                        title,
+                        narrator,
+                        codec,
+                        container,
+                        b_mode,
+                        search_min,
+                        search_max,
+                    ] + tag_names
+                    searchables = [s for s in searchables if s]
+                    combined_search_text = " ".join(searchables)
+                    text_match = smart_search(search_text, combined_search_text)
+
+                t_item.setHidden(not (status_match and text_match))
+            return
+
         if not search_text and self.current_filter == "all":
             self.show_all_items(self.tree.invisibleRootItem())
             return
@@ -2287,6 +3045,13 @@ class LibraryWidget(QWidget):
         for i in range(parent_item.childCount()):
             child = parent_item.child(i)
             child.setHidden(False)
+            item_type = child.data(0, Qt.ItemDataRole.UserRole + 1)
+            if item_type == "grid_placeholder":
+                widget = self.tree.itemWidget(child, 0)
+                if isinstance(widget, BookGridList):
+                    for k in range(widget.count()):
+                        widget.item(k).setHidden(False)
+                    widget.update_height()
             self.show_all_items(child)
 
     def filter_tree_items(self, parent_item, search_text: str) -> bool:
@@ -2310,6 +3075,71 @@ class LibraryWidget(QWidget):
                 if not child.isHidden():
                     has_visible = True
 
+            elif item_type == "grid_placeholder":
+                widget = self.tree.itemWidget(child, 0)
+                if isinstance(widget, BookGridList):
+                    vis_in_grid = 0
+                    for k in range(widget.count()):
+                        t_item = widget.item(k)
+                        
+                        # 1. Check Status Filter
+                        status_data = t_item.data(Qt.ItemDataRole.UserRole + 3)
+                        status_match = True
+                        if status_data and len(status_data) >= 2:
+                            is_started = status_data[0]
+                            is_completed = status_data[1]
+                            if self.current_filter == "not_started":
+                                status_match = not is_started
+                            elif self.current_filter == "in_progress":
+                                status_match = is_started and not is_completed
+                            elif self.current_filter == "completed":
+                                status_match = is_completed
+
+                        # 2. Check Text Search
+                        text_match = True
+                        if search_text:
+                            data = t_item.data(Qt.ItemDataRole.UserRole + 2)
+                            author, title, narrator = "", "", ""
+                            codec, b_min, b_max, b_mode, container = "", 0, 0, "", ""
+                            if data:
+                                author, title, narrator = data[0:3]
+                                codec, b_min, b_max, b_mode, container = data[7:12]
+
+                            # Tag Search
+                            tags = t_item.data(Qt.ItemDataRole.UserRole + 4)
+                            tag_names = []
+                            if tags and isinstance(tags, list):
+                                for tag in tags:
+                                    if isinstance(tag, dict) and "name" in tag:
+                                        tag_names.append(tag["name"])
+
+                            # Bitrate search
+                            search_min = str(b_min // 1000) if b_min > 5000 else str(b_min)
+                            search_max = str(b_max // 1000) if b_max > 5000 else str(b_max)
+
+                            searchables = [
+                                author,
+                                title,
+                                narrator,
+                                codec,
+                                container,
+                                b_mode,
+                                search_min,
+                                search_max,
+                            ] + tag_names
+                            searchables = [s for s in searchables if s]
+                            combined_search_text = " ".join(searchables)
+                            text_match = smart_search(search_text, combined_search_text)
+
+                        t_item.setHidden(not (status_match and text_match))
+                        if not t_item.isHidden():
+                            vis_in_grid += 1
+
+                    widget.update_height()
+                    child.setHidden(vis_in_grid == 0)
+                    if vis_in_grid > 0:
+                        has_visible = True
+
             elif item_type == "audiobook":
                 # 1. Check Status Filter
                 status_data = child.data(0, Qt.ItemDataRole.UserRole + 3)
@@ -2328,6 +3158,8 @@ class LibraryWidget(QWidget):
                 text_match = True
                 if search_text:
                     data = child.data(0, Qt.ItemDataRole.UserRole + 2)
+                    author, title, narrator = "", "", ""
+                    codec, b_min, b_max, b_mode, container = "", 0, 0, "", ""
 
                     if data:
                         # author, title, narrator, file_count, duration, listened_duration, progress_percent, codec, b_min, b_max, b_mode, container
@@ -2374,6 +3206,14 @@ class LibraryWidget(QWidget):
             path = item.data(0, Qt.ItemDataRole.UserRole)
             if path:
                 self.db.update_folder_expanded_state(path, True)
+            
+            # Recalculate heights of nested grid widgets in this expanded folder
+            for i in range(item.childCount()):
+                child = item.child(i)
+                if child.data(0, Qt.ItemDataRole.UserRole + 1) == "grid_placeholder":
+                    widget = self.tree.itemWidget(child, 0)
+                    if isinstance(widget, BookGridList):
+                        widget.update_height()
 
     def on_item_collapsed(self, item):
         """Persist the folder collapse state to the database when a branch is closed"""
@@ -2852,7 +3692,7 @@ class LibraryWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, tr("window.title"), f"Error opening folder: {e}")
 
-    def on_item_double_clicked(self, item, column):
+    def on_item_double_clicked(self, item, column=0):
         if item.data(0, Qt.ItemDataRole.UserRole + 1) == "audiobook":
             path = item.data(0, Qt.ItemDataRole.UserRole)
             self.audiobook_selected.emit(path)
@@ -2902,11 +3742,90 @@ class LibraryWidget(QWidget):
             self.load_audiobooks(use_cache=False)
             return
 
-        item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
-        if not item:
-            return
         data = self.db.get_audiobook_by_path(audiobook_path)
-        if data:
+        if not data:
+            return
+
+        # Fetch tags
+        tags = []
+        info = self.db.get_audiobook_info(audiobook_path)
+        if info:
+            tags = self.db.get_tags_for_audiobook(info[0])
+
+        self.update_cache_item_status(
+            audiobook_path, data["is_started"], data["is_completed"]
+        )
+
+        # Helper to refresh grid/list item
+        def refresh_grid_item_fields(t_item, b_data, b_tags):
+            t_item.setData(
+                Qt.ItemDataRole.UserRole + 2,
+                (
+                    b_data["author"],
+                    b_data["title"],
+                    b_data["narrator"],
+                    b_data["file_count"],
+                    b_data["duration"],
+                    b_data["listened_duration"],
+                    b_data["progress_percent"],
+                    b_data["codec"],
+                    b_data["bitrate_min"],
+                    b_data["bitrate_max"],
+                    b_data["bitrate_mode"],
+                    b_data["container"],
+                    b_data.get("description", ""),
+                    b_data.get("total_size", 0),
+                ),
+            )
+            t_item.setData(
+                Qt.ItemDataRole.UserRole + 3,
+                (b_data["is_started"], b_data["is_completed"], b_data["is_favorite"]),
+            )
+            t_item.setData(Qt.ItemDataRole.UserRole + 4, b_tags)
+            
+            cover_icon = None
+            cover_p_str = b_data.get("cached_cover_path") or b_data.get("cover_path")
+            if cover_p_str:
+                cover_p = Path(str(cover_p_str))
+                default_path = self.config.get("default_path")
+                if not cover_p.is_absolute() and default_path:
+                    cover_p = Path(str(default_path)) / cover_p
+                
+                from utils import load_icon
+                load_icon.cache_clear()
+                cover_icon = load_icon(
+                    cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
+                )
+            t_item.setIcon(cover_icon or self.default_audiobook_icon)
+
+        # 1. Update Flat Grid (self.tile_view)
+        for i in range(self.tile_view.count()):
+            t_item = self.tile_view.item(i)
+            if t_item.data(Qt.ItemDataRole.UserRole) == audiobook_path:
+                refresh_grid_item_fields(t_item, data, tags)
+
+        # 2. Update Hybrid Grid (BookGridList inside tree)
+        def traverse(parent_item):
+            for i in range(parent_item.childCount()):
+                child = parent_item.child(i)
+                if child.data(0, Qt.ItemDataRole.UserRole + 1) == "grid_placeholder":
+                    widget = self.tree.itemWidget(child, 0)
+                    if isinstance(widget, BookGridList):
+                        # Update underlying books list inside widget
+                        for b_idx, b in enumerate(widget.books):
+                            if b["path"] == audiobook_path:
+                                widget.books[b_idx].update(data)
+                                widget.books[b_idx]["tags"] = tags
+                        for k in range(widget.count()):
+                            w_item = widget.item(k)
+                            if w_item.data(Qt.ItemDataRole.UserRole) == audiobook_path:
+                                refresh_grid_item_fields(w_item, data, tags)
+                traverse(child)
+        traverse(self.tree.invisibleRootItem())
+
+        # 3. Update Standard Tree Item
+        item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
+        if item:
             item.setData(
                 0,
                 Qt.ItemDataRole.UserRole + 2,
@@ -2933,51 +3852,71 @@ class LibraryWidget(QWidget):
                     Qt.ItemDataRole.UserRole + 3,
                     (data["is_started"], data["is_completed"], data["is_favorite"]),
                 )
-
-            # Refresh tags
-            info = self.db.get_audiobook_info(audiobook_path)
-            if info:
-                tags = self.db.get_tags_for_audiobook(info[0])
-                item.setData(0, Qt.ItemDataRole.UserRole + 4, tags)
+            item.setData(0, Qt.ItemDataRole.UserRole + 4, tags)
 
             # Refresh and scale the audiobook cover
             cover_icon = None
-            cover_p_str = data.get("cached_cover_path")
-            if not cover_p_str:
-                cover_p_str = data.get("cover_path")
-
+            cover_p_str = data.get("cached_cover_path") or data.get("cover_path")
             if cover_p_str:
-                cover_p = Path(cover_p_str)
-                if not cover_p.is_absolute() and self.config.get("default_path"):
-                    cover_p = Path(self.config.get("default_path")) / cover_p
+                cover_p = Path(str(cover_p_str))
+                default_path = self.config.get("default_path")
+                if not cover_p.is_absolute() and default_path:
+                    cover_p = Path(str(default_path)) / cover_p
 
                 from utils import load_icon
-                # Clear LRU cache of load_icon to force reload of the potentially updated/overwritten image
                 load_icon.cache_clear()
                 cover_icon = load_icon(
                     cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
                 )
             item.setIcon(0, cover_icon or self.default_audiobook_icon)
-
             item.setText(0, item.text(0))
-            self.update_cache_item_status(
-                audiobook_path, data["is_started"], data["is_completed"]
-            )
-            self.tree.viewport().update()
+
+        self.trigger_viewport_update()
 
     def update_item_progress(
         self, audiobook_path: str, listened_duration: float, progress_percent: int
     ):
+        # 1. Update Flat Grid (self.tile_view)
+        for i in range(self.tile_view.count()):
+            t_item = self.tile_view.item(i)
+            if t_item.data(Qt.ItemDataRole.UserRole) == audiobook_path:
+                data = t_item.data(Qt.ItemDataRole.UserRole + 2)
+                if data and len(data) >= 7:
+                    new_data = list(data)
+                    new_data[5] = listened_duration
+                    new_data[6] = progress_percent
+                    t_item.setData(Qt.ItemDataRole.UserRole + 2, tuple(new_data))
+
+        # 2. Update Hybrid Grid (BookGridList inside tree)
+        def traverse(parent_item):
+            for i in range(parent_item.childCount()):
+                child = parent_item.child(i)
+                if child.data(0, Qt.ItemDataRole.UserRole + 1) == "grid_placeholder":
+                    widget = self.tree.itemWidget(child, 0)
+                    if isinstance(widget, BookGridList):
+                        for k in range(widget.count()):
+                            w_item = widget.item(k)
+                            if w_item.data(Qt.ItemDataRole.UserRole) == audiobook_path:
+                                data = w_item.data(Qt.ItemDataRole.UserRole + 2)
+                                if data and len(data) >= 7:
+                                    new_data = list(data)
+                                    new_data[5] = listened_duration
+                                    new_data[6] = progress_percent
+                                    w_item.setData(Qt.ItemDataRole.UserRole + 2, tuple(new_data))
+                traverse(child)
+        traverse(self.tree.invisibleRootItem())
+
+        # 3. Update Standard Tree Item
         item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
-        if not item:
-            return
-        data = item.data(0, Qt.ItemDataRole.UserRole + 2)
-        if data and len(data) >= 7:
-            new_data = list(data)
-            new_data[5] = listened_duration
-            new_data[6] = progress_percent
-            item.setData(0, Qt.ItemDataRole.UserRole + 2, tuple(new_data))
-            self.tree.viewport().update()
+        if item:
+            data = item.data(0, Qt.ItemDataRole.UserRole + 2)
+            if data and len(data) >= 7:
+                new_data = list(data)
+                new_data[5] = listened_duration
+                new_data[6] = progress_percent
+                item.setData(0, Qt.ItemDataRole.UserRole + 2, tuple(new_data))
+
+        self.trigger_viewport_update()
 
     def update_cache_item_status(self, path: str, is_started: bool, is_completed: bool):
         if not self.cached_library_data:
@@ -3000,14 +3939,360 @@ class LibraryWidget(QWidget):
         # Clear search filter to ensure the audiobook is visible
         self.search_edit.clear()
 
-        # Scroll to the audiobook (it's already highlighted by the delegate)
-        item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
+        # Scroll to the audiobook
+        if self.show_grid and not self.show_folders:
+            # Scroll flat grid
+            for i in range(self.tile_view.count()):
+                t_item = self.tile_view.item(i)
+                if t_item.data(Qt.ItemDataRole.UserRole) == audiobook_path:
+                    self.tile_view.scrollToItem(t_item, QAbstractItemView.ScrollHint.PositionAtCenter)
+                    break
+        else:
+            # Scroll tree / hybrid grid
+            def find_and_reveal(parent_item):
+                for i in range(parent_item.childCount()):
+                    child = parent_item.child(i)
+                    item_type = child.data(0, Qt.ItemDataRole.UserRole + 1)
+                    if item_type == "folder":
+                        if find_and_reveal(child):
+                            child.setExpanded(True)
+                            return True
+                    elif item_type == "grid_placeholder":
+                        widget = self.tree.itemWidget(child, 0)
+                        if isinstance(widget, BookGridList):
+                            for k in range(widget.count()):
+                                if widget.item(k).data(Qt.ItemDataRole.UserRole) == audiobook_path:
+                                    parent_item.setExpanded(True)
+                                    self.tree.scrollToItem(child, QTreeWidget.ScrollHint.PositionAtCenter)
+                                    widget.setCurrentRow(k)
+                                    widget.scrollToItem(widget.item(k), QAbstractItemView.ScrollHint.PositionAtCenter)
+                                    return True
+                    elif item_type == "audiobook":
+                        if child.data(0, Qt.ItemDataRole.UserRole) == audiobook_path:
+                            self.tree.scrollToItem(child, QTreeWidget.ScrollHint.PositionAtCenter)
+                            return True
+                return False
+            find_and_reveal(self.tree.invisibleRootItem())
+
+    def clear_other_grid_selections(self, active_grid):
+        """Deselect all item selections in other grid components across the tree"""
+        # Block signals temporarily to prevent loop
+        if active_grid != self.tree:
+            self.tree.blockSignals(True)
+            self.tree.clearSelection()
+            self.tree.blockSignals(False)
+            
+        if active_grid != self.tile_view:
+            self.tile_view.blockSignals(True)
+            self.tile_view.clearSelection()
+            self.tile_view.blockSignals(False)
+
+        def traverse(parent_item):
+            for i in range(parent_item.childCount()):
+                child = parent_item.child(i)
+                if child.data(0, Qt.ItemDataRole.UserRole + 1) == "grid_placeholder":
+                    widget = self.tree.itemWidget(child, 0)
+                    if isinstance(widget, BookGridList) and widget != active_grid:
+                        widget.blockSignals(True)
+                        widget.clearSelection()
+                        widget.blockSignals(False)
+                traverse(child)
+
+        traverse(self.tree.invisibleRootItem())
+
+    def trigger_viewport_update(self):
+        """Force paint event across tree and list components"""
+        self.tree.viewport().update()
+        self.tile_view.viewport().update()
+        def traverse(parent_item):
+            for i in range(parent_item.childCount()):
+                child = parent_item.child(i)
+                if child.data(0, Qt.ItemDataRole.UserRole + 1) == "grid_placeholder":
+                    widget = self.tree.itemWidget(child, 0)
+                    if isinstance(widget, BookGridList):
+                        widget.viewport().update()
+                traverse(child)
+        traverse(self.tree.invisibleRootItem())
+
+    def update_all_grid_heights(self):
+        """Iterate all active BookGridList widgets and update their layout heights"""
+        def traverse(parent_item):
+            for i in range(parent_item.childCount()):
+                child = parent_item.child(i)
+                if child.data(0, Qt.ItemDataRole.UserRole + 1) == "grid_placeholder":
+                    widget = self.tree.itemWidget(child, 0)
+                    if isinstance(widget, BookGridList):
+                        widget.update_height()
+                traverse(child)
+        traverse(self.tree.invisibleRootItem())
+
+    def on_tile_view_leave(self, tile_view, event):
+        """Handle mouse leaving the grid list widget to clear button hover states"""
+        tile_view.hovered_item = None
+        tile_view.mouse_pos = None
+        tile_view.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+        tile_view.viewport().update()
+
+    def on_tile_view_mouse_move(self, tile_view, event):
+        """Handle hover state updates when mouse moves over list items"""
+        pos = event.pos()
+        tile_view.mouse_pos = pos
+        item = tile_view.itemAt(pos)
+        if item != tile_view.hovered_item:
+            tile_view.hovered_item = item
+        tile_view.viewport().update()
+        
+        # Cursor shape update
+        cursor_set = False
         if item:
-            self.tree.scrollToItem(item, QTreeWidget.ScrollHint.PositionAtCenter)
+            delegate = tile_view.itemDelegate()
+            if isinstance(delegate, TileDelegate):
+                rect = tile_view.visualItemRect(item)
+                play_rect = delegate.get_play_rect(rect)
+                fav_rect = delegate.get_fav_rect(rect)
+                if play_rect.contains(QPointF(pos)) or fav_rect.contains(QPointF(pos)):
+                    tile_view.viewport().setCursor(Qt.CursorShape.PointingHandCursor)
+                    cursor_set = True
+        
+        if not cursor_set:
+            tile_view.viewport().setCursor(Qt.CursorShape.ArrowCursor)
+            
+        QListWidget.mouseMoveEvent(tile_view, event)
+
+    def on_tile_view_item_clicked(self, item):
+        """Handle clicking an item inside a grid list widget"""
+        try:
+            self.clear_other_grid_selections(self.tile_view)
+            
+            path = item.data(Qt.ItemDataRole.UserRole)
+            # Check if the click was exactly on the action buttons (Favorite or Play/Pause)
+            delegate = self.tile_view.itemDelegate()
+            if isinstance(delegate, TileDelegate):
+                event_pos = self.tile_view.viewport().mapFromGlobal(QCursor.pos())
+                rect = self.tile_view.visualItemRect(item)
+                
+                # Check Play button
+                play_rect = delegate.get_play_rect(rect)
+                if play_rect.contains(QPointF(event_pos)):
+                    # Trigger Play action
+                    self.tree.play_button_clicked.emit(path)
+                    return
+                    
+                # Check Favorite button
+                fav_rect = delegate.get_fav_rect(rect)
+                if fav_rect.contains(QPointF(event_pos)):
+                    # Toggle favorite status
+                    status_data = item.data(Qt.ItemDataRole.UserRole + 3)
+                    if status_data:
+                        is_fav = status_data[2]
+                        audiobook_id = None
+                        for p, items in (self.cached_library_data or {}).items():
+                            for it in items:
+                                if it["path"] == path:
+                                    audiobook_id = it["id"]
+                                    break
+                            if audiobook_id:
+                                break
+                        if audiobook_id:
+                            self.toggle_favorite(audiobook_id, path)
+                    return
+
+            self.audiobook_selected.emit(path)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+    def on_tile_view_item_double_clicked(self, item):
+        """Handle double-clicking an item to start playback"""
+        try:
+            path = item.data(Qt.ItemDataRole.UserRole)
+            delegate = self.tile_view.itemDelegate()
+            if isinstance(delegate, TileDelegate):
+                event_pos = self.tile_view.viewport().mapFromGlobal(QCursor.pos())
+                rect = self.tile_view.visualItemRect(item)
+                if delegate.get_play_rect(rect).contains(QPointF(event_pos)) or delegate.get_fav_rect(rect).contains(QPointF(event_pos)):
+                    return
+            
+            window = self.window()
+            if hasattr(window, "playback_controller"):
+                window.playback_controller.play_audiobook(path)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+    def on_tile_view_context_menu(self, pos):
+        """Display standard context menu for audiobook item"""
+        try:
+            item = self.tile_view.itemAt(pos)
+            if not item:
+                return
+                
+            path = item.data(Qt.ItemDataRole.UserRole)
+            self.show_context_menu_for_path(path, self.tile_view.viewport().mapToGlobal(pos))
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+
+    def show_context_menu_for_path(self, path: str, global_pos):
+        """Unified helper to trigger custom context menu for a specific book path"""
+        try:
+            audiobook = None
+            for p, items in (self.cached_library_data or {}).items():
+                for it in items:
+                    if it["path"] == path:
+                        audiobook = it
+                        break
+                if audiobook:
+                    break
+            
+            # Fallback: query DB directly if not found in cached data
+            if not audiobook:
+                db_data = self.db.get_audiobook_by_path(path)
+                if db_data:
+                    audiobook = db_data
+
+            if not audiobook:
+                return
+
+            from PyQt6.QtGui import QAction
+            from PyQt6.QtWidgets import QMenu, QStyle
+
+            menu = QMenu(self)
+            menu.setObjectName("libraryContextMenu")
+
+            audiobook_id = audiobook.get("id")
+            if not audiobook_id:
+                info = self.db.get_audiobook_info(path)
+                if info:
+                    audiobook_id = info[0]
+            if not audiobook_id:
+                return
+
+            # 1. Play / Pause Action
+            window = self.window()
+            is_playing = False
+            if hasattr(window, "playback_controller"):
+                is_playing = window.playback_controller.current_audiobook_path == path and window.playback_controller.player.is_playing()
+
+            play_action = QAction(tr("library.context_pause") if is_playing else tr("library.context_play"), self)
+            play_action.setIcon(get_icon("pause" if is_playing else "context_play"))
+            play_action.triggered.connect(lambda p=path: self.tree.play_button_clicked.emit(p))
+            menu.addAction(play_action)
+
+            menu.addSeparator()
+
+            # 2. Add to Favorites / Remove
+            is_favorite = audiobook.get("is_favorite", False)
+            fav_text = tr("library.menu_remove_favorite") if is_favorite else tr("library.menu_add_favorite")
+            fav_icon = get_icon("context_favorite_on" if is_favorite else "context_favorite_off")
+            if not fav_icon or fav_icon.isNull():
+                fav_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogYesButton)
+
+            fav_action = QAction(fav_text, self)
+            fav_action.setIcon(fav_icon)
+            fav_action.triggered.connect(lambda aid=audiobook_id, p=path: self.toggle_favorite(aid, p))
+            menu.addAction(fav_action)
+
+            # 3. Mark Completed / Not Completed
+            is_completed = audiobook.get("is_completed", False)
+            
+            mark_read_action = QAction(tr("library.menu_mark_read"), self)
+            mark_read_action.setIcon(get_icon("context_mark_read"))
+            mark_read_action.triggered.connect(
+                lambda aid=audiobook_id, dur=audiobook.get("duration", 0), p=path: self.mark_as_read(aid, dur, p)
+            )
+            menu.addAction(mark_read_action)
+
+            mark_unread_action = QAction(tr("library.menu_mark_unread"), self)
+            mark_unread_action.setIcon(get_icon("context_mark_unread"))
+            mark_unread_action.triggered.connect(
+                lambda aid=audiobook_id, p=path: self.mark_as_unread(aid, p)
+            )
+            menu.addAction(mark_unread_action)
+
+            menu.addSeparator()
+
+            # 4. Edit Metadata
+            edit_action = QAction(tr("library.menu_edit_metadata"), self)
+            edit_action.setIcon(get_icon("context_edit_metadata"))
+            edit_action.triggered.connect(lambda aid=audiobook_id, p=path: self.open_metadata_editor(aid, p))
+            menu.addAction(edit_action)
+
+            # Tags Submenu
+            tags_menu = menu.addMenu(tr("tags.menu_title"))
+            tags_menu.setObjectName("libraryContextMenu")
+            tags_menu.setIcon(get_icon("context_tags"))
+
+            all_tags = self.db.get_all_tags()
+            assigned_tags = self.db.get_tags_for_audiobook(audiobook_id)
+            assigned_tag_ids = {t["id"] for t in assigned_tags}
+
+            for tag in all_tags:
+                tag_action = QAction(tag["name"], self)
+                tag_action.setCheckable(True)
+                tag_action.setChecked(tag["id"] in assigned_tag_ids)
+                
+                if tag.get("color"):
+                    pixmap = QPixmap(14, 14)
+                    pixmap.fill(Qt.GlobalColor.transparent)
+                    painter = QPainter(pixmap)
+                    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                    painter.setBrush(QColor(tag["color"]))
+                    painter.setPen(Qt.PenStyle.NoPen)
+                    painter.drawRoundedRect(0, 0, 14, 14, 3, 3)
+                    if tag["id"] in assigned_tag_ids:
+                        _, accent_color = StyleManager.get_theme_property("theme_primary")
+                        painter.setBrush(accent_color)
+                        painter.drawEllipse(5, 5, 4, 4)
+                    painter.end()
+                    tag_action.setIcon(QIcon(pixmap))
+
+                tag_action.triggered.connect(
+                    lambda checked, t_id=tag["id"], aid=audiobook_id, p=path: self.toggle_tag_from_context_menu(
+                        aid, t_id, p, checked
+                    )
+                )
+                tags_menu.addAction(tag_action)
+
+            tags_menu.addSeparator()
+            
+            assign_action = QAction(tr("tags.menu_assign"), self)
+            assign_action.triggered.connect(
+                lambda aid=audiobook_id, p=path: self.open_tag_assignment(aid, p)
+            )
+            tags_menu.addAction(assign_action)
+
+            clear_tags_action = QAction(tr("tags.menu_clear_all"), self)
+            clear_tags_action.triggered.connect(
+                lambda aid=audiobook_id, p=path: self.clear_all_tags(aid, p)
+            )
+            clear_tags_action.setEnabled(bool(assigned_tag_ids))
+            tags_menu.addAction(clear_tags_action)
+
+            menu.addSeparator()
+
+            # 5. Open Folder
+            open_folder_action = QAction(tr("library.menu_open_folder"), self)
+            open_folder_action.setIcon(get_icon("context_open_folder"))
+            open_folder_action.triggered.connect(lambda p=path: self.open_folder(p))
+            menu.addAction(open_folder_action)
+
+            # 6. Delete Book
+            delete_action = QAction(tr("library.menu_delete"), self)
+            delete_action.setIcon(get_icon("delete"))
+            delete_action.triggered.connect(lambda aid=audiobook_id, p=path: self.confirm_delete(aid, p))
+            menu.addAction(delete_action)
+
+            menu.exec(global_pos)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
 
     def update_texts(self):
         if hasattr(self, "btn_show_folders"):
             self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
+        if hasattr(self, "btn_show_grid"):
+            self.btn_show_grid.setToolTip(tr("library.tooltip_tile_view"))
         if hasattr(self, "btn_favorites"):
             self.btn_favorites.setToolTip(tr("library.tooltip_favorites"))
         if hasattr(self, "btn_tags"):

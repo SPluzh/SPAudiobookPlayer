@@ -79,6 +79,7 @@
     "filter_tags": "Tags",
     "show_folders": "",
     "tooltip_show_folders": "Show folder hierarchy",
+    "tooltip_tile_view": "Show books as grid/tiles",
     "tooltip_filter_all": "Show all books",
     "tooltip_filter_not_started": "Show only new books",
     "tooltip_filter_in_progress": "Show books in progress",

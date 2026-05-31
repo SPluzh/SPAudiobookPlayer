@@ -2,9 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.22]
+- **Library Grid**: Fixed an issue where tiles in flat grid view would overlap (layer on top of each other) due to missing item size hints.
+- **Library Grid**: Fixed nested grids within folders not updating their height and clipping/hiding wrapped tiles when the window or sidebar width was resized.
+- **Library Grid**: Proactively recalculate nested grid height upon expanding a folder item to prevent initial layout clipping.
+- **Library Grid**: Increased grid spacing to 30px, aligned covers tightly at the top of the cells (exactly 4px border margin), and set item `SizeHint` height to `icon_size + 10` (with `height = rows * (icon_size + 10) + (rows - 1) * spacing + 8`) to eliminate any unnecessary vertical margins or empty spaces.
+- **Library Grid**: Aligned tile cover rendering, rounding radius (3px), active glowing highlight border (8px), and flat under-cover progress bar (5px) to be exactly identical to the list view's high-fidelity style.
+
 ## [1.6.21]
+- **Library**: Added a checkable tile view mode displaying audiobook covers as a fluid grid from left to right, adapting to the available window space.
+- **Library**: Added a tile view button next to the "show folders" button, supporting both standalone books and hierarchical folder contents in grid format.
 - **Library**: Added total file size tracking for audiobooks, displaying the formatted total book size (e.g. `💾 120.4 MB`) within the tree view (requires a library rescan to populate sizes for existing audiobooks).
 - **UI**: Added a checkable option in the View menu to show or hide the detailed metadata row (progress, file count, duration, and size) for audiobooks in the library.
+- **Fix**: Resolved a critical startup error where accessing the library reference in TileDelegate constructor triggered an AttributeError prior to complete initialization.
 
 ## [1.6.20]
 - **Playback**: Added a floating real-time time tooltip that appears above the progress slider handle during manual seeking/scrubbing to show the target position.

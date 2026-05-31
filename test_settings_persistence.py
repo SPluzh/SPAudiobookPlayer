@@ -50,6 +50,7 @@ class MockApp:
         self.pitch_value = 0.0
         self.show_folders = False
         self.show_filter_labels = True
+        self.show_grid = False
 
     def geometry(self):
         class Rect:
@@ -111,6 +112,7 @@ class MockApp:
 
         if 'Library' not in config: config['Library'] = {}
         config['Library']['show_folders'] = str(self.show_folders)
+        config['Library']['show_grid'] = str(self.show_grid)
         config['Library']['show_filter_labels'] = str(self.show_filter_labels)
         
         if 'Audiobook_Style' not in config: config['Audiobook_Style'] = {}
@@ -131,16 +133,19 @@ class MockApp:
         self.show_id3 = config.getboolean('Player', 'show_id3', fallback=False)
         self.auto_rewind = config.getboolean('Player', 'auto_rewind', fallback=False)
         self.auto_check_updates = config.getboolean('Player', 'auto_check_updates', fallback=True)
+        self.show_grid = config.getboolean('Library', 'show_grid', fallback=False)
         
         print(f"Loaded auto_check_updates: {self.auto_check_updates}")
         print(f"Loaded auto_rewind: {self.auto_rewind}")
         print(f"Loaded show_id3: {self.show_id3}")
+        print(f"Loaded show_grid: {self.show_grid}")
 
 def test():
     config_file = "test_settings.ini"
     if os.path.exists(config_file): os.remove(config_file)
     
     app = MockApp(config_file)
+    app.show_grid = True
     print("Saving settings with auto_check_updates=False...")
     app.save_settings()
     
@@ -157,6 +162,7 @@ def test():
     assert app2.auto_check_updates == False
     assert app2.auto_rewind == True
     assert app2.show_id3 == True
+    assert app2.show_grid == True
     print("Test passed!")
     
     if os.path.exists(config_file): os.remove(config_file)

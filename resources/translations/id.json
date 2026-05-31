@@ -93,7 +93,8 @@
     "no_tags_available": "Tidak ada tag tersedia",
     "tooltip_favorites": "Tampilkan hanya buku favorit",
     "tooltip_tags": "Filter berdasarkan tag",
-    "folder_books_count": "{count} audiobook"
+    "folder_books_count": "{count} audiobook",
+    "tooltip_tile_view": "Show books as grid/tiles"
   },
   "player": {
     "volume": "Volume",
