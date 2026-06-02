@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 - **Library**: Replaced the text-based narrator emoji with a custom graphical icon.
 - **Library**: Added a custom writer icon before the author's name in the audiobook list.
 - **Library**: Swapped the order of information to display the audiobook title above the author's name.
+- **Library**: Added interactive author and narrator fields that bold and change the mouse cursor on hover.
+- **Library**: Clicking on an author or narrator in the list view automatically populates the search bar to filter by that person.
 
 ## [1.6.21]
 - **Library**: Added total file size tracking for audiobooks, displaying the formatted total book size (e.g. `💾 120.4 MB`) within the tree view (requires a library rescan to populate sizes for existing audiobooks).

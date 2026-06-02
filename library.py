@@ -609,6 +609,7 @@ class MultiLineDelegate(QStyledItemDelegate):
 
         # UI state for interaction
         self.hovered_index = None
+        self.hovered_field = None
         self.mouse_pos = None
 
         # Narrator icon
@@ -1293,6 +1294,9 @@ class MultiLineDelegate(QStyledItemDelegate):
         # Author field
         if author:
             font, color = self._get_style("delegate_author")
+            if self.hovered_index == index and getattr(self, "hovered_field", None) == "author":
+                font = QFont(font)
+                font.setBold(True)
             painter.setFont(font)
             painter.setPen(color)
 
@@ -1321,6 +1325,9 @@ class MultiLineDelegate(QStyledItemDelegate):
         # NARRATOR Metadata
         if narrator:
             font, color = self._get_style("delegate_narrator")
+            if self.hovered_index == index and getattr(self, "hovered_field", None) == "narrator":
+                font = QFont(font)
+                font.setBold(True)
             painter.setFont(font)
             painter.setPen(color)
 
@@ -1503,6 +1510,98 @@ class MultiLineDelegate(QStyledItemDelegate):
 
         painter.restore()
 
+    def get_author_rect(self, option_rect: QRect, index: QModelIndex) -> QRect:
+        """Calculate bounds for the author field including icon and text width"""
+        item_type = index.data(Qt.ItemDataRole.UserRole + 1)
+        if item_type != "audiobook":
+            return QRect()
+
+        data = index.data(Qt.ItemDataRole.UserRole + 2)
+        if not data or len(data) < 1:
+            return QRect()
+
+        author = data[0]
+        if not author:
+            return QRect()
+
+        icon_rect = self.get_icon_rect(option_rect, index)
+        text_x = icon_rect.right() + 15
+        text_y = option_rect.top() + self.vertical_padding
+
+        # Skip title
+        font_title, _ = self._get_style("delegate_title")
+        title_height = QFontMetrics(font_title).height()
+        text_y += title_height + self.line_spacing
+
+        font_author, _ = self._get_style("delegate_author")
+        author_height = QFontMetrics(font_author).height()
+
+        author_x = text_x
+        icon_width = 0
+        if hasattr(self, "author_icon") and not self.author_icon.isNull():
+            icon_width = 14 + 6
+            author_x += icon_width
+
+        fm = QFontMetrics(font_author)
+        text_width = fm.horizontalAdvance(author)
+        available_width = option_rect.right() - author_x - self.horizontal_padding
+        actual_width = min(text_width, available_width)
+
+        return QRect(text_x, text_y, icon_width + actual_width, author_height)
+
+    def get_narrator_rect(self, option_rect: QRect, index: QModelIndex) -> QRect:
+        """Calculate bounds for the narrator field including icon and text width"""
+        item_type = index.data(Qt.ItemDataRole.UserRole + 1)
+        if item_type != "audiobook":
+            return QRect()
+
+        data = index.data(Qt.ItemDataRole.UserRole + 2)
+        if not data or len(data) < 3:
+            return QRect()
+
+        author = data[0]
+        narrator = data[2]
+        if not narrator:
+            return QRect()
+
+        icon_rect = self.get_icon_rect(option_rect, index)
+        text_x = icon_rect.right() + 15
+        text_y = option_rect.top() + self.vertical_padding
+
+        # Skip title
+        font_title, _ = self._get_style("delegate_title")
+        title_height = QFontMetrics(font_title).height()
+        text_y += title_height + self.line_spacing
+
+        # Skip author if present
+        if author:
+            font_author, _ = self._get_style("delegate_author")
+            author_height = QFontMetrics(font_author).height()
+            text_y += author_height + self.line_spacing
+
+        font_narrator, _ = self._get_style("delegate_narrator")
+        narrator_height = QFontMetrics(font_narrator).height()
+
+        narrator_x = text_x
+        icon_width = 0
+        icon_drawn = False
+        if hasattr(self, "narrator_icon") and not self.narrator_icon.isNull():
+            icon_width = 14 + 6
+            narrator_x += icon_width
+            icon_drawn = True
+
+        if icon_drawn:
+            narrator_text = narrator
+        else:
+            narrator_text = f"{tr('delegate.narrator_prefix')} {narrator}"
+
+        fm = QFontMetrics(font_narrator)
+        text_width = fm.horizontalAdvance(narrator_text)
+        available_width = option_rect.right() - narrator_x - self.horizontal_padding
+        actual_width = min(text_width, available_width)
+
+        return QRect(text_x, text_y, icon_width + actual_width, narrator_height)
+
 
 class LibraryTree(QTreeWidget):
     """Customized tree widget that handles hover detection and direct interaction with audiobook 'Play' buttons"""
@@ -1513,6 +1612,7 @@ class LibraryTree(QTreeWidget):
     favorite_clicked = pyqtSignal(str)  # Emits path when heart is clicked
     description_requested = pyqtSignal(str)  # Emits path when info icon is clicked
     settings_requested = pyqtSignal()  # Emits when placeholder settings icon is clicked
+    search_requested = pyqtSignal(str)  # Emits search string when author or narrator clicked
 
     def __init__(self, parent=None):
         """Enable mouse tracking for fine-grained hover effects on custom-painted items"""
@@ -1568,6 +1668,8 @@ class LibraryTree(QTreeWidget):
         delegate = self.itemDelegate()
         if delegate and hasattr(delegate, "hovered_index"):
             delegate.hovered_index = None
+            if hasattr(delegate, "hovered_field"):
+                delegate.hovered_field = None
             delegate.mouse_pos = None
             self.viewport().update()
         super().leaveEvent(event)
@@ -1591,8 +1693,9 @@ class LibraryTree(QTreeWidget):
         delegate = self.itemDelegate()
         if delegate and hasattr(delegate, "get_play_button_rect"):
             delegate.hovered_index = index if index.isValid() else None
+            if hasattr(delegate, "hovered_field"):
+                delegate.hovered_field = None
             delegate.mouse_pos = event.pos()
-            self.viewport().update()
 
             if index.isValid():
                 item_type = index.data(Qt.ItemDataRole.UserRole + 1)
@@ -1602,6 +1705,7 @@ class LibraryTree(QTreeWidget):
                     play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
                     if play_rect.contains(QPointF(event.pos())):
                         self.setCursor(Qt.CursorShape.PointingHandCursor)
+                        self.viewport().update()
                         return
 
                     # Check heart hover
@@ -1615,6 +1719,7 @@ class LibraryTree(QTreeWidget):
                         heart_rect = delegate.get_heart_rect(QRectF(icon_rect))
                         if heart_rect.contains(QPointF(event.pos())):
                             self.setCursor(Qt.CursorShape.PointingHandCursor)
+                            self.viewport().update()
                             return
 
                     # Check info hover
@@ -1624,9 +1729,27 @@ class LibraryTree(QTreeWidget):
                         info_rect = delegate.get_info_rect(QRectF(icon_rect))
                         if info_rect.contains(QPointF(event.pos())):
                             self.setCursor(Qt.CursorShape.PointingHandCursor)
+                            self.viewport().update()
                             return
 
-        self.setCursor(Qt.CursorShape.ArrowCursor)
+                    # Check author hover
+                    author_rect = delegate.get_author_rect(rect, index)
+                    if not author_rect.isEmpty() and author_rect.contains(event.pos()):
+                        delegate.hovered_field = "author"
+                        self.setCursor(Qt.CursorShape.PointingHandCursor)
+                        self.viewport().update()
+                        return
+
+                    # Check narrator hover
+                    narrator_rect = delegate.get_narrator_rect(rect, index)
+                    if not narrator_rect.isEmpty() and narrator_rect.contains(event.pos()):
+                        delegate.hovered_field = "narrator"
+                        self.setCursor(Qt.CursorShape.PointingHandCursor)
+                        self.viewport().update()
+                        return
+
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.viewport().update()
 
     def mousePressEvent(self, event):
         """Identify clicks on the custom 'Play' button to initiate playback without selecting the item"""
@@ -1677,6 +1800,22 @@ class LibraryTree(QTreeWidget):
                             if info_rect.contains(QPointF(event.pos())):
                                 path = index.data(Qt.ItemDataRole.UserRole)
                                 self.description_requested.emit(path)
+                                return
+
+                        # Check author click
+                        author_rect = delegate.get_author_rect(rect, index)
+                        if not author_rect.isEmpty() and author_rect.contains(event.pos()):
+                            author = data[0]
+                            if author:
+                                self.search_requested.emit(author)
+                                return
+
+                        # Check narrator click
+                        narrator_rect = delegate.get_narrator_rect(rect, index)
+                        if not narrator_rect.isEmpty() and narrator_rect.contains(event.pos()):
+                            narrator = data[2]
+                            if narrator:
+                                self.search_requested.emit(narrator)
                                 return
         super().mousePressEvent(event)
 
@@ -1849,6 +1988,7 @@ class LibraryWidget(QWidget):
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.show_context_menu)
         self.tree.settings_requested.connect(self.settings_requested.emit)
+        self.tree.search_requested.connect(self.search_edit.setText)
 
         if self.delegate:
             self.tree.setItemDelegate(self.delegate)
