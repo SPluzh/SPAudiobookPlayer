@@ -25,25 +25,6 @@ if hasattr(sys.stdout, 'reconfigure'):
 class AudiobookScanner:
     """Library scanner for processing audiobook directories and metadata"""
     
-    def __init__(self, config_file='settings.ini'):
-        """Initialize scanner and load configurations"""
-        self.script_dir = Path(__file__).parent
-        self.config_file = self.script_dir / 'resources' / config_file
-        
-        # Load settings
-        self._load_settings()
-        
-        # Paths
-        self.db_file = self.script_dir / 'data' / 'audiobooks.db'
-        
-        covers_dir_str = self.config.get('Paths', 'covers_dir', fallback='data/extracted_covers')
-        self.covers_dir = Path(covers_dir_str)
-        if not self.covers_dir.is_absolute():
-            self.covers_dir = self.script_dir / self.covers_dir
-        
-        # Load translations
-        self._load_translations()
-        
     def _log(self, message: str, end: str = '\n'):
         """Helper to print formatted messages"""
         print(message, end=end, flush=True)
@@ -91,13 +72,21 @@ class AudiobookScanner:
     def __init__(self, config_file='settings.ini'):
         """Initialize scanner and load configurations"""
         self.script_dir = Path(__file__).parent
-        self.config_file = self.script_dir / 'resources' / config_file
+        
+        config_path = Path(config_file)
+        if config_path.is_absolute():
+            self.config_file = config_path
+        else:
+            self.config_file = self.script_dir / 'resources' / config_file
         
         # Load settings
         self._load_settings()
         
         # Paths
-        self.db_file = self.script_dir / 'data' / 'audiobooks.db'
+        db_path_str = self.config.get('Paths', 'database', fallback='data/audiobooks.db')
+        self.db_file = Path(db_path_str)
+        if not self.db_file.is_absolute():
+            self.db_file = self.script_dir / self.db_file
         
         covers_dir_str = self.config.get('Paths', 'covers_dir', fallback='data/extracted_covers')
         self.covers_dir = Path(covers_dir_str)
@@ -569,6 +558,489 @@ class AudiobookScanner:
             return False
         except PermissionError:
             return False
+
+    def _find_playlist_files(self, folder: Path) -> list:
+        """Find all .m3u/.m3u8 files in folder (not recursive)"""
+        m3u_files = []
+        for ext in ('*.m3u', '*.m3u8'):
+            try:
+                m3u_files.extend(folder.glob(ext))
+            except Exception:
+                pass
+        return sorted(m3u_files)
+
+    def _parse_m3u_file(self, m3u_path: Path) -> list:
+        """
+        Parse M3U/M3U8 playlist.
+        Returns: [{'path': str, 'title': str, 'duration': float, 'is_url': bool}, ...]
+        """
+        entries = []
+        content = None
+        for encoding in ['utf-8', 'utf-8-sig', 'cp1251', 'latin-1']:
+            try:
+                content = m3u_path.read_text(encoding=encoding)
+                break
+            except Exception:
+                continue
+        if not content:
+            return []
+
+        lines = content.splitlines()
+        current_title = ''
+        current_duration = -1
+
+        for line in lines:
+            line = line.strip()
+            if not line or (line.startswith('#') and not line.startswith('#EXTINF')):
+                continue
+            if line.startswith('#EXTINF'):
+                match = re.match(r'#EXTINF:\s*(-?\d+)\s*,\s*(.*)', line)
+                if match:
+                    current_duration = float(match.group(1))
+                    current_title = match.group(2).strip()
+                continue
+
+            file_path = line
+            is_url = file_path.startswith(('http://', 'https://'))
+
+            if is_url:
+                entries.append({
+                    'path': file_path,
+                    'title': current_title or Path(file_path).name,
+                    'duration': current_duration if current_duration > 0 else 0.0,
+                    'is_url': True
+                })
+            else:
+                if '://' in file_path:
+                    current_title = ''
+                    current_duration = -1
+                    continue
+                p_obj = Path(file_path)
+                if not p_obj.is_absolute():
+                    resolved = (m3u_path.parent / p_obj).resolve()
+                else:
+                    resolved = p_obj
+                
+                if resolved.exists() and resolved.suffix.lower() in self.audio_extensions:
+                    entries.append({
+                        'path': str(resolved),
+                        'title': current_title or resolved.name,
+                        'duration': current_duration if current_duration > 0 else 0.0,
+                        'is_url': False
+                    })
+            current_title = ''
+            current_duration = -1
+
+        return entries
+
+    def _get_url_duration_fast(self, url: str) -> dict:
+        """
+        Quickly estimate duration of URL file using a single HTTP GET request with Range.
+        Returns: {'duration': float, 'size': int, 'bitrate': int, 'codec': str}
+        """
+        import urllib.request
+        import io
+        from urllib.parse import urlparse
+
+        res = {
+            'duration': 0.0,
+            'size': 0,
+            'bitrate': 0,
+            'codec': 'Unknown'
+        }
+
+        try:
+            req = urllib.request.Request(url)
+            # Fetch 256KB to be safe with larger ID3 headers
+            req.add_header('Range', 'bytes=0-262143')
+            req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                status = getattr(resp, 'status', 200)
+                headers = resp.headers
+                if status == 200:
+                    chunk = resp.read(262144)
+                else:
+                    chunk = resp.read()
+
+            content_range = headers.get('Content-Range', '')
+            content_length = int(headers.get('Content-Length', 0))
+            total_size = 0
+
+            if status == 206 and content_range:
+                match = re.search(r'/(\d+)', content_range)
+                if match:
+                    total_size = int(match.group(1))
+            else:
+                total_size = content_length
+
+            res['size'] = total_size
+
+            if not chunk or total_size == 0:
+                return res
+
+            buf = io.BytesIO(chunk)
+            
+            parsed = urlparse(url)
+            suffix = Path(parsed.path).suffix.lower()
+
+            # Try parser based on suffix first, fallback to try-all
+            parsers_to_try = []
+            if suffix == '.mp3':
+                parsers_to_try = ['mp3', 'mp4']
+            elif suffix in ('.m4a', '.m4b', '.mp4', '.aac'):
+                parsers_to_try = ['mp4', 'mp3']
+            elif suffix == '.flac':
+                parsers_to_try = ['flac', 'mp3']
+            elif suffix == '.ogg':
+                parsers_to_try = ['ogg', 'mp3']
+            else:
+                parsers_to_try = ['mp3', 'mp4']
+
+            parsed_ok = False
+            for ptype in parsers_to_try:
+                try:
+                    if ptype == 'mp3':
+                        from mutagen.mp3 import MP3
+                        buf.seek(0)
+                        audio = MP3(buf)
+                        res['codec'] = 'MP3'
+                        if audio.info.bitrate > 0:
+                            res['bitrate'] = int(audio.info.bitrate)
+                        
+                        # Calculate duration
+                        if audio.info.length > 0:
+                            est_duration = total_size / (audio.info.bitrate / 8) if audio.info.bitrate > 0 else 0
+                            if audio.info.length > est_duration * 0.9:
+                                res['duration'] = audio.info.length
+                            elif est_duration > 0:
+                                # Subtract 4KB ID3 tag average
+                                res['duration'] = max(0.0, (total_size - 4096) / (audio.info.bitrate / 8))
+                        parsed_ok = True
+                        break
+
+                    elif ptype == 'mp4':
+                        from mutagen.mp4 import MP4
+                        buf.seek(0)
+                        audio = MP4(buf)
+                        res['codec'] = 'MP4/M4A'
+                        if audio.info.bitrate > 0:
+                            res['bitrate'] = int(audio.info.bitrate)
+                        if audio.info.length > 0:
+                            res['duration'] = audio.info.length
+                        parsed_ok = True
+                        break
+
+                    elif ptype == 'flac':
+                        from mutagen.flac import FLAC
+                        buf.seek(0)
+                        audio = FLAC(buf)
+                        res['codec'] = 'FLAC'
+                        if audio.info.bitrate > 0:
+                            res['bitrate'] = int(audio.info.bitrate)
+                        if audio.info.length > 0:
+                            res['duration'] = audio.info.length
+                        parsed_ok = True
+                        break
+
+                    elif ptype == 'ogg':
+                        from mutagen.oggvorbis import OggVorbis
+                        buf.seek(0)
+                        audio = OggVorbis(buf)
+                        res['codec'] = 'OGG'
+                        if audio.info.bitrate > 0:
+                            res['bitrate'] = int(audio.info.bitrate)
+                        if audio.info.length > 0:
+                            res['duration'] = audio.info.length
+                        parsed_ok = True
+                        break
+
+                except Exception:
+                    pass
+
+            if not parsed_ok:
+                # Last resort: check if starts with ID3
+                if chunk.startswith(b'ID3') and len(chunk) >= 10:
+                    res['codec'] = 'MP3'
+                    res['bitrate'] = 128000
+                    res['duration'] = (total_size - 4096) / 16000.0
+
+        except Exception:
+            pass
+
+        return res
+
+    def _save_playlist_as_book(self, m3u_path, book_path, parent_path, name, root, conn, verbose=False):
+        """Save playlist as audiobook in the database"""
+        c = conn.cursor()
+        self._log("")
+        self._log_info(self.tr("scanner.m3u_parsing", name=name), indent=2)
+        entries = self._parse_m3u_file(m3u_path)
+        if not entries:
+            return
+
+        self._log_info(self.tr("scanner.m3u_files_loaded", count=len(entries)), indent=2)
+        rel_m3u = str(m3u_path.relative_to(root))
+
+        f_author, f_title, f_narrator = self._parse_audiobook_name(name)
+
+        try:
+            stat = m3u_path.stat()
+            state_str = f"{rel_m3u}|{stat.st_size}|{stat.st_mtime}"
+            current_state_hash = hashlib.md5(state_str.encode()).hexdigest()
+        except Exception:
+            current_state_hash = ''
+
+        c.execute("SELECT id, state_hash FROM audiobooks WHERE path = ?", (book_path,))
+        existing = c.fetchone()
+        if existing and existing[1] == current_state_hash:
+            c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing[0],))
+            return
+
+        from collections import Counter
+        sizes = []
+        bitrates = []
+        modes = []
+        codecs = []
+
+        for e in entries:
+            # We already updated durations of local and URLs. Let's gather whatever size/bitrate/codec info we have.
+            # Local entries analyzed:
+            # Wait, local_paths info was merged into entries in local_entries loop above. Let's fetch from mutagen analysis if available.
+            pass
+
+        # Wait, since the local_entries loop above does not store size, bitrate, and codec back into the entries list, let's make sure it does!
+        # Let's rewrite the analysis loop to store info in entries:
+        local_entries = [(i, e) for i, e in enumerate(entries) if not e['is_url']]
+        if local_entries:
+            local_paths = [Path(e['path']) for _, e in local_entries]
+            analyses = self._analyze_files_parallel(local_paths, conn=conn, max_workers=4)
+            for (orig_idx, entry), info in zip(local_entries, analyses):
+                if info:
+                    if info.get('duration', 0) > 0:
+                        entry['duration'] = info['duration']
+                    entry['size'] = info.get('file_size', 0)
+                    entry['bitrate'] = info.get('bitrate', 0)
+                    entry['codec'] = info.get('codec', '').upper()
+                    entry['mode'] = 'VBR' if info.get('is_vbr') else 'CBR'
+
+        # Now url_entries_to_probe
+        url_entries_to_probe = [e for e in entries if e['is_url'] and e['duration'] == 0]
+        if url_entries_to_probe:
+            total_urls = len(url_entries_to_probe)
+            from concurrent.futures import as_completed
+
+            workers = min(8, total_urls)
+            futures = {}
+
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                for idx, entry in enumerate(url_entries_to_probe, 1):
+                    future = executor.submit(self._get_url_duration_fast, entry['path'])
+                    futures[future] = (idx, entry)
+
+                for future in as_completed(futures):
+                    idx, entry = futures[future]
+                    try:
+                        info = future.result()
+                    except Exception:
+                        info = {
+                            'duration': 0.0,
+                            'size': 0,
+                            'bitrate': 0,
+                            'codec': 'Unknown'
+                        }
+
+                    entry['duration'] = info['duration']
+                    entry['size'] = info['size']
+                    entry['bitrate'] = info['bitrate']
+                    entry['codec'] = info['codec'].upper()
+                    entry['mode'] = 'CBR'
+
+                    # Format size
+                    size_bytes = info['size']
+                    if size_bytes >= 1024 * 1024:
+                        size_str = f"{size_bytes / (1024 * 1024):.1f} MB"
+                    elif size_bytes > 0:
+                        size_str = f"{size_bytes / 1024:.1f} KB"
+                    else:
+                        size_str = "Unknown"
+
+                    # Format duration
+                    dur_secs = info['duration']
+                    h = int(dur_secs // 3600)
+                    m = int((dur_secs % 3600) // 60)
+                    s = int(dur_secs % 60)
+                    if h > 0:
+                        dur_str = f"{h}:{m:02d}:{s:02d}"
+                    else:
+                        dur_str = f"{m}:{s:02d}"
+
+                    bitrate_val = f"{info['bitrate'] // 1000}" if info['bitrate'] > 0 else "Unknown"
+
+                    self._log_info(
+                        self.tr("scanner.probing_network_url", current=idx, total=total_urls, url=entry['path']),
+                        indent=3
+                    )
+                    self._log_info(
+                        self.tr(
+                            "scanner.probing_url_details",
+                            codec=info['codec'],
+                            bitrate=bitrate_val,
+                            duration=dur_str,
+                            size=size_str
+                        ),
+                        indent=3
+                    )
+
+        # Aggregate tech info
+        for entry in entries:
+            if 'size' in entry and entry['size'] > 0:
+                sizes.append(entry['size'])
+            if 'bitrate' in entry and entry['bitrate'] > 0:
+                bitrates.append(entry['bitrate'])
+            if 'mode' in entry and entry['mode']:
+                modes.append(entry['mode'])
+            if 'codec' in entry and entry['codec'] and entry['codec'] != 'UNKNOWN':
+                codecs.append(entry['codec'])
+
+        common_codec = Counter(codecs).most_common(1)[0][0] if codecs else 'M3U'
+        bitrate_min = (min(bitrates) // 1000) if bitrates else 0
+        bitrate_max = (max(bitrates) // 1000) if bitrates else 0
+        bitrate_mode = Counter(modes).most_common(1)[0][0] if modes else None
+        container_val = 'M3U'
+        total_size_val = sum(sizes)
+
+        total_duration = sum(e['duration'] for e in entries)
+        file_count = len(entries)
+
+        folder_of_m3u = m3u_path.parent
+        cover, cover_cached = self._find_cover(folder_of_m3u, book_path)
+
+        if existing:
+            book_id = existing[0]
+            c.execute("""
+                UPDATE audiobooks
+                SET parent_path=?, name=?, author=?, title=?, narrator=?,
+                    file_count=?, duration=?, is_folder=0,
+                    is_playlist=1, playlist_path=?,
+                    cover_path=?, cached_cover_path=?,
+                    state_hash=?, is_available=1,
+                    codec=?, bitrate_min=?, bitrate_max=?, bitrate_mode=?, container=?,
+                    total_size=?
+                WHERE path=?
+            """, (parent_path, name, f_author, f_title, f_narrator,
+                  file_count, total_duration, rel_m3u,
+                  cover, cover_cached, current_state_hash,
+                  common_codec, bitrate_min, bitrate_max, bitrate_mode, container_val,
+                  total_size_val, book_path))
+        else:
+            c.execute("""
+                INSERT INTO audiobooks
+                (path, parent_path, name, author, title, narrator,
+                 file_count, duration, is_folder, is_playlist, playlist_path,
+                 cover_path, cached_cover_path, state_hash,
+                 listened_duration, progress_percent, current_file_index,
+                 current_position, playback_speed, is_started, is_completed,
+                 is_available, codec, bitrate_min, bitrate_max, bitrate_mode, container,
+                 total_size, time_added)
+                VALUES (?,?,?,?,?,?,?,?,0,1,?,?,?,?,0,0,0,0,1.0,0,0,1,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+            """, (book_path, parent_path, name, f_author, f_title, f_narrator,
+                  file_count, total_duration, rel_m3u,
+                  cover, cover_cached, current_state_hash,
+                  common_codec, bitrate_min, bitrate_max, bitrate_mode, container_val,
+                  total_size_val))
+            c.execute("SELECT id FROM audiobooks WHERE path = ?", (book_path,))
+            book_id = c.fetchone()[0]
+
+        self._scan_and_save_all_covers(conn, folder_of_m3u, book_path, book_id, cover_cached)
+
+        c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
+        files_batch = []
+        for idx, entry in enumerate(entries, 1):
+            files_batch.append((
+                book_id,
+                entry['path'] if entry['is_url'] else str(Path(entry['path']).relative_to(root)),
+                Path(entry['path']).name if not entry['is_url'] else entry['title'],
+                idx,
+                entry['duration'],
+                0.0,
+                entry['title'],
+                '', '', '', '',
+                1 if entry['is_url'] else 0
+            ))
+
+        c.executemany("""
+            INSERT INTO audiobook_files
+            (audiobook_id, file_path, file_name, track_number, duration,
+             start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment, is_url)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        """, files_batch)
+
+        # Log summary
+        self._log_book_summary(
+            title=f_title or name,
+            author=f_author,
+            narrator=f_narrator,
+            duration=total_duration,
+            file_count=file_count,
+            codec=common_codec,
+            bitrate=bitrate_max,
+            bitrate_mode=bitrate_mode or '',
+            cover=cover_cached,
+            cue_count=0,
+            problems=sum(1 for e in entries if e['duration'] == 0)
+        )
+
+    def _process_playlist_in_folder(self, folder, root, m3u_files, conn, save_folder_callback, verbose=False):
+        """Process playlist files in a folder"""
+        rel_folder = folder.relative_to(root)
+
+        save_as_folder = False
+        if len(m3u_files) == 1:
+            m3u_file = m3u_files[0]
+            is_generic = m3u_file.stem.lower() in ('playlist', 'book', 'index') or m3u_file.stem == folder.name
+            
+            # Check for subdirectories
+            has_subdirs = False
+            try:
+                for item in folder.iterdir():
+                    if item.is_dir():
+                        has_subdirs = True
+                        break
+            except Exception:
+                pass
+                
+            has_audio = self._has_audio_files(folder)
+            if is_generic and has_audio and not has_subdirs:
+                save_as_folder = True
+
+        if save_as_folder:
+            m3u_file = m3u_files[0]
+            parent = str(rel_folder.parent) if str(rel_folder.parent) != '.' else ''
+            self._save_playlist_as_book(
+                m3u_path=m3u_file,
+                book_path=str(rel_folder),
+                parent_path=parent,
+                name=folder.name,
+                root=root,
+                conn=conn,
+                verbose=verbose
+            )
+            if parent:
+                save_folder_callback(parent)
+        else:
+            for m3u_file in m3u_files:
+                rel_m3u = m3u_file.relative_to(root)
+                self._save_playlist_as_book(
+                    m3u_path=m3u_file,
+                    book_path=str(rel_m3u),
+                    parent_path=str(rel_folder),
+                    name=m3u_file.stem,
+                    root=root,
+                    conn=conn,
+                    verbose=verbose
+                )
+            save_folder_callback(str(rel_folder))
 
     def _get_cached_analysis(self, file_path: Path, conn) -> dict | None:
         """Check cache and return metadata if file hasn't changed"""
@@ -1567,10 +2039,11 @@ class AudiobookScanner:
                     dirnames.clear() # Skip subdirectories
                     continue
                 
-                # Check for audio files in current filenames list (fast)
+                # Check for audio files or playlist files in current filenames list (fast)
                 has_audio = any(Path(fn).suffix.lower() in self.audio_extensions for fn in filenames)
+                has_playlist = any(Path(fn).suffix.lower() in ('.m3u', '.m3u8') for fn in filenames)
                 
-                if has_audio or (rel_path_str in merged_paths_set):
+                if has_audio or has_playlist or (rel_path_str in merged_paths_set):
                     folders.append(d)
             
             self._log_info(self.tr("scanner.found_folders", count=len(folders)))
@@ -1582,9 +2055,53 @@ class AudiobookScanner:
             # Processing each folder
             self._log_section(self.tr("scanner.processing_books"))
             
+            saved_folders = set()
+            
+            def save_folder(path_str):
+                """Recursively save parent folders in database"""
+                if path_str in saved_folders or path_str == '':
+                    return
+                saved_folders.add(path_str)
+                
+                path_obj = Path(path_str)
+                parent_path_str = str(path_obj.parent) if str(path_obj.parent) != '.' else ''
+                
+                if parent_path_str:
+                    save_folder(parent_path_str)
+                
+                # Check for folder existence as audiobook (file_count=0)
+                c.execute(
+                    "SELECT id FROM audiobooks WHERE path = ? AND is_folder = 0",
+                    (path_str,)
+                )
+                if c.fetchone():
+                    return
+                
+                c.execute("""
+                    INSERT OR IGNORE INTO audiobooks
+                    (path, parent_path, name, author, title, narrator, cover_path, cached_cover_path,
+                     file_count, duration, listened_duration, progress_percent, is_folder,
+                     current_file_index, current_position, is_started, is_completed, is_available,
+                     time_added)
+                    VALUES (?, ?, ?, '', '', '', NULL, NULL, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, CURRENT_TIMESTAMP)
+                """, (path_str, parent_path_str, path_obj.name))
+                
+                # Mark existing folder as available and ensure time_added is set
+                c.execute("""
+                    UPDATE audiobooks 
+                    SET is_available = 1,
+                        time_added = COALESCE(time_added, CURRENT_TIMESTAMP)
+                    WHERE path = ? AND is_folder = 1
+                """, (path_str,))
+            
             for idx, folder in enumerate(folders, 1):
                 rel = folder.relative_to(root)
                 parent = rel.parent if str(rel.parent) != '.' else ''
+                
+                m3u_files = self._find_playlist_files(folder)
+                if m3u_files:
+                    self._process_playlist_in_folder(folder, root, m3u_files, conn, save_folder, verbose)
+                    continue
                 
                 # Get file list
                 # Check if this is a merged folder
@@ -2003,45 +2520,6 @@ class AudiobookScanner:
             # Recreate intermediate folder structure
             self._log_section(self.tr("scanner.creating_structure"))
             
-            saved_folders = set()
-            
-            def save_folder(path_str):
-                """Recursively save parent folders in database"""
-                if path_str in saved_folders or path_str == '':
-                    return
-                saved_folders.add(path_str)
-                
-                path_obj = Path(path_str)
-                parent = str(path_obj.parent) if str(path_obj.parent) != '.' else ''
-                
-                if parent:
-                    save_folder(parent)
-                
-                # Check for folder existence as audiobook (file_count=0)
-                c.execute(
-                    "SELECT id FROM audiobooks WHERE path = ? AND is_folder = 0",
-                    (path_str,)
-                )
-                if c.fetchone():
-                    return
-                
-                c.execute("""
-                    INSERT OR IGNORE INTO audiobooks
-                    (path, parent_path, name, author, title, narrator, cover_path, cached_cover_path,
-                     file_count, duration, listened_duration, progress_percent, is_folder,
-                     current_file_index, current_position, is_started, is_completed, is_available,
-                     time_added)
-                    VALUES (?, ?, ?, '', '', '', NULL, NULL, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, CURRENT_TIMESTAMP)
-                """, (path_str, parent, path_obj.name))
-                
-                # Mark existing folder as available and ensure time_added is set
-                c.execute("""
-                    UPDATE audiobooks 
-                    SET is_available = 1,
-                        time_added = COALESCE(time_added, CURRENT_TIMESTAMP)
-                    WHERE path = ? AND is_folder = 1
-                """, (path_str,))
-            
             for folder in folders:
                 rel = folder.relative_to(root)
                 parent = rel.parent
@@ -2070,6 +2548,32 @@ class AudiobookScanner:
             else:
                 self._log_info(self.tr("scanner.standalone_found", count=0))
 
+            # --- Process Standalone M3U Playlists in Root ---
+            standalone_m3u = []
+            try:
+                for f in root.iterdir():
+                    if f.is_file() and f.suffix.lower() in ('.m3u', '.m3u8'):
+                        standalone_m3u.append(f)
+            except PermissionError:
+                pass
+
+            if standalone_m3u:
+                for m3u_file in standalone_m3u:
+                    rel_m3u = m3u_file.relative_to(root)
+                    self._save_playlist_as_book(
+                        m3u_path=m3u_file,
+                        book_path=str(rel_m3u),
+                        parent_path='',
+                        name=m3u_file.stem,
+                        root=root,
+                        conn=conn,
+                        verbose=verbose
+                    )
+
+            # Get total processed count from db
+            c.execute("SELECT COUNT(*) FROM audiobooks WHERE is_folder = 0 AND is_available = 1")
+            total_processed = c.fetchone()[0]
+
             # Finalize: cleanup temp table and commit
             c.execute("DROP TABLE temp_state")
             conn.commit()
@@ -2080,12 +2584,12 @@ class AudiobookScanner:
         elapsed_seconds = int(elapsed_time % 60)
         
         self._log_header(self.tr("scanner.scan_complete"))
-        self._log_info(self.tr("scanner.processed_count", count=len(folders) + len(standalone_files)))
+        self._log_info(self.tr("scanner.processed_count", count=total_processed))
         self._log_info(self.tr("scanner.elapsed_time", minutes=elapsed_minutes, seconds=elapsed_seconds))
         self._log_info(self.tr("scanner.db_file", path=self.db_file))
         self._log("")
         
-        return len(folders) + len(standalone_files)
+        return total_processed
 
     def _process_standalone_file(self, file_path: Path, root: Path, conn, verbose=False):
         """Process a single audio file as a book"""

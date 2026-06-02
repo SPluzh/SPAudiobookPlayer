@@ -299,7 +299,13 @@
     "cli_path": "Caminho para escanear: {path}",
     "cli_done": "Concluído! Audiolivros processados: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "Escaneando playlists M3U...",
+    "m3u_found": "Playlists encontradas: {count}",
+    "m3u_parsing": "Analisando: {name}",
+    "m3u_files_loaded": "Faixas carregadas: {count}",
+    "probing_network_url": "  Verificando URL [{current}/{total}]: {url}",
+    "probing_url_details": "  -> Codec: {codec}, Taxa de bits: {bitrate} kbps, Duração: {duration}, Tamanho: {size}"
   },
   "ffmpeg_updater": {
     "title": "ATUALIZAÇÃO DO FFPROBE (FFMPEG)",

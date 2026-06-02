@@ -317,7 +317,13 @@
     "cli_path": "Jalur pemindaian: {path}",
     "cli_done": "Selesai! Audiobook diproses: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "Memindai daftar putar M3U...",
+    "m3u_found": "Daftar putar ditemukan: {count}",
+    "m3u_parsing": "Mengurai: {name}",
+    "m3u_files_loaded": "Trek dimuat: {count}",
+    "probing_network_url": "  Memeriksa URL [{current}/{total}]: {url}",
+    "probing_url_details": "  -> Codec: {codec}, Bitrate: {bitrate} kbps, Durasi: {duration}, Ukuran: {size}"
   },
   "ffmpeg_updater": {
     "title": "PEMBARUAN FFPROBE (FFMPEG)",

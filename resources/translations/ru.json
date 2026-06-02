@@ -317,7 +317,13 @@
     "db_file": "  База данных: {path}",
     "cli_start": "ЗАПУСК СКАНИРОВАНИЯ",
     "cli_path": "Путь для сканирования: {path}",
-    "cli_done": "Готово! Обработано аудиокниг: {count}"
+    "cli_done": "Готово! Обработано аудиокниг: {count}",
+    "scanning_playlists": "Сканирование M3U плейлистов...",
+    "m3u_found": "Найдено плейлистов: {count}",
+    "m3u_parsing": "Разбор: {name}",
+    "m3u_files_loaded": "Загружено треков: {count}",
+    "probing_network_url": "  Проверка URL [{current}/{total}]: {url}",
+    "probing_url_details": "  -> Кодек: {codec}, Битрейт: {bitrate} кбит/с, Длительность: {duration}, Размер: {size}"
   },
   "ffmpeg_updater": {
     "title": "ОБНОВЛЕНИЕ FFPROBE (FFMPEG)",

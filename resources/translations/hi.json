@@ -299,7 +299,13 @@
     "cli_path": "स्कैन करने के लिए पथ: {path}",
     "cli_done": "हो गया! संसाधित ऑडियोबुक्स: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "M3U प्लेलिस्ट स्कैन की जा रही है...",
+    "m3u_found": "प्लेलिस्ट मिली: {count}",
+    "m3u_parsing": "पार्स करना: {name}",
+    "m3u_files_loaded": "ट्रैक लोड किए गए: {count}",
+    "probing_network_url": "  URL की जाँच की जा रही है [{current}/{total}]: {url}",
+    "probing_url_details": "  -> कोडेक: {codec}, बिटरेट: {bitrate} kbps, अवधि: {duration}, आकार: {size}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE अपडेट (FFMPEG)",

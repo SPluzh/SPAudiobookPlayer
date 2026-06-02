@@ -299,7 +299,13 @@
     "cli_path": "مسار المسح: {path}",
     "cli_done": "تم! الكتب الصوتية المعالجة: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "جاري مسح قوائم تشغيل M3U...",
+    "m3u_found": "تم العثور على قوائم تشغيل: {count}",
+    "m3u_parsing": "تحليل: {name}",
+    "m3u_files_loaded": "تم تحميل المسارات: {count}",
+    "probing_network_url": "  جاري فحص الرابط [{current}/{total}]: {url}",
+    "probing_url_details": "  -> الترميز: {codec}، معدل البت: {bitrate} ك.ب/ث، المدة: {duration}، الحجم: {size}"
   },
   "ffmpeg_updater": {
     "title": "تحديث FFPROBE (FFMPEG)",

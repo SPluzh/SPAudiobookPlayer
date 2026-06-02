@@ -299,7 +299,13 @@
     "cli_path": "Pfad zum Scannen: {path}",
     "cli_done": "Fertig! Hörbücher verarbeitet: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "Scannen von M3U-Playlists...",
+    "m3u_found": "Playlists gefunden: {count}",
+    "m3u_parsing": "Parsing: {name}",
+    "m3u_files_loaded": "Titel geladen: {count}",
+    "probing_network_url": "  Überprüfe URL [{current}/{total}]: {url}",
+    "probing_url_details": "  -> Codec: {codec}, Bitrate: {bitrate} kbps, Dauer: {duration}, Größe: {size}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE UPDATE (FFMPEG)",

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.6.22]
+- **Scanner**: Added support for M3U and M3U8 playlists, allowing folders or individual files containing playlists to be scanned and registered as virtual audiobooks.
+- **Scanner**: Implemented automatic metadata parsing and duration verification for local tracks within playlists.
+- **Scanner**: Added fast duration estimation for remote network stream URLs using quick network probes.
+- **Scanner**: Expanded metadata and scanning status translation coverage for all 15 supported languages.
+- **Scanner**: Ensured the library scanner respects custom database file paths defined in configuration.
+- **Scanner**: Resolved database file locking issues on Windows platforms to prevent process access errors.
+- **Scanner**: Fixed recursive folder discovery to find and scan directories containing only M3U/M3U8 playlist files.
+- **Scanner**: Refined M3U classification logic so single playlists in parent/category directories are saved as separate files rather than registering the parent directory.
+- **Scanner**: Improved console logging readability during scanning by adding appropriate blank lines before playlist processing entries.
+- **Scanner**: Added real-time progress logging when probing remote network stream URLs to make long scans of streaming playlists transparent.
+- **Scanner**: Saved aggregate technical metadata (codec, bitrate, container, size) for M3U playlists in the database, allowing M3U books to display correct format details in the tree view and status row.
 - **Library**: Replaced the text-based narrator emoji with a custom graphical icon.
 - **Library**: Added a custom writer icon before the author's name in the audiobook list.
 - **Library**: Swapped the order of information to display the audiobook title above the author's name.

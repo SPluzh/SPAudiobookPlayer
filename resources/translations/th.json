@@ -317,7 +317,13 @@
     "cli_path": "เส้นทางที่จะสแกน: {path}",
     "cli_done": "เสร็จสิ้น! ประมวลผลหนังสือเสียงแล้ว: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "กำลังสแกนเพลย์ลิสต์ M3U...",
+    "m3u_found": "พบเพลย์ลิสต์: {count}",
+    "m3u_parsing": "กำลังแยกวิเคราะห์: {name}",
+    "m3u_files_loaded": "โหลดแทร็กแล้ว: {count}",
+    "probing_network_url": "  กำลังตรวจสอบ URL [{current}/{total}]: {url}",
+    "probing_url_details": "  -> ตัวถอดรหัส: {codec}, บิตเรต: {bitrate} kbps, ระยะเวลา: {duration}, ขนาด: {size}"
   },
   "ffmpeg_updater": {
     "title": "การอัปเดต FFPROBE (FFMPEG)",

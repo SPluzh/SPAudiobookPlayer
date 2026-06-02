@@ -299,7 +299,13 @@
     "cli_path": "스캔 경로: {path}",
     "cli_done": "완료! 처리된 오디오북: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "M3U 재생 목록 스캔 중...",
+    "m3u_found": "재생 목록 찾음: {count}",
+    "m3u_parsing": "구문 분석 중: {name}",
+    "m3u_files_loaded": "로드된 트랙 수: {count}",
+    "probing_network_url": "  URL 확인 중 [{current}/{total}]: {url}",
+    "probing_url_details": "  -> 코덱: {codec}, 비트레이트: {bitrate} kbps, 재생 시간: {duration}, 크기: {size}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE 업데이트 (FFMPEG)",

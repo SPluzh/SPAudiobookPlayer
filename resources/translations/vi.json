@@ -317,7 +317,13 @@
     "cli_path": "Đường dẫn quét: {path}",
     "cli_done": "Xong! Số sách nói đã xử lý: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "Đang quét danh sách phát M3U...",
+    "m3u_found": "Đã tìm thấy danh sách phát: {count}",
+    "m3u_parsing": "Đang phân tích: {name}",
+    "m3u_files_loaded": "Số bài hát đã tải: {count}",
+    "probing_network_url": "  Đang kiểm tra URL [{current}/{total}]: {url}",
+    "probing_url_details": "  -> Codec: {codec}, Tốc độ bit: {bitrate} kbps, Thời lượng: {duration}, Kích thước: {size}"
   },
   "ffmpeg_updater": {
     "title": "CẬP NHẬT FFPROBE (FFMPEG)",

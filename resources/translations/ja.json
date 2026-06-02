@@ -299,7 +299,13 @@
     "cli_path": "スキャンパス: {path}",
     "cli_done": "完了！処理された本: {count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "M3Uプレイリストをスキャン中...",
+    "m3u_found": "プレイリストが見つかりました: {count}",
+    "m3u_parsing": "解析中: {name}",
+    "m3u_files_loaded": "読み込まれたトラック数: {count}",
+    "probing_network_url": "  URLを検証中 [{current}/{total}]: {url}",
+    "probing_url_details": "  -> コーデック: {codec}, ビットレート: {bitrate} kbps, 長さ: {duration}, サイズ: {size}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBEの更新 (FFMPEG)",

@@ -299,7 +299,13 @@
     "cli_path": "扫描路径：{path}",
     "cli_done": "完成！已处理有声书：{count}",
     "db_added_description": "  + Added field: description",
-    "db_added_total_size": "  + Added field: total_size"
+    "db_added_total_size": "  + Added field: total_size",
+    "scanning_playlists": "正在扫描 M3U 播放列表...",
+    "m3u_found": "找到播放列表: {count}",
+    "m3u_parsing": "正在解析: {name}",
+    "m3u_files_loaded": "已加载曲目数: {count}",
+    "probing_network_url": "  正在检测 URL [{current}/{total}]: {url}",
+    "probing_url_details": "  -> 编码: {codec}, 比特率: {bitrate} kbps, 时长: {duration}, 大小: {size}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE 更新 (FFMPEG)",

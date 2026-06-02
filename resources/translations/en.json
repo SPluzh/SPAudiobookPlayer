@@ -317,7 +317,13 @@
     "db_file": "  Database: {path}",
     "cli_start": "LAUNCHING SCAN",
     "cli_path": "Path to scan: {path}",
-    "cli_done": "Done! Audiobooks processed: {count}"
+    "cli_done": "Done! Audiobooks processed: {count}",
+    "scanning_playlists": "Scanning M3U playlists...",
+    "m3u_found": "Playlists found: {count}",
+    "m3u_parsing": "Parsing: {name}",
+    "m3u_files_loaded": "Tracks loaded: {count}",
+    "probing_network_url": "  Probing URL [{current}/{total}]: {url}",
+    "probing_url_details": "  -> Codec: {codec}, Bitrate: {bitrate} kbps, Duration: {duration}, Size: {size}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE UPDATE (FFMPEG)",

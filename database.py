@@ -18,9 +18,11 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         db_file: Path to the database file
         log_func: Function for logging output (default is print)
     """
-    with sqlite3.connect(db_file) as conn:
-        c = conn.cursor()
-        c.execute("PRAGMA foreign_keys = ON")
+    conn = sqlite3.connect(db_file)
+    try:
+        with conn:
+            c = conn.cursor()
+            c.execute("PRAGMA foreign_keys = ON")
         
         # Audiobooks table
         c.execute("""
@@ -54,7 +56,9 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 is_favorite INTEGER DEFAULT 0,
                 is_merged INTEGER DEFAULT 0,
-                total_size INTEGER DEFAULT 0
+                total_size INTEGER DEFAULT 0,
+                is_playlist INTEGER DEFAULT 0,
+                playlist_path TEXT
             )
         """)
         
@@ -73,6 +77,7 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 tag_album TEXT,
                 tag_genre TEXT,
                 tag_comment TEXT,
+                is_url INTEGER DEFAULT 0,
                 FOREIGN KEY(audiobook_id) REFERENCES audiobooks(id)
                     ON DELETE CASCADE
             )
@@ -205,6 +210,24 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         except sqlite3.OperationalError:
             pass
 
+        # Migration: add is_playlist column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN is_playlist INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        # Migration: add playlist_path column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN playlist_path TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+        # Migration: add is_url column to audiobook_files
+        try:
+            c.execute("ALTER TABLE audiobook_files ADD COLUMN is_url INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
         # Table: audiobook_covers
         c.execute("""
             CREATE TABLE IF NOT EXISTS audiobook_covers (
@@ -281,6 +304,8 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         c.execute("CREATE INDEX IF NOT EXISTS idx_daily_stats_audiobook ON daily_listening_stats(audiobook_id)")
         
         conn.commit()
+    finally:
+        conn.close()
 
 
 class DatabaseManager:
@@ -449,7 +474,8 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent,
                 is_started, is_completed, is_available, is_expanded, last_updated,
                 codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                time_added, time_started, time_finished, is_favorite, is_merged, description, total_size, id
+                time_added, time_started, time_finished, is_favorite, is_merged, description, total_size,
+                COALESCE(is_playlist, 0) as is_playlist, id
             '''
             
             columns_with_prefix = '''
@@ -457,7 +483,8 @@ class DatabaseManager:
                 p.is_folder, p.file_count, p.duration, p.listened_duration, p.progress_percent,
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
                 p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
-                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.description, p.total_size, p.id
+                p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.description, p.total_size,
+                COALESCE(p.is_playlist, 0) as is_playlist, p.id
             '''
             
             if filter_type == 'all':
@@ -531,7 +558,8 @@ class DatabaseManager:
                 is_folder, file_count, duration, listened_duration, progress_percent, \
                 is_started, is_completed, is_available, is_expanded, last_updated, \
                 codec, bitrate_min, bitrate_max, bitrate_mode, container, \
-                time_added, time_started, time_finished, is_favorite, is_merged, description, total_size, audiobook_id = row
+                time_added, time_started, time_finished, is_favorite, is_merged, description, total_size, \
+                is_playlist, audiobook_id = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -561,6 +589,7 @@ class DatabaseManager:
                     'time_finished': time_finished,
                     'is_favorite': bool(is_favorite),
                     'is_merged': bool(is_merged),
+                    'is_playlist': bool(is_playlist),
                     'description': description,
                     'total_size': total_size or 0,
                     'id': audiobook_id
@@ -724,7 +753,8 @@ class DatabaseManager:
         try:
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT file_path, file_name, duration, track_number, tag_title, start_offset
+                SELECT file_path, file_name, duration, track_number, tag_title, start_offset,
+                       COALESCE(is_url, 0) as is_url
                 FROM audiobook_files WHERE audiobook_id = ?
                 ORDER BY track_number, start_offset, file_name
             ''', (audiobook_id,))
@@ -910,7 +940,7 @@ class DatabaseManager:
                        listened_duration, progress_percent, is_started, is_completed,
                        codec, bitrate_min, bitrate_max, bitrate_mode, container,
                        time_added, time_started, time_finished, is_favorite, description,
-                       cover_path, cached_cover_path, total_size
+                       cover_path, cached_cover_path, total_size, COALESCE(is_playlist, 0) as is_playlist
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -939,7 +969,8 @@ class DatabaseManager:
                     'description': row[18],
                     'cover_path': row[19],
                     'cached_cover_path': row[20],
-                    'total_size': row[21]
+                    'total_size': row[21],
+                    'is_playlist': bool(row[22])
                 }
             return None
         except sqlite3.Error as e:
