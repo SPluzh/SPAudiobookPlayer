@@ -45,6 +45,10 @@ class PlaybackController:
         self.player.on_stream_end = self._on_stream_ended
         self.on_load_start = None
         self.on_load_error = None
+        self.on_load_complete = None   # called after async URL stream is ready
+        self._url_loading = False       # True while a URL is being loaded asynchronously
+        self._url_load_context: dict = {}  # stores state needed after async load completes
+        self._target_seek_position: Optional[float] = None
 
     def _on_stream_ended(self):
         """Callback triggered when the BASS stream finishes playing"""
@@ -64,7 +68,9 @@ class PlaybackController:
         
         # Save current progress before switching, but DO NOT update the timestamp
         # for the book we are leaving (to keep it below the new one in recency)
-        self.save_current_progress(update_timestamp=False)
+        # Guard: Only save if we are switching to a DIFFERENT book!
+        if self.current_audiobook_path and self.current_audiobook_path != audiobook_path:
+            self.save_current_progress(update_timestamp=False)
         
         # End current listening session before switching books
         if self.listening_tracker and self.current_audiobook_id:
@@ -82,6 +88,7 @@ class PlaybackController:
         # Update internal state with database values
         self.current_audiobook_id = audiobook_id
         self.current_audiobook_path = audiobook_path
+        self._target_seek_position = None
         self.total_duration = total_dur or 0
         self.saved_file_index = saved_file_index
         self.saved_position = saved_position
@@ -123,28 +130,31 @@ class PlaybackController:
                 abs_file_path = str(self.library_root / rel_file_path)
             else:
                 abs_file_path = rel_file_path
-                
-            if is_url and getattr(self, 'on_load_start', None):
-                self.on_load_start(abs_file_path)
-                
-            if self.player.load(abs_file_path):
-                # Lazy-update duration of URL track
-                if is_url and file_info.get('duration', 0) == 0:
-                    actual_dur = self.player.get_duration()
-                    if actual_dur > 0:
-                        file_info['duration'] = actual_dur
-                        self.total_duration = sum(f['duration'] for f in self.files_list)
-                        if self.db and self.current_audiobook_id:
-                            self.db.update_file_duration(
-                                audiobook_id=self.current_audiobook_id,
-                                file_path=file_info['path'],
-                                duration=actual_dur
-                            )
 
+            if is_url:
+                # Async path: do not block the UI
+                if getattr(self, 'on_load_start', None):
+                    self.on_load_start(abs_file_path)
+                self._url_loading = True
+                self._url_load_context = {
+                    'file_info': file_info,
+                    'saved_position': saved_position,
+                    'audiobook_id': audiobook_id,
+                    'start_playing': False,   # load_audiobook doesn't auto-play
+                    'restore_paused': False,
+                }
+                self.player.load_url_async(
+                    abs_file_path,
+                    on_ready=self._on_url_stream_ready,
+                    on_error=self._on_url_stream_error,
+                )
+                return True  # return immediately; UI is not blocked
+
+            # Synchronous path for local files
+            if self.player.load(abs_file_path):
                 # Seek to saved position if present, otherwise to chapter start
                 start_offset = file_info.get('start_offset', 0)
                 if saved_position is not None and saved_position > 0:
-                     # saved_position in DB is the absolute position in the physical file
                      self.player.set_position(saved_position)
                 elif start_offset > 0:
                     self.player.set_position(start_offset)
@@ -160,11 +170,99 @@ class PlaybackController:
                     )
                 
                 return True
-            else:
-                if is_url and getattr(self, 'on_load_error', None):
-                    self.on_load_error(abs_file_path)
         
         return False
+
+    def _finalize_url_load(self, start_playing: bool):
+        """Finalize the URL load process: clear loading status, trigger play if requested, and notify UI."""
+        self._url_loading = False
+        self._target_seek_position = None
+        
+        ctx = self._url_load_context
+        restore_paused = ctx.get('restore_paused', False)
+        
+        # Start playback if play is requested and we aren't restoring in paused state
+        if start_playing or (not restore_paused):
+            self.player.play()
+            
+        # Notify the UI
+        if self.on_load_complete:
+            self.on_load_complete()
+
+    def _on_url_stream_ready(self):
+        """Called in the main thread when the async URL stream has connected."""
+        # Note: self._url_loading remains True during the retry-seek phase
+        # to guard database progress saving and prevent race conditions.
+        ctx = self._url_load_context
+        file_info = ctx.get('file_info')
+        saved_position = ctx.get('saved_position')
+        audiobook_id = ctx.get('audiobook_id')
+        start_playing = ctx.get('start_playing', False)
+
+        if file_info is None:
+            self._url_loading = False
+            return
+
+        # Lazy-update duration of URL track
+        if file_info.get('duration', 0) == 0:
+            actual_dur = self.player.get_duration()
+            if actual_dur > 0:
+                file_info['duration'] = actual_dur
+                self.total_duration = sum(f['duration'] for f in self.files_list)
+                if self.db and audiobook_id:
+                    self.db.update_file_duration(
+                        audiobook_id=audiobook_id,
+                        file_path=file_info['path'],
+                        duration=actual_dur
+                    )
+
+        # Update DB timestamp and listening session
+        if audiobook_id:
+            self.db.update_last_updated(audiobook_id)
+        if self.listening_tracker and audiobook_id:
+            self.listening_tracker.start_session(audiobook_id, self.player.speed_pos / 10.0)
+
+        # Seek to saved position or start offset
+        start_offset = file_info.get('start_offset', 0)
+        target_pos = 0.0
+        if saved_position is not None and saved_position > 0:
+            target_pos = saved_position
+        elif start_offset > 0:
+            target_pos = start_offset
+
+        if target_pos > 0:
+            self._target_seek_position = target_pos
+            self._retry_seek_url(target_pos, start_playing=start_playing)
+        else:
+            self._finalize_url_load(start_playing)
+
+    def _retry_seek_url(self, position: float, attempt: int = 1, max_attempts: int = 20, delay_ms: int = 300, start_playing: bool = False):
+        """Retry seeking to a position for a network stream. Finalizes loading state upon success or failure."""
+        if self._target_seek_position != position:
+            return
+
+        success = self.player.set_position(position)
+        current_pos = self.player.get_position()
+
+        # Retry if seek returned False, or if it returned True but position is still close to 0 (meaning BASS is re-buffering/resetting)
+        if not success or (position > 0.5 and current_pos < 0.1):
+            if attempt < max_attempts:
+                from PyQt6.QtCore import QTimer
+                QTimer.singleShot(delay_ms, lambda: self._retry_seek_url(position, attempt + 1, max_attempts, delay_ms, start_playing))
+            else:
+                # Max attempts reached, finalize anyway
+                self._finalize_url_load(start_playing)
+        else:
+            # Seek succeeded, finalize now
+            self._finalize_url_load(start_playing)
+
+    def _on_url_stream_error(self):
+        """Called in the main thread when the async URL stream fails to connect."""
+        self._url_loading = False
+        if getattr(self, 'on_load_error', None) and self._url_load_context.get('file_info'):
+            url = self._url_load_context['file_info'].get('path', '')
+            self.on_load_error(url)
+
     
     def play_file_at_index(self, index: int, start_playing: bool = True) -> bool:
         """Load and optionally start playback of a file at the specified index"""
@@ -172,6 +270,7 @@ class PlaybackController:
             return False
         
         self._stream_end_pending = False
+        self._target_seek_position = None
         was_playing = self.player.is_playing()
         self.current_file_index = index
         
@@ -185,13 +284,30 @@ class PlaybackController:
             abs_file_path = str(self.library_root / file_info['path'])
         else:
             abs_file_path = file_info['path']
-            
-        if is_url and getattr(self, 'on_load_start', None):
-            self.on_load_start(abs_file_path)
-            
+
+        if is_url:
+            # Async path for URL tracks
+            if getattr(self, 'on_load_start', None):
+                self.on_load_start(abs_file_path)
+            self._url_loading = True
+            self._url_load_context = {
+                'file_info': file_info,
+                'saved_position': None,
+                'audiobook_id': self.current_audiobook_id,
+                'start_playing': start_playing or was_playing,
+                'restore_paused': False,
+            }
+            self.player.load_url_async(
+                abs_file_path,
+                on_ready=self._on_url_stream_ready,
+                on_error=self._on_url_stream_error,
+            )
+            return True  # return immediately; stream loads in background
+
+        # Synchronous path for local files
         if self.player.load(abs_file_path):
             # Lazy-update duration of URL track
-            if is_url and file_info.get('duration', 0) == 0:
+            if file_info.get('duration', 0) == 0:
                 actual_dur = self.player.get_duration()
                 if actual_dur > 0:
                     file_info['duration'] = actual_dur
@@ -213,7 +329,7 @@ class PlaybackController:
                 self.player.play()
             return True
         else:
-            if is_url and getattr(self, 'on_load_error', None):
+            if getattr(self, 'on_load_error', None):
                 self.on_load_error(abs_file_path)
         return False
     
@@ -288,6 +404,11 @@ class PlaybackController:
     def save_current_progress(self, update_timestamp: bool = True):
         """Commit current playback state and accumulated metrics to the database"""
         if not self.current_audiobook_id:
+            return
+        
+        # Guard: Do not save progress while a network URL stream is loading in the background
+        # since the BASS channel is temporarily 0 and we would overwrite valid progress with 0.
+        if getattr(self, '_url_loading', False):
             return
         
         position = self.player.get_position()

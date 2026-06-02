@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.23]
+- **Playback**: Fixed an issue where network M3U audiobooks would automatically start playing on session restoration/app startup instead of staying paused.
+- **Playback**: Resolved a race condition where the saved position of network M3U audiobooks would not restore correctly on startup because the stream buffer wasn't ready.
+- **Playback**: Prevented network M3U playback positions from being overwritten with zero when starting playback from the library or switching between audiobooks.
+- **Playback**: Implemented a robust, retry-based seek mechanism that polls the stream buffer state until the network connection is fully established.
+
 ## [1.6.22]
+- **Playback**: Moved network URL stream loading (`BASS_StreamCreateURL`) to a background `QThread` (`StreamLoadThread`) to eliminate UI freezes when selecting or restoring network M3U audiobooks — both on startup and during normal playback.
+- **Playback**: Application startup no longer blocks when the last session was a network M3U book; the window opens immediately and playback begins once the connection is established.
 - **Scanner**: Added support for M3U and M3U8 playlists, allowing folders or individual files containing playlists to be scanned and registered as virtual audiobooks.
 - **Scanner**: Implemented automatic metadata parsing and duration verification for local tracks within playlists.
 - **Scanner**: Added fast duration estimation for remote network stream URLs using quick network probes.

@@ -1238,7 +1238,6 @@ class AudiobookPlayerWindow(QMainWindow):
                 if len(sizes) == 2:
                     self.splitter.setSizes(sizes)
             except (ValueError, TypeError):
-                # Silently ignore malformed layout data
                 pass
 
         if audiobook_id <= 0:
@@ -1257,23 +1256,35 @@ class AudiobookPlayerWindow(QMainWindow):
             audiobook_path = row[0]
             is_completed = row[1]
             if is_completed == 1:
-                # If the audiobook was read completely, do not restore it
                 return
+
+            # Wire up the async-load callback so that UI is updated once the stream is ready
+            self.playback_controller.on_load_complete = self._on_url_load_complete
+
             if self.playback_controller.load_audiobook(audiobook_path):
                 # Inform the delegate of the active playback path for visual feedback
                 if self.delegate:
                     self.delegate.playing_path = audiobook_path
 
-                # Re-establish saved playback progress
+                if self.playback_controller._url_loading:
+                    # URL track: re-inject the saved position and file_index into the context
+                    # so _on_url_stream_ready() will seek correctly after connection.
+                    ctx = self.playback_controller._url_load_context
+                    ctx['saved_position'] = position if position > 0 else ctx.get('saved_position')
+                    ctx['restore_paused'] = True
+                    # Update the UI for what we know so far (playlist, cover, speed)
+                    self.update_ui_for_audiobook()
+                    self.library_widget.tree.viewport().update()
+                    self.statusBar().showMessage(tr("player.connecting", "Connecting..."))
+                    return  # playback will start in _on_url_load_complete once connected
+
+                # Synchronous path (local file) — same as before
                 self.playback_controller.current_file_index = file_index
                 self.playback_controller.play_file_at_index(file_index, False)
                 if position > 0:
                     self.player.set_position(position)
 
-                # Synchronize UI states
                 self.update_ui_for_audiobook()
-
-                # Force library refresh to reflect session state
                 self.library_widget.tree.viewport().update()
                 self.library_widget.load_audiobooks()
                 self.statusBar().showMessage(tr("status.restored_session"))
@@ -1419,6 +1430,9 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def on_audiobook_selected(self, audiobook_path: str):
         """Handle the user's selection of an audiobook from the library, initiating playback and updating status"""
+        # Wire up the async-load callback before loading
+        self.playback_controller.on_load_complete = self._on_url_load_complete
+
         if self.playback_controller.load_audiobook(audiobook_path):
             # Update database status to mark the book as currently reading
             if self.playback_controller.current_audiobook_id:
@@ -1431,10 +1445,53 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.delegate.playing_path = audiobook_path
 
             self.update_ui_for_audiobook()
-            self.toggle_play()
 
-            # Refresh library categories to reflect "Started" status immediately
-            self.library_widget.load_audiobooks(use_cache=False)
+            if self.playback_controller._url_loading:
+                # URL track: stream is loading in background — do NOT call toggle_play().
+                # Playback will start in _on_url_load_complete() once the stream is ready.
+                self.library_widget.load_audiobooks(use_cache=False)
+            else:
+                # Local file: start playback immediately as before
+                self.toggle_play()
+                self.library_widget.load_audiobooks(use_cache=False)
+
+    def _on_url_load_complete(self):
+        """Called in the main thread once an async URL stream has connected and is ready."""
+        ctx = self.playback_controller._url_load_context
+        restore_paused = ctx.get('restore_paused', False)
+
+        # If the player is not yet playing (e.g. user selected a book), start now
+        if not self.player.is_playing() and not restore_paused:
+            self.player.play()
+
+        if self.player.is_playing():
+            self.taskbar_progress.set_normal()
+        else:
+            self.taskbar_progress.set_paused()
+        self.player_widget.set_playing(self.player.is_playing())
+
+        # Sync the listening tracker for statistics
+        if hasattr(self, 'listening_tracker') and self.playback_controller.current_audiobook_id:
+            if not self.listening_tracker.is_active:
+                self.listening_tracker.start_session(
+                    self.playback_controller.current_audiobook_id,
+                    self.player.speed_pos / 10.0
+                )
+
+        # Sync taskbar thumbnail play/pause state
+        if hasattr(self, 'thumbnail_buttons'):
+            self.thumbnail_buttons.update_play_state(self.player.is_playing())
+
+        # Refresh the playlist panel to show updated durations
+        self.player_widget.load_files(
+            self.playback_controller.files_list,
+            self.playback_controller.current_file_index,
+        )
+        self.update_progress_bar_markers()
+
+        # Update library to reflect started status
+        self.library_widget.load_audiobooks(use_cache=False)
+        self.statusBar().showMessage(tr("status.restored_session"))
 
     def update_ui_for_audiobook(self):
         """Synchronize various UI elements to reflect the metadata and state of the currently loaded audiobook"""
@@ -1469,6 +1526,10 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def toggle_play(self):
         """Toggle between active playback and paused states, updating UI indicators and background controllers accordingly"""
+        # Guard: Ignore play/pause clicks while a network stream is connecting or seeking
+        if self.playback_controller._url_loading:
+            return
+
         if self.player.is_playing():
             self.player.pause()
             self.last_pause_time = __import__("time").time()
@@ -1555,6 +1616,10 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def on_position_changed(self, normalized: float):
         """Seek to a specific temporal position within the active chapter based on normalized slider input"""
+        # Guard: Ignore seek attempts while a network stream is connecting or seeking
+        if self.playback_controller._url_loading:
+            return
+
         if not self.playback_controller.files_list or self.playback_controller.current_file_index < 0 or self.playback_controller.current_file_index >= len(self.playback_controller.files_list):
             return
             
@@ -1566,6 +1631,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         if chapter_duration > 0:
             target_pos = start_offset + (normalized * chapter_duration)
+            self.playback_controller._target_seek_position = None  # Cancel any pending auto-seek retries
             self.player.set_position(target_pos)
             self.playback_controller.save_current_progress()
 
@@ -1584,7 +1650,10 @@ class AudiobookPlayerWindow(QMainWindow):
         else:
             # If a different book is targeted, load its session and begin playback immediately
             self.on_audiobook_selected(audiobook_path)
-            if not self.player.is_playing():
+            # Guard: for async network books, do not call toggle_play() immediately because it
+            # will run while the channel is still 0 and overwrite the saved position with 0.
+            # Instead, the playback will automatically start in _on_url_load_complete().
+            if not self.playback_controller._url_loading and not self.player.is_playing():
                 self.toggle_play()
 
         # Force a refresh to reflect progress/started status changes immediately

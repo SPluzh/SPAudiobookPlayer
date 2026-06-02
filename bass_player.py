@@ -3,6 +3,7 @@ import ctypes
 import subprocess
 import tempfile
 from ctypes import c_float, c_int, c_void_p, c_bool
+from PyQt6.QtCore import QThread, pyqtSignal
 
 # BASS constants
 BASS_STREAM_DECODE = 0x200000
@@ -170,6 +171,28 @@ if bass_vst:
     bass_vst.BASS_VST_SetParam.argtypes = [c_int, c_int, c_float]
     bass_vst.BASS_VST_SetParam.restype = c_bool
 
+class StreamLoadThread(QThread):
+    """Runs blocking BASS_StreamCreateURL in a background thread to avoid freezing the UI."""
+    stream_ready = pyqtSignal(int)   # emits chan0 handle on success
+    stream_error = pyqtSignal(str)   # emits url on failure
+
+    def __init__(self, url: str, flags: int, parent=None):
+        super().__init__(parent)
+        self.url = url
+        self.flags = flags
+
+    def run(self):
+        try:
+            url_bytes = self.url.encode('utf-8') + b'\x00'
+            chan0 = bass.BASS_StreamCreateURL(url_bytes, 0, self.flags, None, None)
+            if chan0 != 0:
+                self.stream_ready.emit(chan0)
+            else:
+                self.stream_error.emit(self.url)
+        except Exception:
+            self.stream_error.emit(self.url)
+
+
 class BassPlayer:
     """Audio player using BASS library with tempo control support"""
     
@@ -220,13 +243,19 @@ class BassPlayer:
 
         self.is_streaming = False
 
+        # Async URL loading state
+        self._stream_load_thread: 'StreamLoadThread | None' = None
+        self._pending_url: str = ''
+        self._on_url_ready_cb = None
+        self._on_url_error_cb = None
+
         # Initialize BASS at 48kHz (required for RNNoise VST plugin)
         if bass and bass.BASS_Init(-1, 48000, 0, 0, None):
             self.initialized = True
             
             # Configure network buffer, pre-buffer, and timeout
-            bass.BASS_SetConfig(BASS_CONFIG_NET_BUFFER, 20000)   # 20s buffer
-            bass.BASS_SetConfig(BASS_CONFIG_NET_PREBUF, 75)      # 75% pre-buffer
+            bass.BASS_SetConfig(BASS_CONFIG_NET_BUFFER, 5000)   # 5s buffer
+            bass.BASS_SetConfig(BASS_CONFIG_NET_PREBUF, 0)      # 0% pre-buffer (return immediately after connection)
             bass.BASS_SetConfig(BASS_CONFIG_NET_TIMEOUT, 10000)  # 10s timeout
 
             # Load plugins (OPUS, AAC/M4B, FLAC, APE)
@@ -296,9 +325,9 @@ class BassPlayer:
         self.is_streaming = is_url
 
         if is_url:
-            url_bytes = filepath.encode('utf-8') + b'\x00'
-            flags0 = BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT
-            self.chan0 = bass.BASS_StreamCreateURL(url_bytes, 0, flags0, None, None)
+            # URL streams must go through load_url_async() to avoid blocking the UI.
+            # Callers that call load() directly with a URL will get False here.
+            return False
         else:
             # Try to load file directly
             path_bytes = filepath.encode('utf-16le') + b'\x00\x00'
@@ -374,16 +403,11 @@ class BassPlayer:
 
         if self.chan == 0:
             bass.BASS_StreamFree(self.chan0)
-            if is_url:
-                url_bytes = filepath.encode('utf-8') + b'\x00'
-                self.chan = bass.BASS_StreamCreateURL(url_bytes, 0, BASS_SAMPLE_FLOAT, None, None)
-            else:
-                # Retry with original file if fallback wasn't used, or explicitly with what we have
-                target_bytes = path_bytes
-                if self.temp_file:
-                     target_bytes = self.temp_file.encode('utf-16le') + b'\x00\x00'
-                
-                self.chan = bass.BASS_StreamCreateFile(False, target_bytes, 0, 0, BASS_UNICODE | BASS_SAMPLE_FLOAT)
+            # Retry with original file if fallback wasn't used, or explicitly with what we have
+            target_bytes = path_bytes
+            if self.temp_file:
+                 target_bytes = self.temp_file.encode('utf-16le') + b'\x00\x00'
+            self.chan = bass.BASS_StreamCreateFile(False, target_bytes, 0, 0, BASS_UNICODE | BASS_SAMPLE_FLOAT)
             self.has_fx = False
 
         if self.chan != 0:
@@ -400,6 +424,77 @@ class BassPlayer:
             self.apply_attributes()
             return True
         return False
+
+    def load_url_async(self, url: str, on_ready, on_error):
+        """Start loading a network URL stream in a background thread.
+
+        on_ready() is called (in the main thread via signal) when the stream is connected.
+        on_error() is called if the connection fails.
+        """
+        # Cancel any existing load thread
+        if self._stream_load_thread is not None and self._stream_load_thread.isRunning():
+            self._stream_load_thread.stream_ready.disconnect()
+            self._stream_load_thread.stream_error.disconnect()
+            self._stream_load_thread.quit()
+            self._stream_load_thread.wait(500)
+
+        # Release any existing channel
+        if self.chan != 0:
+            bass.BASS_StreamFree(self.chan)
+            self.chan = 0
+            self.chan0 = 0
+            self.deesser_handle = 0
+            self.compressor_handle = 0
+            self.noise_suppression_handle = 0
+            self.mono_dsp_handle = 0
+            self._sync_handle = 0
+
+        self._pending_url = url
+        self._on_url_ready_cb = on_ready
+        self._on_url_error_cb = on_error
+        self.is_streaming = True
+
+        flags0 = BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT
+        self._stream_load_thread = StreamLoadThread(url, flags0)
+        self._stream_load_thread.stream_ready.connect(self._finish_url_load)
+        self._stream_load_thread.stream_error.connect(self._on_url_load_failed)
+        self._stream_load_thread.start()
+
+    def _finish_url_load(self, chan0: int):
+        """Called in the main thread when background URL connection succeeds."""
+        self.chan0 = chan0
+
+        if self.has_fx:
+            flags_fx = BASS_STREAM_PRESCAN | BASS_FX_FREESOURCE | BASS_SAMPLE_FLOAT
+            self.chan = bass_fx.BASS_FX_TempoCreate(self.chan0, flags_fx)
+
+        if self.chan == 0:
+            # FX creation failed — use the raw stream directly
+            bass.BASS_StreamFree(self.chan0)
+            url_bytes = self._pending_url.encode('utf-8') + b'\x00'
+            self.chan = bass.BASS_StreamCreateURL(url_bytes, 0, BASS_SAMPLE_FLOAT, None, None)
+            self.has_fx = False
+
+        if self.chan != 0:
+            self.current_file = self._pending_url
+            self.mono_dsp_handle = bass.BASS_ChannelSetDSP(self.chan, self._mono_dsp_callback_ref, None, 0)
+            if self.initialized:
+                self._sync_handle = bass.BASS_ChannelSetSync(
+                    self.chan, BASS_SYNC_END, 0, self._sync_callback_ref, None
+                )
+            self.apply_attributes()
+            if self._on_url_ready_cb:
+                self._on_url_ready_cb()
+        else:
+            self.is_streaming = False
+            if self._on_url_error_cb:
+                self._on_url_error_cb()
+
+    def _on_url_load_failed(self, url: str):
+        """Called in the main thread when background URL connection fails."""
+        self.is_streaming = False
+        if self._on_url_error_cb:
+            self._on_url_error_cb()
 
     def _get_startupinfo(self):
         """Get startupinfo to hide console window on Windows"""
@@ -516,11 +611,12 @@ class BassPlayer:
             return bass.BASS_ChannelBytes2Seconds(self.chan, pos_bytes)
         return 0.0
 
-    def set_position(self, seconds: float):
+    def set_position(self, seconds: float) -> bool:
         """Set playback position in seconds"""
         if self.chan != 0:
-            pos_bytes = bass.BASS_ChannelSeconds2Bytes(self.chan, max(0, seconds))
-            bass.BASS_ChannelSetPosition(self.chan, pos_bytes, BASS_POS_BYTE)
+            pos_bytes = bass.BASS_ChannelSeconds2Bytes(self.chan, max(0.0, seconds))
+            return bool(bass.BASS_ChannelSetPosition(self.chan, pos_bytes, BASS_POS_BYTE))
+        return False
 
     def get_duration(self) -> float:
         """Get total duration of loaded file in seconds"""
