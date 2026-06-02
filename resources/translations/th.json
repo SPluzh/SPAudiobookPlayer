@@ -139,7 +139,11 @@
     "vad_sens_label": "ความไว:",
     "vad_grace_label": "ยั้ง:",
     "vad_retro_label": "ย้อนหลัง:",
-    "of": "จาก"
+    "of": "จาก",
+    "buffering": "กำลังบัฟเฟอร์...",
+    "network_error": "ข้อผิดพลาดของเครือข่าย",
+    "connecting": "กำลังเชื่อมต่อ...",
+    "streaming": "กำลังเล่นสตรีม..."
   },
   "status": {
     "load_library": "📚 กำลังโหลดคลังหนังสือเสียง",

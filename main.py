@@ -92,6 +92,7 @@ from utils import (
     format_duration,
     format_time,
     format_time_short,
+    format_size,
     OutputCapture,
 )
 from player import PlaybackController, PlayerWidget
@@ -168,6 +169,8 @@ class AudiobookPlayerWindow(QMainWindow):
         # Initialize listening tracker for statistics
         self.listening_tracker = ListeningTracker(self.db_manager)
         self.playback_controller.listening_tracker = self.listening_tracker
+        self.playback_controller.on_load_start = self.on_stream_load_start
+        self.playback_controller.on_load_error = self.on_stream_load_error
 
         self.taskbar_progress = TaskbarProgress()
 
@@ -1626,6 +1629,17 @@ class AudiobookPlayerWindow(QMainWindow):
             self.playback_controller.current_audiobook_path
         )
 
+    def on_stream_load_start(self, url: str):
+        """Handle network stream load start by showing connecting message"""
+        msg = tr("player.connecting", "Connecting...")
+        self.statusBar().showMessage(msg)
+        # Force a repaint so the user sees the connecting message before BASS connects synchronously
+        QApplication.processEvents()
+
+    def on_stream_load_error(self, url: str):
+        """Handle network stream load failure by showing network error message"""
+        self.statusBar().showMessage(tr("player.network_error", "Network error"), 5000)
+
     def update_ui(self):
         """Perform periodic synchronization of all UI components (sliders, labels, taskbar) with the current engine state"""
         if self.player.chan == 0:
@@ -1684,6 +1698,73 @@ class AudiobookPlayerWindow(QMainWindow):
                 current=total_pos,
                 total=self.playback_controller.total_duration,
             )
+
+        # Update streaming information in the status bar
+        if getattr(self.player, "is_streaming", False):
+            info = self.player.get_stream_info()
+            curr_msg = self.statusBar().currentMessage()
+            
+            is_our_msg = (
+                not curr_msg or 
+                "Streaming" in curr_msg or 
+                "Connecting" in curr_msg or 
+                "Buffering" in curr_msg or
+                "Буферизация" in curr_msg or
+                "Поточное" in curr_msg or
+                "Подключение" in curr_msg or
+                tr("player.buffering") in curr_msg or
+                tr("player.connecting") in curr_msg or
+                tr("player.streaming") in curr_msg
+            )
+            
+            if is_our_msg:
+                if info.get("is_stalled", False):
+                    msg = tr("player.buffering", "Buffering...")
+                    if info.get("buffering_percent", -1) >= 0:
+                        msg += f" {info['buffering_percent']}%"
+                    
+                    if info.get("downloaded", 0) > 0:
+                        dl_str = format_size(info["downloaded"])
+                        if info.get("total_size", 0) > 0:
+                            tot_str = format_size(info["total_size"])
+                            msg += f" ({dl_str} / {tot_str})"
+                        else:
+                            msg += f" ({dl_str})"
+                    self.statusBar().showMessage(msg)
+                else:
+                    dl = info.get("downloaded", 0)
+                    tot = info.get("total_size", 0)
+                    if dl > 0:
+                        if tot > 0 and dl >= tot:
+                            self.statusBar().clearMessage()
+                        else:
+                            msg = tr("player.streaming", "Streaming...")
+                            dl_str = format_size(dl)
+                            if tot > 0:
+                                tot_str = format_size(tot)
+                                msg += f" ({dl_str} / {tot_str})"
+                            else:
+                                msg += f" ({dl_str})"
+                            self.statusBar().showMessage(msg)
+                    else:
+                        self.statusBar().showMessage(tr("player.connecting", "Connecting..."))
+        else:
+            curr_msg = self.statusBar().currentMessage()
+            is_our_msg = (
+                curr_msg and (
+                    "Streaming" in curr_msg or 
+                    "Connecting" in curr_msg or 
+                    "Buffering" in curr_msg or
+                    "Буферизация" in curr_msg or
+                    "Поточное" in curr_msg or
+                    "Подключение" in curr_msg or
+                    tr("player.buffering") in curr_msg or
+                    tr("player.connecting") in curr_msg or
+                    tr("player.streaming") in curr_msg
+                )
+            )
+            if is_our_msg:
+                self.statusBar().clearMessage()
 
         # Automate track transition upon reaching the end of the current file or chapter
         chapter_end = start_offset + chapter_duration

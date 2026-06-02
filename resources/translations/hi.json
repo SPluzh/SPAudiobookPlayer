@@ -121,7 +121,11 @@
     "vad_sens_label": "संवेदनशीलता:",
     "vad_grace_label": "ग्रेस:",
     "vad_retro_label": "रेट्रो:",
-    "of": "का"
+    "of": "का",
+    "buffering": "बफ़र हो रहा है...",
+    "network_error": "नेटवर्क त्रुटि",
+    "connecting": "कनेक्ट हो रहा है...",
+    "streaming": "स्ट्रीमिंग हो रही है..."
   },
   "status": {
     "load_library": "📚 ऑडियोबुक लाइब्रेरी लोड करें",

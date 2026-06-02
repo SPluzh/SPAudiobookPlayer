@@ -121,7 +121,11 @@
     "vad_sens_label": "Sens:",
     "vad_grace_label": "Grace:",
     "vad_retro_label": "Retro:",
-    "of": "من"
+    "of": "من",
+    "buffering": "جارٍ التخزين المؤقت...",
+    "network_error": "خطأ في الشبكة",
+    "connecting": "جاري الاتصال...",
+    "streaming": "البث المباشر..."
   },
   "status": {
     "load_library": "📚 تحميل مكتبة الكتب الصوتية",

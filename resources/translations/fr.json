@@ -121,7 +121,11 @@
     "vad_sens_label": "Sens :",
     "vad_grace_label": "Grâce :",
     "vad_retro_label": "Rétro :",
-    "of": "sur"
+    "of": "sur",
+    "buffering": "Mise en mémoire tampon...",
+    "network_error": "Erreur réseau",
+    "connecting": "Connexion...",
+    "streaming": "Diffusion..."
   },
   "status": {
     "load_library": "📚 Chargement de la bibliothèque",

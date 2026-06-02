@@ -121,7 +121,11 @@
     "vad_sens_label": "灵敏度：",
     "vad_grace_label": "保持：",
     "vad_retro_label": "回溯：",
-    "of": "/"
+    "of": "/",
+    "buffering": "缓冲中...",
+    "network_error": "网络错误",
+    "connecting": "正在连接...",
+    "streaming": "正在播放网络流..."
   },
   "status": {
     "load_library": "📚 加载有声书库",

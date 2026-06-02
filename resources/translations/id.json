@@ -139,7 +139,11 @@
     "vad_sens_label": "Sens:",
     "vad_grace_label": "Tenggang:",
     "vad_retro_label": "Retro:",
-    "of": "dari"
+    "of": "dari",
+    "buffering": "Penyanggaan...",
+    "network_error": "Kesalahan jaringan",
+    "connecting": "Menghubungkan...",
+    "streaming": "Streaming..."
   },
   "status": {
     "load_library": "📚 Muat perpustakaan audiobook",

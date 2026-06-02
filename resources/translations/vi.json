@@ -139,7 +139,11 @@
     "vad_sens_label": "Độ nhạy:",
     "vad_grace_label": "Chờ:",
     "vad_retro_label": "Truy thu:",
-    "of": "trên"
+    "of": "trên",
+    "buffering": "Đang đệm...",
+    "network_error": "Lỗi mạng",
+    "connecting": "Đang kết nối...",
+    "streaming": "Đang phát trực tuyến..."
   },
   "status": {
     "load_library": "📚 Tải thư viện sách nói",

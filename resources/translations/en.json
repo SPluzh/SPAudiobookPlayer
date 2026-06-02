@@ -139,7 +139,11 @@
     "vad_sens_label": "Sens:",
     "vad_grace_label": "Grace:",
     "vad_retro_label": "Retro:",
-    "of": "of"
+    "of": "of",
+    "buffering": "Buffering...",
+    "network_error": "Network error",
+    "connecting": "Connecting...",
+    "streaming": "Streaming..."
   },
   "status": {
     "load_library": "📚 Load audiobook library",

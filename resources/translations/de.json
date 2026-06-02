@@ -121,7 +121,11 @@
     "vad_sens_label": "Sens:",
     "vad_grace_label": "Haltezeit:",
     "vad_retro_label": "Rückw.:",
-    "of": "von"
+    "of": "von",
+    "buffering": "Pufferung...",
+    "network_error": "Netzwerkfehler",
+    "connecting": "Verbinden...",
+    "streaming": "Streaming..."
   },
   "status": {
     "load_library": "📚 Hörbuch-Bibliothek laden",

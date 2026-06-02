@@ -43,6 +43,8 @@ class PlaybackController:
         # Stream end callback flag
         self._stream_end_pending = False
         self.player.on_stream_end = self._on_stream_ended
+        self.on_load_start = None
+        self.on_load_error = None
 
     def _on_stream_ended(self):
         """Callback triggered when the BASS stream finishes playing"""
@@ -93,13 +95,14 @@ class PlaybackController:
         files = self.db.get_audiobook_files(audiobook_id)
         self.files_list = []
         
-        for file_path, file_name, duration, track_num, tag_title, start_offset in files:
+        for file_path, file_name, duration, track_num, tag_title, start_offset, is_url in files:
             self.files_list.append({
                 'path': file_path,
                 'name': file_name,
                 'tag_title': tag_title or '',
                 'duration': duration or 0,
-                'start_offset': start_offset or 0
+                'start_offset': start_offset or 0,
+                'is_url': bool(is_url)
             })
         
         # Restore saved playback speed
@@ -111,15 +114,35 @@ class PlaybackController:
             self.calculate_global_position()
             
             # Resolve path relative to library root
-            rel_file_path = self.files_list[self.current_file_index]['path']
-            if self.library_root:
+            file_info = self.files_list[self.current_file_index]
+            rel_file_path = file_info['path']
+            is_url = file_info.get('is_url', False)
+            if is_url:
+                abs_file_path = rel_file_path
+            elif self.library_root:
                 abs_file_path = str(self.library_root / rel_file_path)
             else:
                 abs_file_path = rel_file_path
                 
+            if is_url and getattr(self, 'on_load_start', None):
+                self.on_load_start(abs_file_path)
+                
             if self.player.load(abs_file_path):
+                # Lazy-update duration of URL track
+                if is_url and file_info.get('duration', 0) == 0:
+                    actual_dur = self.player.get_duration()
+                    if actual_dur > 0:
+                        file_info['duration'] = actual_dur
+                        self.total_duration = sum(f['duration'] for f in self.files_list)
+                        if self.db and self.current_audiobook_id:
+                            self.db.update_file_duration(
+                                audiobook_id=self.current_audiobook_id,
+                                file_path=file_info['path'],
+                                duration=actual_dur
+                            )
+
                 # Seek to saved position if present, otherwise to chapter start
-                start_offset = self.files_list[self.current_file_index].get('start_offset', 0)
+                start_offset = file_info.get('start_offset', 0)
                 if saved_position is not None and saved_position > 0:
                      # saved_position in DB is the absolute position in the physical file
                      self.player.set_position(saved_position)
@@ -137,6 +160,9 @@ class PlaybackController:
                     )
                 
                 return True
+            else:
+                if is_url and getattr(self, 'on_load_error', None):
+                    self.on_load_error(abs_file_path)
         
         return False
     
@@ -148,16 +174,37 @@ class PlaybackController:
         self._stream_end_pending = False
         was_playing = self.player.is_playing()
         self.current_file_index = index
-        self.calculate_global_position()
         
         file_info = self.files_list[index]
+        is_url = file_info.get('is_url', False)
+        
         # Resolve absolute file path
-        if self.library_root:
+        if is_url:
+            abs_file_path = file_info['path']
+        elif self.library_root:
             abs_file_path = str(self.library_root / file_info['path'])
         else:
             abs_file_path = file_info['path']
             
+        if is_url and getattr(self, 'on_load_start', None):
+            self.on_load_start(abs_file_path)
+            
         if self.player.load(abs_file_path):
+            # Lazy-update duration of URL track
+            if is_url and file_info.get('duration', 0) == 0:
+                actual_dur = self.player.get_duration()
+                if actual_dur > 0:
+                    file_info['duration'] = actual_dur
+                    self.total_duration = sum(f['duration'] for f in self.files_list)
+                    if self.db and self.current_audiobook_id:
+                        self.db.update_file_duration(
+                            audiobook_id=self.current_audiobook_id,
+                            file_path=file_info['path'],
+                            duration=actual_dur
+                        )
+
+            self.calculate_global_position()
+            
             start_offset = file_info.get('start_offset', 0)
             if start_offset > 0:
                 self.player.set_position(start_offset)
@@ -165,6 +212,9 @@ class PlaybackController:
             if start_playing or was_playing:
                 self.player.play()
             return True
+        else:
+            if is_url and getattr(self, 'on_load_error', None):
+                self.on_load_error(abs_file_path)
         return False
     
     def next_file(self, auto_next: bool = True) -> bool:

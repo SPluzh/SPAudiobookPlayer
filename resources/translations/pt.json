@@ -121,7 +121,11 @@
     "vad_sens_label": "Sensib.:",
     "vad_grace_label": "Tolerância:",
     "vad_retro_label": "Retroativo:",
-    "of": "de"
+    "of": "de",
+    "buffering": "Carregando...",
+    "network_error": "Erro de rede",
+    "connecting": "Conectando...",
+    "streaming": "Transmitindo..."
   },
   "status": {
     "load_library": "📚 Carregar biblioteca de audiolivros",

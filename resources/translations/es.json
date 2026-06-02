@@ -121,7 +121,11 @@
     "vad_sens_label": "Sens:",
     "vad_grace_label": "Gracia:",
     "vad_retro_label": "Retro:",
-    "of": "de"
+    "of": "de",
+    "buffering": "Almacenando en búfer...",
+    "network_error": "Error de red",
+    "connecting": "Conectando...",
+    "streaming": "Transmitiendo..."
   },
   "status": {
     "load_library": "📚 Cargar biblioteca de audiolibros",

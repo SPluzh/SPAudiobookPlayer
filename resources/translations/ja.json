@@ -121,7 +121,11 @@
     "vad_sens_label": "感度:",
     "vad_grace_label": "猶予:",
     "vad_retro_label": "遡及:",
-    "of": "/"
+    "of": "/",
+    "buffering": "バッファリング中...",
+    "network_error": "ネットワークエラー",
+    "connecting": "接続中...",
+    "streaming": "ストリーミング再生中..."
   },
   "status": {
     "load_library": "📚 ライブラリを読み込み中",

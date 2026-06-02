@@ -121,7 +121,11 @@
     "vad_sens_label": "감도:",
     "vad_grace_label": "유예:",
     "vad_retro_label": "소급:",
-    "of": "/"
+    "of": "/",
+    "buffering": "버퍼링 중...",
+    "network_error": "네트워크 오류",
+    "connecting": "연결 중...",
+    "streaming": "스트리밍 재생 중..."
   },
   "status": {
     "load_library": "📚 오디오북 라이브러리 불러오기",

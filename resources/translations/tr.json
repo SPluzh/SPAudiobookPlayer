@@ -121,7 +121,11 @@
     "vad_sens_label": "Hassasiyet:",
     "vad_grace_label": "Tolerans:",
     "vad_retro_label": "Geriye Dönük:",
-    "of": "/"
+    "of": "/",
+    "buffering": "Tamponlanıyor...",
+    "network_error": "Ağ hatası",
+    "connecting": "Bağlanıyor...",
+    "streaming": "Akış oynatılıyor..."
   },
   "status": {
     "load_library": "📚 Sesli kitap kütüphanesini yükle",

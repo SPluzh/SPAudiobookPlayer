@@ -12,17 +12,26 @@ BASS_UNICODE = 0x80000000
 BASS_FX_FREESOURCE = 0x10000
 BASS_ATTRIB_VOL = 2
 BASS_ATTRIB_TEMPO = 0x10000
-BASS_ATTRIB_TEMPO = 0x10000
 BASS_ATTRIB_TEMPO_PITCH = 0x10001
 BASS_ATTRIB_PAN = 6
 BASS_ATTRIB_MIX_MATRIX = 0x1020
 BASS_POS_BYTE = 0
 BASS_ACTIVE_PLAYING = 1
+BASS_ACTIVE_STALLED = 2
+BASS_FILEPOS_DOWNLOAD = 1
+BASS_FILEPOS_END = 2
+BASS_FILEPOS_CONNECTED = 4
+BASS_FILEPOS_SIZE = 8
+BASS_FILEPOS_BUFFERING = 9
 BASS_FX_BFX_PEAKEQ = 0x10004
 BASS_FX_BFX_COMPRESSOR2 = 0x10011
 BASS_FX_BFX_MIX = 0x10007
 BASS_BFX_CHANALL = -1
-BASS_UNICODE = 0x80000000
+
+# BASS constants for network streaming
+BASS_CONFIG_NET_BUFFER = 15
+BASS_CONFIG_NET_PREBUF = 21
+BASS_CONFIG_NET_TIMEOUT = 11
 
 # Plugin flags
 BASS_PLUGIN_UNICODE = 0x80000000
@@ -136,6 +145,12 @@ if bass:
     bass.BASS_ChannelRemoveDSP.restype = c_bool
     bass.BASS_ChannelSetSync.argtypes = [c_int, c_int, ctypes.c_uint64, SYNCPROC, c_void_p]
     bass.BASS_ChannelSetSync.restype = c_int
+    bass.BASS_SetConfig.argtypes = [c_int, c_int]
+    bass.BASS_SetConfig.restype = c_bool
+    bass.BASS_StreamCreateURL.argtypes = [c_void_p, c_int, c_int, c_void_p, c_void_p]
+    bass.BASS_StreamCreateURL.restype = c_int
+    bass.BASS_StreamGetFilePosition.argtypes = [c_int, c_int]
+    bass.BASS_StreamGetFilePosition.restype = ctypes.c_uint64
 
 # BASS constants for FFT
 BASS_DATA_FFT2048 = 0x80000003
@@ -203,10 +218,17 @@ class BassPlayer:
         self._sync_handle = 0
         self._sync_callback_ref = SYNCPROC(self._sync_callback)
 
+        self.is_streaming = False
+
         # Initialize BASS at 48kHz (required for RNNoise VST plugin)
         if bass and bass.BASS_Init(-1, 48000, 0, 0, None):
             self.initialized = True
             
+            # Configure network buffer, pre-buffer, and timeout
+            bass.BASS_SetConfig(BASS_CONFIG_NET_BUFFER, 20000)   # 20s buffer
+            bass.BASS_SetConfig(BASS_CONFIG_NET_PREBUF, 75)      # 75% pre-buffer
+            bass.BASS_SetConfig(BASS_CONFIG_NET_TIMEOUT, 10000)  # 10s timeout
+
             # Load plugins (OPUS, AAC/M4B, FLAC, APE)
             self.plugins = {}
             for plugin in ["bassopus.dll", "bass_aac.dll", "bassflac.dll", "bassape.dll"]:
@@ -246,8 +268,11 @@ class BassPlayer:
             ptr[i+1] = mono
 
     def load(self, filepath: str) -> bool:
-        """Load an audio file into the player"""
-        if not self.initialized or not os.path.exists(filepath):
+        """Load an audio file or URL stream into the player"""
+        is_url = filepath.startswith(('http://', 'https://'))
+        if not self.initialized:
+            return False
+        if not is_url and not os.path.exists(filepath):
             return False
 
         if self.chan != 0:
@@ -268,70 +293,77 @@ class BassPlayer:
                 pass
             self.temp_file = None
 
-        # Try to load file directly
-        path_bytes = filepath.encode('utf-16le') + b'\x00\x00'
-        flags0 = BASS_STREAM_DECODE | BASS_UNICODE | BASS_SAMPLE_FLOAT
-        self.chan0 = bass.BASS_StreamCreateFile(False, path_bytes, 0, 0, flags0)
+        self.is_streaming = is_url
 
-        # If loading failed, check for BASS_ERROR_FILEFORM (41) and try FFmpeg fallback
-        if self.chan0 == 0:
-            error_code = bass.BASS_ErrorGetCode()
-            if error_code == 41:  # BASS_ERROR_FILEFORM
-                # Check for ffmpeg from config or default
-                config_path = os.path.join(os.path.dirname(__file__), "resources", "settings.ini")
-                ffmpeg_path = os.path.join(os.path.dirname(__file__), "resources/bin/ffmpeg.exe") # Default
-                temp_dir = os.path.join(os.path.dirname(__file__), "data", "temp") # Default
-                
-                if os.path.exists(config_path):
-                    import configparser
-                    config = configparser.ConfigParser()
-                    try:
-                        config.read(config_path, encoding='utf-8')
-                        if 'Paths' in config:
-                            # Read temp_dir
-                            if 'temp_dir' in config['Paths']:
-                                configured_temp = config['Paths']['temp_dir']
-                                if not os.path.isabs(configured_temp):
-                                    temp_dir = os.path.join(os.path.dirname(__file__), configured_temp)
-                                else:
-                                    temp_dir = configured_temp
+        if is_url:
+            url_bytes = filepath.encode('utf-8') + b'\x00'
+            flags0 = BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT
+            self.chan0 = bass.BASS_StreamCreateURL(url_bytes, 0, flags0, None, None)
+        else:
+            # Try to load file directly
+            path_bytes = filepath.encode('utf-16le') + b'\x00\x00'
+            flags0 = BASS_STREAM_DECODE | BASS_UNICODE | BASS_SAMPLE_FLOAT
+            self.chan0 = bass.BASS_StreamCreateFile(False, path_bytes, 0, 0, flags0)
+
+            # If loading failed, check for BASS_ERROR_FILEFORM (41) and try FFmpeg fallback
+            if self.chan0 == 0:
+                error_code = bass.BASS_ErrorGetCode()
+                if error_code == 41:  # BASS_ERROR_FILEFORM
+                    # Check for ffmpeg from config or default
+                    config_path = os.path.join(os.path.dirname(__file__), "resources", "settings.ini")
+                    ffmpeg_path = os.path.join(os.path.dirname(__file__), "resources/bin/ffmpeg.exe") # Default
+                    temp_dir = os.path.join(os.path.dirname(__file__), "data", "temp") # Default
+                    
+                    if os.path.exists(config_path):
+                        import configparser
+                        config = configparser.ConfigParser()
+                        try:
+                            config.read(config_path, encoding='utf-8')
+                            if 'Paths' in config:
+                                # Read temp_dir
+                                if 'temp_dir' in config['Paths']:
+                                    configured_temp = config['Paths']['temp_dir']
+                                    if not os.path.isabs(configured_temp):
+                                        temp_dir = os.path.join(os.path.dirname(__file__), configured_temp)
+                                    else:
+                                        temp_dir = configured_temp
+                                
+                                # Read ffmpeg_path
+                                if 'ffmpeg_path' in config['Paths']:
+                                    configured_ffmpeg = config['Paths']['ffmpeg_path']
+                                    if not os.path.isabs(configured_ffmpeg):
+                                        ffmpeg_path = os.path.join(os.path.dirname(__file__), configured_ffmpeg)
+                                    else:
+                                        ffmpeg_path = configured_ffmpeg
+                        except:
+                            pass
+
+                    if os.path.exists(ffmpeg_path):
+                        try:
+                            os.makedirs(temp_dir, exist_ok=True)
                             
-                            # Read ffmpeg_path
-                            if 'ffmpeg_path' in config['Paths']:
-                                configured_ffmpeg = config['Paths']['ffmpeg_path']
-                                if not os.path.isabs(configured_ffmpeg):
-                                    ffmpeg_path = os.path.join(os.path.dirname(__file__), configured_ffmpeg)
-                                else:
-                                    ffmpeg_path = configured_ffmpeg
-                    except:
-                        pass
-
-                if os.path.exists(ffmpeg_path):
-                    try:
-                        os.makedirs(temp_dir, exist_ok=True)
-                        
-                        # Create temp file path
-                        fd, temp_path = tempfile.mkstemp(suffix=".opus", dir=temp_dir)
-                        os.close(fd)
-                        
-                        # Run ffmpeg to transmux
-                        subprocess.run([
-                            ffmpeg_path,
-                            '-y',
-                            '-v', 'error',
-                            '-i', filepath,
-                            '-c:a', 'copy',
-                            temp_path
-                        ], check=True, startupinfo=self._get_startupinfo())
-                        
-                        if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
-                            self.temp_file = temp_path
-                            # Try loading the converted file
-                            temp_path_bytes = temp_path.encode('utf-16le') + b'\x00\x00'
-                            self.chan0 = bass.BASS_StreamCreateFile(False, temp_path_bytes, 0, 0, flags0)
-                    except Exception as e:
-                        print(f"FFmpeg fallback failed: {e}")
-                        pass
+                            # Create temp file path
+                            fd, temp_path = tempfile.mkstemp(suffix=".opus", dir=temp_dir)
+                            os.close(fd)
+                            
+                            # Run ffmpeg to transmux
+                            subprocess.run([
+                                ffmpeg_path,
+                                '-y',
+                                '-v', 'error',
+                                '-i', filepath,
+                                '-c:a', 'copy',
+                                temp_path
+                            ], check=True, startupinfo=self._get_startupinfo())
+                            
+                            if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+                                self.temp_file = temp_path
+                                # Try loading the converted file
+                                temp_path_bytes = temp_path.encode('utf-16le') + b'\x00\x00'
+                                self.chan0 = bass.BASS_StreamCreateFile(False, temp_path_bytes, 0, 0, flags0)
+                        except Exception as e:
+                            print(f"FFmpeg fallback failed: {e}")
+                            pass
 
         if self.chan0 == 0:
             return False
@@ -342,12 +374,16 @@ class BassPlayer:
 
         if self.chan == 0:
             bass.BASS_StreamFree(self.chan0)
-            # Retry with original file if fallback wasn't used, or explicitly with what we have
-            target_bytes = path_bytes
-            if self.temp_file:
-                 target_bytes = self.temp_file.encode('utf-16le') + b'\x00\x00'
-            
-            self.chan = bass.BASS_StreamCreateFile(False, target_bytes, 0, 0, BASS_UNICODE | BASS_SAMPLE_FLOAT)
+            if is_url:
+                url_bytes = filepath.encode('utf-8') + b'\x00'
+                self.chan = bass.BASS_StreamCreateURL(url_bytes, 0, BASS_SAMPLE_FLOAT, None, None)
+            else:
+                # Retry with original file if fallback wasn't used, or explicitly with what we have
+                target_bytes = path_bytes
+                if self.temp_file:
+                     target_bytes = self.temp_file.encode('utf-16le') + b'\x00\x00'
+                
+                self.chan = bass.BASS_StreamCreateFile(False, target_bytes, 0, 0, BASS_UNICODE | BASS_SAMPLE_FLOAT)
             self.has_fx = False
 
         if self.chan != 0:
@@ -418,6 +454,60 @@ class BassPlayer:
     def is_playing(self) -> bool:
         """Check if currently playing"""
         return self.chan != 0 and bass.BASS_ChannelIsActive(self.chan) == BASS_ACTIVE_PLAYING
+
+    def get_stream_info(self) -> dict:
+        """Get network streaming information (download progress, total size, stalled status)"""
+        info = {
+            "is_streaming": getattr(self, "is_streaming", False),
+            "connected": False,
+            "downloaded": 0,
+            "total_size": 0,
+            "is_stalled": False,
+            "buffering_percent": -1
+        }
+        
+        if not info["is_streaming"] or self.chan == 0:
+            return info
+
+        handle = self.chan0 if self.chan0 != 0 else self.chan
+        if handle == 0:
+            return info
+
+        try:
+            connected_val = bass.BASS_StreamGetFilePosition(handle, BASS_FILEPOS_CONNECTED)
+            info["connected"] = (connected_val == 1)
+        except:
+            pass
+
+        try:
+            downloaded_val = bass.BASS_StreamGetFilePosition(handle, BASS_FILEPOS_DOWNLOAD)
+            if downloaded_val != 18446744073709551615:  # -1 as uint64
+                info["downloaded"] = downloaded_val
+        except:
+            pass
+
+        try:
+            size_val = bass.BASS_StreamGetFilePosition(handle, BASS_FILEPOS_SIZE)
+            if size_val != 18446744073709551615 and size_val > 0:
+                info["total_size"] = size_val
+        except:
+            pass
+
+        try:
+            buff_val = bass.BASS_StreamGetFilePosition(handle, BASS_FILEPOS_BUFFERING)
+            if buff_val != 18446744073709551615:
+                # BASS_FILEPOS_BUFFERING returns percentage of buffering remaining (0-100)
+                info["buffering_percent"] = max(0, min(100, 100 - int(buff_val)))
+        except:
+            pass
+
+        try:
+            active_status = bass.BASS_ChannelIsActive(self.chan)
+            info["is_stalled"] = (active_status == BASS_ACTIVE_STALLED)
+        except:
+            pass
+
+        return info
 
     def get_position(self) -> float:
         """Get current playback position in seconds"""

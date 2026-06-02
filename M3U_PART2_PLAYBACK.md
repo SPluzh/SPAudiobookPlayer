@@ -168,21 +168,21 @@ def update_file_duration(self, audiobook_id: int, file_path: str, duration: floa
 ## ✅ Checklist — Часть 2
 
 ### BASS Player
-- [ ] Добавить константы `BASS_CONFIG_NET_BUFFER`, `BASS_CONFIG_NET_PREBUF`, `BASS_CONFIG_NET_TIMEOUT`
-- [ ] Настроить буферизацию в `__init__()`
-- [ ] Объявить `BASS_StreamCreateURL` (argtypes, restype)
-- [ ] Добавить URL-ветку в `load()` — `BASS_StreamCreateURL` вместо `BASS_StreamCreateFile`
-- [ ] Добавить флаг `self.is_streaming` для отслеживания состояния
+- [x] Добавить константы `BASS_CONFIG_NET_BUFFER`, `BASS_CONFIG_NET_PREBUF`, `BASS_CONFIG_NET_TIMEOUT`
+- [x] Настроить буферизацию в `__init__()`
+- [x] Объявить `BASS_StreamCreateURL` (argtypes, restype)
+- [x] Добавить URL-ветку в `load()` — `BASS_StreamCreateURL` вместо `BASS_StreamCreateFile`
+- [x] Добавить флаг `self.is_streaming` для отслеживания состояния
 
 ### Player
-- [ ] Обновить `load_file_by_index()` — обработка `is_url`
-- [ ] Добавить lazy-update длительности при первом воспроизведении URL-трека
+- [x] Обновить `load_file_by_index()` — обработка `is_url`
+- [x] Добавить lazy-update длительности при первом воспроизведении URL-трека
 
 ### Database
-- [ ] Реализовать `update_file_duration()` в `DatabaseManager`
+- [x] Реализовать `update_file_duration()` в `DatabaseManager`
 
 ### Переводы
-- [ ] Добавить 2 ключа плеера во все 12 языков
+- [x] Добавить 2 ключа плеера во все 12 языков
 
 ---
 
@@ -226,10 +226,10 @@ def update_file_duration(self, audiobook_id: int, file_path: str, duration: floa
 
 ## 🧪 Тест Части 2
 
-- [ ] Локальный плейлист воспроизводится корректно (треки переключаются по порядку)
-- [ ] URL-плейлист открывается и буферизуется
-- [ ] Прогресс URL-трека сохраняется в БД
-- [ ] При недоступном URL — ошибка в статусбаре, переход к следующему треку
-- [ ] Перемотка URL-трека (если сервер поддерживает Range)
-- [ ] Смешанный плейлист (локальные + URL чередуются)
-- [ ] Lazy-update длительности срабатывает и обновляет БД
+- [x] Локальный плейлист воспроизводится корректно (треки переключаются по порядку)
+- [x] URL-плейлист открывается и буферизуется
+- [x] Прогресс URL-трека сохраняется в БД
+- [x] При недоступном URL — ошибка в статусбаре, переход к следующему треку
+- [x] Перемотка URL-трека (если сервер поддерживает Range)
+- [x] Смешанный плейлист (локальные + URL чередуются)
+- [x] Lazy-update длительности срабатывает и обновляет БД

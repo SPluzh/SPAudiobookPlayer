@@ -1597,7 +1597,36 @@ class DatabaseManager:
         finally:
             conn.close()
 
+    def update_file_duration(self, audiobook_id: int, file_path: str, duration: float):
+        """Update duration of a specific file in audiobook_files and recalculate book duration."""
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE audiobook_files
+                SET duration = ?
+                WHERE audiobook_id = ? AND file_path = ? AND (duration = 0 OR duration IS NULL)
+            """, (duration, audiobook_id, file_path))
+
+            # Recalculate book duration
+            cursor.execute("""
+                UPDATE audiobooks
+                SET duration = (
+                    SELECT COALESCE(SUM(duration), 0)
+                    FROM audiobook_files
+                    WHERE audiobook_id = ?
+                )
+                WHERE id = ?
+            """, (audiobook_id, audiobook_id))
+
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error updating file duration: {e}")
+        finally:
+            conn.close()
+
     # --- Listening Statistics Methods ---
+
 
     def create_listening_session(self, audiobook_id: int, start_time, speed: float) -> Optional[int]:
         """Create new listening session, returns session_id
