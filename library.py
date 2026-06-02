@@ -611,6 +611,10 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.hovered_index = None
         self.mouse_pos = None
 
+        # Narrator icon
+        self.narrator_icon = get_icon("narrator")
+        self.author_icon = get_icon("author")
+
         # Nesting lines color palette
         self.NESTING_COLORS = [
             QColor("#3498db"),  # Blue
@@ -1266,19 +1270,6 @@ class MultiLineDelegate(QStyledItemDelegate):
         text_y = option.rect.top() + self.vertical_padding
         available_width = option.rect.right() - text_x - self.horizontal_padding
 
-        # Author field
-        if author:
-            font, color = self._get_style("delegate_author")
-            painter.setFont(font)
-            painter.setPen(color)
-
-            line_height = painter.fontMetrics().height()
-            rect = QRect(text_x, text_y, available_width, line_height)
-            painter.drawText(
-                rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, author
-            )
-            text_y += line_height + self.line_spacing
-
         # Title field
         font, color = self._get_style("delegate_title")
         painter.setFont(font)
@@ -1299,6 +1290,34 @@ class MultiLineDelegate(QStyledItemDelegate):
         )
         text_y += line_height + self.line_spacing
 
+        # Author field
+        if author:
+            font, color = self._get_style("delegate_author")
+            painter.setFont(font)
+            painter.setPen(color)
+
+            line_height = painter.fontMetrics().height()
+            
+            author_x = text_x
+            if hasattr(self, "author_icon") and not self.author_icon.isNull():
+                icon_size = 14
+                icon_y = text_y + (line_height - icon_size) // 2
+                icon_rect = QRect(text_x, icon_y, icon_size, icon_size)
+                
+                painter.save()
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+                self.author_icon.paint(painter, icon_rect)
+                painter.restore()
+                
+                author_x += icon_size + 6
+
+            rect = QRect(author_x, text_y, option.rect.right() - author_x - self.horizontal_padding, line_height)
+            painter.drawText(
+                rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, author
+            )
+            text_y += line_height + self.line_spacing
+
         # NARRATOR Metadata
         if narrator:
             font, color = self._get_style("delegate_narrator")
@@ -1306,8 +1325,30 @@ class MultiLineDelegate(QStyledItemDelegate):
             painter.setPen(color)
 
             line_height = painter.fontMetrics().height()
-            rect = QRect(text_x, text_y, available_width, line_height)
-            narrator_text = f"{tr('delegate.narrator_prefix')} {narrator}"
+            
+            icon_drawn = False
+            narrator_x = text_x
+            
+            if hasattr(self, "narrator_icon") and not self.narrator_icon.isNull():
+                icon_size = 14
+                icon_y = text_y + (line_height - icon_size) // 2
+                icon_rect = QRect(text_x, icon_y, icon_size, icon_size)
+                
+                painter.save()
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+                self.narrator_icon.paint(painter, icon_rect)
+                painter.restore()
+                
+                narrator_x += icon_size + 6
+                icon_drawn = True
+                
+            if icon_drawn:
+                narrator_text = narrator
+            else:
+                narrator_text = f"{tr('delegate.narrator_prefix')} {narrator}"
+
+            rect = QRect(narrator_x, text_y, option.rect.right() - narrator_x - self.horizontal_padding, line_height)
             painter.drawText(
                 rect,
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
