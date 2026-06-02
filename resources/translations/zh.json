@@ -125,7 +125,12 @@
     "buffering": "缓冲中...",
     "network_error": "网络错误",
     "connecting": "正在连接...",
-    "streaming": "正在播放网络流..."
+    "streaming": "正在播放网络流...",
+    "loading_playlist": "📋 Loading playlist...",
+    "restoring_position": "⏩ Restoring position...",
+    "seeking": "⏩ Seeking position... (attempt {attempt})",
+    "stream_ready": "▶ Stream ready",
+    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
   },
   "status": {
     "load_library": "📚 加载有声书库",

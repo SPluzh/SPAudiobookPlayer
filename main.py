@@ -111,6 +111,8 @@ from updater import get_current_version
 
 
 class AudiobookPlayerWindow(QMainWindow):
+    status_requested = pyqtSignal(str)
+
     def __init__(self):
         """Initialize the main application window, establishing directory structures, loading configurations, and assembling core components"""
         super().__init__()
@@ -171,6 +173,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.playback_controller.listening_tracker = self.listening_tracker
         self.playback_controller.on_load_start = self.on_stream_load_start
         self.playback_controller.on_load_error = self.on_stream_load_error
+        self.playback_controller.on_status_update = self._on_playback_status
+        self.status_requested.connect(self.statusBar().showMessage)
 
         self.taskbar_progress = TaskbarProgress()
 
@@ -1275,7 +1279,6 @@ class AudiobookPlayerWindow(QMainWindow):
                     # Update the UI for what we know so far (playlist, cover, speed)
                     self.update_ui_for_audiobook()
                     self.library_widget.tree.viewport().update()
-                    self.statusBar().showMessage(tr("player.connecting", "Connecting..."))
                     return  # playback will start in _on_url_load_complete once connected
 
                 # Synchronous path (local file) — same as before
@@ -1433,6 +1436,10 @@ class AudiobookPlayerWindow(QMainWindow):
         # Wire up the async-load callback before loading
         self.playback_controller.on_load_complete = self._on_url_load_complete
 
+        # Provide immediate feedback during metadata lookup/playlist loading
+        self.statusBar().showMessage(tr("player.loading_playlist"))
+        QApplication.processEvents()
+
         if self.playback_controller.load_audiobook(audiobook_path):
             # Update database status to mark the book as currently reading
             if self.playback_controller.current_audiobook_id:
@@ -1491,7 +1498,10 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Update library to reflect started status
         self.library_widget.load_audiobooks(use_cache=False)
-        self.statusBar().showMessage(tr("status.restored_session"))
+        if ctx.get("restore_paused"):
+            self.statusBar().showMessage(tr("status.restored_session"))
+        else:
+            self.statusBar().showMessage(tr("player.stream_ready"))
 
     def update_ui_for_audiobook(self):
         """Synchronize various UI elements to reflect the metadata and state of the currently loaded audiobook"""
@@ -1698,6 +1708,10 @@ class AudiobookPlayerWindow(QMainWindow):
             self.playback_controller.current_audiobook_path
         )
 
+    def _on_playback_status(self, message: str):
+        """Route status messages from PlaybackController to the status bar via thread-safe signal."""
+        self.status_requested.emit(message)
+
     def on_stream_load_start(self, url: str):
         """Handle network stream load start by showing connecting message"""
         msg = tr("player.connecting", "Connecting...")
@@ -1769,7 +1783,9 @@ class AudiobookPlayerWindow(QMainWindow):
             )
 
         # Update streaming information in the status bar
-        if getattr(self.player, "is_streaming", False):
+        if self.playback_controller._url_loading:
+            pass  # Do not touch the status bar while a URL is loading/seeking/connecting asynchronously
+        elif getattr(self.player, "is_streaming", False):
             info = self.player.get_stream_info()
             curr_msg = self.statusBar().currentMessage()
             

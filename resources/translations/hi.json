@@ -125,7 +125,12 @@
     "buffering": "बफ़र हो रहा है...",
     "network_error": "नेटवर्क त्रुटि",
     "connecting": "कनेक्ट हो रहा है...",
-    "streaming": "स्ट्रीमिंग हो रही है..."
+    "streaming": "स्ट्रीमिंग हो रही है...",
+    "loading_playlist": "📋 Loading playlist...",
+    "restoring_position": "⏩ Restoring position...",
+    "seeking": "⏩ Seeking position... (attempt {attempt})",
+    "stream_ready": "▶ Stream ready",
+    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
   },
   "status": {
     "load_library": "📚 ऑडियोबुक लाइब्रेरी लोड करें",

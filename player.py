@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Callable
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, 
     QLabel, QProgressBar, QListWidget, QListWidgetItem, QSizePolicy,
@@ -46,9 +46,16 @@ class PlaybackController:
         self.on_load_start = None
         self.on_load_error = None
         self.on_load_complete = None   # called after async URL stream is ready
+        self.on_status_update: Optional[Callable[[str], None]] = None
         self._url_loading = False       # True while a URL is being loaded asynchronously
         self._url_load_context: dict = {}  # stores state needed after async load completes
         self._target_seek_position: Optional[float] = None
+        self.max_connect_attempts = 5
+
+    def _emit_status(self, msg: str):
+        """Helper to safely trigger the on_status_update callback if defined"""
+        if callable(self.on_status_update):
+            self.on_status_update(msg)
 
     def _on_stream_ended(self):
         """Callback triggered when the BASS stream finishes playing"""
@@ -111,6 +118,9 @@ class PlaybackController:
                 'start_offset': start_offset or 0,
                 'is_url': bool(is_url)
             })
+        
+        if any(f.get('is_url') for f in self.files_list):
+            self._emit_status(tr("player.loading_playlist"))
         
         # Restore saved playback speed
         self.player.set_speed(int(saved_speed * 10))
@@ -232,6 +242,7 @@ class PlaybackController:
 
         if target_pos > 0:
             self._target_seek_position = target_pos
+            self._emit_status(tr("player.restoring_position"))
             self._retry_seek_url(target_pos, start_playing=start_playing)
         else:
             self._finalize_url_load(start_playing)
@@ -240,6 +251,9 @@ class PlaybackController:
         """Retry seeking to a position for a network stream. Finalizes loading state upon success or failure."""
         if self._target_seek_position != position:
             return
+
+        if attempt > 1:
+            self._emit_status(trf("player.seeking", attempt=attempt))
 
         success = self.player.set_position(position)
         current_pos = self.player.get_position()
@@ -257,10 +271,34 @@ class PlaybackController:
             self._finalize_url_load(start_playing)
 
     def _on_url_stream_error(self):
-        """Called in the main thread when the async URL stream fails to connect."""
+        """Called in the main thread when the async URL stream fails to connect. Retries with a delay if attempts remaining."""
+        attempt = self._url_load_context.get('connect_attempt', 1)
+        max_attempts = 5
+        file_info = self._url_load_context.get('file_info')
+        
+        if attempt < max_attempts and file_info:
+            self._url_load_context['connect_attempt'] = attempt + 1
+            abs_file_path = file_info['path']
+            
+            # Emit status bar update about the retry attempt
+            self._emit_status(trf("player.connecting_retry", attempt=attempt, max_attempts=max_attempts))
+            
+            def do_retry():
+                # Only execute if the context has not been replaced or cleared in the meantime
+                if self._url_loading and self._url_load_context.get('file_info') is file_info:
+                    self.player.load_url_async(
+                        abs_file_path,
+                        on_ready=self._on_url_stream_ready,
+                        on_error=self._on_url_stream_error,
+                    )
+            
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(2000, do_retry)
+            return
+
         self._url_loading = False
-        if getattr(self, 'on_load_error', None) and self._url_load_context.get('file_info'):
-            url = self._url_load_context['file_info'].get('path', '')
+        if getattr(self, 'on_load_error', None) and file_info:
+            url = file_info.get('path', '')
             self.on_load_error(url)
 
     

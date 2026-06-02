@@ -125,7 +125,12 @@
     "buffering": "バッファリング中...",
     "network_error": "ネットワークエラー",
     "connecting": "接続中...",
-    "streaming": "ストリーミング再生中..."
+    "streaming": "ストリーミング再生中...",
+    "loading_playlist": "📋 Loading playlist...",
+    "restoring_position": "⏩ Restoring position...",
+    "seeking": "⏩ Seeking position... (attempt {attempt})",
+    "stream_ready": "▶ Stream ready",
+    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
   },
   "status": {
     "load_library": "📚 ライブラリを読み込み中",

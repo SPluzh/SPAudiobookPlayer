@@ -125,7 +125,12 @@
     "buffering": "버퍼링 중...",
     "network_error": "네트워크 오류",
     "connecting": "연결 중...",
-    "streaming": "스트리밍 재생 중..."
+    "streaming": "스트리밍 재생 중...",
+    "loading_playlist": "📋 Loading playlist...",
+    "restoring_position": "⏩ Restoring position...",
+    "seeking": "⏩ Seeking position... (attempt {attempt})",
+    "stream_ready": "▶ Stream ready",
+    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
   },
   "status": {
     "load_library": "📚 오디오북 라이브러리 불러오기",

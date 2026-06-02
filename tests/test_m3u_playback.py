@@ -136,6 +136,7 @@ def test_playback_controller_callbacks(tmp_path):
 
     
     controller = PlaybackController(player_mock, db)
+    controller.max_connect_attempts = 1
     
     start_called = []
     complete_called = []

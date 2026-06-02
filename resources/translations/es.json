@@ -125,7 +125,12 @@
     "buffering": "Almacenando en búfer...",
     "network_error": "Error de red",
     "connecting": "Conectando...",
-    "streaming": "Transmitiendo..."
+    "streaming": "Transmitiendo...",
+    "loading_playlist": "📋 Loading playlist...",
+    "restoring_position": "⏩ Restoring position...",
+    "seeking": "⏩ Seeking position... (attempt {attempt})",
+    "stream_ready": "▶ Stream ready",
+    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
   },
   "status": {
     "load_library": "📚 Cargar biblioteca de audiolibros",

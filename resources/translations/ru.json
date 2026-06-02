@@ -143,7 +143,12 @@
     "buffering": "Буферизация...",
     "network_error": "Ошибка сети",
     "connecting": "Подключение...",
-    "streaming": "Поточное воспроизведение..."
+    "streaming": "Поточное воспроизведение...",
+    "loading_playlist": "📋 Загрузка плейлиста...",
+    "restoring_position": "⏩ Восстановление позиции...",
+    "seeking": "⏩ Поиск позиции... (попытка {attempt})",
+    "stream_ready": "▶ Поток готов",
+    "connecting_retry": "❌ Ошибка подключения. Повтор... (попытка {attempt} из {max_attempts})"
   },
   "status": {
     "load_library": "📚 Загрузите библиотеку аудиокниг",

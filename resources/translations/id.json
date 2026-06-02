@@ -143,7 +143,12 @@
     "buffering": "Penyanggaan...",
     "network_error": "Kesalahan jaringan",
     "connecting": "Menghubungkan...",
-    "streaming": "Streaming..."
+    "streaming": "Streaming...",
+    "loading_playlist": "📋 Loading playlist...",
+    "restoring_position": "⏩ Restoring position...",
+    "seeking": "⏩ Seeking position... (attempt {attempt})",
+    "stream_ready": "▶ Stream ready",
+    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
   },
   "status": {
     "load_library": "📚 Muat perpustakaan audiobook",
