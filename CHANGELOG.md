@@ -3,25 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.6.23]
-- **Playback**: Fixed an issue where network M3U audiobooks would automatically start playing on session restoration/app startup instead of staying paused.
-- **Playback**: Resolved a race condition where the saved position of network M3U audiobooks would not restore correctly on startup because the stream buffer wasn't ready.
-- **Playback**: Prevented network M3U playback positions from being overwritten with zero when starting playback from the library or switching between audiobooks.
-- **Playback**: Implemented a robust, retry-based seek mechanism that polls the stream buffer state until the network connection is fully established.
+- **M3U Support**: Added full support for M3U/M3U8 playlists as audiobooks — both local files and network streams. Playlists are scanned, registered in the library, and played back with correct metadata, duration, cover art, and saved position restoration.
 
 ## [1.6.22]
-- **Playback**: Moved network URL stream loading (`BASS_StreamCreateURL`) to a background `QThread` (`StreamLoadThread`) to eliminate UI freezes when selecting or restoring network M3U audiobooks — both on startup and during normal playback.
-- **Playback**: Application startup no longer blocks when the last session was a network M3U book; the window opens immediately and playback begins once the connection is established.
-- **Scanner**: Added support for M3U and M3U8 playlists, allowing folders or individual files containing playlists to be scanned and registered as virtual audiobooks.
-- **Scanner**: Implemented automatic metadata parsing and duration verification for local tracks within playlists.
-- **Scanner**: Added fast duration estimation for remote network stream URLs using quick network probes.
-- **Scanner**: Expanded metadata and scanning status translation coverage for all 15 supported languages.
-- **Scanner**: Ensured the library scanner respects custom database file paths defined in configuration.
-- **Scanner**: Resolved database file locking issues on Windows platforms to prevent process access errors.
-- **Scanner**: Fixed recursive folder discovery to find and scan directories containing only M3U/M3U8 playlist files.
-- **Scanner**: Refined M3U classification logic so single playlists in parent/category directories are saved as separate files rather than registering the parent directory.
-- **Scanner**: Improved console logging readability during scanning by adding appropriate blank lines before playlist processing entries.
-- **Scanner**: Added real-time progress logging when probing remote network stream URLs to make long scans of streaming playlists transparent.
-- **Scanner**: Saved aggregate technical metadata (codec, bitrate, container, size) for M3U playlists in the database, allowing M3U books to display correct format details in the tree view and status row.
 - **Library**: Replaced the text-based narrator emoji with a custom graphical icon.
 - **Library**: Added a custom writer icon before the author's name in the audiobook list.
 - **Library**: Swapped the order of information to display the audiobook title above the author's name.
