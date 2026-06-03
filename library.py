@@ -616,6 +616,12 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.narrator_icon = get_icon("narrator")
         self.author_icon = get_icon("author")
 
+        # Technical/metadata icons
+        self.info_bitrate_icon = get_icon("info_bitrate")
+        self.info_file_count_icon = get_icon("info_file_count")
+        self.info_duration_icon = get_icon("info_duration")
+        self.info_size_icon = get_icon("info_size")
+
         # Nesting lines color palette
         self.NESTING_COLORS = [
             QColor("#3498db"),  # Blue
@@ -1369,28 +1375,24 @@ class MultiLineDelegate(QStyledItemDelegate):
         # Listening progress percentage
         font_prog, color_prog = self._get_style("delegate_progress")
         progress_text = trf("delegate.progress", percent=int(progress_percent))
-        info_parts.append((progress_text, font_prog, color_prog))
+        info_parts.append((None, progress_text, font_prog, color_prog))
 
         # File list count
         if file_count:
             font_fc, color_fc = self._get_style("delegate_file_count")
-            files_text = f"{tr('delegate.files_prefix')} {file_count}"
-            info_parts.append((files_text, font_fc, color_fc))
+            info_parts.append((self.info_file_count_icon, str(file_count), font_fc, color_fc))
 
         # Overall duration
         if duration:
             font_dur, color_dur = self._get_style("delegate_duration")
-            duration_text = (
-                f"{tr('delegate.duration_prefix')} {format_duration(duration)}"
-            )
-            info_parts.append((duration_text, font_dur, color_dur))
+            duration_text = format_duration(duration)
+            info_parts.append((self.info_duration_icon, duration_text, font_dur, color_dur))
 
         # Total size metadata
         if total_size:
             font_sz, color_sz = self._get_style("delegate_file_count")
-            size_prefix = tr("delegate.size_prefix", default="💾")
-            size_text = f"{size_prefix} {format_size(total_size)}"
-            info_parts.append((size_text, font_sz, color_sz))
+            size_text = format_size(total_size)
+            info_parts.append((self.info_size_icon, size_text, font_sz, color_sz))
 
         # Technical Metadata (Bitrate, Mode, Codec/Container)
         if b_min or codec or container:
@@ -1425,20 +1427,34 @@ class MultiLineDelegate(QStyledItemDelegate):
                 tech_line.append("/".join(codec_info))
 
             if tech_line:
-                full_tech_text = f"{tr('delegate.codec_prefix')} {' '.join(tech_line)}"
+                full_tech_text = ' '.join(tech_line)
                 # Use same style as narrator or file count for technical info
                 font_tech, color_tech = self._get_style("delegate_file_count")
-                info_parts.append((full_tech_text, font_tech, color_tech))
+                info_parts.append((self.info_bitrate_icon, full_tech_text, font_tech, color_tech))
 
         # Draw consolidated info line with custom formatting/spacing
         if info_parts and getattr(self, "show_detailed_info", True):
             current_x = text_x
-            for i, (text, font, color) in enumerate(info_parts):
+            for i, (icon, text, font, color) in enumerate(info_parts):
                 painter.setFont(font)
                 painter.setPen(color)
 
                 text_width = painter.fontMetrics().horizontalAdvance(text)
                 line_height = painter.fontMetrics().height()
+
+                # Draw graphic icon if present
+                if icon and not icon.isNull():
+                    icon_size = 14
+                    icon_y = text_y + (line_height - icon_size) // 2
+                    icon_rect = QRect(current_x, icon_y, icon_size, icon_size)
+
+                    painter.save()
+                    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                    painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+                    icon.paint(painter, icon_rect)
+                    painter.restore()
+
+                    current_x += icon_size + 6
 
                 rect = QRect(current_x, text_y, text_width + 10, line_height)
                 painter.drawText(

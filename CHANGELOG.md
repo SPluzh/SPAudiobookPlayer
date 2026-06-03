@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.24]
+- **Library UI**: Replaced text-based emoji prefixes (files, duration, size, bitrate) in the audiobook information line with custom graphical icons.
+
 ## [1.6.23]
 - **M3U Support**: Added full support for M3U/M3U8 playlists as audiobooks — both local files and network streams. Playlists are scanned, registered in the library, and played back with correct metadata, duration, cover art, and saved position restoration.
 - **M3U Structure**: Recommended folder layout for network playlists:
