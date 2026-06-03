@@ -378,7 +378,8 @@
     "library_hierarchy_title": "Cấu trúc thư viện được đề xuất:",
     "library_hierarchy_text": "Audiobooks/\n├── Tên tác giả/\n│   ├── Tên bộ truyện/\n│   │   └── Tác giả - Tên sách [Người đọc]/\n│   │       ├── 01 - Chương 1.mp3\n│   │       ├── 02 - Chương 2.mp3\n│   │       └── cover.jpg\n│   └── Tác giả - Sách độc lập [Người đọc]/\n│       └── audiobook.m4b\n└── Tác giả khác/\n    ├── Tác giả - Tên sách [Người đọc]/\n    │   └── file.mp3\n    ├── Tác giả - Sách Danh Sách Phát [Người đọc]/\n    │   ├── playlist.m3u8\n    │   └── cover.jpg\n    └── Bộ sưu tập danh sách phát/\n        ├── Tác giả - Tiêu đề [Người đọc].m3u\n        ├── Tác giả - Sách khác [Người đọc].m3u8\n        └── cover.jpg\n\nTrình quét hỗ trợ mọi cấu trúc thư mục.\nMỗi thư mục có tệp âm thanh = một audiobook.\n\nVới M3U: một danh sách phát trong một thư mục (có ảnh bìa)\nhoặc nhiều danh sách phát trong một thư mục (mỗi danh sách là một cuốn sách riêng biệt).",
     "close": "Đóng",
-    "github": "GitHub"
+    "github": "GitHub",
+    "feedback": "Ý kiến, gợi ý & lỗi"
   },
   "taskbar": {
     "prev": "Tập trước",

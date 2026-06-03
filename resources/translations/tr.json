@@ -360,7 +360,8 @@
     "library_hierarchy_title": "Önerilen Kütüphane Yapısı:",
     "library_hierarchy_text": "Audiobooks/\n├── Yazar Adı/\n│   ├── Seri Adı/\n│   │   └── Yazar - Kitap Başlığı [Anlatıcı]/\n│   │       ├── 01 - Bölüm 1.mp3\n│   │       ├── 02 - Bölüm 2.mp3\n│   │       └── cover.jpg\n│   └── Yazar - Bağımsız Kitap [Anlatıcı]/\n│       └── audiobook.m4b\n└── Başka Yazar/\n    ├── Yazar - Kitap Başlığı [Anlatıcı]/\n    │   └── file.mp3\n    ├── Yazar - Çalma Listesi Kitabı [Anlatıcı]/\n    │   ├── playlist.m3u8\n    │   └── cover.jpg\n    └── Çalma Listesi Koleksiyonu/\n        ├── Yazar - Kitap Başlığı [Anlatıcı].m3u\n        ├── Yazar - Başka Bir Kitap [Anlatıcı].m3u8\n        └── cover.jpg\n\nTarayıcı herhangi bir klasör hiyerarşisini destekler.\nSes dosyaları içeren her klasör = bir sesli kitap.\n\nM3U için: klasörde tek bir çalma listesi (kapaklı)\nveya tek bir klasörde birden fazla çalma listesi (her biri ayrı bir kitap olarak).",
     "close": "Kapat",
-    "github": "GitHub"
+    "github": "GitHub",
+    "feedback": "Geri Bildirim, Öneriler ve Hatalar"
   },
   "taskbar": {
     "prev": "Önceki parça",

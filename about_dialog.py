@@ -101,6 +101,26 @@ class AboutDialog(QDialog):
         github_link_group.addWidget(github_text_label)
 
         version_github_layout.addLayout(github_link_group)
+
+        version_github_layout.addSpacing(15)
+
+        # Feedback Link Group
+        feedback_link_group = QHBoxLayout()
+        feedback_link_group.setSpacing(5)
+
+        # Icon Label
+        feedback_icon_label = QLabel()
+        feedback_icon_label.setPixmap(QIcon(github_icon_path).pixmap(16, 16))
+        feedback_link_group.addWidget(feedback_icon_label)
+
+        # Text Label
+        feedback_text_label = QLabel(tr("about.feedback", "Feedback, Suggestions & Bugs"))
+        feedback_text_label.setObjectName("aboutGithubLink")
+        feedback_text_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        feedback_text_label.mousePressEvent = lambda e: self.open_feedback()
+        feedback_link_group.addWidget(feedback_text_label)
+
+        version_github_layout.addLayout(feedback_link_group)
         container_layout.addLayout(version_github_layout)
 
         # Separator
@@ -221,3 +241,7 @@ class AboutDialog(QDialog):
     def open_github(self):
         """Open project GitHub repository in default browser"""
         QDesktopServices.openUrl(QUrl("https://github.com/SPluzh/SPAudiobookPlayer"))
+
+    def open_feedback(self):
+        """Open project feedback and issues page in default browser"""
+        QDesktopServices.openUrl(QUrl("https://github.com/SPluzh/SPAudiobookPlayer/issues"))

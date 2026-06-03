@@ -378,7 +378,8 @@
     "library_hierarchy_title": "Recommended Library Structure:",
     "library_hierarchy_text": "Audiobooks/\n├── Author Name/\n│   ├── Series Name/\n│   │   └── Author - Book Title [Narrator]/\n│   │       ├── 01 - Chapter 1.mp3\n│   │       ├── 02 - Chapter 2.mp3\n│   │       └── cover.jpg\n│   └── Author - Standalone Book [Narrator]/\n│       └── audiobook.m4b\n└── Another Author/\n    ├── Author - Book Title [Narrator]/\n    │   └── file.mp3\n    ├── Author - Playlist Book [Narrator]/\n    │   ├── playlist.m3u8\n    │   └── cover.jpg\n    └── Playlist Collection/\n        ├── Author - Book Title [Narrator].m3u\n        ├── Author - Another Book [Narrator].m3u8\n        └── cover.jpg\n\nThe scanner supports any folder hierarchy.\nEach folder with audio files = one audiobook.\n\nFor M3U: single playlist in a folder (with cover)\nor multiple playlists in one folder (each as a separate book).",
     "close": "Close",
-    "github": "GitHub"
+    "github": "GitHub",
+    "feedback": "Feedback, Suggestions & Bugs"
   },
   "taskbar": {
     "prev": "Previous track",
