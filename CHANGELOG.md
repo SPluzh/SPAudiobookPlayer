@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [1.6.23]
 - **M3U Support**: Added full support for M3U/M3U8 playlists as audiobooks — both local files and network streams. Playlists are scanned, registered in the library, and played back with correct metadata, duration, cover art, and saved position restoration.
+- **M3U Structure**: Recommended folder layout for network playlists:
+    - **One playlist per folder** — place a single `.m3u`/`.m3u8` file in a dedicated folder named `Author - Title [Narrator]`; an optional `cover.jpg` in the same folder will be used as the book cover.
+    - **Multiple playlists per folder** — place several `.m3u`/`.m3u8` files in one folder; each playlist is registered as a separate audiobook.
 
 ## [1.6.22]
 - **Library**: Replaced the text-based narrator emoji with a custom graphical icon.
