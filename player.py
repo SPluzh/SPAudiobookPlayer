@@ -273,7 +273,7 @@ class PlaybackController:
     def _on_url_stream_error(self):
         """Called in the main thread when the async URL stream fails to connect. Retries with a delay if attempts remaining."""
         attempt = self._url_load_context.get('connect_attempt', 1)
-        max_attempts = 5
+        max_attempts = self.max_connect_attempts
         file_info = self._url_load_context.get('file_info')
         
         if attempt < max_attempts and file_info:
