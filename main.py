@@ -74,7 +74,7 @@ import ctypes
 from ctypes import wintypes
 from hotkeys import HotKeyManager
 from player import PlayerWidget, PlaybackController
-from bookmarks_dialog import BookmarksListDialog
+from bookmarks_dialog import BookmarksListDialog, BookmarkEditorDialog
 from settings_dialog import SettingsDialog
 from translations import (
     tr,
@@ -333,7 +333,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Playback Controls Component
         self.player_widget = PlayerWidget()
-        self.player_widget.setMinimumWidth(400)
+        self.player_widget.setMinimumWidth(443)
         self.player_widget.id3_btn.setChecked(self.show_id3)
         self.player_widget.on_id3_toggled(self.show_id3)
 
@@ -798,6 +798,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.speed_changed.connect(self.on_speed_changed)
         self.player_widget.file_selected.connect(self.on_file_selected)
         self.player_widget.bookmarks_clicked.connect(self.show_bookmarks)
+        self.player_widget.add_bookmark_clicked.connect(self.add_bookmark)
 
     def show_bookmarks(self):
         """Open the bookmarks manager dialog"""
@@ -833,6 +834,50 @@ class AudiobookPlayerWindow(QMainWindow):
         dlg.bookmark_selected.connect(self.on_bookmark_selected)
         dlg.exec()
         self.update_progress_bar_markers()
+
+    def add_bookmark(self):
+        """Open the add bookmark dialog directly"""
+        if not self.playback_controller.current_audiobook_id:
+            QMessageBox.information(
+                self, tr("info"), tr("bookmarks.no_book_playing")
+            )
+            return
+
+        current_pos = self.playback_controller.player.get_position()
+        current_idx = self.playback_controller.current_file_index
+        current_file = (
+            self.playback_controller.files_list[current_idx]["name"]
+            if self.playback_controller.files_list
+            else ""
+        )
+
+        from utils import format_time_short
+        timestamp = format_time_short(current_pos)
+        default_title = f"{tr('bookmarks.bookmark_at')} {timestamp}"
+
+        dlg = BookmarkEditorDialog(
+            self,
+            title=default_title,
+            description="",
+            files_list=self.playback_controller.files_list,
+            current_index=current_idx,
+            position=current_pos
+        )
+        dlg.setWindowTitle(tr("bookmarks.add_title"))
+
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            title, desc = dlg.get_data()
+            if not title:
+                title = default_title
+
+            self.db_manager.add_bookmark(
+                self.playback_controller.current_audiobook_id,
+                current_file,
+                current_pos,
+                title,
+                desc
+            )
+            self.update_progress_bar_markers()
 
     def on_bookmark_selected(self, bookmark_id: int):
         """Handle jump to bookmark, ensuring UI and session state are updated"""
@@ -1048,7 +1093,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "window_height": "800",
             "window_x": "100",
             "window_y": "100",
-            "normal_min_width": "450",
+            "normal_min_width": "650",
             "normal_min_height": "450",
             "minimal_width": "450",
             "minimal_height": "270",

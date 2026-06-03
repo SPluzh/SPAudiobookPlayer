@@ -117,7 +117,10 @@ QPushButton#bookmarksBtn {
     font-size: 11px;
     min-height: 18px;
     margin-top: 2px;
-    border-radius: 3px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
 }
 
 QPushButton#bookmarksBtn:hover {
@@ -127,6 +130,33 @@ QPushButton#bookmarksBtn:hover {
 }
 
 QPushButton#bookmarksBtn:pressed {
+    background-color: @accent-dark;
+    border-color: @accent-dark;
+}
+
+QPushButton#addBookmarkBtn {
+    background-color: @bg-dark;
+    border: 1px solid @border;
+    color: @text;
+    padding: 2px 2px;
+    font-weight: 500;
+    font-size: 11px;
+    min-height: 18px;
+    margin-top: 2px;
+    margin-left: -1px;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+QPushButton#addBookmarkBtn:hover {
+    background-color: @accent;
+    border-color: @accent;
+    color: @text-bright;
+}
+
+QPushButton#addBookmarkBtn:pressed {
     background-color: @accent-dark;
     border-color: @accent-dark;
 }

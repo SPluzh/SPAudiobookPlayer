@@ -666,6 +666,7 @@ class PlayerWidget(QWidget):
     volume_boost_toggled_signal = pyqtSignal(bool)
     volume_boost_level_changed_signal = pyqtSignal(float)
     bookmarks_clicked = pyqtSignal()
+    add_bookmark_clicked = pyqtSignal()
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
@@ -732,6 +733,13 @@ class PlayerWidget(QWidget):
         self.auto_rewind_btn.toggled.connect(self.on_auto_rewind_toggled)
         btns_row.addWidget(self.auto_rewind_btn)
 
+        # Bookmarks container to group list and add button flush together and prevent overlap on resize
+        self.bookmarks_container = QWidget()
+        self.bookmarks_container.setFixedWidth(60)
+        bookmarks_layout = QHBoxLayout(self.bookmarks_container)
+        bookmarks_layout.setSpacing(0)
+        bookmarks_layout.setContentsMargins(0, 0, 0, 0)
+
         # Bookmarks Button
         self.bookmarks_btn = QPushButton(tr("bookmarks.button_label"))
         self.bookmarks_btn.setCheckable(False) # Unlike ID3, this opens a dialog
@@ -739,7 +747,18 @@ class PlayerWidget(QWidget):
         self.bookmarks_btn.setObjectName("bookmarksBtn")
         self.bookmarks_btn.setToolTip(tr("bookmarks.list_title"))
         self.bookmarks_btn.clicked.connect(self.bookmarks_clicked)
-        btns_row.addWidget(self.bookmarks_btn)
+        bookmarks_layout.addWidget(self.bookmarks_btn)
+
+        # Add Bookmark Button
+        self.add_bookmark_btn = QPushButton("+")
+        self.add_bookmark_btn.setCheckable(False)
+        self.add_bookmark_btn.setFixedWidth(20)
+        self.add_bookmark_btn.setObjectName("addBookmarkBtn")
+        self.add_bookmark_btn.setToolTip(tr("bookmarks.add"))
+        self.add_bookmark_btn.clicked.connect(self.add_bookmark_clicked)
+        bookmarks_layout.addWidget(self.add_bookmark_btn)
+
+        btns_row.addWidget(self.bookmarks_container)
 
         btns_row.addStretch()
         
