@@ -352,10 +352,12 @@
     "version": "版本：{version}",
     "description": "该程序允许您方便地浏览收藏，保存收听进度并快速找到所需的书籍。\n基于 PyQt6 和 BASS 库构建。",
     "supported_formats": "支持的格式：",
-    "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE 支持 (章节标记和元数据)",
+    "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA, M3U, M3U8 (播放列表)\n+ .CUE 支持 (章节标记和元数据)",
     "close": "关闭",
     "hotkeys_title": "快捷键:",
     "hotkeys_list": "空格 — 播放 / 暂停\n[ 和 ] — 上一个 / 下一个文件\n左 / 右 — 后退 / 前进 10秒\nShift + 左 / 右 — 后退 / 前进 60秒\n上 / 下 — 播放速度 (±0.1x)\nShift + 上 / 下 — 音量 (±5%)",
+    "global_hotkeys_title": "全局快捷键 (后台):",
+    "global_hotkeys_list": "Play/Pause — 播放 / 暂停\nStop — 暂停\nNext Track — 快进 10 秒\nPrev Track — 后退 10 秒",
     "library_hierarchy_title": "推荐的库结构:",
     "library_hierarchy_text": "Audiobooks/\n├── 作者名/\n│   ├── 系列名/\n│   │   └── 作者 - 书名 [朗读者]/\n│   │       ├── 01 - 第1章.mp3\n│   │       ├── 02 - 第2章.mp3\n│   │       └── cover.jpg\n│   └── 作者 - 独立书籍 [朗读者]/\n│       └── audiobook.m4b\n└── 其他作者/\n    ├── 作者 - 书名 [朗读者]/\n    │   └── file.mp3\n    ├── 作者 - 播放列表书籍 [朗读者]/\n    │   ├── playlist.m3u8\n    │   └── cover.jpg\n    └── 播放列表合集/\n        ├── 作者 - 书名 [朗读者].m3u\n        ├── 作者 - 另一本书 [朗读者].m3u8\n        └── cover.jpg\n\n扫描器支持任何文件夹层次结构。\n每个包含音频文件的文件夹 = 一本有声书。\n\n对于 M3U：文件夹中的单个播放列表（带封面）\n或一个文件夹中的多个播放列表（每个作为一本单独的书）。",
     "github": "GitHub"

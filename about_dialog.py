@@ -138,19 +138,36 @@ class AboutDialog(QDialog):
         left_column.addSpacing(15)
 
         # Hotkeys
-        hotkeys_title = QLabel(tr("about.hotkeys_title", "Горячие клавиши:"))
+        hotkeys_title = QLabel(tr("about.hotkeys_title", "Hotkeys:"))
         hotkeys_title.setObjectName("aboutSectionTitle")
         left_column.addWidget(hotkeys_title)
 
         hotkeys_content = QLabel(
             tr(
                 "about.hotkeys_list",
-                "Пробел — Воспроизведение / Пауза\n[ и ] — Предыдущий / Следующий файл\nВлево / Вправо — Перемотка на 10 сек.\nShift + Влево / Вправо — Перемотка на 60 сек.\nВверх / Вниз — Изменение скорости (±0.1x)\nShift + Вверх / Вниз — Громкость (±5%)",
+                "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)",
             )
         )
         hotkeys_content.setObjectName("aboutSectionContent")
         hotkeys_content.setWordWrap(True)
         left_column.addWidget(hotkeys_content)
+
+        left_column.addSpacing(15)
+
+        # Global Hotkeys
+        global_hotkeys_title = QLabel(tr("about.global_hotkeys_title", "Global Keys (in background):"))
+        global_hotkeys_title.setObjectName("aboutSectionTitle")
+        left_column.addWidget(global_hotkeys_title)
+
+        global_hotkeys_content = QLabel(
+            tr(
+                "about.global_hotkeys_list",
+                "Play/Pause — Play / Pause\nStop — Pause\nNext Track — Forward 10s\nPrev Track — Rewind 10s",
+            )
+        )
+        global_hotkeys_content.setObjectName("aboutSectionContent")
+        global_hotkeys_content.setWordWrap(True)
+        left_column.addWidget(global_hotkeys_content)
 
         # Right Column: Recommended Library Structure
         right_column = QVBoxLayout()
