@@ -214,6 +214,7 @@ class SettingsDialog(QDialog):
         
         # Auto Update Check toggle
         self.auto_update_checkbox = QCheckBox(tr("settings.auto_update_label"))
+        self.auto_update_checkbox.setObjectName("autoUpdateCheckbox")
         self.auto_update_checkbox.setChecked(self.auto_check)
         tools_layout.addWidget(self.auto_update_checkbox)
         

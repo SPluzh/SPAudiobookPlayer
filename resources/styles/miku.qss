@@ -433,6 +433,66 @@ QLineEdit::placeholder {
 }
 
 /* ============================================================
+   CHECKBOXES
+   ============================================================ */
+
+QCheckBox {
+    spacing: 5px;
+    color: @text;
+    background-color: transparent;
+}
+
+QCheckBox::indicator {
+    border-radius: 3px;
+}
+
+QCheckBox::indicator:unchecked {
+    width: 16px;
+    height: 16px;
+    border: 1px solid @border;
+    background-color: @bg-dark;
+}
+
+QCheckBox::indicator:unchecked:hover {
+    width: 16px;
+    height: 16px;
+    border: 1px solid @accent;
+    background-color: @bg-hover;
+}
+
+QCheckBox::indicator:checked {
+    width: 16px;
+    height: 16px;
+    border: 1px solid @border;
+    background-color: qradialgradient(cx:0.5, cy:0.5, radius:0.40, fx:0.5, fy:0.5, stop:0 @text-bright, stop:0.40 @text-bright, stop:0.41 @bg-dark, stop:1 @bg-dark);
+}
+
+QCheckBox::indicator:checked:hover {
+    width: 16px;
+    height: 16px;
+    border: 1px solid @accent;
+    background-color: qradialgradient(cx:0.5, cy:0.5, radius:0.40, fx:0.5, fy:0.5, stop:0 @text-bright, stop:0.40 @text-bright, stop:0.41 @bg-hover, stop:1 @bg-hover);
+}
+
+QCheckBox::indicator:unchecked:disabled {
+    width: 16px;
+    height: 16px;
+    border: 1px solid @text-disabled;
+    background-color: @bg-disabled;
+}
+
+QCheckBox::indicator:checked:disabled {
+    width: 16px;
+    height: 16px;
+    border: 1px solid @text-disabled;
+    background-color: qradialgradient(cx:0.5, cy:0.5, radius:0.40, fx:0.5, fy:0.5, stop:0 @text-disabled, stop:0.40 @text-disabled, stop:0.41 @bg-disabled, stop:1 @bg-disabled);
+}
+
+QCheckBox:disabled {
+    color: @text-disabled;
+}
+
+/* ============================================================
    LISTS
    ============================================================ */
 

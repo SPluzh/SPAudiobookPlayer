@@ -16,7 +16,7 @@ from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPixmap, QIcon, Q
 
 from translations import tr, trf
 from styles import StyleManager
-from utils import load_icon, get_base_path, format_duration
+from utils import load_icon, get_base_path, format_duration, get_icon
 
 
 
@@ -107,15 +107,15 @@ class HeatmapToolTip(QFrame):
         else:
             target_data = []
             for book in daily_books:
-                # Book name (Author on line 1, Title on line 2)
+                # Book name (Title on line 1, Author on line 2)
                 author = book.get('author')
                 title = book.get('title')
                 if author and title:
-                    display_name = f"{author}\n{title}"
+                    display_name = f"{title}\n{author}"
                 elif title:
                     display_name = title
                 elif author:
-                    display_name = f"{author}\n{book.get('audiobook_name', tr('delegate.no_title'))}"
+                    display_name = f"{book.get('audiobook_name', tr('delegate.no_title'))}\n{author}"
                 else:
                     display_name = book.get('audiobook_name') or tr('delegate.no_title')
                 
@@ -923,34 +923,83 @@ class StatisticsDialog(QDialog):
         text_layout = QVBoxLayout()
         text_layout.setSpacing(2)
         
-        author_label = QLabel(book.get('author') or tr("scanner.unknown_author"))
-        author_label.setObjectName("delegate_author")
-        
+        # Title goes first
         title_label = QLabel(book.get('title') or tr("delegate.no_title"))
         title_label.setObjectName("delegate_title")
-        
-        text_layout.addWidget(author_label)
         text_layout.addWidget(title_label)
         
+        # Author goes second (with icon like in library)
+        author_layout = QHBoxLayout()
+        author_layout.setContentsMargins(0, 0, 0, 0)
+        author_layout.setSpacing(6)
+        author_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        
+        author_icon = get_icon("author")
+        if author_icon and not author_icon.isNull():
+            author_icon_label = QLabel()
+            author_icon_label.setPixmap(author_icon.pixmap(14, 14))
+            author_icon_label.setFixedSize(14, 14)
+            author_layout.addWidget(author_icon_label)
+            
+        author_label = QLabel(book.get('author') or tr("scanner.unknown_author"))
+        author_label.setObjectName("delegate_author")
+        author_layout.addWidget(author_label)
+        text_layout.addLayout(author_layout)
+        
+        # Narrator goes third (with icon like in library)
         narrator = book.get('narrator')
         if narrator:
-            narrator_text = f"{tr('delegate.narrator_prefix')} {narrator}"
+            narrator_layout = QHBoxLayout()
+            narrator_layout.setContentsMargins(0, 0, 0, 0)
+            narrator_layout.setSpacing(6)
+            narrator_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            
+            narrator_icon = get_icon("narrator")
+            if narrator_icon and not narrator_icon.isNull():
+                narrator_icon_label = QLabel()
+                narrator_icon_label.setPixmap(narrator_icon.pixmap(14, 14))
+                narrator_icon_label.setFixedSize(14, 14)
+                narrator_layout.addWidget(narrator_icon_label)
+                narrator_text = narrator
+            else:
+                narrator_text = f"{tr('delegate.narrator_prefix')} {narrator}"
+                
             narrator_label = QLabel(narrator_text)
             narrator_label.setObjectName("delegate_narrator")
-            text_layout.addWidget(narrator_label)
+            narrator_layout.addWidget(narrator_label)
+            text_layout.addLayout(narrator_layout)
         
-        # Timeline status (Started / Completed)
-        timeline_parts = []
+        # Timeline status (Started / Completed / Duration / Progress)
+        timeline_layout = QHBoxLayout()
+        timeline_layout.setContentsMargins(0, 0, 0, 0)
+        timeline_layout.setSpacing(6)
+        timeline_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
-        # Progress and duration prefix
-        progress_str = f"{int(progress_val)}%"
-        timeline_parts.append(progress_str)
+        # 1. Progress
+        progress_label = QLabel(f"{int(progress_val)}%")
+        progress_label.setObjectName("completedLabel")
+        timeline_layout.addWidget(progress_label)
         
+        # 2. Duration with Icon
         duration_val = book.get('duration') or 0.0
         if duration_val > 0:
+            sep_dot = QLabel("•")
+            sep_dot.setObjectName("completedLabel")
+            timeline_layout.addWidget(sep_dot)
+            
+            dur_icon = get_icon("info_duration")
+            if dur_icon and not dur_icon.isNull():
+                dur_icon_label = QLabel()
+                dur_icon_label.setPixmap(dur_icon.pixmap(14, 14))
+                dur_icon_label.setFixedSize(14, 14)
+                timeline_layout.addWidget(dur_icon_label)
+                
             duration_str = format_duration(duration_val)
-            timeline_parts.append(f"{tr('delegate.duration_prefix')} {duration_str}")
-        
+            dur_label = QLabel(duration_str)
+            dur_label.setObjectName("completedLabel")
+            timeline_layout.addWidget(dur_label)
+            
+        # 3. Started date
         if book.get('time_started'):
             ts = book['time_started']
             started_date = ""
@@ -964,8 +1013,15 @@ class StatisticsDialog(QDialog):
                 except:
                     started_date = str(ts)
             if started_date:
-                timeline_parts.append(trf("statistics.started_on", date=started_date))
+                sep_dot = QLabel("•")
+                sep_dot.setObjectName("completedLabel")
+                timeline_layout.addWidget(sep_dot)
                 
+                started_label = QLabel(trf("statistics.started_on", date=started_date))
+                started_label.setObjectName("completedLabel")
+                timeline_layout.addWidget(started_label)
+                
+        # 4. Completed date
         if book.get('is_completed') and book.get('time_finished'):
             tf = book['time_finished']
             completed_date = ""
@@ -979,13 +1035,15 @@ class StatisticsDialog(QDialog):
                 except:
                     completed_date = str(tf)
             if completed_date:
-                timeline_parts.append(trf("statistics.completed_on", date=completed_date))
+                sep_dot = QLabel("•")
+                sep_dot.setObjectName("completedLabel")
+                timeline_layout.addWidget(sep_dot)
                 
-        if timeline_parts:
-            completed_text = "  •  ".join(timeline_parts)
-            completed_label = QLabel(completed_text)
-            completed_label.setObjectName("completedLabel")
-            text_layout.addWidget(completed_label)
+                completed_label = QLabel(trf("statistics.completed_on", date=completed_date))
+                completed_label.setObjectName("completedLabel")
+                timeline_layout.addWidget(completed_label)
+                
+        text_layout.addLayout(timeline_layout)
             
         row_layout.addLayout(text_layout, 1)
         
