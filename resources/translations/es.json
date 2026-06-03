@@ -356,7 +356,7 @@
     "close": "Cerrar",
     "hotkeys_title": "Teclas de acceso rápido:",
     "hotkeys_list": "Espacio — Reproducir / Pausar\n[ y ] — Archivo anterior / siguiente\nIzquierda / Derecha — Rebobinar / Avanzar 10s\nShift + Izquierda / Derecha — Rebobinar / Avanzar 60s\nArriba / Abajo — Velocidad de reproducción (±0.1x)\nShift + Arriba / Abajo — Volumen (±5%)",
-    "global_hotkeys_title": "Teclas globales (en segundo plano):",
+    "global_hotkeys_title": "Teclas multimedia globales (en segundo plano):",
     "global_hotkeys_list": "Play/Pause — Reproducir / Pausar\nStop — Pausar\nNext Track — Adelantar 10s\nPrev Track — Rebobinar 10s",
     "library_hierarchy_title": "Estructura de biblioteca recomendada:",
     "library_hierarchy_text": "Audiobooks/\n├── Nombre del autor/\n│   ├── Nombre de la serie/\n│   │   └── Autor - Título del libro [Narrador]/\n│   │       ├── 01 - Capítulo 1.mp3\n│   │       ├── 02 - Capítulo 2.mp3\n│   │       └── cover.jpg\n│   └── Autor - Libro independiente [Narrador]/\n│       └── audiobook.m4b\n└── Otro autor/\n    ├── Autor - Título del libro [Narrador]/\n    │   └── file.mp3\n    ├── Autor - Libro de playlist [Narrador]/\n    │   ├── playlist.m3u8\n    │   └── cover.jpg\n    └── Colección de playlists/\n        ├── Autor - Título del libro [Narrador].m3u\n        ├── Autor - Otro libro [Narrador].m3u8\n        └── cover.jpg\n\nEl escáner admite cualquier jerarquía de carpetas.\nCada carpeta con archivos de audio = un audiolibro.\n\nPara M3U: una sola lista de reproducción en una carpeta (con portada)\no varias listas de reproducción en una carpeta (cada una como un libro independiente).",

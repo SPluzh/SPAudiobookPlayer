@@ -373,7 +373,7 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA, M3U, M3U8 (daftar putar)\n+ Dukungan .CUE (penanda bab dan metadata)",
     "hotkeys_title": "Tombol Cepat:",
     "hotkeys_list": "Space — Putar / Jeda\n[ dan ] — File Sebelumnya / Berikutnya\nKiri / Kanan — Mundur / Maju 10s\nShift + Kiri / Kanan — Mundur / Maju 60s\nAtas / Bawah — Kecepatan Putar (±0.1x)\nShift + Atas / Bawah — Volume (±5%)",
-    "global_hotkeys_title": "Tombol Global (di latar belakang):",
+    "global_hotkeys_title": "Tombol Media Global (di latar belakang):",
     "global_hotkeys_list": "Play/Pause — Putar / Jeda\nStop — Jeda\nNext Track — Maju 10s\nPrev Track — Mundur 10s",
     "library_hierarchy_title": "Struktur Perpustakaan yang Disarankan:",
     "library_hierarchy_text": "Audiobooks/\n├── Nama Penulis/\n│   ├── Nama Seri/\n│   │   └── Penulis - Judul Buku [Narator]/\n│   │       ├── 01 - Bab 1.mp3\n│   │       ├── 02 - Bab 2.mp3\n│   │       └── cover.jpg\n│   └── Penulis - Buku Mandiri [Narator]/\n│       └── audiobook.m4b\n└── Penulis Lain/\n    ├── Penulis - Judul Buku [Narator]/\n    │   └── file.mp3\n    ├── Penulis - Buku Playlist [Narator]/\n    │   ├── playlist.m3u8\n    │   └── cover.jpg\n    └── Kumpulan Playlist/\n        ├── Penulis - Judul Buku [Narator].m3u\n        ├── Penulis - Buku Lain [Narator].m3u8\n        └── cover.jpg\n\nPemindai mendukung hierarki folder apa pun.\nSetiap folder dengan file audio = satu audiobook.\n\nUntuk M3U: satu daftar putar dalam satu folder (dengan sampul)\natau beberapa daftar putar dalam satu folder (masing-masing sebagai buku terpisah).",

@@ -175,7 +175,7 @@ class AboutDialog(QDialog):
         left_column.addSpacing(15)
 
         # Global Hotkeys
-        global_hotkeys_title = QLabel(tr("about.global_hotkeys_title", "Global Keys (in background):"))
+        global_hotkeys_title = QLabel(tr("about.global_hotkeys_title", "Global Media Keys (in background):"))
         global_hotkeys_title.setObjectName("aboutSectionTitle")
         left_column.addWidget(global_hotkeys_title)
 
