@@ -61,27 +61,16 @@ class AboutDialog(QDialog):
         container_layout = QVBoxLayout(self.container)
         container_layout.setSpacing(15)
 
-        # Title
-        title = QLabel(tr("window.title"))
+        # Title with version
+        version_text = self.get_app_version()
+        title = QLabel(f"{tr('window.title')} {version_text}")
         title.setObjectName("aboutTitle")
         container_layout.addWidget(title)
 
-        # Version and GitHub Link Layout
-        version_github_layout = QHBoxLayout()
-        version_github_layout.setContentsMargins(0, 0, 0, 0)
-        version_github_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Version
-        version_text = self.get_app_version()
-        version_str = trf("about.version", version=version_text)
-        if not version_str or version_str == "about.version":
-            version_str = f"Version: {version_text}"
-
-        version = QLabel(version_str)
-        version.setObjectName("aboutVersion")
-        version_github_layout.addWidget(version)
-
-        version_github_layout.addSpacing(2)
+        # GitHub and Feedback Links Layout
+        links_layout = QHBoxLayout()
+        links_layout.setContentsMargins(0, 0, 0, 0)
+        links_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # GitHub Link Group
         github_link_group = QHBoxLayout()
@@ -100,9 +89,9 @@ class AboutDialog(QDialog):
         github_text_label.mousePressEvent = lambda e: self.open_github()
         github_link_group.addWidget(github_text_label)
 
-        version_github_layout.addLayout(github_link_group)
+        links_layout.addLayout(github_link_group)
 
-        version_github_layout.addSpacing(15)
+        links_layout.addSpacing(15)
 
         # Feedback Link Group
         feedback_link_group = QHBoxLayout()
@@ -120,8 +109,8 @@ class AboutDialog(QDialog):
         feedback_text_label.mousePressEvent = lambda e: self.open_feedback()
         feedback_link_group.addWidget(feedback_text_label)
 
-        version_github_layout.addLayout(feedback_link_group)
-        container_layout.addLayout(version_github_layout)
+        links_layout.addLayout(feedback_link_group)
+        container_layout.addLayout(links_layout)
 
         # Separator
         line = QFrame()
@@ -154,6 +143,18 @@ class AboutDialog(QDialog):
         formats_content.setObjectName("aboutSectionContent")
         formats_content.setWordWrap(True)
         left_column.addWidget(formats_content)
+
+        left_column.addSpacing(15)
+
+        # Supported Cover Formats
+        covers_title = QLabel(tr("about.supported_covers_title"))
+        covers_title.setObjectName("aboutSectionTitle")
+        left_column.addWidget(covers_title)
+
+        covers_content = QLabel(tr("about.covers_list"))
+        covers_content.setObjectName("aboutSectionContent")
+        covers_content.setWordWrap(True)
+        left_column.addWidget(covers_content)
 
         left_column.addSpacing(15)
 

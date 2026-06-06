@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ## [1.6.24]
 - **Library UI**: Replaced text-based emoji prefixes (files, duration, size, bitrate) in the audiobook information line with custom graphical icons.
 - **UI (About Dialog)**: Added global media hotkeys documentation, M3U/M3U8 playlists, and a feedback link.
+- **UI (About Dialog)**: Refined layout (version moved to title, added cover formats list, and reordered formats).
+- **UI (About Dialog)**: Documented description text files support (info.txt, description.txt, or about.txt).
 - **Playback**: Added a quick access "+" button next to the Bookmarks button to directly add a bookmark at the current playback position.
 - **Statistics**: Reordered list items and heatmap tooltips to show the title first, and added graphical icons for author, narrator, and duration.
 
