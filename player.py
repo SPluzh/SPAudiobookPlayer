@@ -119,8 +119,8 @@ class PlaybackController:
                 'is_url': bool(is_url)
             })
         
-        if any(f.get('is_url') for f in self.files_list):
-            self._emit_status(tr("player.loading_playlist"))
+        # Clear any lingering status from a previous book
+        self._emit_status("")
         
         # Restore saved playback speed
         self.player.set_speed(int(saved_speed * 10))
