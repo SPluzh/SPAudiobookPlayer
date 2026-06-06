@@ -144,7 +144,7 @@ class AboutDialog(QDialog):
         formats_content.setWordWrap(True)
         left_column.addWidget(formats_content)
 
-        left_column.addSpacing(15)
+        left_column.addSpacing(5)
 
         # Supported Cover Formats
         covers_title = QLabel(tr("about.supported_covers_title"))
@@ -156,7 +156,7 @@ class AboutDialog(QDialog):
         covers_content.setWordWrap(True)
         left_column.addWidget(covers_content)
 
-        left_column.addSpacing(15)
+        left_column.addSpacing(5)
 
         # Hotkeys
         hotkeys_title = QLabel(tr("about.hotkeys_title", "Hotkeys:"))
@@ -173,7 +173,7 @@ class AboutDialog(QDialog):
         hotkeys_content.setWordWrap(True)
         left_column.addWidget(hotkeys_content)
 
-        left_column.addSpacing(15)
+        left_column.addSpacing(5)
 
         # Global Hotkeys
         global_hotkeys_title = QLabel(tr("about.global_hotkeys_title", "Global Media Keys (in background):"))
