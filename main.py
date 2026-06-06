@@ -246,7 +246,8 @@ class AudiobookPlayerWindow(QMainWindow):
         if self.always_on_top:
             self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
 
-        self.statusBar().showMessage(tr("status.load_library"))
+        if not self.playback_controller.current_audiobook_path:
+            self.statusBar().showMessage(tr("status.load_library"))
 
         # Blur Effect Stacking logic to handle nested modal dialogs
         self._blur_count = 0
