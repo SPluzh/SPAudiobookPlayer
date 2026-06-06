@@ -152,6 +152,7 @@ class PlaybackController:
                     'audiobook_id': audiobook_id,
                     'start_playing': False,   # load_audiobook doesn't auto-play
                     'restore_paused': False,
+                    'connect_attempt': 1,     # explicit reset for clean retry state
                 }
                 self.player.load_url_async(
                     abs_file_path,
@@ -184,17 +185,23 @@ class PlaybackController:
         return False
 
     def _finalize_url_load(self, start_playing: bool):
-        """Finalize the URL load process: clear loading status, trigger play if requested, and notify UI."""
+        """Finalize the URL load process: clear loading status, trigger play if requested, and notify UI.
+        
+        The stream may already be in the correct paused state if _retry_seek_url left it there.
+        Only call play() when the caller explicitly requested playback.
+        """
         self._url_loading = False
         self._target_seek_position = None
-        
+
         ctx = self._url_load_context
         restore_paused = ctx.get('restore_paused', False)
-        
-        # Start playback if play is requested and we aren't restoring in paused state
-        if start_playing or (not restore_paused):
+
+        # Start playback ONLY if explicitly requested and not in restore-paused mode.
+        # When start_playing=False the stream was already paused by _retry_seek_url
+        # (or never started), so we must NOT call play() here.
+        if start_playing and not restore_paused:
             self.player.play()
-            
+
         # Notify the UI
         if self.on_load_complete:
             self.on_load_complete()
@@ -241,33 +248,69 @@ class PlaybackController:
             target_pos = start_offset
 
         if target_pos > 0:
+            # Skip seek entirely for live / unbounded streams (e.g. radio)
+            if not self.player.is_seekable():
+                self._emit_status(tr("player.restoring_position"))  # brief status then finalize
+                self._finalize_url_load(start_playing)
+                return
+
             self._target_seek_position = target_pos
             self._emit_status(tr("player.restoring_position"))
             self._retry_seek_url(target_pos, start_playing=start_playing)
         else:
             self._finalize_url_load(start_playing)
 
-    def _retry_seek_url(self, position: float, attempt: int = 1, max_attempts: int = 20, delay_ms: int = 300, start_playing: bool = False):
-        """Retry seeking to a position for a network stream. Finalizes loading state upon success or failure."""
+    def _retry_seek_url(self, position: float, attempt: int = 1, max_attempts: int = 20,
+                        delay_ms: int = 150, start_playing: bool = False):
+        """Retry seeking to a position for a network stream.
+
+        BASS network streams require the channel to be *playing* before
+        get_position() returns a reliable value — while paused the buffer
+        does not advance and the reported position stays at 0.
+        The method therefore temporarily starts playback to let BASS buffer
+        enough data, attempts the seek, then pauses again if the caller did
+        not request auto-play.  Retries use an exponential back-off so that
+        slow connections are given more time without hammering the server.
+        """
         if self._target_seek_position != position:
             return
 
         if attempt > 1:
             self._emit_status(trf("player.seeking", attempt=attempt))
 
-        success = self.player.set_position(position)
-        current_pos = self.player.get_position()
+        # BASS needs the channel to be playing to buffer data; without this
+        # get_position() always reads 0 while paused on a network stream.
+        was_playing = self.player.is_playing()
+        if not was_playing:
+            self.player.play()
 
-        # Retry if seek returned False, or if it returned True but position is still close to 0 (meaning BASS is re-buffering/resetting)
-        if not success or (position > 0.5 and current_pos < 0.1):
+        success = self.player.set_position(position)
+        current_pos = self.player.get_position() if success else 0.0
+
+        print(f"[seek] attempt={attempt}/{max_attempts}, target={position:.1f}s, "
+              f"success={success}, current={current_pos:.3f}s")
+
+        # Retry if seek returned False, or position hasn't advanced close enough
+        # (BASS may reset the position while re-buffering after a seek)
+        seek_ok = success and (position <= 0.5 or current_pos >= position * 0.9)
+
+        if not seek_ok:
+            # Return to paused state while waiting for the next attempt
+            if not start_playing and not was_playing:
+                self.player.pause()
             if attempt < max_attempts:
                 from PyQt6.QtCore import QTimer
-                QTimer.singleShot(delay_ms, lambda: self._retry_seek_url(position, attempt + 1, max_attempts, delay_ms, start_playing))
+                # Exponential back-off: 150 → 300 → 600 → … capped at 2000 ms
+                next_delay = min(delay_ms * 2, 2000)
+                QTimer.singleShot(delay_ms, lambda: self._retry_seek_url(
+                    position, attempt + 1, max_attempts, next_delay, start_playing))
             else:
-                # Max attempts reached, finalize anyway
+                # Max attempts reached — finalize without a successful seek
                 self._finalize_url_load(start_playing)
         else:
-            # Seek succeeded, finalize now
+            # Seek succeeded — pause unless the caller asked for playback
+            if not start_playing:
+                self.player.pause()
             self._finalize_url_load(start_playing)
 
     def _on_url_stream_error(self):
@@ -334,6 +377,7 @@ class PlaybackController:
                 'audiobook_id': self.current_audiobook_id,
                 'start_playing': start_playing or was_playing,
                 'restore_paused': False,
+                'connect_attempt': 1,     # explicit reset for clean retry state
             }
             self.player.load_url_async(
                 abs_file_path,

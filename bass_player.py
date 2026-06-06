@@ -625,6 +625,18 @@ class BassPlayer:
             return bass.BASS_ChannelBytes2Seconds(self.chan, len_bytes)
         return 0.0
 
+    def is_seekable(self) -> bool:
+        """Return True if the current stream supports seeking (has a known finite length).
+        
+        Live / unbounded network streams return 0xFFFFFFFFFFFFFFFF from
+        BASS_ChannelGetLength, which means seeking is not supported.
+        """
+        if self.chan == 0:
+            return False
+        len_bytes = bass.BASS_ChannelGetLength(self.chan, BASS_POS_BYTE)
+        # BASS returns max uint64 (0xFFFFFFFFFFFFFFFF) for streams with no known length
+        return len_bytes not in (0, 18446744073709551615)
+
 
     def get_spectrum(self):
         """Get FFT data for visualization (returns 1024 floats)"""
