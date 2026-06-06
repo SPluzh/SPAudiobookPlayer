@@ -28,7 +28,8 @@
     "expand_all": "Tüm Klasörleri Genişlet",
     "show_nesting_lines": "İç İçe Geçme Çizgilerini Göster",
     "show_statusbar": "Durum Çubuğunu Göster",
-    "show_detailed_info": "Kitap bilgi satırını göster"
+    "show_detailed_info": "Kitap bilgi satırını göster",
+    "show_status_triangle": "Durum Üçgenini Göster"
   },
   "library": {
     "search_placeholder": "Başlık, yazar, anlatıcıya göre ara...",

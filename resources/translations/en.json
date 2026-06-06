@@ -28,7 +28,8 @@
     "expand_all": "Expand All Folders",
     "show_nesting_lines": "Show Nesting Lines",
     "show_detailed_info": "Show Detailed Info",
-    "show_statusbar": "Show Status Bar"
+    "show_status_triangle": "Show Status Triangle",
+    "show_statusbar": "Show Window Status Bar"
   },
   "bookmarks": {
     "edit_title": "Edit Bookmark",

@@ -28,7 +28,8 @@
     "expand_all": "Développer tous les dossiers",
     "show_nesting_lines": "Afficher les lignes d'imbrication",
     "show_statusbar": "Afficher la barre d'état",
-    "show_detailed_info": "Afficher la ligne d'informations du livre"
+    "show_detailed_info": "Afficher la ligne d'informations du livre",
+    "show_status_triangle": "Afficher le triangle de statut"
   },
   "library": {
     "search_placeholder": "Rechercher par titre, auteur, narrateur...",

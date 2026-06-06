@@ -28,7 +28,8 @@
     "expand_all": "सभी फ़ोल्डर विस्तृत करें",
     "show_nesting_lines": "नेस्टिंग लाइनें दिखाएं",
     "show_statusbar": "स्टेटस बार दिखाएं",
-    "show_detailed_info": "पुस्तक सूचना पंक्ति दिखाएं"
+    "show_detailed_info": "पुस्तक सूचना पंक्ति दिखाएं",
+    "show_status_triangle": "स्थिति त्रिकोण दिखाएं"
   },
   "library": {
     "search_placeholder": "शीर्षक, लेखक, वाचक द्वारा खोजें...",

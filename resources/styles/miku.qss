@@ -1079,6 +1079,18 @@ QFrame#aboutContainer {
     color: #000000;
 }
 
+#delegate_status_new {
+    color: @status-error;
+}
+
+#delegate_status_started {
+    color: @status-warning;
+}
+
+#delegate_status_completed {
+    color: @status-ok;
+}
+
 #separator_dot {
     color: @separator-dot;
 }

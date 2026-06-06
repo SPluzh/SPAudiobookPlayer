@@ -147,6 +147,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_visualizer = True
         self.show_nesting_lines = True
         self.show_detailed_info = True
+        self.show_status_triangle = True
         self.show_statusbar = True
         self.normal_geometry = None
         self.normal_splitter_state = None
@@ -187,6 +188,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.delegate.audiobook_icon_size = self.audiobook_icon_size
             self.delegate.show_nesting_lines = self.show_nesting_lines
             self.delegate.show_detailed_info = self.show_detailed_info
+            self.delegate.show_status_triangle = self.show_status_triangle
         except Exception as e:
             print(f"Failed to create delegate: {e}")
 
@@ -513,6 +515,20 @@ class AudiobookPlayerWindow(QMainWindow):
         self.detailed_info_action.triggered.connect(self.toggle_detailed_info)
         view_menu.addAction(self.detailed_info_action)
 
+        # Show Status Triangle Toggle
+        self.show_status_triangle_action = QAction(tr("menu.show_status_triangle"), self)
+        self.show_status_triangle_action.setCheckable(True)
+        self.show_status_triangle_action.setChecked(self.show_status_triangle)
+        self.show_status_triangle_action.triggered.connect(self.toggle_status_triangle)
+        view_menu.addAction(self.show_status_triangle_action)
+
+        # Show Status Bar Toggle
+        self.statusbar_action = QAction(tr("menu.show_statusbar"), self)
+        self.statusbar_action.setCheckable(True)
+        self.statusbar_action.setChecked(self.show_statusbar)
+        self.statusbar_action.triggered.connect(self.toggle_statusbar)
+        view_menu.addAction(self.statusbar_action)
+
         # Minimal Interface Toggle
         self.minimal_interface_action = QAction(tr("menu.minimal_interface"), self)
         self.minimal_interface_action.setCheckable(True)
@@ -530,13 +546,6 @@ class AudiobookPlayerWindow(QMainWindow):
         self.always_on_top_action.setShortcut("T")
         self.always_on_top_action.triggered.connect(self.toggle_always_on_top)
         view_menu.addAction(self.always_on_top_action)
-
-        # Show Status Bar Toggle
-        self.statusbar_action = QAction(tr("menu.show_statusbar"), self)
-        self.statusbar_action.setCheckable(True)
-        self.statusbar_action.setChecked(self.show_statusbar)
-        self.statusbar_action.triggered.connect(self.toggle_statusbar)
-        view_menu.addAction(self.statusbar_action)
 
         # Theme Selection
         theme_menu = view_menu.addMenu(tr("menu.theme"))
@@ -626,6 +635,15 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_detailed_info = checked
         if hasattr(self, "delegate") and self.delegate:
             self.delegate.show_detailed_info = checked
+            if hasattr(self, "library_widget"):
+                self.library_widget.tree.viewport().update()
+        self.save_settings()
+
+    def toggle_status_triangle(self, checked: bool):
+        """Toggle the visibility of the book status corner triangle in the library tree"""
+        self.show_status_triangle = checked
+        if hasattr(self, "delegate") and self.delegate:
+            self.delegate.show_status_triangle = checked
             if hasattr(self, "library_widget"):
                 self.library_widget.tree.viewport().update()
         self.save_settings()
@@ -1047,6 +1065,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_detailed_info = config.getboolean(
             "Library", "show_detailed_info", fallback=True
         )
+        self.show_status_triangle = config.getboolean(
+            "Library", "show_status_triangle", fallback=True
+        )
         self.library_filter_mode = config.get("Library", "filter_mode", fallback="all")
         self.library_favorites_active = config.getboolean(
             "Library", "favorites_active", fallback=False
@@ -1119,6 +1140,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "favorites_active": "False",
             "show_nesting_lines": "True",
             "show_detailed_info": "True",
+            "show_status_triangle": "True",
         }
         config["LastSession"] = {
             "last_audiobook_id": "0",
@@ -1207,6 +1229,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Library"]["show_filter_labels"] = str(self.show_filter_labels)
         config["Library"]["show_nesting_lines"] = str(self.show_nesting_lines)
         config["Library"]["show_detailed_info"] = str(self.show_detailed_info)
+        config["Library"]["show_status_triangle"] = str(self.show_status_triangle)
         if hasattr(self, "library_widget"):
             config["Library"]["tag_filter_active"] = str(
                 self.library_widget.is_tag_filter_active

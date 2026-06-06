@@ -606,6 +606,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.is_paused = True
         self.show_nesting_lines = True
         self.show_detailed_info = True
+        self.show_status_triangle = True
 
         # UI state for interaction
         self.hovered_index = None
@@ -1051,8 +1052,10 @@ class MultiLineDelegate(QStyledItemDelegate):
         status_data = index.data(Qt.ItemDataRole.UserRole + 3)
         is_favorite = False
         is_started = False
+        is_completed = False
         if status_data and len(status_data) >= 3:
             is_started = bool(status_data[0])
+            is_completed = bool(status_data[1])
             is_favorite = status_data[2]
 
         if icon:
@@ -1074,6 +1077,34 @@ class MultiLineDelegate(QStyledItemDelegate):
             if self.hovered_index == index:
                 _, overlay_bg = StyleManager.get_theme_property("overlay_background")
                 painter.fillRect(icon_rect, overlay_bg)
+
+            # Draw status triangle (New / Started / Finished)
+            if getattr(self, "show_status_triangle", True):
+                if is_completed:
+                    _, status_color = StyleManager.get_theme_property("delegate_status_completed")
+                    if not status_color.isValid() or status_color == QColor():
+                        status_color = QColor("#4ecca3")
+                elif is_started:
+                    _, status_color = StyleManager.get_theme_property("delegate_status_started")
+                    if not status_color.isValid() or status_color == QColor():
+                        status_color = QColor("#f9ca24")
+                else:
+                    _, status_color = StyleManager.get_theme_property("delegate_status_new")
+                    if not status_color.isValid() or status_color == QColor():
+                        status_color = QColor("#ff6b6b")
+
+                tri_size = icon_rect.width() * 0.25
+                tri_path = QPainterPath()
+                tri_path.moveTo(float(icon_rect.left()), float(icon_rect.top()))
+                tri_path.lineTo(float(icon_rect.left() + tri_size), float(icon_rect.top()))
+                tri_path.lineTo(float(icon_rect.left()), float(icon_rect.top() + tri_size))
+                tri_path.closeSubpath()
+
+                painter.save()
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(QBrush(status_color))
+                painter.drawPath(tri_path)
+                painter.restore()
 
             painter.restore()
 

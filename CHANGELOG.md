@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.25]
+- **Library UI**: Added colored status triangles (red for new, yellow for started, green for completed) to the top-left corner of audiobook covers in the library.
+- **Library UI**: Added a View menu option to show/hide status triangles on book covers.
+
 ## [1.6.24]
 - **Library UI**: Replaced text-based emoji prefixes (files, duration, size, bitrate) in the audiobook information line with custom graphical icons.
 - **UI (About Dialog)**: Added global media hotkeys documentation, M3U/M3U8 playlists, and a feedback link.

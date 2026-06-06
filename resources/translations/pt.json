@@ -28,7 +28,8 @@
     "expand_all": "Expandir todas as pastas",
     "show_nesting_lines": "Mostrar linhas de aninhamento",
     "show_statusbar": "Mostrar barra de status",
-    "show_detailed_info": "Mostrar linha de informações do livro"
+    "show_detailed_info": "Mostrar linha de informações do livro",
+    "show_status_triangle": "Mostrar triângulo de status"
   },
   "library": {
     "search_placeholder": "Pesquisar por título, autor, narrador...",

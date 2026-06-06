@@ -28,7 +28,8 @@ class StyleManager:
         'delegate_accent', 'delegate_accent_secondary', 'delegate_text_dim',
         'delegate_info_font', 'delegate_regular_font', 'theme_primary',
         'overlay_background', 'overlay_progress_bg', 'separator_dot',
-        'placeholder_title', 'placeholder_text', 'placeholder_icon'
+        'placeholder_title', 'placeholder_text', 'placeholder_icon',
+        'delegate_status_new', 'delegate_status_started', 'delegate_status_completed'
     ]
 
     @staticmethod

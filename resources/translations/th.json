@@ -28,7 +28,8 @@
     "expand_all": "ขยายโฟลเดอร์ทั้งหมด",
     "show_nesting_lines": "แสดงเส้นซ้อน",
     "show_statusbar": "แสดงแถบสถานะ",
-    "show_detailed_info": "แสดงแถบข้อมูลหนังสือ"
+    "show_detailed_info": "แสดงแถบข้อมูลหนังสือ",
+    "show_status_triangle": "แสดงสามเหลี่ยมสถานะ"
   },
   "bookmarks": {
     "edit_title": "แก้ไขที่คั่นหน้า",

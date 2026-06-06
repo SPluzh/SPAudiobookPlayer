@@ -28,7 +28,8 @@
     "expand_all": "Perluas Semua Folder",
     "show_nesting_lines": "Tampilkan Garis Bersarang",
     "show_statusbar": "Tampilkan Bilah Status",
-    "show_detailed_info": "Tampilkan baris info buku"
+    "show_detailed_info": "Tampilkan baris info buku",
+    "show_status_triangle": "Tampilkan Segitiga Status"
   },
   "bookmarks": {
     "edit_title": "Edit Penanda",
