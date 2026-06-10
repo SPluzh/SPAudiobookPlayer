@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1]
+- **Library Deletion**: Added a checkbox to the audiobook delete dialog allowing users to delete book files directly from the disk.
+
 ## [1.7.0]
 - **UI**: Added a View menu option to remember whether folders are displayed or hidden separately for each tab (All, New, Started, Finished).
 - **Library Sorting**: Added a sorting field dropdown (Title, Author, Date, etc.) and alphabetical A-Z/Z-A buttons, with preferences saved separately for each tab.
