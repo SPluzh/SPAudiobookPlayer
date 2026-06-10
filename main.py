@@ -1075,19 +1075,19 @@ class AudiobookPlayerWindow(QMainWindow):
         self.library_favorites_active = config.getboolean(
             "Library", "favorites_active", fallback=False
         )
-        fallback_sort = config.get("Library", "sort_order", fallback="asc")
+        old_sort = config.get("Library", "sort_order", fallback="asc")
         self.library_sort_orders = {
-            "all": config.get("Library", "sort_order_all", fallback=fallback_sort),
-            "not_started": config.get("Library", "sort_order_not_started", fallback=fallback_sort),
-            "in_progress": config.get("Library", "sort_order_in_progress", fallback=fallback_sort),
-            "completed": config.get("Library", "sort_order_completed", fallback=fallback_sort),
+            "all": config.get("Library", "sort_order_all", fallback=old_sort),
+            "not_started": config.get("Library", "sort_order_not_started", fallback="desc"),
+            "in_progress": config.get("Library", "sort_order_in_progress", fallback="desc"),
+            "completed": config.get("Library", "sort_order_completed", fallback="desc"),
         }
-        fallback_field = config.get("Library", "sort_field", fallback="name")
+        old_field = config.get("Library", "sort_field", fallback="name")
         self.library_sort_fields = {
-            "all": config.get("Library", "sort_field_all", fallback=fallback_field),
-            "not_started": config.get("Library", "sort_field_not_started", fallback=fallback_field),
-            "in_progress": config.get("Library", "sort_field_in_progress", fallback=fallback_field),
-            "completed": config.get("Library", "sort_field_completed", fallback=fallback_field),
+            "all": config.get("Library", "sort_field_all", fallback=old_field),
+            "not_started": config.get("Library", "sort_field_not_started", fallback="time_added"),
+            "in_progress": config.get("Library", "sort_field_in_progress", fallback="last_updated"),
+            "completed": config.get("Library", "sort_field_completed", fallback="time_finished"),
         }
 
         self.tag_filter_active = config.getboolean(
@@ -1159,13 +1159,13 @@ class AudiobookPlayerWindow(QMainWindow):
             "show_detailed_info": "True",
             "show_status_triangle": "True",
             "sort_order_all": "asc",
-            "sort_order_not_started": "asc",
-            "sort_order_in_progress": "asc",
-            "sort_order_completed": "asc",
+            "sort_order_not_started": "desc",
+            "sort_order_in_progress": "desc",
+            "sort_order_completed": "desc",
             "sort_field_all": "name",
-            "sort_field_not_started": "name",
-            "sort_field_in_progress": "name",
-            "sort_field_completed": "name",
+            "sort_field_not_started": "time_added",
+            "sort_field_in_progress": "last_updated",
+            "sort_field_completed": "time_finished",
         }
         config["LastSession"] = {
             "last_audiobook_id": "0",

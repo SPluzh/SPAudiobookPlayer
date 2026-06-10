@@ -1924,9 +1924,9 @@ class LibraryWidget(QWidget):
         self.is_favorites_filter_active = self.config.get("favorites_active", False)
         self.sort_orders = self.config.get("sort_orders", {
             "all": "asc",
-            "not_started": "asc",
-            "in_progress": "asc",
-            "completed": "asc"
+            "not_started": "desc",
+            "in_progress": "desc",
+            "completed": "desc"
         })
         # Migrate from old single sort_order if present
         if "sort_orders" not in self.config and "sort_order" in self.config:
@@ -1936,9 +1936,9 @@ class LibraryWidget(QWidget):
 
         self.sort_fields = self.config.get("sort_fields", {
             "all": "name",
-            "not_started": "name",
-            "in_progress": "name",
-            "completed": "name"
+            "not_started": "time_added",
+            "in_progress": "last_updated",
+            "completed": "time_finished"
         })
         self._expanded_paths_cache = set()
         self.setup_ui()
@@ -2050,6 +2050,11 @@ class LibraryWidget(QWidget):
 
         filter_layout.addStretch(1)
 
+        # Create a layout to keep sorting toggle and dropdown in one flush button group
+        sort_layout = QHBoxLayout()
+        sort_layout.setSpacing(0)
+        sort_layout.setContentsMargins(0, 0, 0, 0)
+
         # Sort Order Toggle (A-Z / Z-A) - positioned at the far right
         self.btn_sort = QPushButton("")
         self.btn_sort.setObjectName("filterBtn")
@@ -2065,15 +2070,19 @@ class LibraryWidget(QWidget):
             else tr("library.tooltip_sort_desc")
         )
         self.btn_sort.clicked.connect(self.toggle_sort_order)
-        filter_layout.addWidget(self.btn_sort)
+        sort_layout.addWidget(self.btn_sort)
 
         # Sort Field Dropdown Button (arrow down) - positioned immediately after self.btn_sort
-        self.btn_sort_field = QPushButton("▼")
+        self.btn_sort_field = QPushButton("")
         self.btn_sort_field.setObjectName("filterBtnArrow")
-        self.btn_sort_field.setFixedWidth(18)
+        self.btn_sort_field.setFixedWidth(20)
+        self.btn_sort_field.setIcon(get_icon("chevron-down"))
+        self.btn_sort_field.setIconSize(QSize(12, 12))
         self.btn_sort_field.setToolTip(tr("library.tooltip_sort_field"))
         self.btn_sort_field.clicked.connect(self.show_sort_field_menu)
-        filter_layout.addWidget(self.btn_sort_field)
+        sort_layout.addWidget(self.btn_sort_field)
+
+        filter_layout.addLayout(sort_layout)
 
         layout.addLayout(filter_layout)
 
