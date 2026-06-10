@@ -29,7 +29,8 @@
     "show_nesting_lines": "Hiển thị đường lồng nhau",
     "show_statusbar": "Hiển thị thanh trạng thái",
     "show_detailed_info": "Hiển thị dòng thông tin sách",
-    "show_status_triangle": "Hiển thị tam giác trạng thái"
+    "show_status_triangle": "Hiển thị tam giác trạng thái",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "bookmarks": {
     "edit_title": "Chỉnh sửa dấu trang",

@@ -29,7 +29,8 @@
     "show_nesting_lines": "แสดงเส้นซ้อน",
     "show_statusbar": "แสดงแถบสถานะ",
     "show_detailed_info": "แสดงแถบข้อมูลหนังสือ",
-    "show_status_triangle": "แสดงสามเหลี่ยมสถานะ"
+    "show_status_triangle": "แสดงสามเหลี่ยมสถานะ",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "bookmarks": {
     "edit_title": "แก้ไขที่คั่นหน้า",

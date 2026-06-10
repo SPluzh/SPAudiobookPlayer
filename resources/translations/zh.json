@@ -29,7 +29,8 @@
     "show_nesting_lines": "显示嵌套线",
     "show_statusbar": "显示状态栏",
     "show_detailed_info": "显示书籍信息行",
-    "show_status_triangle": "显示状态三角"
+    "show_status_triangle": "显示状态三角",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "library": {
     "search_placeholder": "按标题、作者、朗读者搜索...",

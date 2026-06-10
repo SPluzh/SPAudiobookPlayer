@@ -29,7 +29,8 @@
     "show_nesting_lines": "Mostrar líneas de anidación",
     "show_statusbar": "Mostrar barra de estado",
     "show_detailed_info": "Mostrar línea de información del libro",
-    "show_status_triangle": "Mostrar triángulo de estado"
+    "show_status_triangle": "Mostrar triángulo de estado",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "library": {
     "search_placeholder": "Buscar por título, autor, narrador...",

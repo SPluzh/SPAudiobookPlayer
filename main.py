@@ -152,6 +152,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.normal_geometry = None
         self.normal_splitter_state = None
         self.always_on_top = False
+        self.remember_filter_folders = True
+        self.library_show_folders = {
+            "all": False,
+            "not_started": False,
+            "in_progress": False,
+            "completed": False,
+        }
 
         # Load user configurations and localization settings
         self.db_manager = DatabaseManager(self.db_file)
@@ -328,6 +335,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 "favorites_active": self.library_favorites_active,
                 "sort_orders": self.library_sort_orders,
                 "sort_fields": self.library_sort_fields,
+                "remember_filter_folders": self.remember_filter_folders,
+                "show_folders_by_filter": self.library_show_folders,
             },
             self.delegate,
             show_folders=self.show_folders,
@@ -531,6 +540,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.statusbar_action.triggered.connect(self.toggle_statusbar)
         view_menu.addAction(self.statusbar_action)
 
+        # Remember Folder View per Filter Toggle
+        self.remember_filter_folders_action = QAction(tr("menu.remember_filter_folders"), self)
+        self.remember_filter_folders_action.setCheckable(True)
+        self.remember_filter_folders_action.setChecked(self.remember_filter_folders)
+        self.remember_filter_folders_action.triggered.connect(self.toggle_remember_filter_folders)
+        view_menu.addAction(self.remember_filter_folders_action)
+
         # Minimal Interface Toggle
         self.minimal_interface_action = QAction(tr("menu.minimal_interface"), self)
         self.minimal_interface_action.setCheckable(True)
@@ -721,6 +737,18 @@ class AudiobookPlayerWindow(QMainWindow):
             h = 270 if enabled else 245
             self.setMinimumSize(self.minimal_width, h)
             self.resize(self.minimal_width, h)
+        self.save_settings()
+
+    def toggle_remember_filter_folders(self, enabled: bool):
+        """Toggle whether folder visibility is remembered per library filter"""
+        self.remember_filter_folders = enabled
+        if hasattr(self, "remember_filter_folders_action"):
+            self.remember_filter_folders_action.setChecked(enabled)
+        if hasattr(self, "library_widget"):
+            self.library_widget.remember_filter_folders = enabled
+            if enabled:
+                current_filter = self.library_widget.current_filter
+                self.library_widget.show_folders_by_filter[current_filter] = self.library_widget.show_folders
         self.save_settings()
 
     def update_all_texts(self):
@@ -1059,6 +1087,15 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_volume_boost(self.volume_boost_enabled)
         self.player.set_volume_boost_level(self.volume_boost_level)
         self.show_folders = config.getboolean("Library", "show_folders", fallback=False)
+        self.remember_filter_folders = config.getboolean(
+            "Library", "remember_filter_folders", fallback=True
+        )
+        self.library_show_folders = {
+            "all": config.getboolean("Library", "show_folders_all", fallback=self.show_folders),
+            "not_started": config.getboolean("Library", "show_folders_not_started", fallback=self.show_folders),
+            "in_progress": config.getboolean("Library", "show_folders_in_progress", fallback=self.show_folders),
+            "completed": config.getboolean("Library", "show_folders_completed", fallback=self.show_folders),
+        }
         self.show_filter_labels = config.getboolean(
             "Library", "show_filter_labels", fallback=True
         )
@@ -1250,7 +1287,18 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Audio"]["volume_boost_level"] = str(self.player.volume_boost_level)
         if "Library" not in config:
             config["Library"] = {}
+
+        if hasattr(self, "library_widget"):
+            self.remember_filter_folders = self.library_widget.remember_filter_folders
+            self.library_show_folders = self.library_widget.show_folders_by_filter
+            self.show_folders = self.library_widget.show_folders
+
+        config["Library"]["remember_filter_folders"] = str(self.remember_filter_folders)
         config["Library"]["show_folders"] = str(self.show_folders)
+        config["Library"]["show_folders_all"] = str(self.library_show_folders.get("all", False))
+        config["Library"]["show_folders_not_started"] = str(self.library_show_folders.get("not_started", False))
+        config["Library"]["show_folders_in_progress"] = str(self.library_show_folders.get("in_progress", False))
+        config["Library"]["show_folders_completed"] = str(self.library_show_folders.get("completed", False))
         config["Library"]["show_filter_labels"] = str(self.show_filter_labels)
         config["Library"]["show_nesting_lines"] = str(self.show_nesting_lines)
         config["Library"]["show_detailed_info"] = str(self.show_detailed_info)
@@ -1531,6 +1579,8 @@ class AudiobookPlayerWindow(QMainWindow):
     def on_show_folders_toggled(self, checked):
         """Update and persist the folder visibility preference"""
         self.show_folders = checked
+        if hasattr(self, "library_widget"):
+            self.library_show_folders = self.library_widget.show_folders_by_filter
         self.save_settings()
 
     def on_sort_order_changed(self, filter_mode, sort_order, sort_field):

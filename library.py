@@ -1916,7 +1916,17 @@ class LibraryWidget(QWidget):
         _, self.highlight_color = StyleManager.get_theme_property("delegate_accent")
         self.highlight_text_color = Qt.GlobalColor.white
         self.current_filter = self.config.get("filter_mode", "all")
-        self.show_folders = show_folders
+        self.remember_filter_folders = self.config.get("remember_filter_folders", True)
+        self.show_folders_by_filter = self.config.get("show_folders_by_filter", {
+            "all": show_folders,
+            "not_started": show_folders,
+            "in_progress": show_folders,
+            "completed": show_folders,
+        })
+        if self.remember_filter_folders:
+            self.show_folders = self.show_folders_by_filter.get(self.current_filter, show_folders)
+        else:
+            self.show_folders = show_folders
         self.show_filter_labels = show_filter_labels
         self.cached_library_data = None  # Cache for fast reconstruction
         self.tag_filter_ids = self.config.get("tag_filter_ids", set())
@@ -2294,12 +2304,21 @@ class LibraryWidget(QWidget):
         self.current_filter = filter_type
         self.update_sort_button_ui()
         self.update_sort_field_button_ui()
+        if self.remember_filter_folders:
+            new_state = self.show_folders_by_filter.get(filter_type, False)
+            if self.show_folders != new_state:
+                self.show_folders = new_state
+                if hasattr(self, "btn_show_folders"):
+                    self.btn_show_folders.setChecked(new_state)
+                self.show_folders_toggled.emit(new_state)
         # When switching filters, reload from DB to apply correct sorting and subset
         self.load_audiobooks(use_cache=False)
 
     def on_show_folders_toggled(self, checked):
         """Toggle folder visibility and refresh the library"""
         self.show_folders = checked
+        if self.remember_filter_folders:
+            self.show_folders_by_filter[self.current_filter] = checked
         self.show_folders_toggled.emit(checked)
         self.load_audiobooks(use_cache=False)
 

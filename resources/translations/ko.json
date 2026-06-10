@@ -29,7 +29,8 @@
     "show_nesting_lines": "중첩 선 표시",
     "show_statusbar": "상태 표시줄 표시",
     "show_detailed_info": "도서 정보 줄 표시",
-    "show_status_triangle": "상태 삼각형 표시"
+    "show_status_triangle": "상태 삼각형 표시",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "library": {
     "search_placeholder": "제목, 저자, 낭독자로 검색...",

@@ -29,7 +29,8 @@
     "show_nesting_lines": "İç İçe Geçme Çizgilerini Göster",
     "show_statusbar": "Durum Çubuğunu Göster",
     "show_detailed_info": "Kitap bilgi satırını göster",
-    "show_status_triangle": "Durum Üçgenini Göster"
+    "show_status_triangle": "Durum Üçgenini Göster",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "library": {
     "search_placeholder": "Başlık, yazar, anlatıcıya göre ara...",

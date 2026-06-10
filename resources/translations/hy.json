@@ -29,7 +29,8 @@
     "show_nesting_lines": "Ցուցադրել ներդրման գծերը",
     "show_detailed_info": "Ցուցադրել մանրամասն տեղեկությունները",
     "show_status_triangle": "Ցուցադրել կարգավիճակի եռանկյունը",
-    "show_statusbar": "Ցուցադրել կարգավիճակի տողը"
+    "show_statusbar": "Ցուցադրել կարգավիճակի տողը",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "bookmarks": {
     "edit_title": "Խմբագրել էջանիշը",

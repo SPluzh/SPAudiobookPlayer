@@ -29,7 +29,8 @@
     "show_nesting_lines": "Show Nesting Lines",
     "show_detailed_info": "Show Detailed Info",
     "show_status_triangle": "Show Status Triangle",
-    "show_statusbar": "Show Window Status Bar"
+    "show_statusbar": "Show Window Status Bar",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "bookmarks": {
     "edit_title": "Edit Bookmark",

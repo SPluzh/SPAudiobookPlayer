@@ -29,7 +29,8 @@
     "show_nesting_lines": "Verschachtelungslinien anzeigen",
     "show_statusbar": "Statusleiste anzeigen",
     "show_detailed_info": "Buch-Informationszeile anzeigen",
-    "show_status_triangle": "Status-Dreieck anzeigen"
+    "show_status_triangle": "Status-Dreieck anzeigen",
+    "remember_filter_folders": "Remember folders for each filter"
   },
   "library": {
     "search_placeholder": "Suche nach Titel, Autor, Sprecher...",
