@@ -96,7 +96,13 @@
     "tooltip_tags": "Filter berdasarkan tag",
     "folder_books_count": "{count} audiobook",
     "tooltip_sort_asc": "Urutkan: A-Z",
-    "tooltip_sort_desc": "Urutkan: Z-A"
+    "tooltip_sort_desc": "Urutkan: Z-A",
+    "sort_by_name": "Title",
+    "sort_by_author": "Author",
+    "sort_by_date_added": "Date added",
+    "sort_by_last_read": "Date last read",
+    "sort_by_date_finished": "Date finished",
+    "tooltip_sort_field": "Sort by..."
   },
   "player": {
     "volume": "Volume",

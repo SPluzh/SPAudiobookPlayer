@@ -96,7 +96,13 @@
     "tooltip_favorites": "Ցուցադրել միայն երկրպագելի գրքերը",
     "tooltip_tags": "Զտել ըստ պիտակների",
     "tooltip_sort_asc": "Տեսակավորել՝ Ա-Ֆ",
-    "tooltip_sort_desc": "Տեսակավորել՝ Ֆ-Ա"
+    "tooltip_sort_desc": "Տեսակավորել՝ Ֆ-Ա",
+    "sort_by_name": "Title",
+    "sort_by_author": "Author",
+    "sort_by_date_added": "Date added",
+    "sort_by_last_read": "Date last read",
+    "sort_by_date_finished": "Date finished",
+    "tooltip_sort_field": "Sort by..."
   },
   "player": {
     "volume": "Ձայնի ուժգնություն",

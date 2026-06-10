@@ -78,7 +78,13 @@
     "tooltip_tags": "태그로 필터링",
     "folder_books_count": "오디오북 {count}권",
     "tooltip_sort_asc": "정렬: A-Z",
-    "tooltip_sort_desc": "정렬: Z-A"
+    "tooltip_sort_desc": "정렬: Z-A",
+    "sort_by_name": "Title",
+    "sort_by_author": "Author",
+    "sort_by_date_added": "Date added",
+    "sort_by_last_read": "Date last read",
+    "sort_by_date_finished": "Date finished",
+    "tooltip_sort_field": "Sort by..."
   },
   "player": {
     "volume": "음량",

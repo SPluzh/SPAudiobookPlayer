@@ -78,7 +78,13 @@
     "tooltip_tags": "टैग द्वारा फ़िल्टर करें",
     "folder_books_count": "{count} ऑडियोबुक्स",
     "tooltip_sort_asc": "क्रमबद्ध करें: A-Z",
-    "tooltip_sort_desc": "क्रमबद्ध करें: Z-A"
+    "tooltip_sort_desc": "क्रमबद्ध करें: Z-A",
+    "sort_by_name": "Title",
+    "sort_by_author": "Author",
+    "sort_by_date_added": "Date added",
+    "sort_by_last_read": "Date last read",
+    "sort_by_date_finished": "Date finished",
+    "tooltip_sort_field": "Sort by..."
   },
   "player": {
     "volume": "वॉल्यूम",

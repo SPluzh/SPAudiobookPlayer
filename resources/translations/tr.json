@@ -78,7 +78,13 @@
     "tooltip_tags": "Etiketlere göre filtrele",
     "folder_books_count": "{count} sesli kitap",
     "tooltip_sort_asc": "Sırala: A-Z",
-    "tooltip_sort_desc": "Sırala: Z-A"
+    "tooltip_sort_desc": "Sırala: Z-A",
+    "sort_by_name": "Title",
+    "sort_by_author": "Author",
+    "sort_by_date_added": "Date added",
+    "sort_by_last_read": "Date last read",
+    "sort_by_date_finished": "Date finished",
+    "tooltip_sort_field": "Sort by..."
   },
   "player": {
     "volume": "Ses",

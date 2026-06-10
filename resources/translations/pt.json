@@ -78,7 +78,13 @@
     "tooltip_tags": "Filtrar por tags",
     "folder_books_count": "{count} audiolivros",
     "tooltip_sort_asc": "Ordenar: A-Z",
-    "tooltip_sort_desc": "Ordenar: Z-A"
+    "tooltip_sort_desc": "Ordenar: Z-A",
+    "sort_by_name": "Title",
+    "sort_by_author": "Author",
+    "sort_by_date_added": "Date added",
+    "sort_by_last_read": "Date last read",
+    "sort_by_date_finished": "Date finished",
+    "tooltip_sort_field": "Sort by..."
   },
   "player": {
     "volume": "Volume",

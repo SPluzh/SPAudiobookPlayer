@@ -3,7 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.6.26]
+- **Library Sorting**: Added a narrow dropdown arrow next to the sort order button. Clicking it opens a dropdown menu to select the sorting field: Title, Author, Date Added, Date Last Read, or Date Finished. The selected sort field is saved and remembered separately for each tab. Empty fields are always sorted to the end of the list.
 - **Library Sorting**: Added alphabetical sorting buttons (A-Z and Z-A) to the library filter bar. Sort preferences are now saved and remembered separately for each tab (All, New, Started, Finished), and the sort button has been moved to the far right. Expanded and collapsed states of folders are now preserved when changing sorting direction or switching tabs.
+- **Library Sorting**: Fixed audiobook sorting behavior when folders display is turned off so that books are sorted globally without folder-based grouping.
 - **Localization**: Added full support for Armenian language (Հայերեն), including comprehensive interface translations.
 
 ## [1.6.25]

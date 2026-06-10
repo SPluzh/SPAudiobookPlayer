@@ -1414,3 +1414,23 @@ QLabel#seekTooltip {
     font-size: 12px;
     font-weight: bold;
 }
+
+QPushButton#filterBtnArrow {
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0px;
+    padding: 6px 4px;
+    font-weight: 500;
+    font-size: 13px;
+    color: @text;
+}
+
+QPushButton#filterBtnArrow:hover {
+    background-color: @bg-hover;
+    color: @text-bright;
+}
+
+QPushButton#filterBtnArrow:pressed {
+    color: @accent;
+}

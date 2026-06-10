@@ -78,7 +78,13 @@
     "tooltip_tags": "Nach Tags filtern",
     "folder_books_count": "{count} Hörbücher",
     "tooltip_sort_asc": "Sortierung: A-Z",
-    "tooltip_sort_desc": "Sortierung: Z-A"
+    "tooltip_sort_desc": "Sortierung: Z-A",
+    "sort_by_name": "Title",
+    "sort_by_author": "Author",
+    "sort_by_date_added": "Date added",
+    "sort_by_last_read": "Date last read",
+    "sort_by_date_finished": "Date finished",
+    "tooltip_sort_field": "Sort by..."
   },
   "player": {
     "volume": "Lautstärke",

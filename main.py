@@ -327,6 +327,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 "filter_mode": self.library_filter_mode,
                 "favorites_active": self.library_favorites_active,
                 "sort_orders": self.library_sort_orders,
+                "sort_fields": self.library_sort_fields,
             },
             self.delegate,
             show_folders=self.show_folders,
@@ -1081,6 +1082,13 @@ class AudiobookPlayerWindow(QMainWindow):
             "in_progress": config.get("Library", "sort_order_in_progress", fallback=fallback_sort),
             "completed": config.get("Library", "sort_order_completed", fallback=fallback_sort),
         }
+        fallback_field = config.get("Library", "sort_field", fallback="name")
+        self.library_sort_fields = {
+            "all": config.get("Library", "sort_field_all", fallback=fallback_field),
+            "not_started": config.get("Library", "sort_field_not_started", fallback=fallback_field),
+            "in_progress": config.get("Library", "sort_field_in_progress", fallback=fallback_field),
+            "completed": config.get("Library", "sort_field_completed", fallback=fallback_field),
+        }
 
         self.tag_filter_active = config.getboolean(
             "Library", "tag_filter_active", fallback=False
@@ -1154,6 +1162,10 @@ class AudiobookPlayerWindow(QMainWindow):
             "sort_order_not_started": "asc",
             "sort_order_in_progress": "asc",
             "sort_order_completed": "asc",
+            "sort_field_all": "name",
+            "sort_field_not_started": "name",
+            "sort_field_in_progress": "name",
+            "sort_field_completed": "name",
         }
         config["LastSession"] = {
             "last_audiobook_id": "0",
@@ -1261,6 +1273,10 @@ class AudiobookPlayerWindow(QMainWindow):
             config["Library"]["sort_order_not_started"] = self.library_widget.sort_orders.get("not_started", "asc")
             config["Library"]["sort_order_in_progress"] = self.library_widget.sort_orders.get("in_progress", "asc")
             config["Library"]["sort_order_completed"] = self.library_widget.sort_orders.get("completed", "asc")
+            config["Library"]["sort_field_all"] = self.library_widget.sort_fields.get("all", "name")
+            config["Library"]["sort_field_not_started"] = self.library_widget.sort_fields.get("not_started", "name")
+            config["Library"]["sort_field_in_progress"] = self.library_widget.sort_fields.get("in_progress", "name")
+            config["Library"]["sort_field_completed"] = self.library_widget.sort_fields.get("completed", "name")
 
         # Visual Style Persistence
         if "Audiobook_Style" not in config:
@@ -1517,9 +1533,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_folders = checked
         self.save_settings()
 
-    def on_sort_order_changed(self, filter_mode, sort_order):
+    def on_sort_order_changed(self, filter_mode, sort_order, sort_field):
         """Update and persist the library sort order preference"""
         self.library_sort_orders[filter_mode] = sort_order
+        self.library_sort_fields[filter_mode] = sort_field
         self.save_settings()
 
     def on_audiobook_selected(self, audiobook_path: str):

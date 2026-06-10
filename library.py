@@ -1881,7 +1881,7 @@ class LibraryWidget(QWidget):
     folder_delete_requested = pyqtSignal(str)  # Emits folder relative path
     scan_requested = pyqtSignal()
     settings_requested = pyqtSignal()  # Propagate settings request
-    sort_order_changed = pyqtSignal(str, str)  # Emits (filter_mode, sort_order)
+    sort_order_changed = pyqtSignal(str, str, str)  # Emits (filter_mode, sort_order, sort_field)
 
     # Internal configuration for status filtering
     FILTER_CONFIG = {
@@ -1933,6 +1933,13 @@ class LibraryWidget(QWidget):
             old_sort = self.config["sort_order"]
             for k in self.sort_orders:
                 self.sort_orders[k] = old_sort
+
+        self.sort_fields = self.config.get("sort_fields", {
+            "all": "name",
+            "not_started": "name",
+            "in_progress": "name",
+            "completed": "name"
+        })
         self._expanded_paths_cache = set()
         self.setup_ui()
         self.load_icons()
@@ -1944,6 +1951,14 @@ class LibraryWidget(QWidget):
     @sort_order.setter
     def sort_order(self, value):
         self.sort_orders[self.current_filter] = value
+
+    @property
+    def sort_field(self):
+        return self.sort_fields.get(self.current_filter, "name")
+
+    @sort_field.setter
+    def sort_field(self, value):
+        self.sort_fields[self.current_filter] = value
 
     def setup_ui(self):
         """Assemble the search bar, filter buttons, and the main library tree widget"""
@@ -2051,6 +2066,14 @@ class LibraryWidget(QWidget):
         )
         self.btn_sort.clicked.connect(self.toggle_sort_order)
         filter_layout.addWidget(self.btn_sort)
+
+        # Sort Field Dropdown Button (arrow down) - positioned immediately after self.btn_sort
+        self.btn_sort_field = QPushButton("▼")
+        self.btn_sort_field.setObjectName("filterBtnArrow")
+        self.btn_sort_field.setFixedWidth(18)
+        self.btn_sort_field.setToolTip(tr("library.tooltip_sort_field"))
+        self.btn_sort_field.clicked.connect(self.show_sort_field_menu)
+        filter_layout.addWidget(self.btn_sort_field)
 
         layout.addLayout(filter_layout)
 
@@ -2261,6 +2284,7 @@ class LibraryWidget(QWidget):
         """Switch the current library view filter and refresh the audiobook listing"""
         self.current_filter = filter_type
         self.update_sort_button_ui()
+        self.update_sort_field_button_ui()
         # When switching filters, reload from DB to apply correct sorting and subset
         self.load_audiobooks(use_cache=False)
 
@@ -2301,6 +2325,37 @@ class LibraryWidget(QWidget):
         self._expanded_paths_cache = self.get_expanded_folder_paths()
         self.tree.clear()
 
+        # Helper to generate the key for client-side sorting
+        def make_sort_key(field, reverse):
+            def key_fn(x):
+                is_folder = x.get("is_folder", False)
+                if is_folder:
+                    # Folders are always sorted by their name
+                    val = (x.get("name") or "").lower()
+                    return (1, val) if reverse else (0, val)
+                
+                val = x.get(field)
+                is_empty = (val is None or val == "")
+                
+                if is_empty:
+                    # Empty values always go to the end of the list, regardless of sort order
+                    return (0, "") if reverse else (1, "")
+                
+                if field in ("name", "author"):
+                    val = str(val).lower()
+                else:
+                    # Keep numeric type if possible for proper numeric sorting, fallback to str
+                    if isinstance(val, (int, float)):
+                        pass
+                    else:
+                        try:
+                            val = float(val)
+                        except (ValueError, TypeError):
+                            val = str(val)
+                
+                return (1, val) if reverse else (0, val)
+            return key_fn
+
         # Check cache or force reload
         # Always load all audiobooks to enable fast client-side filtering
         if not use_cache or self.cached_library_data is None:
@@ -2322,7 +2377,7 @@ class LibraryWidget(QWidget):
             # If folders are hidden and we are in a non-'all' filter,
             # we should populate as a flat list to guarantee the SQL sort order
             # is visually preserved across the entire library.
-            if not self.show_folders and self.current_filter != "all":
+            if not self.show_folders:
                 all_items = []
                 for parent_path, items in self.cached_library_data.items():
                     for item_data in items:
@@ -2345,11 +2400,11 @@ class LibraryWidget(QWidget):
 
                             all_items.append(item_data)
 
-                # Re-sort at client side alphabetically
+                # Re-sort at client side
                 reverse_sort = (self.sort_order == "desc")
                 all_items.sort(
-                    key=lambda x: (x.get("name") or "").lower(),
-                    reverse=reverse_sort,
+                    key=make_sort_key(self.sort_field, reverse_sort),
+                    reverse=reverse_sort
                 )
 
                 # Batch add to avoid recursion overhead
@@ -2397,15 +2452,15 @@ class LibraryWidget(QWidget):
 
                     data_to_display = filtered_data
 
-                # Sort alphabetically by name within each parent group (folders first, then books)
+                # Sort within each parent group (folders first, then books)
                 sorted_data = {}
                 for parent_path, items in data_to_display.items():
                     folders = [x for x in items if x.get("is_folder")]
                     books = [x for x in items if not x.get("is_folder")]
                     
                     reverse_sort = (self.sort_order == "desc")
-                    folders.sort(key=lambda x: (x.get("name") or "").lower(), reverse=reverse_sort)
-                    books.sort(key=lambda x: (x.get("name") or "").lower(), reverse=reverse_sort)
+                    folders.sort(key=make_sort_key(self.sort_field, reverse_sort), reverse=reverse_sort)
+                    books.sort(key=make_sort_key(self.sort_field, reverse_sort), reverse=reverse_sort)
                     
                     sorted_data[parent_path] = folders + books
                 data_to_display = sorted_data
@@ -3320,6 +3375,7 @@ class LibraryWidget(QWidget):
         if hasattr(self, "btn_tags"):
             self.btn_tags.setToolTip(tr("library.tooltip_tags"))
         self.update_sort_button_ui()
+        self.update_sort_field_button_ui()
             
         self.update_filter_labels()
         for filter_id, config in self.FILTER_CONFIG.items():
@@ -3369,5 +3425,48 @@ class LibraryWidget(QWidget):
         """Toggle alphabetical sorting direction and refresh library"""
         self.sort_order = "desc" if self.sort_order == "asc" else "asc"
         self.update_sort_button_ui()
-        self.sort_order_changed.emit(self.current_filter, self.sort_order)
+        self.sort_order_changed.emit(self.current_filter, self.sort_order, self.sort_field)
         self.load_audiobooks(use_cache=True)
+
+    def show_sort_field_menu(self):
+        """Display a popup menu to select the active sort field"""
+        menu = QMenu(self)
+        menu.setObjectName("sortFieldMenu")
+        
+        options = [
+            ("name", "library.sort_by_name"),
+            ("author", "library.sort_by_author"),
+            ("time_added", "library.sort_by_date_added"),
+            ("last_updated", "library.sort_by_last_read"),
+            ("time_finished", "library.sort_by_date_finished")
+        ]
+        
+        current = self.sort_field
+        for field_key, loc_key in options:
+            action = menu.addAction(tr(loc_key))
+            action.setCheckable(True)
+            action.setChecked(field_key == current)
+            action.triggered.connect(lambda checked, fk=field_key: self._on_sort_field_selected(fk))
+            
+        global_pos = self.btn_sort_field.mapToGlobal(QPoint(0, self.btn_sort_field.height()))
+        menu.exec(global_pos)
+
+    def _on_sort_field_selected(self, field_key):
+        self.sort_field = field_key
+        self.update_sort_field_button_ui()
+        self.sort_order_changed.emit(self.current_filter, self.sort_order, self.sort_field)
+        self.load_audiobooks(use_cache=True)
+
+    def update_sort_field_button_ui(self):
+        """Update the sort field button tooltip based on the current sort field"""
+        if hasattr(self, "btn_sort_field"):
+            field_map = {
+                "name": "sort_by_name",
+                "author": "sort_by_author",
+                "time_added": "sort_by_date_added",
+                "last_updated": "sort_by_last_read",
+                "time_finished": "sort_by_date_finished"
+            }
+            loc_key = field_map.get(self.sort_field, "sort_by_name")
+            field_name = tr(f"library.{loc_key}")
+            self.btn_sort_field.setToolTip(f"{tr('library.tooltip_sort_field')} ({field_name})")
