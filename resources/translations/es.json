@@ -30,7 +30,7 @@
     "show_statusbar": "Mostrar barra de estado",
     "show_detailed_info": "Mostrar línea de información del libro",
     "show_status_triangle": "Mostrar triángulo de estado",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "Recordar carpetas para cada filtro"
   },
   "library": {
     "search_placeholder": "Buscar por título, autor, narrador...",
@@ -80,12 +80,13 @@
     "folder_books_count": "{count} audiolibros",
     "tooltip_sort_asc": "Ordenar: A-Z",
     "tooltip_sort_desc": "Ordenar: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "Título",
+    "sort_by_author": "Autor",
+    "sort_by_date_added": "Fecha de adición",
+    "sort_by_last_read": "Fecha de última escucha",
+    "sort_by_date_finished": "Fecha de finalización",
+    "tooltip_sort_field": "Ordenar por...",
+    "delete_from_disk_checkbox": "Eliminar también los archivos del audiolibro del disco"
   },
   "player": {
     "volume": "Volumen",
@@ -136,11 +137,11 @@
     "network_error": "Error de red",
     "connecting": "Conectando...",
     "streaming": "Transmitiendo...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 Cargando lista de reproducción...",
+    "restoring_position": "⏩ Restaurando posición...",
+    "seeking": "⏩ Buscando posición... (intento {attempt})",
+    "stream_ready": "▶ Transmisión lista",
+    "connecting_retry": "❌ Error de conexión. Reintentando... (intento {attempt} de {max_attempts})"
   },
   "status": {
     "load_library": "📚 Cargar biblioteca de audiolibros",
@@ -157,10 +158,11 @@
     "styles_error": "❌ Error de estilos: {error}",
     "reset_success": "✅ Biblioteca purgada exitosamente",
     "delete_success": "✅ Audiolibro eliminado exitosamente",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "La biblioteca está vacía",
+    "no_audiobooks_instructions": "Haga clic en el icono de la carpeta de arriba para seleccionar su directorio de audiolibros\n\nTambién puede agregar libros a través de Menú -> Biblioteca\nLuego haga clic en 'Escanear' para actualizar",
     "starting_copy": "Iniciando copia...",
-    "no_audiobook_playing": "No hay ningún audiolibro reproduciéndose"
+    "no_audiobook_playing": "No hay ningún audiolibro reproduciéndose",
+    "copy_complete": "✅ {count} elementos copiados."
   },
   "delegate": {
     "narrator_prefix": "🎙",

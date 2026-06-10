@@ -6,8 +6,8 @@ from pathlib import Path
 def get_translation_keys_from_code(project_root):
     """Scan .py files for tr('key') or tr("key") patterns."""
     keys = {} # key -> list of (file_path, line_number)
-    # Matches tr('key'), tr('key', ...), tr("key"), etc.
-    pattern = re.compile(r"tr\(['\"]([^'\"]+)['\"]")
+    # Matches tr('key'), trf('key'), etc.
+    pattern = re.compile(r"trf?\(['\"]([^'\"]+)['\"]")
     
     for root, _, files in os.walk(project_root):
         if "_build_" in root or ".venv" in root or "__pycache__" in root or ".git" in root or "tests" in root:

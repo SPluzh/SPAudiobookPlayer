@@ -30,7 +30,7 @@
     "show_statusbar": "إظهار شريط الحالة",
     "show_detailed_info": "إظهار سطر معلومات الكتاب",
     "show_status_triangle": "إظهار مثلث الحالة",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "تذكر المجلدات لكل تصفية"
   },
   "library": {
     "search_placeholder": "بحث بالعنوان، المؤلف، الراوي...",
@@ -80,12 +80,13 @@
     "folder_books_count": "{count} كتب",
     "tooltip_sort_asc": "ترتيب: أ-ي",
     "tooltip_sort_desc": "ترتيب: ي-أ",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "العنوان",
+    "sort_by_author": "المؤلف",
+    "sort_by_date_added": "تاريخ الإضافة",
+    "sort_by_last_read": "تاريخ آخر قراءة",
+    "sort_by_date_finished": "تاريخ الانتهاء",
+    "tooltip_sort_field": "ترتيب حسب...",
+    "delete_from_disk_checkbox": "احذف أيضًا ملفات الكتاب الصوتي من القرص"
   },
   "player": {
     "volume": "مستوى الصوت",
@@ -136,11 +137,11 @@
     "network_error": "خطأ في الشبكة",
     "connecting": "جاري الاتصال...",
     "streaming": "البث المباشر...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 جاري تحميل قائمة التشغيل...",
+    "restoring_position": "⏩ جاري استعادة الموضع...",
+    "seeking": "⏩ جاري البحث عن الموضع... (المحاولة {attempt})",
+    "stream_ready": "▶ البث جاهز",
+    "connecting_retry": "❌ فشل الاتصال. جاري إعادة المحاولة... (المحاولة {attempt} من {max_attempts})"
   },
   "status": {
     "load_library": "📚 تحميل مكتبة الكتب الصوتية",
@@ -157,10 +158,11 @@
     "styles_error": "❌ خطأ في النمط: {error}",
     "reset_success": "✅ تم مسح المكتبة بنجاح",
     "delete_success": "✅ تم حذف الكتاب الصوتي بنجاح",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "المكتبة فارغة",
+    "no_audiobooks_instructions": "انقر على أيقونة المجلد أعلاه لتحديد دليل الكتب الصوتية الخاص بك\n\nيمكنك أيضًا إضافة كتب عبر القائمة -> المكتبة\nثم انقر على 'مسح' للتحديث",
     "starting_copy": "جارٍ بدء النسخ...",
-    "no_audiobook_playing": "لا يوجد كتاب صوتي قيد التشغيل حاليًا"
+    "no_audiobook_playing": "لا يوجد كتاب صوتي قيد التشغيل حاليًا",
+    "copy_complete": "✅ تم نسخ {count} من العناصر."
   },
   "delegate": {
     "narrator_prefix": "🎙",

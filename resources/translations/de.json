@@ -30,7 +30,7 @@
     "show_statusbar": "Statusleiste anzeigen",
     "show_detailed_info": "Buch-Informationszeile anzeigen",
     "show_status_triangle": "Status-Dreieck anzeigen",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "Ordneransicht für jeden Filter merken"
   },
   "library": {
     "search_placeholder": "Suche nach Titel, Autor, Sprecher...",
@@ -80,12 +80,13 @@
     "folder_books_count": "{count} Hörbücher",
     "tooltip_sort_asc": "Sortierung: A-Z",
     "tooltip_sort_desc": "Sortierung: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "Titel",
+    "sort_by_author": "Autor",
+    "sort_by_date_added": "Hinzugefügt am",
+    "sort_by_last_read": "Zuletzt gehört am",
+    "sort_by_date_finished": "Beendet am",
+    "tooltip_sort_field": "Sortieren nach...",
+    "delete_from_disk_checkbox": "Hörbuchdateien auch von der Festplatte löschen"
   },
   "player": {
     "volume": "Lautstärke",
@@ -136,11 +137,11 @@
     "network_error": "Netzwerkfehler",
     "connecting": "Verbinden...",
     "streaming": "Streaming...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 Playlist wird geladen...",
+    "restoring_position": "⏩ Position wird wiederhergestellt...",
+    "seeking": "⏩ Position wird gesucht... (Versuch {attempt})",
+    "stream_ready": "▶ Stream bereit",
+    "connecting_retry": "❌ Verbindung fehlgeschlagen. Erneuter Versuch... (Versuch {attempt} von {max_attempts})"
   },
   "status": {
     "load_library": "📚 Hörbuch-Bibliothek laden",
@@ -157,10 +158,11 @@
     "styles_error": "❌ Stilfehler: {error}",
     "reset_success": "✅ Bibliothek erfolgreich bereinigt",
     "delete_success": "✅ Hörbuch erfolgreich gelöscht",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "Bibliothek ist leer",
+    "no_audiobooks_instructions": "Klicken Sie oben auf das Ordnersymbol, um Ihr Hörbuchverzeichnis auszuwählen\n\nSie können Bücher auch über Menü -> Bibliothek hinzufügen\nKlicken Sie dann auf 'Scannen', um zu aktualisieren",
     "starting_copy": "Kopiervorgang wird gestartet...",
-    "no_audiobook_playing": "Kein Hörbuch wird gerade abgespielt"
+    "no_audiobook_playing": "Kein Hörbuch wird gerade abgespielt",
+    "copy_complete": "✅ {count} Elemente kopiert."
   },
   "delegate": {
     "narrator_prefix": "🎙",

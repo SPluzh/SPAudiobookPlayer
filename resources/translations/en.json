@@ -68,6 +68,8 @@
     "merge_confirm_msg": "Are you sure you want to merge this folder and its subfolders into a single audiobook?\nAll subfolders will be scanned recursively.",
     "confirm_delete_title": "Delete Confirmation",
     "confirm_delete_msg": "Are you sure you want to remove this audiobook from the library?\nFiles on disk will remain untouched.\n\n{path}",
+    "delete_from_disk_checkbox": "Also delete audiobook files from disk",
+    "delete_error": "Could not delete audiobook files: {error}",
     "confirm_delete_folder_title": "Delete Folder Confirmation",
     "confirm_delete_folder_msg": "Are you sure you want to remove this folder, ALL subfolders, and contained audiobooks from the library?\nFiles on disk will remain untouched.\n\n{path}{items}",
     "delete_folder_contents_header": "Contents:",
@@ -178,7 +180,8 @@
     "reset_success": "✅ Library successfully purged",
     "delete_success": "✅ Audiobook successfully deleted",
     "starting_copy": "Starting copy...",
-    "no_audiobook_playing": "No audiobook is currently playing"
+    "no_audiobook_playing": "No audiobook is currently playing",
+    "copy_complete": "✅ Copied {count} items."
   },
   "delegate": {
     "narrator_prefix": "🎙",

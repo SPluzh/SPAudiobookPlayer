@@ -30,7 +30,7 @@
     "show_statusbar": "स्टेटस बार दिखाएं",
     "show_detailed_info": "पुस्तक सूचना पंक्ति दिखाएं",
     "show_status_triangle": "स्थिति त्रिकोण दिखाएं",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "प्रत्येक फ़िल्टर के लिए फ़ोल्डर याद रखें"
   },
   "library": {
     "search_placeholder": "शीर्षक, लेखक, वाचक द्वारा खोजें...",
@@ -80,12 +80,13 @@
     "folder_books_count": "{count} ऑडियोबुक्स",
     "tooltip_sort_asc": "क्रमबद्ध करें: A-Z",
     "tooltip_sort_desc": "क्रमबद्ध करें: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "शीर्षक",
+    "sort_by_author": "लेखक",
+    "sort_by_date_added": "जोड़ने की तिथि",
+    "sort_by_last_read": "अंतिम बार सुनने की तिथि",
+    "sort_by_date_finished": "समाप्त होने की तिथि",
+    "tooltip_sort_field": "क्रमबद्ध करें...",
+    "delete_from_disk_checkbox": "डिस्क से ऑडियोबुक फ़ाइलें भी हटाएं"
   },
   "player": {
     "volume": "वॉल्यूम",
@@ -136,11 +137,11 @@
     "network_error": "नेटवर्क त्रुटि",
     "connecting": "कनेक्ट हो रहा है...",
     "streaming": "स्ट्रीमिंग हो रही है...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 प्लेलिस्ट लोड की जा रही है...",
+    "restoring_position": "⏩ स्थान बहाल किया जा रहा है...",
+    "seeking": "⏩ स्थान खोजा जा रहा है... (प्रयास {attempt})",
+    "stream_ready": "▶ स्ट्रीम तैयार है",
+    "connecting_retry": "❌ कनेक्शन विफल। पुनः प्रयास किया जा रहा है... ({max_attempts} में से प्रयास {attempt})"
   },
   "status": {
     "load_library": "📚 ऑडियोबुक लाइब्रेरी लोड करें",
@@ -157,10 +158,11 @@
     "styles_error": "❌ शैली त्रुटि: {error}",
     "reset_success": "✅ लाइब्रेरी सफलतापूर्वक साफ़ की गई",
     "delete_success": "✅ ऑडियोबुक सफलतापूर्वक हटा दी गई",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "लाइब्रेरी खाली है",
+    "no_audiobooks_instructions": "अपनी ऑडियोबुक निर्देशिका का चयन करने के लिए ऊपर दिए गए फ़ोल्डर आइकन पर क्लिक करें\n\nआप मेनू -> लाइब्रेरी के माध्यम से भी पुस्तकें जोड़ सकते हैं\nफिर अपडेट करने के लिए 'स्कैन' पर क्लिक करें",
     "starting_copy": "कॉपी शुरू हो रही है...",
-    "no_audiobook_playing": "वर्तमान में कोई ऑडियोबुक नहीं चल रही है"
+    "no_audiobook_playing": "वर्तमान में कोई ऑडियोबुक नहीं चल रही है",
+    "copy_complete": "✅ {count} आइटम कॉपी किए गए।"
   },
   "delegate": {
     "narrator_prefix": "🎙",

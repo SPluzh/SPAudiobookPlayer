@@ -30,7 +30,7 @@
     "show_statusbar": "Mostrar barra de status",
     "show_detailed_info": "Mostrar linha de informações do livro",
     "show_status_triangle": "Mostrar triângulo de status",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "Lembrar pastas para cada filtro"
   },
   "library": {
     "search_placeholder": "Pesquisar por título, autor, narrador...",
@@ -80,12 +80,13 @@
     "folder_books_count": "{count} audiolivros",
     "tooltip_sort_asc": "Ordenar: A-Z",
     "tooltip_sort_desc": "Ordenar: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "Título",
+    "sort_by_author": "Autor",
+    "sort_by_date_added": "Data de adição",
+    "sort_by_last_read": "Data da última escuta",
+    "sort_by_date_finished": "Data de término",
+    "tooltip_sort_field": "Ordenar por...",
+    "delete_from_disk_checkbox": "Excluir também os arquivos do audiolivro do disco"
   },
   "player": {
     "volume": "Volume",
@@ -136,11 +137,11 @@
     "network_error": "Erro de rede",
     "connecting": "Conectando...",
     "streaming": "Transmitindo...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 Carregando lista de reprodução...",
+    "restoring_position": "⏩ Restaurando posição...",
+    "seeking": "⏩ Buscando posição... (tentativa {attempt})",
+    "stream_ready": "▶ Transmissão pronta",
+    "connecting_retry": "❌ Falha na conexão. Tentando novamente... (tentativa {attempt} de {max_attempts})"
   },
   "status": {
     "load_library": "📚 Carregar biblioteca de audiolivros",
@@ -157,10 +158,11 @@
     "styles_error": "❌ Erro nos estilos: {error}",
     "reset_success": "✅ Biblioteca limpa com sucesso",
     "delete_success": "✅ Audiolivro excluído com sucesso",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "A biblioteca está vazia",
+    "no_audiobooks_instructions": "Clique no ícone de pasta acima para selecionar o diretório do seu audiolivro\n\nVocê também pode adicionar livros via Menu -> Biblioteca\nEm seguida, clique em 'Escanear' para atualizar",
     "starting_copy": "Iniciando cópia...",
-    "no_audiobook_playing": "Nenhum audiolivro está sendo reproduzido no momento"
+    "no_audiobook_playing": "Nenhum audiolivro está sendo reproduzido no momento",
+    "copy_complete": "✅ {count} itens copiados."
   },
   "delegate": {
     "narrator_prefix": "🎙",

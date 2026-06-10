@@ -827,10 +827,6 @@ class AudiobookPlayerWindow(QMainWindow):
         self.library_widget.show_folders_toggled.connect(self.on_show_folders_toggled)
         self.library_widget.sort_order_changed.connect(self.on_sort_order_changed)
         self.library_widget.delete_requested.connect(self.on_delete_requested)
-        self.library_widget.delete_requested.connect(self.on_delete_requested)
-        self.library_widget.folder_delete_requested.connect(
-            self.on_folder_delete_requested
-        )
         self.library_widget.folder_delete_requested.connect(
             self.on_folder_delete_requested
         )
@@ -2196,7 +2192,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 self, "Error", f"Failed to completely clear library data: {e}"
             )
 
-    def on_delete_requested(self, audiobook_id: int, rel_path: str):
+    def on_delete_requested(self, audiobook_id: int, rel_path: str, delete_from_disk: bool = False):
         """Coordinate the comprehensive removal of an audiobook from the filesystem, database, and UI"""
         if not self.default_path:
             return
@@ -2218,7 +2214,22 @@ class AudiobookPlayerWindow(QMainWindow):
             if self.delegate:
                 self.delegate.playing_path = None
 
-        # 2. Finalize data synchronization across database and view
+        # 2. Delete the files from the disk if requested
+        if delete_from_disk and abs_path.exists():
+            try:
+                if abs_path.is_dir():
+                    shutil.rmtree(abs_path)
+                else:
+                    abs_path.unlink()
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    tr("library.confirm_delete_title"),
+                    trf("library.delete_error", error=str(e)),
+                )
+                return
+
+        # 3. Finalize data synchronization across database and view
         try:
             self.db_manager.delete_audiobook(audiobook_id)
             self.library_widget.remove_audiobook_from_ui(rel_path)

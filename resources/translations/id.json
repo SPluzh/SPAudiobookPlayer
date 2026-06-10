@@ -30,7 +30,7 @@
     "show_statusbar": "Tampilkan Bilah Status",
     "show_detailed_info": "Tampilkan baris info buku",
     "show_status_triangle": "Tampilkan Segitiga Status",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "Ingat folder untuk setiap filter"
   },
   "bookmarks": {
     "edit_title": "Edit Penanda",
@@ -98,12 +98,13 @@
     "folder_books_count": "{count} audiobook",
     "tooltip_sort_asc": "Urutkan: A-Z",
     "tooltip_sort_desc": "Urutkan: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "Judul",
+    "sort_by_author": "Penulis",
+    "sort_by_date_added": "Tanggal ditambahkan",
+    "sort_by_last_read": "Tanggal terakhir didengar",
+    "sort_by_date_finished": "Tanggal selesai",
+    "tooltip_sort_field": "Urutkan berdasarkan...",
+    "delete_from_disk_checkbox": "Hapus juga file audiobook dari disk"
   },
   "player": {
     "volume": "Volume",
@@ -154,18 +155,18 @@
     "network_error": "Kesalahan jaringan",
     "connecting": "Menghubungkan...",
     "streaming": "Streaming...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 Memuat daftar putar...",
+    "restoring_position": "⏩ Memulihkan posisi...",
+    "seeking": "⏩ Mencari posisi... (percobaan {attempt})",
+    "stream_ready": "▶ Aliran siap",
+    "connecting_retry": "❌ Koneksi gagal. Mencoba kembali... (percobaan {attempt} dari {max_attempts})"
   },
   "status": {
     "load_library": "📚 Muat perpustakaan audiobook",
     "restored_session": "✅ Sesi terakhir dipulihkan",
     "library_count": "📚 Perpustakaan: {count} audiobook",
     "no_audiobooks_title": "Perpustakaan kosong",
-    "no_audiobooks_instructions": "Klik ikon folder di atas untuk memilih direktori audiobook Anda\n\nAnda juga dapat menambahkan buku lewat Menu -> Perpustakaan\nLalu klik 'Pindai' untuk memperbarui",
+    "no_audiobooks_instructions": "Klik ikon folder di atas để memilih direktori audiobook Anda\n\nAnda juga dapat menambahkan buku via Menu -> Perpustakaan\nKemudian klik 'Pindai' untuk memperbarui",
     "no_database": "⚠️ Database tidak ditemukan — klik \"Pindai\"",
     "scanning": "🔄 Memindai...",
     "scan_complete": "✅ Ditemukan audiobook: {count}",
@@ -178,7 +179,8 @@
     "reset_success": "✅ Perpustakaan berhasil dibersihkan",
     "delete_success": "✅ Audiobook berhasil dihapus",
     "starting_copy": "Memulai penyalinan...",
-    "no_audiobook_playing": "Tidak ada buku audio yang sedang diputar"
+    "no_audiobook_playing": "Tidak ada buku audio yang sedang diputar",
+    "copy_complete": "✅ {count} item disalin."
   },
   "delegate": {
     "narrator_prefix": "🎙",

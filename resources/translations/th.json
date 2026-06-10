@@ -30,7 +30,7 @@
     "show_statusbar": "แสดงแถบสถานะ",
     "show_detailed_info": "แสดงแถบข้อมูลหนังสือ",
     "show_status_triangle": "แสดงสามเหลี่ยมสถานะ",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "จำโฟลเดอร์สำหรับแต่ละตัวกรอง"
   },
   "bookmarks": {
     "edit_title": "แก้ไขที่คั่นหน้า",
@@ -98,12 +98,13 @@
     "folder_books_count": "หนังสือเสียง {count} เล่ม",
     "tooltip_sort_asc": "เรียงลำดับ: A-Z",
     "tooltip_sort_desc": "เรียงลำดับ: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "ชื่อเรื่อง",
+    "sort_by_author": "ผู้แต่ง",
+    "sort_by_date_added": "วันที่เพิ่ม",
+    "sort_by_last_read": "วันที่ฟังล่าสุด",
+    "sort_by_date_finished": "วันที่ฟังจบ",
+    "tooltip_sort_field": "จัดเรียงตาม...",
+    "delete_from_disk_checkbox": "ลบไฟล์หนังสือเสียงออกจากดิสก์ด้วย"
   },
   "player": {
     "volume": "ระดับเสียง",
@@ -154,18 +155,18 @@
     "network_error": "ข้อผิดพลาดของเครือข่าย",
     "connecting": "กำลังเชื่อมต่อ...",
     "streaming": "กำลังเล่นสตรีม...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 กำลังโหลดเพลย์ลิสต์...",
+    "restoring_position": "⏩ กำลังกู้คืนตำแหน่ง...",
+    "seeking": "⏩ กำลังค้นหาตำแหน่ง... (พยายามครั้งที่ {attempt})",
+    "stream_ready": "▶ สตรีมพร้อมใช้งาน",
+    "connecting_retry": "❌ เชื่อมต่อล้มเหลว กำลังลองใหม่... (พยายามครั้งที่ {attempt} จาก {max_attempts})"
   },
   "status": {
     "load_library": "📚 กำลังโหลดคลังหนังสือเสียง",
     "restored_session": "✅ กู้คืนเซสชันล่าสุดแล้ว",
     "library_count": "📚 คลัง: หนังสือเสียง {count} เล่ม",
-    "no_audiobooks_title": "คลังว่างเปล่า",
-    "no_audiobooks_instructions": "คลิกไอคอนโฟลเดอร์ด้านบนเพื่อเลือกไดเรกทอรีหนังสือเสียงของคุณ\n\nคุณยังสามารถเพิ่มหนังสือผ่าน เมนู -> คลัง\nจากนั้นคลิก 'สแกน' เพื่ออัปเดต",
+    "no_audiobooks_title": "ห้องสมุดว่างเปล่า",
+    "no_audiobooks_instructions": "คลิกไอคอนโฟลเดอร์ด้านบนเพื่อเลือกไดเรกทอรีหนังสือเสียงของคุณ\n\nคุณยังสามารถเพิ่มหนังสือผ่าน เมนู -> ห้องสมุด\nจากนั้นคลิก 'สแกน' เพื่ออัปเดต",
     "no_database": "⚠️ ไม่พบฐานข้อมูล — คลิก \"สแกน\"",
     "scanning": "🔄 กำลังสแกน...",
     "scan_complete": "✅ พบหนังสือเสียง: {count} เล่ม",
@@ -178,7 +179,8 @@
     "reset_success": "✅ ล้างข้อมูลคลังสำเร็จ",
     "delete_success": "✅ ลบหนังสือเสียงสำเร็จ",
     "starting_copy": "กำลังเริ่มการคัดลอก...",
-    "no_audiobook_playing": "ไม่มีหนังสือเสียงที่กำลังเล่นอยู่"
+    "no_audiobook_playing": "ไม่มีหนังสือเสียงที่กำลังเล่นอยู่",
+    "copy_complete": "✅ คัดลอก {count} รายการแล้ว"
   },
   "delegate": {
     "narrator_prefix": "🎙",

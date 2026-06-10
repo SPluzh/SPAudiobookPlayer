@@ -30,7 +30,7 @@
     "show_detailed_info": "Ցուցադրել մանրամասն տեղեկությունները",
     "show_status_triangle": "Ցուցադրել կարգավիճակի եռանկյունը",
     "show_statusbar": "Ցուցադրել կարգավիճակի տողը",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "Հիշել թղթապանակները յուրաքանչյուր ֆիլտրի համար"
   },
   "bookmarks": {
     "edit_title": "Խմբագրել էջանիշը",
@@ -98,12 +98,13 @@
     "tooltip_tags": "Զտել ըստ պիտակների",
     "tooltip_sort_asc": "Տեսակավորել՝ Ա-Ֆ",
     "tooltip_sort_desc": "Տեսակավորել՝ Ֆ-Ա",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "Վերնագիր",
+    "sort_by_author": "Հեղինակ",
+    "sort_by_date_added": "Ավելացման ամսաթիվ",
+    "sort_by_last_read": "Վերջին լսման ամսաթիվ",
+    "sort_by_date_finished": "Ավարտման ամսաթիվ",
+    "tooltip_sort_field": "Սորտավորել ըստ...",
+    "delete_from_disk_checkbox": "Նաև ջնջել աուդիոգրքի ֆայլերը սկավառակից"
   },
   "player": {
     "volume": "Ձայնի ուժգնություն",
@@ -154,18 +155,18 @@
     "network_error": "Ցանցային սխալ",
     "connecting": "Միացում...",
     "streaming": "Հոսքային հաղորդում...",
-    "loading_playlist": "📋 Նվագացուցակի բեռնում...",
+    "loading_playlist": "📋 Փլեյլիստի բեռնում...",
     "restoring_position": "⏩ Դիրքի վերականգնում...",
     "seeking": "⏩ Դիրքի որոնում... (փորձ {attempt})",
     "stream_ready": "▶ Հոսքը պատրաստ է",
-    "connecting_retry": "❌ Միացումը ձախողվեց: Կրկին փորձ... (փորձ {attempt}-ը {max_attempts}-ից)"
+    "connecting_retry": "❌ Միացման սխալ: Կրկին փորձ... (փորձ {attempt}-ը {max_attempts}-ից)"
   },
   "status": {
     "load_library": "📚 Բեռնել աուդիոգրքերի գրադարանը",
     "restored_session": "✅ <b>Վերջին սեսիան վերականգնված է</b>",
     "library_count": "📚 Գրադարան՝ {count} աուդիոգիրք",
     "no_audiobooks_title": "Գրադարանը դատարկ է",
-    "no_audiobooks_instructions": "Սեղմեք վերևում գտնվող թղթապանակի պատկերակին՝ ձեր աուդիոգրքերի թղթապանակն ընտրելու համար\n\nԿարող եք նաև գրքեր ավելացնել Մենյու -> Գրադարան միջոցով\nԱյնուհետև սեղմեք «Սկանավորել»՝ թարմացնելու համար",
+    "no_audiobooks_instructions": "Կտտացրեք վերևում գտնվող թղթապանակի պատկերակին՝ ձեր աուդիոգրքերի գրացուցակը ընտրելու համար\n\nԿարող եք նաև գրքեր ավելացնել Մենյու -> Գրադարան միջոցով\nԱյնուհետև կտտացրեք «Սկանավորել»՝ թարմացնելու համար",
     "no_database": "⚠️ Տվյալների բազան չի գտնվել — սեղմեք «Սկանավորել»",
     "scanning": "🔄 Սկանավորում...",
     "scan_complete": "✅ Գտնված աուդիոգրքեր՝ {count}",
@@ -178,7 +179,8 @@
     "reset_success": "✅ Գրադարանը հաջողությամբ մաքրվել է",
     "delete_success": "✅ Աուդիոգիրքը հաջողությամբ ջնջվել է",
     "starting_copy": "Պատճենահանման սկիզբ...",
-    "no_audiobook_playing": "Այս պահին ոչ մի աուդիոգիրք չի նվագարկվում"
+    "no_audiobook_playing": "Այս պահին ոչ մի աուդիոգիրք չի նվագարկվում",
+    "copy_complete": "✅ Պատճենվել է {count} տարր:"
   },
   "delegate": {
     "narrator_prefix": "🎙",

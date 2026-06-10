@@ -30,7 +30,7 @@
     "show_statusbar": "상태 표시줄 표시",
     "show_detailed_info": "도서 정보 줄 표시",
     "show_status_triangle": "상태 삼각형 표시",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "필터별 폴더 기억"
   },
   "library": {
     "search_placeholder": "제목, 저자, 낭독자로 검색...",
@@ -80,12 +80,13 @@
     "folder_books_count": "오디오북 {count}권",
     "tooltip_sort_asc": "정렬: A-Z",
     "tooltip_sort_desc": "정렬: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "제목",
+    "sort_by_author": "저자",
+    "sort_by_date_added": "추가된 날짜",
+    "sort_by_last_read": "마지막으로 들은 날짜",
+    "sort_by_date_finished": "완료된 날짜",
+    "tooltip_sort_field": "정렬 기준...",
+    "delete_from_disk_checkbox": "디스크에서 오디오북 파일도 삭제"
   },
   "player": {
     "volume": "음량",
@@ -136,11 +137,11 @@
     "network_error": "네트워크 오류",
     "connecting": "연결 중...",
     "streaming": "스트리밍 재생 중...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 재생 목록을 불러오는 중...",
+    "restoring_position": "⏩ 재생 위치를 복구하는 중...",
+    "seeking": "⏩ 재생 위치를 찾는 중... ({attempt}차 시도)",
+    "stream_ready": "▶ 스트림 준비 완료",
+    "connecting_retry": "❌ 연결 실패. 재시도 중... ({max_attempts} 중 {attempt}차 시도)"
   },
   "status": {
     "load_library": "📚 오디오북 라이브러리 불러오기",
@@ -157,10 +158,11 @@
     "styles_error": "❌ 스타일 오류: {error}",
     "reset_success": "✅ 라이브러리 초기화 성공",
     "delete_success": "✅ 오디오북 삭제 성공",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "라이브러리가 비어 있습니다",
+    "no_audiobooks_instructions": "위의 폴더 아이콘을 클릭하여 오디오북 디렉터리를 선택하세요\n\n메뉴 -> 라이브러리를 통해 책을 추가할 수도 있습니다\n그런 다음 '스캔'을 클릭하여 업데이트하세요",
     "starting_copy": "복사 시작 중...",
-    "no_audiobook_playing": "현재 재생 중인 오디오북이 없습니다"
+    "no_audiobook_playing": "현재 재생 중인 오디오북이 없습니다",
+    "copy_complete": "✅ {count}개 항목 복사 완료."
   },
   "delegate": {
     "narrator_prefix": "🎙",

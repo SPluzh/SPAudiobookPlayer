@@ -30,7 +30,7 @@
     "show_statusbar": "显示状态栏",
     "show_detailed_info": "显示书籍信息行",
     "show_status_triangle": "显示状态三角",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "记住每个过滤器的文件夹"
   },
   "library": {
     "search_placeholder": "按标题、作者、朗读者搜索...",
@@ -80,12 +80,13 @@
     "folder_books_count": "{count} 本有声书",
     "tooltip_sort_asc": "排序：A-Z",
     "tooltip_sort_desc": "排序：Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "标题",
+    "sort_by_author": "作者",
+    "sort_by_date_added": "添加日期",
+    "sort_by_last_read": "上次播放日期",
+    "sort_by_date_finished": "播放完毕日期",
+    "tooltip_sort_field": "排序方式...",
+    "delete_from_disk_checkbox": "同时从磁盘删除有声书文件"
   },
   "player": {
     "volume": "音量",
@@ -136,11 +137,11 @@
     "network_error": "网络错误",
     "connecting": "正在连接...",
     "streaming": "正在播放网络流...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 正在加载播放列表...",
+    "restoring_position": "⏩ 正在恢复播放位置...",
+    "seeking": "⏩ 正在寻道... (第 {attempt} 次尝试)",
+    "stream_ready": "▶ 流就绪",
+    "connecting_retry": "❌ 连接失败。正在重试... (第 {attempt} 次尝试，共 {max_attempts} 次)"
   },
   "status": {
     "load_library": "📚 加载有声书库",
@@ -157,10 +158,11 @@
     "styles_error": "❌ 样式错误：{error}",
     "reset_success": "✅ 库已成功清除",
     "delete_success": "✅ 有声书已成功删除",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "书库为空",
+    "no_audiobooks_instructions": "点击上方的文件夹图标以选择您的有声书目录\n\n您也可以通过 菜单 -> 书库 添加图书\n然后点击“扫描”进行更新",
     "starting_copy": "正在开始复制...",
-    "no_audiobook_playing": "当前没有正在播放的有声书"
+    "no_audiobook_playing": "当前没有正在播放的有声书",
+    "copy_complete": "✅ 已复制 {count} 个项目。"
   },
   "delegate": {
     "narrator_prefix": "🎙",

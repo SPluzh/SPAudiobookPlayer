@@ -30,7 +30,7 @@
     "show_statusbar": "Hiển thị thanh trạng thái",
     "show_detailed_info": "Hiển thị dòng thông tin sách",
     "show_status_triangle": "Hiển thị tam giác trạng thái",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "Ghi nhớ thư mục cho mỗi bộ lọc"
   },
   "bookmarks": {
     "edit_title": "Chỉnh sửa dấu trang",
@@ -98,12 +98,13 @@
     "folder_books_count": "{count} sách nói",
     "tooltip_sort_asc": "Sắp xếp: A-Z",
     "tooltip_sort_desc": "Sắp xếp: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "Tiêu đề",
+    "sort_by_author": "Tác giả",
+    "sort_by_date_added": "Ngày thêm",
+    "sort_by_last_read": "Ngày nghe gần nhất",
+    "sort_by_date_finished": "Ngày hoàn thành",
+    "tooltip_sort_field": "Sắp xếp theo...",
+    "delete_from_disk_checkbox": "Đồng thời xóa các tệp sách nói khỏi đĩa"
   },
   "player": {
     "volume": "Âm lượng",
@@ -154,18 +155,18 @@
     "network_error": "Lỗi mạng",
     "connecting": "Đang kết nối...",
     "streaming": "Đang phát trực tuyến...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 Đang tải danh sách phát...",
+    "restoring_position": "⏩ Đang khôi phục vị trí...",
+    "seeking": "⏩ Đang tìm vị trí... (thử lần {attempt})",
+    "stream_ready": "▶ Luồng phát đã sẵn sàng",
+    "connecting_retry": "❌ Kết nối thất bại. Đang thử lại... (lần thử {attempt} trên {max_attempts})"
   },
   "status": {
     "load_library": "📚 Tải thư viện sách nói",
     "restored_session": "✅ Đã khôi phục phiên nghe cuối",
     "library_count": "📚 Thư viện: {count} sách nói",
     "no_audiobooks_title": "Thư viện trống",
-    "no_audiobooks_instructions": "Nhấn vào biểu tượng thư mục ở trên để chọn danh mục sách nói của bạn\n\nBạn cũng có thể thêm sách qua Trình đơn -> Thư viện\nSau đó nhấn 'Quét' để cập nhật",
+    "no_audiobooks_instructions": "Nhấp vào biểu tượng thư mục ở trên để chọn thư mục sách nói của bạn\n\nBạn cũng có thể thêm sách qua Menu -> Thư viện\nSau đó nhấp 'Quét' để cập nhật",
     "no_database": "⚠️ Không tìm thấy cơ sở dữ liệu — nhấn \"Quét\"",
     "scanning": "🔄 Đang quét...",
     "scan_complete": "✅ Đã tìm thấy: {count} sách nói",
@@ -178,7 +179,8 @@
     "reset_success": "✅ Thư viện đã được làm sạch",
     "delete_success": "✅ Đã xóa sách nói thành công",
     "starting_copy": "Bắt đầu sao chép...",
-    "no_audiobook_playing": "Hiện không có sách nào đang phát"
+    "no_audiobook_playing": "Hiện không có sách nào đang phát",
+    "copy_complete": "✅ Đã sao chép {count} mục."
   },
   "delegate": {
     "narrator_prefix": "🎙",

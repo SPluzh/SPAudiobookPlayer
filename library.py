@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
     QStyleOptionViewItem,
     QFrame,
+    QCheckBox,
 )
 from PyQt6.QtCore import (
     Qt,
@@ -1877,7 +1878,7 @@ class LibraryWidget(QWidget):
         str
     )  # Emits the relative path of the selected audiobook
     show_folders_toggled = pyqtSignal(bool)  # Emits the new state of the folders toggle
-    delete_requested = pyqtSignal(int, str)  # Emits (audiobook_id, rel_path)
+    delete_requested = pyqtSignal(int, str, bool)  # Emits (audiobook_id, rel_path, delete_from_disk)
     folder_delete_requested = pyqtSignal(str)  # Emits folder relative path
     scan_requested = pyqtSignal()
     settings_requested = pyqtSignal()  # Propagate settings request
@@ -2555,6 +2556,7 @@ class LibraryWidget(QWidget):
                 item.setData(0, Qt.ItemDataRole.UserRole, data["path"])
                 item.setText(0, data["name"])
                 item.setData(0, Qt.ItemDataRole.UserRole + 1, "folder")
+                item.setData(0, Qt.ItemDataRole.UserRole + 5, data["name"])
                 item.setIcon(0, self.folder_icon)
                 # Restore the expansion state of the folder from previous sessions or cache
                 if data.get("is_expanded") or data["path"] in self._expanded_paths_cache:
@@ -3094,16 +3096,27 @@ class LibraryWidget(QWidget):
     def confirm_delete(self, audiobook_id: int, path: str):
         """Ask for user confirmation before proceeding with book deletion"""
         display_path = os.path.basename(path)
-        reply = QMessageBox.question(
-            self,
-            tr("library.confirm_delete_title"),
-            trf("library.confirm_delete_msg", path=display_path),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
+        
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(tr("library.confirm_delete_title"))
+        msg_box.setText(trf("library.confirm_delete_msg", path=display_path))
+        msg_box.setIcon(QMessageBox.Icon.Question)
+        
+        checkbox = QCheckBox(tr("library.delete_from_disk_checkbox"))
+        msg_box.setCheckBox(checkbox)
+        
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msg_box.setDefaultButton(QMessageBox.StandardButton.No)
+        
+        self.apply_blur()
+        try:
+            reply = msg_box.exec()
+        finally:
+            self.remove_blur()
 
         if reply == QMessageBox.StandardButton.Yes:
-            self.delete_requested.emit(audiobook_id, path)
+            delete_from_disk = checkbox.isChecked()
+            self.delete_requested.emit(audiobook_id, path, delete_from_disk)
 
     def remove_audiobook_from_ui(self, path: str):
         """Cleanly remove an audiobook from the library tree and internal cache"""
@@ -3124,6 +3137,7 @@ class LibraryWidget(QWidget):
         if item:
             parent = item.parent() or self.tree.invisibleRootItem()
             parent.removeChild(item)
+            self._recalculate_ancestors_stats(parent)
 
         # 3. Refresh status metrics in the main window
         window = self.window()
@@ -3134,6 +3148,34 @@ class LibraryWidget(QWidget):
             window.statusBar().showMessage(
                 trf("status.library_count", count=total_count)
             )
+
+    def _recalculate_ancestors_stats(self, parent_item: QTreeWidgetItem):
+        """Recursively update folder stats up to the root, removing folders if they become empty"""
+        if not parent_item or parent_item == self.tree.invisibleRootItem():
+            return
+
+        item_type = parent_item.data(0, Qt.ItemDataRole.UserRole + 1)
+        if item_type != "folder":
+            return
+
+        books_count, total_seconds = self._get_folder_stats(parent_item)
+        if books_count == 0:
+            # If folder is empty now, remove it and update its parent
+            grandparent = parent_item.parent() or self.tree.invisibleRootItem()
+            grandparent.removeChild(parent_item)
+            self._recalculate_ancestors_stats(grandparent)
+        else:
+            # Update folder text
+            folder_name = parent_item.data(0, Qt.ItemDataRole.UserRole + 5) or parent_item.text(0)
+            if " (" in folder_name and folder_name.endswith(")"):
+                folder_name = folder_name.rsplit(" (", 1)[0]
+                
+            duration_str = format_duration(total_seconds)
+            books_str = self._format_books_count(books_count)
+            parent_item.setText(0, f"{folder_name} ({books_str}, {duration_str})")
+            
+            # Propagate upwards
+            self._recalculate_ancestors_stats(parent_item.parent())
 
     def confirm_delete_folder(self, path: str):
         """Ask for user confirmation before proceeding with folder removal"""

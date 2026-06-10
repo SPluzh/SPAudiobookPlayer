@@ -30,7 +30,7 @@
     "show_statusbar": "ステータスバーを表示",
     "show_detailed_info": "書籍情報行を表示",
     "show_status_triangle": "ステータス三角形を表示",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "フィルターごとにフォルダーを記憶する"
   },
   "library": {
     "search_placeholder": "タイトル、著者、ナレーターで検索...",
@@ -80,12 +80,13 @@
     "folder_books_count": "{count} 冊のオーディオブック",
     "tooltip_sort_asc": "並べ替え: A-Z",
     "tooltip_sort_desc": "並べ替え: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "タイトル",
+    "sort_by_author": "著者",
+    "sort_by_date_added": "追加日",
+    "sort_by_last_read": "最後に聴いた日",
+    "sort_by_date_finished": "聴了日",
+    "tooltip_sort_field": "並べ替え...",
+    "delete_from_disk_checkbox": "ディスクからオーディオブックファイルも削除する"
   },
   "player": {
     "volume": "音量",
@@ -136,11 +137,11 @@
     "network_error": "ネットワークエラー",
     "connecting": "接続中...",
     "streaming": "ストリーミング再生中...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 プレイリストを読み込んでいます...",
+    "restoring_position": "⏩ 再生位置を復元しています...",
+    "seeking": "⏩ 再生位置を探しています... (試行 {attempt})",
+    "stream_ready": "▶ ストリーム準備完了",
+    "connecting_retry": "❌ 接続に失敗しました。再試行中... (試行 {attempt} / {max_attempts})"
   },
   "status": {
     "load_library": "📚 ライブラリを読み込み中",
@@ -157,10 +158,11 @@
     "styles_error": "❌ スタイルエラー: {error}",
     "reset_success": "✅ ライブラリを正常に初期化しました",
     "delete_success": "✅ オーディオブックを正常に削除しました",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "ライブラリは空です",
+    "no_audiobooks_instructions": "上のフォルダーアイコンをクリックしてオーディオブックディレクトリを選択してください\n\nメニュー -> ライブラリから本を追加することもできます\nその後、「スキャン」をクリックして更新します",
     "starting_copy": "コピーを開始しています...",
-    "no_audiobook_playing": "現在再生中のオーディオブックはありません"
+    "no_audiobook_playing": "現在再生中のオーディオブックはありません",
+    "copy_complete": "✅ {count} 個のアイテムをコピーしました。"
   },
   "delegate": {
     "narrator_prefix": "🎙",

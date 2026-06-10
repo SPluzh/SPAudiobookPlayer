@@ -30,7 +30,7 @@
     "show_statusbar": "Durum Çubuğunu Göster",
     "show_detailed_info": "Kitap bilgi satırını göster",
     "show_status_triangle": "Durum Üçgenini Göster",
-    "remember_filter_folders": "Remember folders for each filter"
+    "remember_filter_folders": "Her filtre için klasörleri hatırla"
   },
   "library": {
     "search_placeholder": "Başlık, yazar, anlatıcıya göre ara...",
@@ -80,12 +80,13 @@
     "folder_books_count": "{count} sesli kitap",
     "tooltip_sort_asc": "Sırala: A-Z",
     "tooltip_sort_desc": "Sırala: Z-A",
-    "sort_by_name": "Title",
-    "sort_by_author": "Author",
-    "sort_by_date_added": "Date added",
-    "sort_by_last_read": "Date last read",
-    "sort_by_date_finished": "Date finished",
-    "tooltip_sort_field": "Sort by..."
+    "sort_by_name": "Başlık",
+    "sort_by_author": "Yazar",
+    "sort_by_date_added": "Ekleme tarihi",
+    "sort_by_last_read": "Son dinleme tarihi",
+    "sort_by_date_finished": "Bitirme tarihi",
+    "tooltip_sort_field": "Sırala...",
+    "delete_from_disk_checkbox": "Sesli kitap dosyalarını diskten de sil"
   },
   "player": {
     "volume": "Ses",
@@ -136,11 +137,11 @@
     "network_error": "Ağ hatası",
     "connecting": "Bağlanıyor...",
     "streaming": "Akış oynatılıyor...",
-    "loading_playlist": "📋 Loading playlist...",
-    "restoring_position": "⏩ Restoring position...",
-    "seeking": "⏩ Seeking position... (attempt {attempt})",
-    "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "loading_playlist": "📋 Çalma listesi yükleniyor...",
+    "restoring_position": "⏩ Konum geri yükleniyor...",
+    "seeking": "⏩ Konum aranıyor... (deneme {attempt})",
+    "stream_ready": "▶ Akış hazır",
+    "connecting_retry": "❌ Bağlantı başarısız. Yeniden deneniyor... (deneme {attempt} / {max_attempts})"
   },
   "status": {
     "load_library": "📚 Sesli kitap kütüphanesini yükle",
@@ -157,10 +158,11 @@
     "styles_error": "❌ Stil hatası: {error}",
     "reset_success": "✅ Kütüphane başarıyla temizlendi",
     "delete_success": "✅ Sesli kitap başarıyla silindi",
-    "no_audiobooks_title": "Library is empty",
-    "no_audiobooks_instructions": "Click the folder icon above to select your audiobook directory\n\nYou can also add books via Menu -> Library\nThen click 'Scan' to update",
+    "no_audiobooks_title": "Kütüphane boş",
+    "no_audiobooks_instructions": "Sesli kitap dizininizi seçmek için yukarıdaki klasör simgesine tıklayın\n\nAyrıca Menü -> Kütüphane üzerinden de kitap ekleyebilirsiniz\nArdından güncellemek için 'Tara' seçeneğine tıklayın",
     "starting_copy": "Kopyalama başlatılıyor...",
-    "no_audiobook_playing": "Şu anda çalan sesli kitap yok"
+    "no_audiobook_playing": "Şu anda çalan sesli kitap yok",
+    "copy_complete": "✅ {count} öğe kopyalandı."
   },
   "delegate": {
     "narrator_prefix": "🎙",
