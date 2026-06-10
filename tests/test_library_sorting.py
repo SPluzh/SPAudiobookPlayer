@@ -155,3 +155,71 @@ def test_library_sorting_logic():
         items.append(child.data(0, Qt.ItemDataRole.UserRole))
         
     assert items == ["path/B", "path/D", "path/A", "path/C"]
+
+
+def test_library_sorting_by_title_instead_of_name():
+    # Ensure QApplication is initialized
+    app = QApplication.instance() or QApplication([])
+
+    def make_mock_book(id_, path, name, title, author):
+        return {
+            "id": id_,
+            "path": path,
+            "name": name,
+            "title": title,
+            "author": author,
+            "narrator": "Narrator X",
+            "time_added": 100.0,
+            "is_folder": False,
+            "file_count": 1,
+            "duration": 1000,
+            "listened_duration": 0,
+            "progress_percent": 0.0,
+            "codec": "mp3",
+            "bitrate_min": 128,
+            "bitrate_max": 128,
+            "bitrate_mode": "cbr",
+            "container": "mp3",
+            "description": "",
+            "total_size": 1000000,
+            "is_started": False,
+            "is_completed": False,
+            "is_favorite": False,
+        }
+
+    # Books where names and titles are in opposite alphabetical order:
+    # Names: "Folder A", "Folder B"
+    # Titles: "Z Title", "A Title"
+    books = [
+        make_mock_book(1, "path/A", "Folder A", "Z Title", "Author X"),
+        make_mock_book(2, "path/B", "Folder B", "A Title", "Author Y"),
+    ]
+
+    db_manager = MagicMock()
+    db_manager.get_all_tags.return_value = []
+    db_manager.get_all_audiobook_tags.return_value = {}
+    db_manager.get_audiobook_count.return_value = 2
+    db_manager.load_audiobooks_from_db.return_value = {"": books}
+
+    config = {
+        "sort_orders": {"all": "asc"},
+        "sort_fields": {"all": "name"}
+    }
+
+    widget = LibraryWidget(db_manager=db_manager, config=config)
+    widget.show_folders = False
+
+    # Sort by name (presented as Title in UI) ascending
+    widget.sort_field = "name"
+    widget.sort_order = "asc"
+    widget.load_audiobooks(use_cache=False)
+
+    items = []
+    root = widget.tree.invisibleRootItem()
+    for i in range(root.childCount()):
+        child = root.child(i)
+        items.append(child.data(0, Qt.ItemDataRole.UserRole))
+
+    # If it sorts by title (A Title before Z Title), Book B ("path/B") must come first!
+    assert items == ["path/B", "path/A"]
+

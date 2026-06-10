@@ -2301,7 +2301,7 @@ class LibraryWidget(QWidget):
         """Toggle folder visibility and refresh the library"""
         self.show_folders = checked
         self.show_folders_toggled.emit(checked)
-        self.load_audiobooks(use_cache=True)
+        self.load_audiobooks(use_cache=False)
 
     def refresh_library(self):
         """Force a database reload and refresh the UI"""
@@ -2343,7 +2343,10 @@ class LibraryWidget(QWidget):
                     val = (x.get("name") or "").lower()
                     return (1, val) if reverse else (0, val)
                 
-                val = x.get(field)
+                if field == "name":
+                    val = x.get("title") or x.get("name")
+                else:
+                    val = x.get(field)
                 is_empty = (val is None or val == "")
                 
                 if is_empty:
@@ -2390,27 +2393,47 @@ class LibraryWidget(QWidget):
                 all_items = []
                 for parent_path, items in self.cached_library_data.items():
                     for item_data in items:
-                        if not item_data["is_folder"]:
-                            # Get tags
-                            item_tags = all_tags.get(item_data["id"], [])
-                            if "id" in item_data:
-                                item_data["tags"] = item_tags
+                        if item_data["is_folder"]:
+                            continue
 
-                            # Apply Tag Filter
-                            if self.is_tag_filter_active and self.tag_filter_ids:
-                                item_tag_ids = {t["id"] for t in item_tags}
-                                if not self.tag_filter_ids.intersection(item_tag_ids):
-                                    continue
+                        # Attach tags
+                        item_tags = all_tags.get(item_data["id"], [])
+                        if "id" in item_data:
+                            item_data["tags"] = item_tags
 
-                            # Apply Favorites Filter
-                            if self.is_favorites_filter_active:
-                                if not item_data.get("is_favorite"):
-                                    continue
+                        # Apply Status Filter — must happen here so sorting is
+                        # applied only to the books that will actually be shown.
+                        # (filter_tree_items handles text search afterward)
+                        if self.current_filter == "not_started":
+                            if item_data.get("is_started"):
+                                continue
+                        elif self.current_filter == "in_progress":
+                            if not (item_data.get("is_started") and not item_data.get("is_completed")):
+                                continue
+                        elif self.current_filter == "completed":
+                            if not item_data.get("is_completed"):
+                                continue
 
-                            all_items.append(item_data)
+                        # Apply Tag Filter
+                        if self.is_tag_filter_active and self.tag_filter_ids:
+                            item_tag_ids = {t["id"] for t in item_tags}
+                            if not self.tag_filter_ids.intersection(item_tag_ids):
+                                continue
 
-                # Re-sort at client side
+                        # Apply Favorites Filter
+                        if self.is_favorites_filter_active:
+                            if not item_data.get("is_favorite"):
+                                continue
+
+                        all_items.append(item_data)
+
+                # Global flat sort — ignores folder hierarchy entirely.
+                # Two-pass stable sort: first by name (secondary, always asc, tie-breaker),
+                # then by primary field (stable — preserves name order within ties).
+                # This prevents folder-grouped clustering when multiple books share the
+                # same primary sort key value (e.g. same time_added after a batch scan).
                 reverse_sort = (self.sort_order == "desc")
+                all_items.sort(key=lambda x: (x.get("title") or x.get("name") or "").lower())
                 all_items.sort(
                     key=make_sort_key(self.sort_field, reverse_sort),
                     reverse=reverse_sort
@@ -2468,7 +2491,10 @@ class LibraryWidget(QWidget):
                     books = [x for x in items if not x.get("is_folder")]
                     
                     reverse_sort = (self.sort_order == "desc")
+                    # Two-pass sort for consistent tie-breaking within each folder group
+                    folders.sort(key=lambda x: (x.get("name") or "").lower())
                     folders.sort(key=make_sort_key(self.sort_field, reverse_sort), reverse=reverse_sort)
+                    books.sort(key=lambda x: (x.get("title") or x.get("name") or "").lower())
                     books.sort(key=make_sort_key(self.sort_field, reverse_sort), reverse=reverse_sort)
                     
                     sorted_data[parent_path] = folders + books
