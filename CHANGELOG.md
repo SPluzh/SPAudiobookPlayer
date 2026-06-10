@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.6.26]
+- **Library Sorting**: Added alphabetical sorting buttons (A-Z and Z-A) to the library filter bar. Sort preferences are now saved and remembered separately for each tab (All, New, Started, Finished), and the sort button has been moved to the far right. Expanded and collapsed states of folders are now preserved when changing sorting direction or switching tabs.
 - **Localization**: Added full support for Armenian language (Հայերեն), including comprehensive interface translations.
 
 ## [1.6.25]

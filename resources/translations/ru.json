@@ -80,6 +80,8 @@
     "filter_tags": "Теги",
     "show_folders": "",
     "tooltip_show_folders": "Показать структуру папок",
+    "tooltip_sort_asc": "Сортировка: А-Я",
+    "tooltip_sort_desc": "Сортировка: Я-А",
     "tooltip_filter_all": "Показать все книги",
     "tooltip_filter_not_started": "Показать только новые книги",
     "tooltip_filter_in_progress": "Показать книги в процессе прослушивания",

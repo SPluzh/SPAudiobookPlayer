@@ -94,7 +94,9 @@
     "description_title": "Աուդիոգրքի նկարագրություն",
     "no_tags_available": "Հասանելի պիտակներ չկան",
     "tooltip_favorites": "Ցուցադրել միայն երկրպագելի գրքերը",
-    "tooltip_tags": "Զտել ըստ պիտակների"
+    "tooltip_tags": "Զտել ըստ պիտակների",
+    "tooltip_sort_asc": "Տեսակավորել՝ Ա-Ֆ",
+    "tooltip_sort_desc": "Տեսակավորել՝ Ֆ-Ա"
   },
   "player": {
     "volume": "Ձայնի ուժգնություն",

@@ -76,7 +76,9 @@
     "no_tags_available": "لا توجد علامات متاحة",
     "tooltip_favorites": "إظهار الكتب المفضلة فقط",
     "tooltip_tags": "تصفية حسب الأوسمة",
-    "folder_books_count": "{count} كتب"
+    "folder_books_count": "{count} كتب",
+    "tooltip_sort_asc": "ترتيب: أ-ي",
+    "tooltip_sort_desc": "ترتيب: ي-أ"
   },
   "player": {
     "volume": "مستوى الصوت",

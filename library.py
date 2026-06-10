@@ -1881,6 +1881,7 @@ class LibraryWidget(QWidget):
     folder_delete_requested = pyqtSignal(str)  # Emits folder relative path
     scan_requested = pyqtSignal()
     settings_requested = pyqtSignal()  # Propagate settings request
+    sort_order_changed = pyqtSignal(str, str)  # Emits (filter_mode, sort_order)
 
     # Internal configuration for status filtering
     FILTER_CONFIG = {
@@ -1921,8 +1922,28 @@ class LibraryWidget(QWidget):
         self.tag_filter_ids = self.config.get("tag_filter_ids", set())
         self.is_tag_filter_active = self.config.get("tag_filter_active", False)
         self.is_favorites_filter_active = self.config.get("favorites_active", False)
+        self.sort_orders = self.config.get("sort_orders", {
+            "all": "asc",
+            "not_started": "asc",
+            "in_progress": "asc",
+            "completed": "asc"
+        })
+        # Migrate from old single sort_order if present
+        if "sort_orders" not in self.config and "sort_order" in self.config:
+            old_sort = self.config["sort_order"]
+            for k in self.sort_orders:
+                self.sort_orders[k] = old_sort
+        self._expanded_paths_cache = set()
         self.setup_ui()
         self.load_icons()
+
+    @property
+    def sort_order(self):
+        return self.sort_orders.get(self.current_filter, "asc")
+
+    @sort_order.setter
+    def sort_order(self, value):
+        self.sort_orders[self.current_filter] = value
 
     def setup_ui(self):
         """Assemble the search bar, filter buttons, and the main library tree widget"""
@@ -2013,6 +2034,24 @@ class LibraryWidget(QWidget):
             last_btn.setChecked(True)
 
         filter_layout.addStretch(1)
+
+        # Sort Order Toggle (A-Z / Z-A) - positioned at the far right
+        self.btn_sort = QPushButton("")
+        self.btn_sort.setObjectName("filterBtn")
+        self.btn_sort.setFixedWidth(40)
+        self.btn_sort.setIcon(
+            get_icon("arrow-up-narrow-wide")
+            if self.sort_order == "asc"
+            else get_icon("arrow-down-wide-narrow")
+        )
+        self.btn_sort.setToolTip(
+            tr("library.tooltip_sort_asc")
+            if self.sort_order == "asc"
+            else tr("library.tooltip_sort_desc")
+        )
+        self.btn_sort.clicked.connect(self.toggle_sort_order)
+        filter_layout.addWidget(self.btn_sort)
+
         layout.addLayout(filter_layout)
 
         self.tree = LibraryTree()
@@ -2221,6 +2260,7 @@ class LibraryWidget(QWidget):
     def apply_filter(self, filter_type: str):
         """Switch the current library view filter and refresh the audiobook listing"""
         self.current_filter = filter_type
+        self.update_sort_button_ui()
         # When switching filters, reload from DB to apply correct sorting and subset
         self.load_audiobooks(use_cache=False)
 
@@ -2234,9 +2274,31 @@ class LibraryWidget(QWidget):
         """Force a database reload and refresh the UI"""
         self.load_audiobooks(use_cache=False)
 
+    def get_expanded_folder_paths(self):
+        """Recursively retrieve the paths of all currently expanded folders in the tree"""
+        expanded_paths = set()
+        if not hasattr(self, "tree") or self.tree is None:
+            return expanded_paths
+
+        def traverse(item):
+            if item.data(0, Qt.ItemDataRole.UserRole + 1) == "folder":
+                if item.isExpanded():
+                    path = item.data(0, Qt.ItemDataRole.UserRole)
+                    if path:
+                        expanded_paths.add(path)
+            for i in range(item.childCount()):
+                traverse(item.child(i))
+
+        root = self.tree.invisibleRootItem()
+        if root:
+            for i in range(root.childCount()):
+                traverse(root.child(i))
+        return expanded_paths
+
     def load_audiobooks(self, use_cache: bool = True):
         """Retrieve and display audiobooks from the database according to the active filter"""
         self.current_playing_item = None
+        self._expanded_paths_cache = self.get_expanded_folder_paths()
         self.tree.clear()
 
         # Check cache or force reload
@@ -2283,19 +2345,11 @@ class LibraryWidget(QWidget):
 
                             all_items.append(item_data)
 
-                # Re-sort at client side to ensure absolute order (SQL order might be fragmented in the map)
-                sort_key = "name"
-                if self.current_filter == "in_progress":
-                    sort_key = "last_updated"
-                elif self.current_filter == "completed":
-                    sort_key = "time_finished"
-                elif self.current_filter == "not_started":
-                    sort_key = "time_added"
-                # favorites sort key removed as it's no longer a main mode
-
+                # Re-sort at client side alphabetically
+                reverse_sort = (self.sort_order == "desc")
                 all_items.sort(
-                    key=lambda x: (x.get(sort_key) or "", x.get("name") or ""),
-                    reverse=(sort_key != "name"),
+                    key=lambda x: (x.get("name") or "").lower(),
+                    reverse=reverse_sort,
                 )
 
                 # Batch add to avoid recursion overhead
@@ -2343,6 +2397,19 @@ class LibraryWidget(QWidget):
 
                     data_to_display = filtered_data
 
+                # Sort alphabetically by name within each parent group (folders first, then books)
+                sorted_data = {}
+                for parent_path, items in data_to_display.items():
+                    folders = [x for x in items if x.get("is_folder")]
+                    books = [x for x in items if not x.get("is_folder")]
+                    
+                    reverse_sort = (self.sort_order == "desc")
+                    folders.sort(key=lambda x: (x.get("name") or "").lower(), reverse=reverse_sort)
+                    books.sort(key=lambda x: (x.get("name") or "").lower(), reverse=reverse_sort)
+                    
+                    sorted_data[parent_path] = folders + books
+                data_to_display = sorted_data
+
                 # Root path can be represented as '' or None in the database map
                 self.add_items_from_db(
                     self.tree.invisibleRootItem(), "", data_to_display
@@ -2380,8 +2447,8 @@ class LibraryWidget(QWidget):
                 item.setText(0, data["name"])
                 item.setData(0, Qt.ItemDataRole.UserRole + 1, "folder")
                 item.setIcon(0, self.folder_icon)
-                # Restore the expansion state of the folder from previous sessions
-                if data.get("is_expanded"):
+                # Restore the expansion state of the folder from previous sessions or cache
+                if data.get("is_expanded") or data["path"] in self._expanded_paths_cache:
                     item.setExpanded(True)
 
                 # Sub-items traversal
@@ -2596,19 +2663,31 @@ class LibraryWidget(QWidget):
 
         return has_visible
 
+    def update_cached_folder_expanded_state(self, path: str, is_expanded: bool):
+        """Update the is_expanded state in the cached library data structure"""
+        if not self.cached_library_data:
+            return
+        for parent_path, items in self.cached_library_data.items():
+            for item in items:
+                if item.get("is_folder") and item.get("path") == path:
+                    item["is_expanded"] = is_expanded
+                    return
+
     def on_item_expanded(self, item):
-        """Persist the folder expansion state to the database when a branch is opened"""
+        """Persist the folder expansion state to the database and cache when a branch is opened"""
         if item.data(0, Qt.ItemDataRole.UserRole + 1) == "folder":
             path = item.data(0, Qt.ItemDataRole.UserRole)
             if path:
                 self.db.update_folder_expanded_state(path, True)
+                self.update_cached_folder_expanded_state(path, True)
 
     def on_item_collapsed(self, item):
-        """Persist the folder collapse state to the database when a branch is closed"""
+        """Persist the folder collapse state to the database and cache when a branch is closed"""
         if item.data(0, Qt.ItemDataRole.UserRole + 1) == "folder":
             path = item.data(0, Qt.ItemDataRole.UserRole)
             if path:
                 self.db.update_folder_expanded_state(path, False)
+                self.update_cached_folder_expanded_state(path, False)
 
     def show_context_menu(self, pos):
         """Construct and display a context menu for items in the library tree"""
@@ -3240,6 +3319,7 @@ class LibraryWidget(QWidget):
             self.btn_favorites.setToolTip(tr("library.tooltip_favorites"))
         if hasattr(self, "btn_tags"):
             self.btn_tags.setToolTip(tr("library.tooltip_tags"))
+        self.update_sort_button_ui()
             
         self.update_filter_labels()
         for filter_id, config in self.FILTER_CONFIG.items():
@@ -3274,3 +3354,20 @@ class LibraryWidget(QWidget):
     def expand_all_folders(self):
         """Expand all folders in the library tree"""
         self.tree.expandAll()
+
+    def update_sort_button_ui(self):
+        """Update the sort button icon and tooltip based on the current sort order"""
+        if hasattr(self, "btn_sort"):
+            if self.sort_order == "asc":
+                self.btn_sort.setIcon(get_icon("arrow-up-narrow-wide"))
+                self.btn_sort.setToolTip(tr("library.tooltip_sort_asc"))
+            else:
+                self.btn_sort.setIcon(get_icon("arrow-down-wide-narrow"))
+                self.btn_sort.setToolTip(tr("library.tooltip_sort_desc"))
+
+    def toggle_sort_order(self):
+        """Toggle alphabetical sorting direction and refresh library"""
+        self.sort_order = "desc" if self.sort_order == "asc" else "asc"
+        self.update_sort_button_ui()
+        self.sort_order_changed.emit(self.current_filter, self.sort_order)
+        self.load_audiobooks(use_cache=True)

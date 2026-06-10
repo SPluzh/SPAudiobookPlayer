@@ -76,7 +76,9 @@
     "no_tags_available": "사용 가능한 태그 없음",
     "tooltip_favorites": "즐겨찾는 책만 표시",
     "tooltip_tags": "태그로 필터링",
-    "folder_books_count": "오디오북 {count}권"
+    "folder_books_count": "오디오북 {count}권",
+    "tooltip_sort_asc": "정렬: A-Z",
+    "tooltip_sort_desc": "정렬: Z-A"
   },
   "player": {
     "volume": "음량",

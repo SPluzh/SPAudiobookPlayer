@@ -76,7 +76,9 @@
     "no_tags_available": "利用可能なタグはありません",
     "tooltip_favorites": "お気に入りの本のみ表示",
     "tooltip_tags": "タグでフィルタリング",
-    "folder_books_count": "{count} 冊のオーディオブック"
+    "folder_books_count": "{count} 冊のオーディオブック",
+    "tooltip_sort_asc": "並べ替え: A-Z",
+    "tooltip_sort_desc": "並べ替え: Z-A"
   },
   "player": {
     "volume": "音量",

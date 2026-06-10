@@ -94,7 +94,9 @@
     "no_tags_available": "Không có thẻ nào",
     "tooltip_favorites": "Chỉ hiển thị sách yêu thích",
     "tooltip_tags": "Lọc theo thẻ",
-    "folder_books_count": "{count} sách nói"
+    "folder_books_count": "{count} sách nói",
+    "tooltip_sort_asc": "Sắp xếp: A-Z",
+    "tooltip_sort_desc": "Sắp xếp: Z-A"
   },
   "player": {
     "volume": "Âm lượng",

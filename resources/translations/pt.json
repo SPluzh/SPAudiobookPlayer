@@ -76,7 +76,9 @@
     "no_tags_available": "Nenhuma tag disponível",
     "tooltip_favorites": "Mostrar apenas livros favoritos",
     "tooltip_tags": "Filtrar por tags",
-    "folder_books_count": "{count} audiolivros"
+    "folder_books_count": "{count} audiolivros",
+    "tooltip_sort_asc": "Ordenar: A-Z",
+    "tooltip_sort_desc": "Ordenar: Z-A"
   },
   "player": {
     "volume": "Volume",
