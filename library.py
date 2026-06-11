@@ -2081,17 +2081,6 @@ class LibraryWidget(QWidget):
         filter_layout = QHBoxLayout()
         filter_layout.setSpacing(10)
 
-        # Show Folders Toggle
-        self.btn_show_folders = QPushButton("")
-        self.btn_show_folders.setObjectName("filterBtn")
-        self.btn_show_folders.setCheckable(True)
-        self.btn_show_folders.setChecked(self.show_folders)
-        self.btn_show_folders.setIcon(get_icon("folder_cover"))
-        self.btn_show_folders.setFixedWidth(40)
-        self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
-        self.btn_show_folders.clicked.connect(self.on_show_folders_toggled)
-        filter_layout.addWidget(self.btn_show_folders)
-
         # Mass Selection Sub-Layout (flush group)
         mass_layout = QHBoxLayout()
         mass_layout.setSpacing(0)
@@ -2177,6 +2166,17 @@ class LibraryWidget(QWidget):
             last_btn.setChecked(True)
 
         filter_layout.addStretch(1)
+
+        # Show Folders Toggle
+        self.btn_show_folders = QPushButton("")
+        self.btn_show_folders.setObjectName("filterBtn")
+        self.btn_show_folders.setCheckable(True)
+        self.btn_show_folders.setChecked(self.show_folders)
+        self.btn_show_folders.setIcon(get_icon("folder_cover"))
+        self.btn_show_folders.setFixedWidth(40)
+        self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
+        self.btn_show_folders.clicked.connect(self.on_show_folders_toggled)
+        filter_layout.addWidget(self.btn_show_folders)
 
         # Create a layout to keep sorting toggle and dropdown in one flush button group
         sort_layout = QHBoxLayout()

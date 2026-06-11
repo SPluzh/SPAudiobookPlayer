@@ -52,9 +52,46 @@ def test_remember_folders_per_filter_behavior(tmp_path):
         assert window.remember_filter_folders_action.isChecked() is True
         
         # Check initial widget state (default library_filter_mode is "all")
-        assert window.library_widget.remember_filter_folders is True
-        assert window.library_widget.show_folders is True
-        assert window.library_widget.btn_show_folders.isChecked() is True
+        library = window.library_widget
+        assert library.remember_filter_folders is True
+        assert library.show_folders is True
+        assert library.btn_show_folders.isChecked() is True
+
+        # Verify btn_show_folders is positioned to the left of the sort button layout in filter_layout
+        filter_layout = None
+        main_layout = library.layout()
+        for i in range(main_layout.count()):
+            item = main_layout.itemAt(i)
+            if item.layout():
+                lay = item.layout()
+                for j in range(lay.count()):
+                    sub_item = lay.itemAt(j)
+                    if sub_item.widget() == library.btn_show_folders:
+                        filter_layout = lay
+                        break
+                if filter_layout:
+                    break
+
+        assert filter_layout is not None
+        idx_show_folders = -1
+        idx_sort_layout = -1
+        for j in range(filter_layout.count()):
+            sub_item = filter_layout.itemAt(j)
+            if sub_item.widget() == library.btn_show_folders:
+                idx_show_folders = j
+            elif sub_item.layout():
+                sub_lay = sub_item.layout()
+                has_sort = False
+                for k in range(sub_lay.count()):
+                    if sub_lay.itemAt(k).widget() == library.btn_sort:
+                        has_sort = True
+                        break
+                if has_sort:
+                    idx_sort_layout = j
+
+        assert idx_show_folders != -1
+        assert idx_sort_layout != -1
+        assert idx_show_folders < idx_sort_layout
 
         # Switch to "not_started" filter and verify folders are hidden
         window.library_widget.apply_filter("not_started")
