@@ -85,6 +85,7 @@
     "sort_by_date_added": "Date d'ajout",
     "sort_by_last_read": "Date de dernière écoute",
     "sort_by_date_finished": "Date de fin",
+    "sort_by_progress": "Progression de lecture",
     "tooltip_sort_field": "Trier par...",
     "delete_from_disk_checkbox": "Supprimer également les fichiers du livre audio du disque"
   },

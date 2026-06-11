@@ -85,6 +85,7 @@
     "sort_by_date_added": "Hinzugefügt am",
     "sort_by_last_read": "Zuletzt gehört am",
     "sort_by_date_finished": "Beendet am",
+    "sort_by_progress": "Lesefortschritt",
     "tooltip_sort_field": "Sortieren nach...",
     "delete_from_disk_checkbox": "Hörbuchdateien auch von der Festplatte löschen"
   },

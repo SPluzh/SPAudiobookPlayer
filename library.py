@@ -3534,7 +3534,8 @@ class LibraryWidget(QWidget):
             ("author", "library.sort_by_author"),
             ("time_added", "library.sort_by_date_added"),
             ("last_updated", "library.sort_by_last_read"),
-            ("time_finished", "library.sort_by_date_finished")
+            ("time_finished", "library.sort_by_date_finished"),
+            ("progress_percent", "library.sort_by_progress")
         ]
         
         current = self.sort_field
@@ -3561,7 +3562,8 @@ class LibraryWidget(QWidget):
                 "author": "sort_by_author",
                 "time_added": "sort_by_date_added",
                 "last_updated": "sort_by_last_read",
-                "time_finished": "sort_by_date_finished"
+                "time_finished": "sort_by_date_finished",
+                "progress_percent": "sort_by_progress"
             }
             loc_key = field_map.get(self.sort_field, "sort_by_name")
             field_name = tr(f"library.{loc_key}")

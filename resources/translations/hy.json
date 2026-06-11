@@ -103,6 +103,7 @@
     "sort_by_date_added": "Ավելացման ամսաթիվ",
     "sort_by_last_read": "Վերջին լսման ամսաթիվ",
     "sort_by_date_finished": "Ավարտման ամսաթիվ",
+    "sort_by_progress": "Ընթերցման առաջընթաց",
     "tooltip_sort_field": "Սորտավորել ըստ...",
     "delete_from_disk_checkbox": "Նաև ջնջել աուդիոգրքի ֆայլերը սկավառակից"
   },

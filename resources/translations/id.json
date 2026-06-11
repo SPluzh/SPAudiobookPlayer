@@ -103,6 +103,7 @@
     "sort_by_date_added": "Tanggal ditambahkan",
     "sort_by_last_read": "Tanggal terakhir didengar",
     "sort_by_date_finished": "Tanggal selesai",
+    "sort_by_progress": "Kemajuan membaca",
     "tooltip_sort_field": "Urutkan berdasarkan...",
     "delete_from_disk_checkbox": "Hapus juga file audiobook dari disk"
   },

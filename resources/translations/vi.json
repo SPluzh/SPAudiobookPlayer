@@ -103,6 +103,7 @@
     "sort_by_date_added": "Ngày thêm",
     "sort_by_last_read": "Ngày nghe gần nhất",
     "sort_by_date_finished": "Ngày hoàn thành",
+    "sort_by_progress": "Tiến độ đọc",
     "tooltip_sort_field": "Sắp xếp theo...",
     "delete_from_disk_checkbox": "Đồng thời xóa các tệp sách nói khỏi đĩa"
   },

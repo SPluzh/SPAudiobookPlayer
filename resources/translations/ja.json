@@ -85,6 +85,7 @@
     "sort_by_date_added": "追加日",
     "sort_by_last_read": "最後に聴いた日",
     "sort_by_date_finished": "聴了日",
+    "sort_by_progress": "読書進捗",
     "tooltip_sort_field": "並べ替え...",
     "delete_from_disk_checkbox": "ディスクからオーディオブックファイルも削除する"
   },

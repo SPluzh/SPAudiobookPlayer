@@ -85,6 +85,7 @@
     "sort_by_date_added": "تاريخ الإضافة",
     "sort_by_last_read": "تاريخ آخر قراءة",
     "sort_by_date_finished": "تاريخ الانتهاء",
+    "sort_by_progress": "تقدم القراءة",
     "tooltip_sort_field": "ترتيب حسب...",
     "delete_from_disk_checkbox": "احذف أيضًا ملفات الكتاب الصوتي من القرص"
   },

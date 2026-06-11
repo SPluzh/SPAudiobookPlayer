@@ -85,6 +85,7 @@
     "sort_by_date_added": "추가된 날짜",
     "sort_by_last_read": "마지막으로 들은 날짜",
     "sort_by_date_finished": "완료된 날짜",
+    "sort_by_progress": "독서 진행률",
     "tooltip_sort_field": "정렬 기준...",
     "delete_from_disk_checkbox": "디스크에서 오디오북 파일도 삭제"
   },

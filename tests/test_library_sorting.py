@@ -223,3 +223,82 @@ def test_library_sorting_by_title_instead_of_name():
     # If it sorts by title (A Title before Z Title), Book B ("path/B") must come first!
     assert items == ["path/B", "path/A"]
 
+
+def test_library_sorting_by_progress():
+    # Ensure QApplication is initialized
+    app = QApplication.instance() or QApplication([])
+
+    def make_mock_book(id_, path, name, progress_percent):
+        return {
+            "id": id_,
+            "path": path,
+            "name": name,
+            "title": name,
+            "author": "Author",
+            "narrator": "Narrator X",
+            "time_added": 100.0,
+            "is_folder": False,
+            "file_count": 1,
+            "duration": 1000,
+            "listened_duration": 0,
+            "progress_percent": progress_percent,
+            "codec": "mp3",
+            "bitrate_min": 128,
+            "bitrate_max": 128,
+            "bitrate_mode": "cbr",
+            "container": "mp3",
+            "description": "",
+            "total_size": 1000000,
+            "is_started": progress_percent > 0,
+            "is_completed": progress_percent >= 100,
+            "is_favorite": False,
+        }
+
+    books = [
+        make_mock_book(1, "path/A", "Book A", 25),
+        make_mock_book(2, "path/B", "Book B", 75),
+        make_mock_book(3, "path/C", "Book C", 0),
+        make_mock_book(4, "path/D", "Book D", 100),
+    ]
+
+    db_manager = MagicMock()
+    db_manager.get_all_tags.return_value = []
+    db_manager.get_all_audiobook_tags.return_value = {}
+    db_manager.get_audiobook_count.return_value = 4
+    db_manager.load_audiobooks_from_db.return_value = {"": books}
+
+    config = {
+        "sort_orders": {"all": "asc"},
+        "sort_fields": {"all": "name"}
+    }
+
+    widget = LibraryWidget(db_manager=db_manager, config=config)
+    widget.show_folders = False
+
+    # --- Test 1: Sort by progress_percent ascending ---
+    # Expected order: 0 (C), 25 (A), 75 (B), 100 (D)
+    widget.sort_field = "progress_percent"
+    widget.sort_order = "asc"
+    widget.load_audiobooks(use_cache=False)
+
+    items = []
+    root = widget.tree.invisibleRootItem()
+    for i in range(root.childCount()):
+        child = root.child(i)
+        items.append(child.data(0, Qt.ItemDataRole.UserRole))
+
+    assert items == ["path/C", "path/A", "path/B", "path/D"]
+
+    # --- Test 2: Sort by progress_percent descending ---
+    # Expected order: 100 (D), 75 (B), 25 (A), 0 (C)
+    widget.sort_order = "desc"
+    widget.load_audiobooks(use_cache=True)
+
+    items = []
+    for i in range(root.childCount()):
+        child = root.child(i)
+        items.append(child.data(0, Qt.ItemDataRole.UserRole))
+
+    assert items == ["path/D", "path/B", "path/A", "path/C"]
+
+

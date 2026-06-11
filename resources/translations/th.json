@@ -103,6 +103,7 @@
     "sort_by_date_added": "วันที่เพิ่ม",
     "sort_by_last_read": "วันที่ฟังล่าสุด",
     "sort_by_date_finished": "วันที่ฟังจบ",
+    "sort_by_progress": "ความคืบหน้าการอ่าน",
     "tooltip_sort_field": "จัดเรียงตาม...",
     "delete_from_disk_checkbox": "ลบไฟล์หนังสือเสียงออกจากดิสก์ด้วย"
   },

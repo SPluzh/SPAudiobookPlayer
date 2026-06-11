@@ -85,6 +85,7 @@
     "sort_by_date_added": "जोड़ने की तिथि",
     "sort_by_last_read": "अंतिम बार सुनने की तिथि",
     "sort_by_date_finished": "समाप्त होने की तिथि",
+    "sort_by_progress": "पढ़ने की प्रगति",
     "tooltip_sort_field": "क्रमबद्ध करें...",
     "delete_from_disk_checkbox": "डिस्क से ऑडियोबुक फ़ाइलें भी हटाएं"
   },
