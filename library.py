@@ -3159,48 +3159,110 @@ class LibraryWidget(QWidget):
             menu.exec(self.tree.viewport().mapToGlobal(pos))
 
     def mark_as_read(self, audiobook_id, duration, path):
-        self.db.mark_audiobook_completed(audiobook_id, duration)
-        self.update_cache_item_status(path, is_started=True, is_completed=True)
-        item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
-        if item:
-            # Preserve existing favorite status
-            current_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
-            is_favorite = False
-            if current_data and len(current_data) >= 3:
-                is_favorite = current_data[2]
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
 
-            item.setData(0, Qt.ItemDataRole.UserRole + 3, (True, True, is_favorite))
-            self.refresh_audiobook_item(path)
-        self.filter_audiobooks()
-        window = self.window()
-        if (
-            hasattr(window, "playback_controller")
-            and window.playback_controller.current_audiobook_id == audiobook_id
-        ):
-            window.update_ui_for_audiobook()
+        if is_batch:
+            batch_books = []
+            for p in selected_paths:
+                info_b = self.db.get_audiobook_info(p)
+                if info_b:
+                    batch_books.append((info_b[0], info_b[6] or 0.0, p))
+            
+            for bid, bdur, bp in batch_books:
+                self.db.mark_audiobook_completed(bid, bdur)
+                self.update_cache_item_status(bp, is_started=True, is_completed=True)
+                item = self.find_item_by_path(self.tree.invisibleRootItem(), bp)
+                if item:
+                    current_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+                    is_favorite = False
+                    if current_data and len(current_data) >= 3:
+                        is_favorite = current_data[2]
+                    item.setData(0, Qt.ItemDataRole.UserRole + 3, (True, True, is_favorite))
+                    self.refresh_audiobook_item(bp)
+            
+            self.filter_audiobooks()
+            window = self.window()
+            if hasattr(window, "playback_controller"):
+                current_id = window.playback_controller.current_audiobook_id
+                if current_id in [b[0] for b in batch_books]:
+                    window.update_ui_for_audiobook()
+        else:
+            self.db.mark_audiobook_completed(audiobook_id, duration)
+            self.update_cache_item_status(path, is_started=True, is_completed=True)
+            item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
+            if item:
+                # Preserve existing favorite status
+                current_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+                is_favorite = False
+                if current_data and len(current_data) >= 3:
+                    is_favorite = current_data[2]
+
+                item.setData(0, Qt.ItemDataRole.UserRole + 3, (True, True, is_favorite))
+                self.refresh_audiobook_item(path)
+            self.filter_audiobooks()
+            window = self.window()
+            if (
+                hasattr(window, "playback_controller")
+                and window.playback_controller.current_audiobook_id == audiobook_id
+            ):
+                window.update_ui_for_audiobook()
 
     def mark_as_unread(self, audiobook_id, path):
-        self.db.reset_audiobook_status(audiobook_id)
-        self.update_cache_item_status(path, is_started=False, is_completed=False)
-        item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
-        if item:
-            # Preserve existing favorite status
-            current_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
-            is_favorite = False
-            if current_data and len(current_data) >= 3:
-                is_favorite = current_data[2]
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
 
-            item.setData(0, Qt.ItemDataRole.UserRole + 3, (False, False, is_favorite))
-            self.refresh_audiobook_item(path)
-        self.filter_audiobooks()
-        window = self.window()
-        if (
-            hasattr(window, "playback_controller")
-            and window.playback_controller.current_audiobook_id == audiobook_id
-        ):
-            window.playback_controller.saved_file_index = 0
-            window.playback_controller.saved_position = 0
-            window.update_ui_for_audiobook()
+        if is_batch:
+            batch_books = []
+            for p in selected_paths:
+                info_b = self.db.get_audiobook_info(p)
+                if info_b:
+                    batch_books.append((info_b[0], p))
+            
+            for bid, bp in batch_books:
+                self.db.reset_audiobook_status(bid)
+                self.update_cache_item_status(bp, is_started=False, is_completed=False)
+                item = self.find_item_by_path(self.tree.invisibleRootItem(), bp)
+                if item:
+                    current_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+                    is_favorite = False
+                    if current_data and len(current_data) >= 3:
+                        is_favorite = current_data[2]
+                    item.setData(0, Qt.ItemDataRole.UserRole + 3, (False, False, is_favorite))
+                    self.refresh_audiobook_item(bp)
+            
+            self.filter_audiobooks()
+            window = self.window()
+            if hasattr(window, "playback_controller"):
+                current_id = window.playback_controller.current_audiobook_id
+                if current_id in [b[0] for b in batch_books]:
+                    window.playback_controller.saved_file_index = 0
+                    window.playback_controller.saved_position = 0
+                    window.update_ui_for_audiobook()
+        else:
+            self.db.reset_audiobook_status(audiobook_id)
+            self.update_cache_item_status(path, is_started=False, is_completed=False)
+            item = self.find_item_by_path(self.tree.invisibleRootItem(), path)
+            if item:
+                # Preserve existing favorite status
+                current_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+                is_favorite = False
+                if current_data and len(current_data) >= 3:
+                    is_favorite = current_data[2]
+
+                item.setData(0, Qt.ItemDataRole.UserRole + 3, (False, False, is_favorite))
+                self.refresh_audiobook_item(path)
+            self.filter_audiobooks()
+            window = self.window()
+            if (
+                hasattr(window, "playback_controller")
+                and window.playback_controller.current_audiobook_id == audiobook_id
+            ):
+                window.playback_controller.saved_file_index = 0
+                window.playback_controller.saved_position = 0
+                window.update_ui_for_audiobook()
 
     def toggle_favorite(self, audiobook_id: int, path: str):
         """Toggle favorite status and refresh item"""
