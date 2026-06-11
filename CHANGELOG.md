@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.2]
+- **Library**: Added a mass selection button to the toolbar and checkboxes to audiobook rows.
+- **Library**: Added a dropdown menu next to the mass selection button with options to select all visible books or clear the current selection.
+- **Library**: Added support for batch assigning/managing tags, clearing tags, and toggling favorite status for all selected books from the context menu.
+
 ## [1.7.1]
 - **Library Deletion**: Added a checkbox to the audiobook delete dialog allowing users to delete book files directly from the disk.
 - **Library Sorting**: Added an option to sort the library by reading progress percentage.

@@ -697,7 +697,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             return 0
 
         # Get tree indentation
-        tree = self.parent()
+        tree = getattr(self, "tree", None) or self.parent()
         indent = 12
         if hasattr(tree, "indentation"):
             indent = tree.indentation()
@@ -730,7 +730,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         line_width = 2
 
         # Get tree indentation for perfect line alignment
-        tree = self.parent()
+        tree = getattr(self, "tree", None) or self.parent()
         indent = 12  # Default value matching tree.setIndentation(12)
         if hasattr(tree, "indentation"):
             indent = tree.indentation()
@@ -986,6 +986,14 @@ class MultiLineDelegate(QStyledItemDelegate):
             self.audiobook_icon_size,
             self.audiobook_icon_size,
         )
+
+    def get_checkbox_rect(self, icon_rect: QRectF) -> QRectF:
+        """Calculate bounds for the mass selection checkbox"""
+        cb_width = 18.0
+        cb_height = 18.0
+        x = icon_rect.right() + 10.0
+        y = icon_rect.top() + (icon_rect.height() - cb_height) / 2.0
+        return QRectF(x, y, cb_width, cb_height)
 
     def get_play_button_rect(self, icon_rect: QRectF) -> QRectF:
         """Calculate the rect for the play button overlay in high precision"""
@@ -1305,7 +1313,60 @@ class MultiLineDelegate(QStyledItemDelegate):
 
                 painter.restore()
 
-        text_x = icon_rect.right() + 15
+        # Draw mass selection checkbox if mode is active
+        tree = getattr(self, "tree", None) or self.parent()
+        mass_mode = getattr(tree, "mass_selection_mode", False)
+        if mass_mode:
+            playing_file = index.data(Qt.ItemDataRole.UserRole)
+            cb_rect = self.get_checkbox_rect(QRectF(icon_rect))
+            
+            selected_paths = getattr(tree, "selected_audiobook_paths", set())
+            is_checked = playing_file in selected_paths
+            
+            painter.save()
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            
+            border_color = QColor("#555555")
+            _, accent_color = self._get_style("delegate_accent")
+            
+            is_over_cb = False
+            if self.mouse_pos and cb_rect.contains(QPointF(self.mouse_pos)):
+                is_over_cb = True
+            
+            if is_checked:
+                bg_color = accent_color
+                if is_over_cb:
+                    bg_color = bg_color.lighter(110)
+                painter.setBrush(bg_color)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawRoundedRect(cb_rect, 4.0, 4.0)
+                
+                checkmark_path = QPainterPath()
+                w = cb_rect.width()
+                h = cb_rect.height()
+                checkmark_path.moveTo(cb_rect.left() + w * 0.25, cb_rect.top() + h * 0.5)
+                checkmark_path.lineTo(cb_rect.left() + w * 0.45, cb_rect.top() + h * 0.75)
+                checkmark_path.lineTo(cb_rect.left() + w * 0.75, cb_rect.top() + h * 0.35)
+                
+                pen = QPen(Qt.GlobalColor.white, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+                painter.setPen(pen)
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawPath(checkmark_path)
+            else:
+                bg_color = QColor(Qt.GlobalColor.transparent)
+                if is_over_cb:
+                    border_color = border_color.lighter(130)
+                painter.setBrush(bg_color)
+                painter.setPen(QPen(border_color, 1.5))
+                painter.drawRoundedRect(cb_rect, 4.0, 4.0)
+                
+            painter.restore()
+
+        # Layout shift if mass selection mode is active
+        if mass_mode:
+            text_x = icon_rect.right() + 43
+        else:
+            text_x = icon_rect.right() + 15
         text_y = option.rect.top() + self.vertical_padding
         available_width = option.rect.right() - text_x - self.horizontal_padding
 
@@ -1573,7 +1634,9 @@ class MultiLineDelegate(QStyledItemDelegate):
             return QRect()
 
         icon_rect = self.get_icon_rect(option_rect, index)
-        text_x = icon_rect.right() + 15
+        tree = getattr(self, "tree", None) or self.parent()
+        mass_mode = getattr(tree, "mass_selection_mode", False)
+        text_x = icon_rect.right() + (43 if mass_mode else 15)
         text_y = option_rect.top() + self.vertical_padding
 
         # Skip title
@@ -1613,7 +1676,9 @@ class MultiLineDelegate(QStyledItemDelegate):
             return QRect()
 
         icon_rect = self.get_icon_rect(option_rect, index)
-        text_x = icon_rect.right() + 15
+        tree = getattr(self, "tree", None) or self.parent()
+        mass_mode = getattr(tree, "mass_selection_mode", False)
+        text_x = icon_rect.right() + (43 if mass_mode else 15)
         text_y = option_rect.top() + self.vertical_padding
 
         # Skip title
@@ -1669,6 +1734,8 @@ class LibraryTree(QTreeWidget):
         self.has_any_content = (
             False  # Track if DB has any items regardless of current filter
         )
+        self.mass_selection_mode = False
+        self.selected_audiobook_paths = set()
 
     def wheelEvent(self, event):
         """Override wheel event to scroll by single row instead of multiple rows"""
@@ -1750,6 +1817,15 @@ class LibraryTree(QTreeWidget):
                 if item_type == "audiobook":
                     rect = self.visualRect(index)
                     icon_rect = delegate.get_icon_rect(rect, index)
+                    
+                    # Check checkbox hover first
+                    if self.mass_selection_mode and hasattr(delegate, "get_checkbox_rect"):
+                        cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
+                        if cb_rect.contains(QPointF(event.pos())):
+                            self.setCursor(Qt.CursorShape.PointingHandCursor)
+                            self.viewport().update()
+                            return
+
                     play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
                     if play_rect.contains(QPointF(event.pos())):
                         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1817,6 +1893,19 @@ class LibraryTree(QTreeWidget):
                     if delegate and hasattr(delegate, "get_play_button_rect"):
                         rect = self.visualRect(index)
                         icon_rect = delegate.get_icon_rect(rect, index)
+                        
+                        # Check checkbox click first in mass selection mode
+                        if self.mass_selection_mode and hasattr(delegate, "get_checkbox_rect"):
+                            cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
+                            if cb_rect.contains(QPointF(event.pos())):
+                                path = index.data(Qt.ItemDataRole.UserRole)
+                                if path in self.selected_audiobook_paths:
+                                    self.selected_audiobook_paths.remove(path)
+                                else:
+                                    self.selected_audiobook_paths.add(path)
+                                self.viewport().update()
+                                return
+
                         play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
                         if play_rect.contains(QPointF(event.pos())):
                             path = index.data(Qt.ItemDataRole.UserRole)
@@ -2003,6 +2092,34 @@ class LibraryWidget(QWidget):
         self.btn_show_folders.clicked.connect(self.on_show_folders_toggled)
         filter_layout.addWidget(self.btn_show_folders)
 
+        # Mass Selection Sub-Layout (flush group)
+        mass_layout = QHBoxLayout()
+        mass_layout.setSpacing(0)
+        mass_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Mass Selection Toggle
+        self.btn_mass_select = QPushButton("")
+        self.btn_mass_select.setObjectName("filterBtn")
+        self.btn_mass_select.setCheckable(True)
+        self.btn_mass_select.setChecked(False)
+        self.btn_mass_select.setIcon(get_icon("square-check"))
+        self.btn_mass_select.setFixedWidth(40)
+        self.btn_mass_select.setToolTip(tr("library.tooltip_mass_select"))
+        self.btn_mass_select.clicked.connect(self.on_mass_select_toggled)
+        mass_layout.addWidget(self.btn_mass_select)
+
+        # Mass Selection Dropdown Arrow Button
+        self.btn_mass_select_arrow = QPushButton("")
+        self.btn_mass_select_arrow.setObjectName("filterBtnArrow")
+        self.btn_mass_select_arrow.setFixedWidth(20)
+        self.btn_mass_select_arrow.setIcon(get_icon("chevron-down"))
+        self.btn_mass_select_arrow.setIconSize(QSize(12, 12))
+        self.btn_mass_select_arrow.setToolTip(tr("library.tooltip_mass_select"))
+        self.btn_mass_select_arrow.clicked.connect(self.show_mass_select_menu)
+        mass_layout.addWidget(self.btn_mass_select_arrow)
+
+        filter_layout.addLayout(mass_layout)
+
         # Favorites Filter (Icon-only)
         self.btn_favorites = QPushButton("")
         self.btn_favorites.setObjectName("filterBtn")
@@ -2120,6 +2237,7 @@ class LibraryWidget(QWidget):
         self.tree.search_requested.connect(self.search_edit.setText)
 
         if self.delegate:
+            self.delegate.tree = self.tree
             self.tree.setItemDelegate(self.delegate)
 
         layout.addWidget(self.tree)
@@ -2322,6 +2440,13 @@ class LibraryWidget(QWidget):
             self.show_folders_by_filter[self.current_filter] = checked
         self.show_folders_toggled.emit(checked)
         self.load_audiobooks(use_cache=False)
+
+    def on_mass_select_toggled(self, checked):
+        """Toggle mass selection mode and refresh viewport"""
+        self.tree.mass_selection_mode = checked
+        if not checked:
+            self.tree.selected_audiobook_paths.clear()
+        self.tree.viewport().update()
 
     def refresh_library(self):
         """Force a database reload and refresh the UI"""
@@ -2816,11 +2941,30 @@ class LibraryWidget(QWidget):
                 return
             audiobook_id = info[0]
 
+            selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+            mass_mode = getattr(self.tree, "mass_selection_mode", False)
+            is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
+
+            if is_batch:
+                batch_books = []
+                for p in selected_paths:
+                    info_b = self.db.get_audiobook_info(p)
+                    if info_b:
+                        batch_books.append((info_b[0], p))
+
             # Fetch fresh favorite status
-            is_favorite = False
-            status_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
-            if status_data and len(status_data) >= 3:
-                is_favorite = status_data[2]
+            if is_batch:
+                is_favorite = True
+                for bid, bp in batch_books:
+                    book_data = self.db.get_audiobook_by_path(bp)
+                    if book_data and not book_data.get("is_favorite", False):
+                        is_favorite = False
+                        break
+            else:
+                is_favorite = False
+                status_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+                if status_data and len(status_data) >= 3:
+                    is_favorite = status_data[2]
 
             duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4]
 
@@ -2867,8 +3011,19 @@ class LibraryWidget(QWidget):
 
             # Populate with existing tags
             all_tags = self.db.get_all_tags()
-            current_tags = self.db.get_tags_for_audiobook(audiobook_id)
-            current_tag_ids = {t["id"] for t in current_tags}
+            if is_batch:
+                common_tag_ids = None
+                for bid, bp in batch_books:
+                    tags = self.db.get_tags_for_audiobook(bid)
+                    tids = {t["id"] for t in tags}
+                    if common_tag_ids is None:
+                        common_tag_ids = tids
+                    else:
+                        common_tag_ids.intersection_update(tids)
+                current_tag_ids = common_tag_ids if common_tag_ids is not None else set()
+            else:
+                current_tags = self.db.get_tags_for_audiobook(audiobook_id)
+                current_tag_ids = {t["id"] for t in current_tags}
 
             if all_tags:
                 for tag in all_tags:
@@ -2921,7 +3076,15 @@ class LibraryWidget(QWidget):
             clear_tags_action.triggered.connect(
                 lambda _: self.clear_all_tags(audiobook_id, path)
             )
-            clear_tags_action.setEnabled(bool(current_tag_ids))
+            if is_batch:
+                has_any_tags = False
+                for bid, bp in batch_books:
+                    if self.db.get_tags_for_audiobook(bid):
+                        has_any_tags = True
+                        break
+                clear_tags_action.setEnabled(has_any_tags)
+            else:
+                clear_tags_action.setEnabled(bool(current_tag_ids))
             tags_menu.addAction(clear_tags_action)
 
             menu.addSeparator()
@@ -3041,38 +3204,110 @@ class LibraryWidget(QWidget):
 
     def toggle_favorite(self, audiobook_id: int, path: str):
         """Toggle favorite status and refresh item"""
-        new_state = self.db.toggle_favorite(audiobook_id)
-        self.refresh_audiobook_item(path)
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
 
-        # If we are in Favorites filter mode and we removed it, reload to hide it
-        if self.is_favorites_filter_active and not new_state:
-            self.load_audiobooks(use_cache=False)
+        if is_batch:
+            any_not_fav = False
+            batch_books = []
+            for p in selected_paths:
+                info_b = self.db.get_audiobook_info(p)
+                if info_b:
+                    batch_books.append((info_b[0], p))
+                    book_data = self.db.get_audiobook_by_path(p)
+                    if book_data and not book_data.get("is_favorite", False):
+                        any_not_fav = True
+            
+            target_state = any_not_fav
+            any_removed = False
+            
+            for bid, bp in batch_books:
+                book_data = self.db.get_audiobook_by_path(bp)
+                if book_data:
+                    curr_fav = book_data.get("is_favorite", False)
+                    if curr_fav != target_state:
+                        self.db.toggle_favorite(bid)
+                        if not target_state:
+                            any_removed = True
+                self.refresh_audiobook_item(bp)
+            
+            if self.is_favorites_filter_active and any_removed:
+                self.load_audiobooks(use_cache=False)
+        else:
+            new_state = self.db.toggle_favorite(audiobook_id)
+            self.refresh_audiobook_item(path)
+
+            # If we are in Favorites filter mode and we removed it, reload to hide it
+            if self.is_favorites_filter_active and not new_state:
+                self.load_audiobooks(use_cache=False)
 
     def open_tag_assignment(self, audiobook_id, path):
         """Open dialog to assign tags to audiobook"""
-        # Unified dialog handling both assignment and management
-        dialog = TagManagerDialog(self.db, self, audiobook_id)
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
+
+        if is_batch:
+            audiobook_ids = []
+            for p in selected_paths:
+                info_b = self.db.get_audiobook_info(p)
+                if info_b:
+                    audiobook_ids.append(info_b[0])
+            dialog = TagManagerDialog(self.db, self, audiobook_ids)
+        else:
+            dialog = TagManagerDialog(self.db, self, audiobook_id)
+
         if dialog.exec():
-            # Refresh this item to show new tags
-            self.refresh_audiobook_item(path)
+            # Refresh items to show new tags
+            if is_batch:
+                for p in selected_paths:
+                    self.refresh_audiobook_item(p)
+            else:
+                self.refresh_audiobook_item(path)
 
     def toggle_tag_from_context_menu(
         self, audiobook_id: int, tag_id: int, path: str, checked: bool
     ):
         """Handle toggling a tag directly from the context menu"""
-        if checked:
-            self.db.add_tag_to_audiobook(audiobook_id, tag_id)
-        else:
-            self.db.remove_tag_from_audiobook(audiobook_id, tag_id)
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
 
-        # Refresh the UI for this item
-        self.refresh_audiobook_item(path)
+        if is_batch:
+            for p in selected_paths:
+                info_b = self.db.get_audiobook_info(p)
+                if info_b:
+                    bid = info_b[0]
+                    if checked:
+                        self.db.add_tag_to_audiobook(bid, tag_id)
+                    else:
+                        self.db.remove_tag_from_audiobook(bid, tag_id)
+                    self.refresh_audiobook_item(p)
+        else:
+            if checked:
+                self.db.add_tag_to_audiobook(audiobook_id, tag_id)
+            else:
+                self.db.remove_tag_from_audiobook(audiobook_id, tag_id)
+            self.refresh_audiobook_item(path)
 
     def clear_all_tags(self, audiobook_id: int, path: str):
         """Remove all tags from an audiobook"""
-        self.db.remove_all_tags_from_audiobook(audiobook_id)
-        # Refresh the UI for this item
-        self.refresh_audiobook_item(path)
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
+
+        if is_batch:
+            for p in selected_paths:
+                info_b = self.db.get_audiobook_info(p)
+                if info_b:
+                    bid = info_b[0]
+                    self.db.remove_all_tags_from_audiobook(bid)
+                    self.refresh_audiobook_item(p)
+        else:
+            self.db.remove_all_tags_from_audiobook(audiobook_id)
+            # Refresh the UI for this item
+            self.refresh_audiobook_item(path)
 
     def open_metadata_editor(self, audiobook_id: int, path: str):
         """Open dialog to edit audiobook metadata (author, title, narrator)"""
@@ -3466,6 +3701,10 @@ class LibraryWidget(QWidget):
     def update_texts(self):
         if hasattr(self, "btn_show_folders"):
             self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
+        if hasattr(self, "btn_mass_select"):
+            self.btn_mass_select.setToolTip(tr("library.tooltip_mass_select"))
+        if hasattr(self, "btn_mass_select_arrow"):
+            self.btn_mass_select_arrow.setToolTip(tr("library.tooltip_mass_select"))
         if hasattr(self, "btn_favorites"):
             self.btn_favorites.setToolTip(tr("library.tooltip_favorites"))
         if hasattr(self, "btn_tags"):
@@ -3568,3 +3807,51 @@ class LibraryWidget(QWidget):
             loc_key = field_map.get(self.sort_field, "sort_by_name")
             field_name = tr(f"library.{loc_key}")
             self.btn_sort_field.setToolTip(f"{tr('library.tooltip_sort_field')} ({field_name})")
+
+    def show_mass_select_menu(self):
+        """Display a popup menu for mass selection actions (select all, deselect all)"""
+        menu = QMenu(self)
+        menu.setObjectName("massSelectMenu")
+        
+        select_all_action = menu.addAction(tr("library.menu_select_all"))
+        select_all_action.triggered.connect(self.select_all_audiobooks)
+        
+        deselect_all_action = menu.addAction(tr("library.menu_deselect_all"))
+        deselect_all_action.triggered.connect(self.deselect_all_audiobooks)
+        
+        global_pos = self.btn_mass_select_arrow.mapToGlobal(QPoint(0, self.btn_mass_select_arrow.height()))
+        menu.exec(global_pos)
+
+    def get_all_visible_audiobook_paths(self):
+        """Recursively collect paths of all visible audiobook items in the tree"""
+        paths = []
+        def traverse(item):
+            if item.isHidden():
+                return
+            item_type = item.data(0, Qt.ItemDataRole.UserRole + 1)
+            if item_type == "audiobook":
+                path = item.data(0, Qt.ItemDataRole.UserRole)
+                if path:
+                    paths.append(path)
+            for i in range(item.childCount()):
+                traverse(item.child(i))
+
+        root = self.tree.invisibleRootItem()
+        for i in range(root.childCount()):
+            traverse(root.child(i))
+        return paths
+
+    def select_all_audiobooks(self):
+        """Enable mass selection mode and select all currently visible audiobooks"""
+        if not self.tree.mass_selection_mode:
+            self.btn_mass_select.setChecked(True)
+            self.on_mass_select_toggled(True)
+        
+        visible_paths = self.get_all_visible_audiobook_paths()
+        self.tree.selected_audiobook_paths.update(visible_paths)
+        self.tree.viewport().update()
+
+    def deselect_all_audiobooks(self):
+        """Clear all selected audiobook paths"""
+        self.tree.selected_audiobook_paths.clear()
+        self.tree.viewport().update()

@@ -70,18 +70,25 @@ class ColorPickerPopup(QDialog):
         self.accept()
 
 class TagManagerDialog(QDialog):
-    """Dialog to manage all tags (add, edit, delete) AND assign them to an optional audiobook"""
+    """Dialog to manage all tags (add, edit, delete) AND assign them to one or more audiobooks"""
     def __init__(self, db_manager, parent=None, audiobook_id=None):
         super().__init__(parent)
         self.db = db_manager
-        self.audiobook_id = audiobook_id
+        
+        # Support both single integer/string ID or a list of IDs
+        self.audiobook_ids = None
+        if audiobook_id is not None:
+            if isinstance(audiobook_id, (list, tuple, set)):
+                self.audiobook_ids = list(audiobook_id)
+            else:
+                self.audiobook_ids = [audiobook_id]
         
         # Default color from new palette (Coral)
         self.current_color = "#FFC8C8"
         
         # Title depends on context
         title = tr("tags.manager_title")
-        if self.audiobook_id:
+        if self.audiobook_ids:
              title = tr("tags.assign_title")
              
         self.setWindowTitle(title)
@@ -96,7 +103,7 @@ class TagManagerDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Help label if in assignment mode
-        if self.audiobook_id:
+        if self.audiobook_ids:
             lbl = QLabel(tr("tags.assign_help"))
             lbl.setWordWrap(True)
             layout.addWidget(lbl)
@@ -159,7 +166,7 @@ class TagManagerDialog(QDialog):
         
         from PyQt6.QtWidgets import QSizePolicy
         
-        if self.audiobook_id:
+        if self.audiobook_ids:
             # Assign Button
             self.assign_btn = QPushButton(tr("tags.assign_btn"))
             self.assign_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -190,8 +197,9 @@ class TagManagerDialog(QDialog):
         
         # If in assignment mode, get currently assigned tags
         assigned_ids = set()
-        if self.audiobook_id:
-            assigned_tags = self.db.get_tags_for_audiobook(self.audiobook_id)
+        if self.audiobook_ids:
+            first_id = self.audiobook_ids[0]
+            assigned_tags = self.db.get_tags_for_audiobook(first_id)
             assigned_ids = {t['id'] for t in assigned_tags}
         
         for tag in all_tags:
@@ -206,7 +214,7 @@ class TagManagerDialog(QDialog):
             item.setData(Qt.ItemDataRole.UserRole, tag)
             
             # Checkbox logic
-            if self.audiobook_id:
+            if self.audiobook_ids:
                 item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsSelectable)
                 check_state = Qt.CheckState.Checked if tag['id'] in assigned_ids else Qt.CheckState.Unchecked
                 item.setCheckState(check_state)
@@ -284,7 +292,7 @@ class TagManagerDialog(QDialog):
     def update_texts(self):
         """Update UI texts when language changes"""
         title = tr("tags.manager_title")
-        if self.audiobook_id:
+        if self.audiobook_ids:
              title = tr("tags.assign_title")
         self.setWindowTitle(title)
         
@@ -301,23 +309,24 @@ class TagManagerDialog(QDialog):
             self.close_btn.setText(tr("tags.close_btn"))
 
     def save_selection(self):
-        if not self.audiobook_id:
+        if not self.audiobook_ids:
             self.accept()
             return
             
-        current_assigned = {t['id'] for t in self.db.get_tags_for_audiobook(self.audiobook_id)}
-        
-        for i in range(self.list_widget.count()):
-            item = self.list_widget.item(i)
-            tag = item.data(Qt.ItemDataRole.UserRole)
-            tag_id = tag['id']
+        for book_id in self.audiobook_ids:
+            current_assigned = {t['id'] for t in self.db.get_tags_for_audiobook(book_id)}
             
-            is_checked = item.checkState() == Qt.CheckState.Checked
-            
-            if is_checked and tag_id not in current_assigned:
-                self.db.add_tag_to_audiobook(self.audiobook_id, tag_id)
-            elif not is_checked and tag_id in current_assigned:
-                self.db.remove_tag_from_audiobook(self.audiobook_id, tag_id)
+            for i in range(self.list_widget.count()):
+                item = self.list_widget.item(i)
+                tag = item.data(Qt.ItemDataRole.UserRole)
+                tag_id = tag['id']
                 
+                is_checked = item.checkState() == Qt.CheckState.Checked
+                
+                if is_checked and tag_id not in current_assigned:
+                    self.db.add_tag_to_audiobook(book_id, tag_id)
+                elif not is_checked and tag_id in current_assigned:
+                    self.db.remove_tag_from_audiobook(book_id, tag_id)
+                    
         self.accept()
 
