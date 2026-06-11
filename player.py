@@ -780,10 +780,8 @@ class PlayerWidget(QWidget):
         self.auto_rewind_btn.toggled.connect(self.on_auto_rewind_toggled)
         btns_row.addWidget(self.auto_rewind_btn)
 
-        # Bookmarks container to group list and add button flush together and prevent overlap on resize
-        self.bookmarks_container = QWidget()
-        self.bookmarks_container.setFixedWidth(60)
-        bookmarks_layout = QHBoxLayout(self.bookmarks_container)
+        # Bookmarks layout to group list and add button flush together and prevent overlap on resize
+        bookmarks_layout = QHBoxLayout()
         bookmarks_layout.setSpacing(0)
         bookmarks_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -805,7 +803,7 @@ class PlayerWidget(QWidget):
         self.add_bookmark_btn.clicked.connect(self.add_bookmark_clicked)
         bookmarks_layout.addWidget(self.add_bookmark_btn)
 
-        btns_row.addWidget(self.bookmarks_container)
+        btns_row.addLayout(bookmarks_layout)
 
         btns_row.addStretch()
         

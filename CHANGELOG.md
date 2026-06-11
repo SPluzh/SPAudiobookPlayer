@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.3]
+- **UI**: Fixed an issue in minimal interface mode where the bookmark buttons (Mark and +) were compressed vertically and overlapped by the volume slider.
+
 ## [1.7.2]
 - **Library**: Added a mass selection button to the toolbar and checkboxes to audiobook rows.
 - **Library**: Added a dropdown menu next to the mass selection button with options to select all visible books or clear the current selection.
