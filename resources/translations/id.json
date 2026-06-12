@@ -55,6 +55,7 @@
     "context_play": "Putar",
     "menu_edit_metadata": "Edit Metadata",
     "menu_open_folder": "Buka Folder",
+    "menu_convert_opus": "Konversi ke Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Tandai Selesai",
     "menu_mark_unread": "Tandai Belum Dimulai",

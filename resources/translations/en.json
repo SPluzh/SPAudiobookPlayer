@@ -56,6 +56,7 @@
     "context_play": "Play",
     "menu_edit_metadata": "Edit Metadata",
     "menu_open_folder": "Open Folder",
+    "menu_convert_opus": "Convert to Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Mark as Read",
     "menu_mark_unread": "Mark as Not Started",

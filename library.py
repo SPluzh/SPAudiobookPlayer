@@ -78,6 +78,7 @@ from styles import StyleManager
 
 
 from metadata_dialog import MetadataEditDialog
+from opus_dialog import OpusConversionDialog
 
 
 def get_placeholder_folder_rect(rect):
@@ -3121,6 +3122,18 @@ class LibraryWidget(QWidget):
 
             menu.addSeparator()
 
+            convert_opus_action = QAction(tr("library.menu_convert_opus"), self)
+            opus_icon = get_icon("convert_opus")
+            if opus_icon.isNull():
+                opus_icon = get_icon("context_edit_metadata")
+            convert_opus_action.setIcon(opus_icon)
+            convert_opus_action.triggered.connect(
+                lambda _, p=path: self.open_opus_converter(p)
+            )
+            menu.addAction(convert_opus_action)
+
+            menu.addSeparator()
+
             delete_action = QAction(tr("library.menu_delete"), self)
             delete_action.setIcon(get_icon("delete"))
             delete_action.triggered.connect(
@@ -3157,6 +3170,74 @@ class LibraryWidget(QWidget):
             menu.addAction(merge_action)
 
             menu.exec(self.tree.viewport().mapToGlobal(pos))
+
+    def open_opus_converter(self, clicked_path: str):
+        """Open Opus conversion dialog for the clicked book (or all selected in batch mode)"""
+        print(f"[DEBUG] open_opus_converter called for clicked_path: {clicked_path}")
+        from pathlib import Path
+
+        library_root = Path(self.config.get("default_path", ""))
+        ffprobe_raw = self.config.get("ffprobe_path", "resources/bin/ffprobe.exe")
+        ffprobe_str = str(ffprobe_raw)
+        ffmpeg_str  = ffprobe_str.replace("ffprobe", "ffmpeg")
+        print(f"[DEBUG] library_root: {library_root}, ffprobe_path: {ffprobe_str}, ffmpeg_path: {ffmpeg_str}")
+
+        # Determine which paths to convert
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and clicked_path in selected_paths and len(selected_paths) > 1
+        print(f"[DEBUG] mass_mode: {mass_mode}, selected_paths: {selected_paths}, is_batch: {is_batch}")
+
+        if is_batch:
+            paths_to_convert = list(selected_paths)
+        else:
+            paths_to_convert = [clicked_path]
+        print(f"[DEBUG] paths_to_convert: {paths_to_convert}")
+
+        # Resolve to absolute paths
+        abs_paths = []
+        for p in paths_to_convert:
+            abs_p = Path(p) if Path(p).is_absolute() else library_root / p
+            exists = abs_p.exists()
+            print(f"[DEBUG] Checking path: {p} -> Absolute: {abs_p} (exists: {exists})")
+            if exists:
+                abs_paths.append(str(abs_p))
+
+        print(f"[DEBUG] abs_paths final list: {abs_paths}")
+        if not abs_paths:
+            print("[DEBUG] abs_paths is empty, returning without dialog")
+            return
+
+        # Blur parent window
+        window = self.window()
+        if hasattr(window, "apply_blur"):
+            print("[DEBUG] Applying window blur")
+            window.apply_blur()
+
+        try:
+            print("[DEBUG] Initializing OpusConversionDialog")
+            dialog = OpusConversionDialog(
+                parent=self,
+                library_paths=abs_paths,
+                ffmpeg_path=ffmpeg_str,
+                ffprobe_path=ffprobe_str,
+            )
+            print("[DEBUG] Connecting dialog signals")
+            dialog.file_converted.connect(
+                lambda old, new, br: self.db.update_file_extension(old, new, br)
+            )
+            dialog.conversion_complete.connect(self.scan_requested.emit)
+            print("[DEBUG] Executing dialog")
+            dialog.exec()
+            print("[DEBUG] Dialog finished")
+        except Exception as e:
+            print(f"[DEBUG] Error showing OpusConversionDialog: {e}")
+            import traceback
+            traceback.print_exc()
+
+        if hasattr(window, "remove_blur"):
+            print("[DEBUG] Removing window blur")
+            window.remove_blur()
 
     def mark_as_read(self, audiobook_id, duration, path):
         selected_paths = getattr(self.tree, "selected_audiobook_paths", set())

@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.3]
+- **Library**: Added a "Convert to Opus" option to the audiobook context menu, allowing users to convert individual books or multiple selected books at once, followed by an automatic directory rescan to update book entries.
 - **UI**: Fixed an issue in minimal interface mode where the bookmark buttons (Mark and +) were compressed vertically and overlapped by the volume slider.
 
 ## [1.7.2]

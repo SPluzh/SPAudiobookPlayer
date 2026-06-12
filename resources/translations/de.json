@@ -37,6 +37,7 @@
     "context_play": "Abspielen",
     "menu_edit_metadata": "Metadaten bearbeiten",
     "menu_open_folder": "Ordner öffnen",
+    "menu_convert_opus": "In Opus konvertieren",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Als gelesen markieren",
     "menu_mark_unread": "Als nicht begonnen markieren",

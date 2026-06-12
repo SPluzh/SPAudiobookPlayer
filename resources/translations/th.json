@@ -55,6 +55,7 @@
     "context_play": "เล่น",
     "menu_edit_metadata": "แก้ไขเมตาเดตา",
     "menu_open_folder": "เปิดโฟลเดอร์",
+    "menu_convert_opus": "แปลงเป็น Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "ทำเครื่องหมายว่าฟังจบแล้ว",
     "menu_mark_unread": "ทำเครื่องหมายว่ายังไม่ได้เริ่ม",

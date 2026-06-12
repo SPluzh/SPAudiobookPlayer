@@ -2133,9 +2133,8 @@ class AudiobookPlayerWindow(QMainWindow):
             self.on_opus_conversion_complete()
 
     def on_opus_conversion_complete(self):
-        """Reload library after opus conversion to reflect updated file extensions"""
-        if hasattr(self, "library_widget"):
-            self.library_widget.load_audiobooks()
+        """Rescan library after opus conversion to reflect updated files"""
+        self.rescan_directory()
         self.statusBar().showMessage(tr("opus_converter.conversion_done"))
 
     def perform_full_reset(self):

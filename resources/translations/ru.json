@@ -56,6 +56,7 @@
     "context_play": "Воспроизвести",
     "menu_edit_metadata": "Редактировать метаданные",
     "menu_open_folder": "Открыть папку",
+    "menu_convert_opus": "Конвертировать в Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Отметить прочитанной",
     "menu_mark_unread": "Отметить не начатой",

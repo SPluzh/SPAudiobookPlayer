@@ -50,14 +50,20 @@ class OpusConversionThread(QThread):
     log_message = pyqtSignal(str)                  # log text
     conversion_finished = pyqtSignal(bool, str)    # success, summary message
     
-    def __init__(self, library_path: str, bitrate: str = "48k",
+    def __init__(self, library_path: str = "", bitrate: str = "48k",
                  stereo_strategy: str = "downmix",
                  ffmpeg_path: str = "ffmpeg",
                  ffprobe_path: str = "ffprobe",
                  max_workers: int = 0,
-                 parent=None):
+                 parent=None,
+                 library_paths: List[str] = None):
         super().__init__(parent)
-        self.library_path = Path(library_path)
+        if library_paths:
+            self.library_paths = [Path(p) for p in library_paths]
+            self.library_path = self.library_paths[0] if self.library_paths else Path(library_path)
+        else:
+            self.library_paths = [Path(library_path)] if library_path else []
+            self.library_path = Path(library_path) if library_path else Path("")
         self.bitrate = bitrate
         self.stereo_strategy = stereo_strategy
         self.ffmpeg_path = str(ffmpeg_path)
@@ -165,9 +171,12 @@ class OpusConversionThread(QThread):
     def _find_convertible_files(self) -> List[Path]:
         """Find all audio files that can be converted to opus"""
         files = []
-        for f in sorted(self.library_path.rglob("*")):
-            if f.is_file() and f.suffix.lower() in SUPPORTED_INPUT_FORMATS:
-                files.append(f)
+        for path in self.library_paths:
+            if not path.exists():
+                continue
+            for f in sorted(path.rglob("*")):
+                if f.is_file() and f.suffix.lower() in SUPPORTED_INPUT_FORMATS:
+                    files.append(f)
         return files
     
     def _get_audio_duration(self, file_path: Path) -> Optional[float]:

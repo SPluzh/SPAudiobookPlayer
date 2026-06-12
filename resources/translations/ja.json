@@ -37,6 +37,7 @@
     "context_play": "再生",
     "menu_edit_metadata": "メタデータを編集",
     "menu_open_folder": "フォルダーを開く",
+    "menu_convert_opus": "Opus に変換",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "既読にする",
     "menu_mark_unread": "未読にする",

@@ -24,9 +24,14 @@ class OpusConversionDialog(QDialog):
     # Signal emitted when all conversions are complete
     conversion_complete = pyqtSignal()
     
-    def __init__(self, parent=None, library_path="", ffmpeg_path="ffmpeg", ffprobe_path="ffprobe"):
+    def __init__(self, parent=None, library_path="", library_paths=None, ffmpeg_path="ffmpeg", ffprobe_path="ffprobe"):
         super().__init__(parent)
-        self.library_path = library_path
+        if library_paths:
+            self.library_paths = library_paths
+            self.library_path = library_paths[0] if library_paths else ""
+        else:
+            self.library_paths = [library_path] if library_path else []
+            self.library_path = library_path
         self.ffmpeg_path = ffmpeg_path
         self.ffprobe_path = ffprobe_path
         self.thread = None
@@ -118,7 +123,7 @@ class OpusConversionDialog(QDialog):
     
     def _update_file_count(self):
         """Count and display the number of convertible files"""
-        count = count_convertible_files(self.library_path)
+        count = sum(count_convertible_files(p) for p in self.library_paths)
         if count > 0:
             self.file_count_label.setText(
                 trf("opus_converter.files_to_convert", count=count)
@@ -131,7 +136,7 @@ class OpusConversionDialog(QDialog):
     
     def _on_start(self):
         """Start conversion after confirmation"""
-        if not self.library_path:
+        if not self.library_paths:
             return
         
         # Blur parent if available
@@ -162,7 +167,7 @@ class OpusConversionDialog(QDialog):
         stereo = self.stereo_combo.currentData()
         
         self.thread = OpusConversionThread(
-            library_path=self.library_path,
+            library_paths=self.library_paths,
             bitrate=bitrate,
             stereo_strategy=stereo,
             ffmpeg_path=self.ffmpeg_path,
