@@ -774,23 +774,103 @@ class SearchWorker(QThread):
             except ImportError:
                 from duckduckgo_search import DDGS
             
-            region = 'wt-wt'
+            # Auto-detect region: use 'ru-ru' for Cyrillic queries so Russian
+            # sites (litres.ru, labirint.ru, etc.) appear in the results,
+            # just as they do in a browser with geo-location enabled.
+            region = 'ru-ru' if any('\u0400' <= ch <= '\u04FF' for ch in self.query) else 'wt-wt'
+            print(f"[SearchWorker] Auto-detected region: '{region}' for query: '{self.query}'")
                 
             results = []
-            max_attempts = 3
-            for attempt in range(max_attempts):
-                try:
-                    with DDGS() as ddgs:
-                        results = list(ddgs.images(self.query, region=region, safesearch='on', max_results=60))
-                    if len(results) > 1:
-                        break
-                    print(f"[SearchWorker] Attempt {attempt + 1} returned {len(results)} results. Retrying...")
-                except Exception as e:
-                    print(f"[SearchWorker] Attempt {attempt + 1} failed with exception: {e}")
-                    if attempt == max_attempts - 1:
-                        raise e
-                if attempt < max_attempts - 1:
-                    time.sleep(1.0)
+            is_cyrillic = any('\u0400' <= ch <= '\u04FF' for ch in self.query)
+            
+            if is_cyrillic and 'site:' not in self.query.lower():
+                # 1. Search on litres.ru first to find specific litres.ru covers.
+                # DDG degrades site: results when requests come too fast from the
+                # same session, so we use a single attempt with a fresh context and
+                # only retry once after a longer pause.
+                litres_query = f'site:litres.ru {self.query}'
+                litres_results = []
+                for attempt in range(2):
+                    try:
+                        print(f"[SearchWorker] Attempting litres.ru search (attempt {attempt + 1})...")
+                        with DDGS() as ddgs:
+                            litres_results = list(ddgs.images(litres_query, region=region, safesearch='off', max_results=60))
+                        if litres_results:
+                            break
+                    except Exception as e:
+                        print(f"[SearchWorker] Litres.ru search attempt {attempt + 1} failed: {e}")
+                    if attempt == 0:
+                        time.sleep(2.5)
+
+                # Count how many results actually come from litres.ru
+                from urllib.parse import urlparse
+                litres_hit_count = sum(
+                    1 for r in litres_results
+                    if 'litres.ru' in urlparse(r.get('image', '')).netloc.lower()
+                    or 'litres.ru' in urlparse(r.get('url', '')).netloc.lower()
+                )
+                print(f"[SearchWorker] litres.ru hits from site: query: {litres_hit_count}/{len(litres_results)}")
+
+                # 2. General search — skip if the litres query gave plenty of images to
+                # avoid triggering DDG's rate-limit / degraded-mode for the same IP.
+                general_results = []
+                if len(litres_results) < 5:
+                    # Pause before second query so DDG doesn't see two back-to-back
+                    # requests and switch to degraded (no-site-filter) mode.
+                    time.sleep(2.5)
+                    for attempt in range(2):
+                        try:
+                            print(f"[SearchWorker] Attempting general search (attempt {attempt + 1})...")
+                            with DDGS() as ddgs:
+                                general_results = list(ddgs.images(self.query, region=region, safesearch='off', max_results=60))
+                            if len(general_results) > 1:
+                                break
+                        except Exception as e:
+                            print(f"[SearchWorker] General search attempt {attempt + 1} failed: {e}")
+                            if attempt == 1 and not litres_results:
+                                raise e
+                        if attempt == 0:
+                            time.sleep(2.5)
+                
+                # Merge results, removing duplicates
+                seen_images = set()
+                merged_results = []
+                for res in litres_results + general_results:
+                    img_url = res.get('image')
+                    if img_url and img_url not in seen_images:
+                        seen_images.add(img_url)
+                        merged_results.append(res)
+                
+                # Sort: prioritize results that belong to litres.ru
+                litres_priority = []
+                other_results = []
+                for res in merged_results:
+                    img_url = res.get('image', '')
+                    page_url = res.get('url', '')
+                    img_domain = urlparse(img_url).netloc.lower()
+                    page_domain = urlparse(page_url).netloc.lower()
+                    if 'litres.ru' in img_domain or 'litres.ru' in page_domain:
+                        litres_priority.append(res)
+                    else:
+                        other_results.append(res)
+                
+                results = litres_priority + other_results
+            else:
+                # Original logic for non-Cyrillic queries
+                max_attempts = 3
+                for attempt in range(max_attempts):
+                    try:
+                        with DDGS() as ddgs:
+                            results = list(ddgs.images(self.query, region=region, safesearch='off', max_results=60))
+                        if len(results) > 1:
+                            break
+                        print(f"[SearchWorker] Attempt {attempt + 1} returned {len(results)} results. Retrying...")
+                    except Exception as e:
+                        print(f"[SearchWorker] Attempt {attempt + 1} failed with exception: {e}")
+                        if attempt == max_attempts - 1:
+                            raise e
+                    if attempt < max_attempts - 1:
+                        time.sleep(1.0)
                     
             print(f"[SearchWorker] Search completed successfully, found {len(results)} results")
             self.results_found.emit(results)

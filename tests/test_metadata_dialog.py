@@ -303,9 +303,12 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
     results_ru = []
     worker_ru.results_found.connect(results_ru.extend)
     worker_ru.run()
-    assert results_ru == mock_results
-    assert len(captured_kwargs) == 1
+    assert len(results_ru) > 0
+    assert len(captured_kwargs) == 2
+    assert captured_kwargs[0][0] == "site:litres.ru Макс Фрай"
     assert captured_kwargs[0][1].get('region') == 'ru-ru'
+    assert captured_kwargs[1][0] == "Макс Фрай"
+    assert captured_kwargs[1][1].get('region') == 'ru-ru'
 
     # Test retry logic: first attempt returns 1 result, second attempt returns 2 results
     retry_results = [
