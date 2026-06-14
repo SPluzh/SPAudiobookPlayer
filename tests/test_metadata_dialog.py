@@ -299,16 +299,21 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
     
     # Test Cyrillic query region selection
     captured_kwargs.clear()
+    
+    # Mock LitresScraper to return empty list to trigger DDG fallback and test DDG behavior
+    class MockLitresScraper:
+        def search(self, query):
+            return []
+    monkeypatch.setattr("litres_scraper.LitresScraper", MockLitresScraper)
+    
     worker_ru = SearchWorker("Макс Фрай")
     results_ru = []
     worker_ru.results_found.connect(results_ru.extend)
     worker_ru.run()
     assert len(results_ru) > 0
-    assert len(captured_kwargs) == 2
-    assert captured_kwargs[0][0] == "site:litres.ru Макс Фрай"
+    assert len(captured_kwargs) == 1
+    assert captured_kwargs[0][0] == "Макс Фрай"
     assert captured_kwargs[0][1].get('region') == 'ru-ru'
-    assert captured_kwargs[1][0] == "Макс Фрай"
-    assert captured_kwargs[1][1].get('region') == 'ru-ru'
 
     # Test retry logic: first attempt returns 1 result, second attempt returns 2 results
     retry_results = [
@@ -343,6 +348,28 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
     
     assert retry_calls == 2
     assert results_retry == mock_results
+    
+    # Test successful LitresScraper path
+    mock_litres_results = [
+        {"title": "Litres Cover", "image": "https://cdn.litres.ru/pub/c/cover/123.jpg", "width": 300, "height": 400}
+    ]
+    class MockLitresScraperSuccess:
+        def search(self, query):
+            return mock_litres_results
+    monkeypatch.setattr("litres_scraper.LitresScraper", MockLitresScraperSuccess)
+    monkeypatch.setattr("duckduckgo_search.DDGS", MockDDGS)
+    try:
+        monkeypatch.setattr("ddgs.DDGS", MockDDGS)
+    except ImportError:
+        pass
+    
+    worker_litres = SearchWorker("Макс Фрай")
+    emitted_events = []
+    worker_litres.results_found.connect(emitted_events.append)
+    worker_litres.run()
+    assert len(emitted_events) == 2
+    assert emitted_events[0] == mock_litres_results
+    assert emitted_events[1] == mock_litres_results + mock_results
 
     # 5. Test DownloadWorker with mocked urlopen
     class MockResponse:

@@ -780,97 +780,58 @@ class SearchWorker(QThread):
             region = 'ru-ru' if any('\u0400' <= ch <= '\u04FF' for ch in self.query) else 'wt-wt'
             print(f"[SearchWorker] Auto-detected region: '{region}' for query: '{self.query}'")
                 
-            results = []
             is_cyrillic = any('\u0400' <= ch <= '\u04FF' for ch in self.query)
+            litres_results = []
+            if is_cyrillic:
+                try:
+                    print(f"[SearchWorker] Querying LitresScraper directly...")
+                    from litres_scraper import LitresScraper
+                    scraper = LitresScraper()
+                    litres_results = scraper.search(self.query)
+                    print(f"[SearchWorker] LitresScraper found {len(litres_results)} results")
+                    if litres_results:
+                        self.results_found.emit(litres_results)
+                except Exception as e:
+                    print(f"[SearchWorker] LitresScraper failed: {e}")
             
-            if is_cyrillic and 'site:' not in self.query.lower():
-                # 1. Search on litres.ru first to find specific litres.ru covers.
-                # DDG degrades site: results when requests come too fast from the
-                # same session, so we use a single attempt with a fresh context and
-                # only retry once after a longer pause.
-                litres_query = f'site:"litres.ru" {self.query}'
-                litres_results = []
-                for attempt in range(2):
-                    try:
-                        print(f"[SearchWorker] Attempting litres.ru search (attempt {attempt + 1})...")
-                        with DDGS() as ddgs:
-                            litres_results = list(ddgs.images(litres_query, region=region, safesearch='on', max_results=60))
-                        if litres_results:
-                            break
-                    except Exception as e:
-                        print(f"[SearchWorker] Litres.ru search attempt {attempt + 1} failed: {e}")
-                    if attempt == 0:
-                        time.sleep(2.5)
-
-                # Count how many results actually come from litres.ru
-                from urllib.parse import urlparse
-                litres_hit_count = sum(
-                    1 for r in litres_results
-                    if 'litres.ru' in urlparse(r.get('image', '')).netloc.lower()
-                    or 'litres.ru' in urlparse(r.get('url', '')).netloc.lower()
-                )
-                print(f"[SearchWorker] litres.ru hits from site: query: {litres_hit_count}/{len(litres_results)}")
-
-                # 2. General search — skip if the litres query gave plenty of images to
-                # avoid triggering DDG's rate-limit / degraded-mode for the same IP.
-                general_results = []
-                if len(litres_results) < 5:
-                    # Pause before second query so DDG doesn't see two back-to-back
-                    # requests and switch to degraded (no-site-filter) mode.
-                    time.sleep(2.5)
-                    for attempt in range(2):
-                        try:
-                            print(f"[SearchWorker] Attempting general search (attempt {attempt + 1})...")
-                            with DDGS() as ddgs:
-                                general_results = list(ddgs.images(self.query, region=region, safesearch='off', max_results=60))
-                            if len(general_results) > 1:
-                                break
-                        except Exception as e:
-                            print(f"[SearchWorker] General search attempt {attempt + 1} failed: {e}")
-                            if attempt == 1 and not litres_results:
-                                raise e
-                        if attempt == 0:
-                            time.sleep(2.5)
-                
-                # Merge results, removing duplicates
-                seen_images = set()
-                merged_results = []
-                for res in litres_results + general_results:
-                    img_url = res.get('image')
-                    if img_url and img_url not in seen_images:
-                        seen_images.add(img_url)
-                        merged_results.append(res)
-                
-                # Sort: prioritize results that belong to litres.ru
-                litres_priority = []
-                other_results = []
-                for res in merged_results:
-                    img_url = res.get('image', '')
-                    page_url = res.get('url', '')
-                    img_domain = urlparse(img_url).netloc.lower()
-                    page_domain = urlparse(page_url).netloc.lower()
-                    if 'litres.ru' in img_domain or 'litres.ru' in page_domain:
-                        litres_priority.append(res)
-                    else:
-                        other_results.append(res)
-                
-                results = litres_priority + other_results
-            else:
-                # Original logic for non-Cyrillic queries
+            # Now run general search via DDGS
+            general_results = []
+            try:
+                print(f"[SearchWorker] Querying general search via DDGS...")
                 max_attempts = 3
                 for attempt in range(max_attempts):
                     try:
                         with DDGS() as ddgs:
-                            results = list(ddgs.images(self.query, region=region, safesearch='off', max_results=60))
-                        if len(results) > 1:
+                            general_results = list(ddgs.images(self.query, region=region, safesearch='off', max_results=60))
+                        if len(general_results) > 1:
                             break
-                        print(f"[SearchWorker] Attempt {attempt + 1} returned {len(results)} results. Retrying...")
+                        print(f"[SearchWorker] General DDGS attempt {attempt + 1} returned {len(general_results)} results. Retrying...")
                     except Exception as e:
-                        print(f"[SearchWorker] Attempt {attempt + 1} failed with exception: {e}")
-                        if attempt == max_attempts - 1:
+                        print(f"[SearchWorker] General DDGS attempt {attempt + 1} failed: {e}")
+                        if attempt == max_attempts - 1 and not litres_results:
                             raise e
                     if attempt < max_attempts - 1:
                         time.sleep(1.0)
+            except Exception as e:
+                print(f"[SearchWorker] DDGS general search failed: {e}")
+                if not litres_results:
+                    raise e
+                    
+            # Merge results, keeping litres_results first
+            seen_images = set()
+            results = []
+            
+            for res in litres_results:
+                img_url = res.get('image')
+                if img_url and img_url not in seen_images:
+                    seen_images.add(img_url)
+                    results.append(res)
+                    
+            for res in general_results:
+                img_url = res.get('image')
+                if img_url and img_url not in seen_images:
+                    seen_images.add(img_url)
+                    results.append(res)
                     
             print(f"[SearchWorker] Search completed successfully, found {len(results)} results")
             self.results_found.emit(results)
@@ -883,21 +844,21 @@ class SearchWorker(QThread):
 class PreviewLoader(QThread):
     preview_ready = pyqtSignal(int, QPixmap)
     
-    def __init__(self, urls):
+    def __init__(self, index_url_pairs):
         super().__init__()
-        self.urls = urls
+        self.index_url_pairs = index_url_pairs
         self.running = True
         
     def run(self):
         import urllib.request
         import traceback
-        print(f"[PreviewLoader] Starting loading of {len(self.urls)} previews")
-        for idx, url in enumerate(self.urls):
+        print(f"[PreviewLoader] Starting loading of {len(self.index_url_pairs)} previews")
+        for idx, url in self.index_url_pairs:
             if not self.running:
                 print("[PreviewLoader] Running flag set to False, stopping preview load")
                 break
             try:
-                print(f"[PreviewLoader] Downloading preview {idx + 1}/{len(self.urls)}: {url}")
+                print(f"[PreviewLoader] Downloading preview {idx + 1}/{len(self.index_url_pairs)} (index {idx}): {url}")
                 req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
                 with urllib.request.urlopen(req, timeout=5) as response:
                     data = response.read()
@@ -1157,6 +1118,7 @@ class CoverSearchDialog(QDialog):
         
         self.results = []
         self.result_widgets = []
+        self.loaded_indices = set()
         self.preview_loader = None
         self.search_worker = None
         self.download_worker = None
@@ -1252,25 +1214,49 @@ class CoverSearchDialog(QDialog):
     def on_search_success(self, results):
         try:
             print(f"[CoverSearchDialog] on_search_success received {len(results)} results")
-            self.results = results
-            if not results:
-                self.status_label.setText(tr("metadata.no_covers_found", default="No covers found"))
+            
+            # Find which results are actually new
+            existing_urls = {res.get('image') for res in self.results}
+            new_results = []
+            for res in results:
+                img_url = res.get('image')
+                if img_url and img_url not in existing_urls:
+                    new_results.append(res)
+                    
+            if not new_results:
+                if not self.results and not results:
+                    self.status_label.setText(tr("metadata.no_covers_found", default="No covers found"))
                 return
                 
-            self.status_label.setText(f"Found {len(results)} covers. Loading previews...")
+            start_idx = len(self.results)
+            self.results.extend(new_results)
             
-            for idx, res in enumerate(results):
+            self.status_label.setText(f"Found {len(self.results)} covers. Loading previews...")
+            
+            for i, res in enumerate(new_results):
+                idx = start_idx + i
                 widget = CoverSearchResultWidget(idx, res, self)
                 widget.clicked.connect(self.on_widget_clicked)
                 self.result_widgets.append(widget)
                 
             self.rearrange_grid()
+            
+            # Restart PreviewLoader for all not-yet-loaded images
+            if self.preview_loader:
+                self.preview_loader.running = False
+                self.preview_loader.wait()
+                self.preview_loader = None
                 
-            urls = [res.get('image') for res in results]
-            print(f"[CoverSearchDialog] Starting PreviewLoader for {len(urls)} previews")
-            self.preview_loader = PreviewLoader(urls)
-            self.preview_loader.preview_ready.connect(self.on_preview_ready)
-            self.preview_loader.start()
+            index_url_pairs = [
+                (i, res.get('image'))
+                for i, res in enumerate(self.results)
+                if i not in self.loaded_indices
+            ]
+            if index_url_pairs:
+                print(f"[CoverSearchDialog] Starting PreviewLoader for {len(index_url_pairs)} pending previews")
+                self.preview_loader = PreviewLoader(index_url_pairs)
+                self.preview_loader.preview_ready.connect(self.on_preview_ready)
+                self.preview_loader.start()
         except Exception as e:
             import traceback
             print("[CoverSearchDialog] Error inside on_search_success:")
@@ -1289,6 +1275,7 @@ class CoverSearchDialog(QDialog):
         try:
             if idx < len(self.result_widgets):
                 self.result_widgets[idx].set_pixmap(pixmap)
+                self.loaded_indices.add(idx)
         except Exception as e:
             print(f"[CoverSearchDialog] Error setting preview pixmap at index {idx}: {e}")
             
@@ -1383,8 +1370,11 @@ class CoverSearchDialog(QDialog):
             widget.deleteLater()
         self.result_widgets = []
         self.results = []
+        self.loaded_indices.clear()
         if hasattr(self, '_current_cols'):
             delattr(self, '_current_cols')
+        if hasattr(self, '_current_widget_count'):
+            delattr(self, '_current_widget_count')
         
         while self.grid_layout.count():
             item = self.grid_layout.takeAt(0)
@@ -1415,9 +1405,11 @@ class CoverSearchDialog(QDialog):
             
         cols = max(1, (avail_width - 10) // 135)
         
-        if hasattr(self, '_current_cols') and self._current_cols == cols:
+        if (hasattr(self, '_current_cols') and self._current_cols == cols and
+                hasattr(self, '_current_widget_count') and self._current_widget_count == len(self.result_widgets)):
             return
         self._current_cols = cols
+        self._current_widget_count = len(self.result_widgets)
         
         self.scroll_widget.setUpdatesEnabled(False)
         try:
