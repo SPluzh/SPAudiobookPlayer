@@ -243,7 +243,18 @@
     "refresh_covers_tooltip": "새 커버를 위해 폴더 스캔",
     "language": "Book Language:",
     "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:"
+    "year_recorded": "Year Recorded:",
+    "search_cover": "Search Cover",
+    "search_cover_tooltip": "Search covers online",
+    "cover_search_title": "Search Covers Online",
+    "search_query_label": "Query:",
+    "search_btn": "Search",
+    "searching": "Searching...",
+    "no_covers_found": "No covers found",
+    "download_selected": "Download Selected",
+    "downloading": "Downloading...",
+    "download_success": "Downloaded {count} covers",
+    "download_error": "Download error: {error}"
   },
   "tags": {
     "edit_title": "태그 편집",

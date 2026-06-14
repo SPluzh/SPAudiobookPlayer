@@ -261,7 +261,18 @@
     "save": "Save",
     "cancel": "Cancel",
     "no_cover_text": "No Cover",
-    "select_cover": "Select Cover:"
+    "select_cover": "Select Cover:",
+    "search_cover": "Search Cover",
+    "search_cover_tooltip": "Search covers online",
+    "cover_search_title": "Search Covers Online",
+    "search_query_label": "Query:",
+    "search_btn": "Search",
+    "searching": "Searching...",
+    "no_covers_found": "No covers found",
+    "download_selected": "Download Selected",
+    "downloading": "Downloading...",
+    "download_success": "Downloaded {count} covers",
+    "download_error": "Download error: {error}"
   },
   "tags": {
     "edit_title": "Edit Tag",

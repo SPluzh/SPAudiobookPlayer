@@ -215,3 +215,114 @@ def test_metadata_dialog_bulk_mode_ui(temp_db):
     assert enabled['author'] == 'Bulk Author'
     assert 'narrator' not in enabled
 
+def test_cover_search_features(temp_db, temp_dir, monkeypatch):
+    """Test the cover search button visibility, worker search, and download processes."""
+    from PyQt6.QtWidgets import QWidget
+    app = QApplication.instance() or QApplication([])
+    init_database(str(temp_db))
+    db = DatabaseManager(str(temp_db))
+    
+    # 1. Insert an audiobook
+    conn = sqlite3.connect(db.db_file)
+    try:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO audiobooks (path, name, author, title, narrator, language, year_written, year_recorded, tag_year, is_folder)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, ("book_path", "Author A - Title T", "Author A", "Title T", "Narrator N", "de", "1890", "", "1890", 0))
+        audiobook_id = c.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
+
+    class MockParent(QWidget):
+        def __init__(self, lib_path):
+            super().__init__()
+            self.config = {"default_path": str(lib_path)}
+            
+        def apply_blur(self):
+            pass
+            
+        def remove_blur(self):
+            pass
+
+    # 2. Check search button is visible in single edit mode
+    mock_parent = MockParent(temp_dir)
+    dialog = MetadataEditDialog(db, audiobook_id, parent=mock_parent)
+    assert dialog.search_cover_btn.isHidden() is False
+    
+    # Check search button is NOT visible in bulk edit mode
+    bulk_dialog = MetadataEditDialog(db, [audiobook_id], parent=mock_parent)
+    assert bulk_dialog.search_cover_btn.isHidden() is True
+    
+    # 3. Test get_audiobook_dir
+    assert dialog.get_audiobook_dir() == temp_dir / "book_path"
+    
+    # 4. Test SearchWorker with mocked duckduckgo_search
+    from metadata_dialog import SearchWorker, DownloadWorker
+    
+    mock_results = [{"title": "Cover 1", "image": "http://example.com/cover1.jpg", "width": 100, "height": 100}]
+    
+    class MockDDGS:
+        def __init__(self, *args, **kwargs):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+        def images(self, query, *args, **kwargs):
+            return mock_results
+            
+    try:
+        import ddgs
+        monkeypatch.setattr("ddgs.DDGS", MockDDGS)
+    except ImportError:
+        pass
+    monkeypatch.setattr("duckduckgo_search.DDGS", MockDDGS)
+    
+    worker = SearchWorker("test query")
+    results = []
+    
+    def on_found(res):
+        results.extend(res)
+        
+    worker.results_found.connect(on_found)
+    worker.run()
+    assert results == mock_results
+
+    # 5. Test DownloadWorker with mocked urlopen
+    class MockResponse:
+        def __init__(self, data):
+            self.data = data
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+        def read(self):
+            return self.data
+            
+    def mock_urlopen(req, timeout=15):
+        return MockResponse(b"fake image data")
+        
+    monkeypatch.setattr("urllib.request.urlopen", mock_urlopen)
+    
+    book_dir = temp_dir / "book_path"
+    book_dir.mkdir(parents=True, exist_ok=True)
+    
+    urls = ["http://example.com/some_cover.jpg", "http://example.com/another_cover.jpg"]
+    download_worker = DownloadWorker(urls, book_dir)
+    
+    finished_args = []
+    def on_finished(count, err):
+        finished_args.append((count, err))
+        
+    download_worker.finished_signal.connect(on_finished)
+    download_worker.run()
+    
+    assert finished_args == [(2, "")]
+    
+    # Check files created and uniquely named
+    assert (book_dir / "cover.jpg").exists()
+    assert (book_dir / "cover_1.jpg").exists()
+
+

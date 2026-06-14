@@ -261,7 +261,18 @@
     "save": "Сохранить",
     "cancel": "Отмена",
     "no_cover_text": "Без обложки",
-    "select_cover": "Выберите обложку:"
+    "select_cover": "Выберите обложку:",
+    "search_cover": "Поиск обложки",
+    "search_cover_tooltip": "Найти обложки в интернете",
+    "cover_search_title": "Поиск обложек в Интернете",
+    "search_query_label": "Запрос:",
+    "search_btn": "Найти",
+    "searching": "Поиск...",
+    "no_covers_found": "Обложки не найдены",
+    "download_selected": "Скачать выбранные",
+    "downloading": "Скачивание...",
+    "download_success": "Скачано обложек: {count}",
+    "download_error": "Ошибка скачивания: {error}"
   },
   "tags": {
     "edit_title": "Редактирование тега",

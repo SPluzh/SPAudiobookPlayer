@@ -5,4 +5,5 @@ pillow>=10.0.0
 mutagen>=1.47.0 
 pytest>=7.0.0
 pytest-mock>=3.10.0
-
+duckduckgo_search>=8.0.0
+ddgs>=9.0.0

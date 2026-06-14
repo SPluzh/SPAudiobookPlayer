@@ -326,19 +326,19 @@ QPushButton#filterBtn:checked {
 }
 
 /* Metadata Cover Refresh, Open Folder & From Tags Buttons */
-QPushButton#refreshCoversBtn, QPushButton#openFolderBtn, QPushButton#fromTagsBtn {
+QPushButton#refreshCoversBtn, QPushButton#openFolderBtn, QPushButton#fromTagsBtn, QPushButton#searchCoverBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     border-radius: 4px;
     padding: 0px;
 }
 
-QPushButton#refreshCoversBtn:hover, QPushButton#openFolderBtn:hover, QPushButton#fromTagsBtn:hover {
+QPushButton#refreshCoversBtn:hover, QPushButton#openFolderBtn:hover, QPushButton#fromTagsBtn:hover, QPushButton#searchCoverBtn:hover {
     background-color: @accent;
     border-color: @accent;
 }
 
-QPushButton#refreshCoversBtn:pressed, QPushButton#openFolderBtn:pressed, QPushButton#fromTagsBtn:pressed {
+QPushButton#refreshCoversBtn:pressed, QPushButton#openFolderBtn:pressed, QPushButton#fromTagsBtn:pressed, QPushButton#searchCoverBtn:pressed {
     background-color: @accent-dark;
     border-color: @accent-dark;
 }

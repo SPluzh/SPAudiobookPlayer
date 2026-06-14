@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.6]
+- **Metadata**: Added online cover search with hover previews to the metadata editor.
+
 ## [1.7.5]
 - **Library**: Fixed a bug where right-clicking an item in the library to open the context menu would cause the list to unexpectedly jump to the top.
 - **Library**: Added display of writing year, recording year, and language in the audiobook details line with polished icon spacing.

@@ -1,11 +1,20 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, 
     QPushButton, QDialogButtonBox, QMessageBox, QFormLayout,
-    QScrollArea, QWidget, QApplication, QCheckBox
+    QScrollArea, QWidget, QApplication, QCheckBox, QLineEdit, QGridLayout
 )
-from PyQt6.QtCore import Qt, QSize, pyqtSignal, QRectF
+from PyQt6.QtCore import Qt, QSize, pyqtSignal, QRectF, QThread
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QPen, QColor
 from pathlib import Path
+import sys
+
+try:
+    if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
 
 from translations import tr
 from utils import get_icon
@@ -296,6 +305,17 @@ class MetadataEditDialog(QDialog):
         if self.is_bulk:
             self.from_tags_btn.setVisible(False)
         
+        # Search Cover button
+        self.search_cover_btn = QPushButton()
+        self.search_cover_btn.setObjectName("searchCoverBtn")
+        self.search_cover_btn.setIcon(get_icon("menu_scan"))
+        self.search_cover_btn.setIconSize(QSize(20, 20))
+        self.search_cover_btn.setFixedSize(std_height, std_height)
+        self.search_cover_btn.setToolTip(tr("metadata.search_cover_tooltip", default="Search covers online"))
+        self.search_cover_btn.clicked.connect(self.on_search_cover)
+        if self.is_bulk:
+            self.search_cover_btn.setVisible(False)
+        
         # Combine buttons at the bottom: custom buttons on the left, standard on the right
         bottom_layout = QHBoxLayout()
         bottom_layout.setContentsMargins(0, 0, 0, 0)
@@ -304,6 +324,7 @@ class MetadataEditDialog(QDialog):
         bottom_layout.addWidget(self.open_folder_btn)
         bottom_layout.addWidget(self.refresh_btn)
         bottom_layout.addWidget(self.from_tags_btn)
+        bottom_layout.addWidget(self.search_cover_btn)
         bottom_layout.addStretch()
         bottom_layout.addWidget(buttons)
         
@@ -632,18 +653,654 @@ class MetadataEditDialog(QDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+    def get_audiobook_dir(self):
+        """Return the absolute Path to the audiobook directory"""
+        try:
+            import sqlite3
+            conn = sqlite3.connect(self.db.db_file)
+            cursor = conn.cursor()
+            cursor.execute("SELECT path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+            row = cursor.fetchone()
+            conn.close()
+            
+            if row:
+                relative_path = row[0]
+                library_root = ""
+                if self.parent() and hasattr(self.parent(), 'config') and self.parent().config:
+                    library_root = self.parent().config.get("default_path", "")
+                
+                if not library_root:
+                    import configparser
+                    from utils import get_base_path
+                    config = configparser.ConfigParser()
+                    config_file = get_base_path() / "resources" / "settings.ini"
+                    if config_file.exists():
+                        config.read(config_file, encoding='utf-8')
+                        library_root = config.get('Paths', 'library_path', fallback='')
+                
+                if library_root:
+                    return Path(library_root) / relative_path
+        except Exception as e:
+            print(f"Error getting audiobook directory: {e}")
+        return None
+
     def apply_blur(self):
-        """Proxy blur request to parent window if supported"""
-        if self.parent() and hasattr(self.parent(), 'apply_blur'):
-            self.parent().apply_blur()
+        """Walk parent chain to find and call apply_blur on the main window"""
+        print("[MetadataDialog] apply_blur requested")
+        p = self.parent()
+        while p:
+            if hasattr(p, 'apply_blur'):
+                print(f"[MetadataDialog] delegating apply_blur to parent {p}")
+                p.apply_blur()
+                break
+            p = p.parent()
 
     def remove_blur(self):
-        """Proxy blur remove request to parent window if supported"""
-        if self.parent() and hasattr(self.parent(), 'remove_blur'):
-            self.parent().remove_blur()
+        """Walk parent chain to find and call remove_blur on the main window"""
+        print("[MetadataDialog] remove_blur requested")
+        p = self.parent()
+        while p:
+            if hasattr(p, 'remove_blur'):
+                print(f"[MetadataDialog] delegating remove_blur to parent {p}")
+                p.remove_blur()
+                break
+            p = p.parent()
+
+    def on_search_cover(self):
+        """Open the online cover search dialog and refresh covers on success"""
+        print("[MetadataDialog] on_search_cover clicked")
+        audiobook_dir = self.get_audiobook_dir()
+        if not audiobook_dir:
+            print("[MetadataDialog] Could not determine audiobook directory, falling back to temp directory")
+            audiobook_dir = Path("c:/Users/user/Desktop/python/SPAudiobookPlayer/data/temp")
+            try:
+                audiobook_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                print(f"[MetadataDialog] Failed to create fallback temp directory: {e}")
+            
+        author = self.author_combo.currentText().strip()
+        title = self.title_combo.currentText().strip()
+        initial_query = f"{author} {title}".strip()
+        print(f"[MetadataDialog] Search query: '{initial_query}', destination: {audiobook_dir}")
+        
+        try:
+            dialog = CoverSearchDialog(initial_query, audiobook_dir, self)
+            print("[MetadataDialog] CoverSearchDialog created successfully")
+        except Exception as e:
+            import traceback
+            print("[MetadataDialog] Error creating CoverSearchDialog:")
+            traceback.print_exc()
+            QMessageBox.critical(self, tr("error"), f"Failed to initialize search: {e}")
+            return
+            
+        self.apply_blur()
+        try:
+            print("[MetadataDialog] Executing CoverSearchDialog...")
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                print("[MetadataDialog] CoverSearchDialog accepted, refreshing covers")
+                self.on_refresh_covers()
+            else:
+                print("[MetadataDialog] CoverSearchDialog rejected/cancelled")
+        except Exception as e:
+            import traceback
+            print("[MetadataDialog] Error during CoverSearchDialog execution:")
+            traceback.print_exc()
+            QMessageBox.critical(self, tr("error"), f"Error during search execution: {e}")
+        finally:
+            self.remove_blur()
 
     def accept(self):
         """Save selected cover and close the dialog"""
         if not self.is_bulk:
             self.db.set_selected_audiobook_cover(self.audiobook_id, self.selected_cover_id)
         super().accept()
+
+
+class SearchWorker(QThread):
+    results_found = pyqtSignal(list)
+    error_occurred = pyqtSignal(str)
+    
+    def __init__(self, query):
+        super().__init__()
+        self.query = query
+        
+    def run(self):
+        import traceback
+        try:
+            print(f"[SearchWorker] Starting search for query: '{self.query}'")
+            try:
+                from ddgs import DDGS
+            except ImportError:
+                from duckduckgo_search import DDGS
+            with DDGS() as ddgs:
+                results = list(ddgs.images(self.query, safesearch='off', max_results=60))
+            print(f"[SearchWorker] Search completed successfully, found {len(results)} results")
+            self.results_found.emit(results)
+        except Exception as e:
+            print(f"[SearchWorker] Exception during search:")
+            traceback.print_exc()
+            self.error_occurred.emit(str(e))
+
+
+class PreviewLoader(QThread):
+    preview_ready = pyqtSignal(int, QPixmap)
+    
+    def __init__(self, urls):
+        super().__init__()
+        self.urls = urls
+        self.running = True
+        
+    def run(self):
+        import urllib.request
+        import traceback
+        print(f"[PreviewLoader] Starting loading of {len(self.urls)} previews")
+        for idx, url in enumerate(self.urls):
+            if not self.running:
+                print("[PreviewLoader] Running flag set to False, stopping preview load")
+                break
+            try:
+                print(f"[PreviewLoader] Downloading preview {idx + 1}/{len(self.urls)}: {url}")
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    data = response.read()
+                from PyQt6.QtGui import QImage
+                image = QImage.fromData(data)
+                if not image.isNull():
+                    pixmap = QPixmap.fromImage(image)
+                    self.preview_ready.emit(idx, pixmap)
+                else:
+                    print(f"[PreviewLoader] Image data is null for: {url}")
+            except Exception as e:
+                print(f"[PreviewLoader] Failed to download preview {idx} ({url}): {e}")
+
+
+class DownloadWorker(QThread):
+    progress = pyqtSignal(int, int)
+    finished_signal = pyqtSignal(int, str)
+    
+    def __init__(self, urls, destination_dir):
+        super().__init__()
+        self.urls = urls
+        self.destination_dir = Path(destination_dir)
+        
+    def run(self):
+        import traceback
+        try:
+            print(f"[DownloadWorker] Starting cover download of {len(self.urls)} images to {self.destination_dir}")
+            if not self.destination_dir.exists():
+                try:
+                    self.destination_dir.mkdir(parents=True, exist_ok=True)
+                    print(f"[DownloadWorker] Created directory: {self.destination_dir}")
+                except Exception as e:
+                    print(f"[DownloadWorker] Failed to create folder: {e}")
+                    self.finished_signal.emit(0, f"Cannot create folder: {e}")
+                    return
+                    
+            import urllib.request
+            from urllib.parse import urlparse
+            import posixpath
+            
+            success_count = 0
+            error_msg = ""
+            total = len(self.urls)
+            
+            for idx, url in enumerate(self.urls):
+                self.progress.emit(idx + 1, total)
+                try:
+                    url_path = urlparse(url).path
+                    ext = posixpath.splitext(url_path)[1].lower()
+                    if ext not in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']:
+                        ext = '.jpg'
+                        
+                    base_name = "cover"
+                    dest_file = self.destination_dir / f"{base_name}{ext}"
+                    
+                    if dest_file.exists():
+                        counter = 1
+                        while True:
+                            dest_file = self.destination_dir / f"{base_name}_{counter}{ext}"
+                            if not dest_file.exists():
+                                break
+                            counter += 1
+                            
+                    print(f"[DownloadWorker] Downloading {idx + 1}/{total} from {url} to {dest_file}")
+                    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+                    with urllib.request.urlopen(req, timeout=15) as response:
+                        data = response.read()
+                        
+                    with open(dest_file, 'wb') as f:
+                        f.write(data)
+                    
+                    print(f"[DownloadWorker] Downloaded and saved: {dest_file}")
+                    success_count += 1
+                except Exception as e:
+                    print(f"[DownloadWorker] Error downloading image from {url}:")
+                    traceback.print_exc()
+                    error_msg = f"Failed to download some covers: {e}"
+                    
+            self.finished_signal.emit(success_count, error_msg if success_count == 0 else "")
+        except Exception as e:
+            print("[DownloadWorker] Critical error inside worker thread:")
+            traceback.print_exc()
+            self.finished_signal.emit(0, str(e))
+
+
+class HoverPreviewPopup(QLabel):
+    def __init__(self, pixmap, parent=None):
+        super().__init__(None, Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setWindowFlag(Qt.WindowType.WindowDoesNotAcceptFocus, True)
+        
+        from styles import StyleManager
+        try:
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            accent_hex = accent_color.name()
+        except Exception:
+            accent_hex = "#2ecc71"
+            
+        self.setStyleSheet(f"""
+            QLabel {{
+                background-color: #1a1a1a;
+                border: 2px solid {accent_hex};
+                border-radius: 8px;
+            }}
+        """)
+        
+        scaled = pixmap.scaled(400, 400, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        self.setPixmap(scaled)
+        self.setFixedSize(scaled.size() + QSize(4, 4))
+
+
+class CoverSearchResultWidget(QWidget):
+    clicked = pyqtSignal()
+    
+    def __init__(self, index, result_data, parent=None):
+        super().__init__(parent)
+        self.index = index
+        self.result_data = result_data
+        self.is_selected = False
+        self.full_pixmap = None
+        self.hover_popup = None
+        
+        self.setFixedSize(125, 155)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(4)
+        
+        self.image_label = QLabel()
+        self.image_label.setFixedSize(115, 115)
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.setStyleSheet("background-color: #1e1e1e; border-radius: 4px;")
+        
+        from utils import get_base_path
+        from utils import load_icon
+        default_cover_path = get_base_path() / "resources" / "icons" / "default_cover.png"
+        if default_cover_path.exists():
+            cover_icon = load_icon(default_cover_path, 100, force_square=True)
+            if cover_icon and not cover_icon.isNull():
+                self.image_label.setPixmap(cover_icon.pixmap(100, 100))
+        
+        layout.addWidget(self.image_label)
+        
+        from urllib.parse import urlparse
+        domain = urlparse(result_data.get('image', '')).netloc
+        if domain.startswith('www.'):
+            domain = domain[4:]
+        
+        width = result_data.get('width', '?')
+        height = result_data.get('height', '?')
+        
+        if len(domain) > 15:
+            domain = domain[:12] + "..."
+            
+        self.info_label = QLabel(f"{domain}\n{width}x{height}")
+        self.info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.info_label.setStyleSheet("color: #aaaaaa; font-size: 9px;")
+        layout.addWidget(self.info_label)
+        
+    def set_pixmap(self, pixmap):
+        if pixmap and not pixmap.isNull():
+            self.full_pixmap = pixmap
+            scaled_pixmap = pixmap.scaled(115, 115, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.image_label.setPixmap(scaled_pixmap)
+            
+    def set_selected(self, selected):
+        if self.is_selected != selected:
+            self.is_selected = selected
+            self.update()
+            
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            print(f"[CoverSearchResultWidget] Widget at index {self.index} clicked")
+            self.clicked.emit()
+            
+    def enterEvent(self, event):
+        super().enterEvent(event)
+        if self.full_pixmap and not self.full_pixmap.isNull():
+            self.show_hover_popup()
+            
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self.hide_hover_popup()
+        
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        self.hide_hover_popup()
+        
+    def closeEvent(self, event):
+        self.hide_hover_popup()
+        super().closeEvent(event)
+        
+    def show_hover_popup(self):
+        self.hide_hover_popup()
+        if not self.full_pixmap or self.full_pixmap.isNull():
+            return
+            
+        self.hover_popup = HoverPreviewPopup(self.full_pixmap, self)
+        
+        widget_rect = self.rect()
+        global_pos = self.mapToGlobal(widget_rect.topRight())
+        
+        screen_geo = QApplication.primaryScreen().geometry()
+        popup_size = self.hover_popup.size()
+        
+        x = global_pos.x() + 10
+        if x + popup_size.width() > screen_geo.right():
+            x = self.mapToGlobal(widget_rect.topLeft()).x() - popup_size.width() - 10
+            
+        y = self.mapToGlobal(widget_rect.topLeft()).y()
+        if y + popup_size.height() > screen_geo.bottom():
+            y = screen_geo.bottom() - popup_size.height() - 10
+            
+        self.hover_popup.move(max(0, x), max(0, y))
+        self.hover_popup.show()
+        
+    def hide_hover_popup(self):
+        if self.hover_popup:
+            try:
+                self.hover_popup.close()
+                self.hover_popup.deleteLater()
+            except Exception:
+                pass
+            self.hover_popup = None
+            
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.is_selected:
+            painter = QPainter(self)
+            try:
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                from styles import StyleManager
+                try:
+                    _, accent_color = StyleManager.get_theme_property("delegate_accent")
+                except Exception:
+                    accent_color = QColor("#2ecc71")
+                
+                pen = QPen(accent_color, 3)
+                painter.setPen(pen)
+                border_rect = QRectF(1.5, 1.5, self.width() - 3.0, self.height() - 3.0)
+                painter.drawRoundedRect(border_rect, 6, 6)
+            finally:
+                painter.end()
+
+
+class CoverSearchDialog(QDialog):
+    def __init__(self, initial_query, audiobook_dir, parent=None):
+        super().__init__(parent)
+        self.audiobook_dir = audiobook_dir
+        self.initial_query = initial_query
+        
+        self.setWindowTitle(tr("metadata.cover_search_title", default="Search Covers Online"))
+        self.resize(450, 500)
+        self.setModal(True)
+        
+        self.results = []
+        self.result_widgets = []
+        self.preview_loader = None
+        self.search_worker = None
+        self.download_worker = None
+        
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        layout.setContentsMargins(15, 15, 15, 15)
+        
+        search_layout = QHBoxLayout()
+        search_layout.setSpacing(6)
+        
+        query_label = QLabel(tr("metadata.search_query_label", default="Query:"))
+        self.query_edit = QLineEdit(self.initial_query)
+        self.query_edit.setMinimumHeight(30)
+        
+        self.search_btn = QPushButton(tr("metadata.search_btn", default="Search"))
+        self.search_btn.setMinimumHeight(30)
+        self.search_btn.clicked.connect(self.start_search)
+        
+        search_layout.addWidget(query_label)
+        search_layout.addWidget(self.query_edit, 1)
+        search_layout.addWidget(self.search_btn)
+        layout.addLayout(search_layout)
+        
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setMinimumHeight(300)
+        self.scroll_area.setStyleSheet("background-color: #121212; border: 1px solid #2d2d2d; border-radius: 4px;")
+        
+        self.scroll_widget = QWidget()
+        self.grid_layout = QGridLayout(self.scroll_widget)
+        self.grid_layout.setSpacing(10)
+        self.grid_layout.setContentsMargins(10, 10, 10, 10)
+        
+        self.scroll_area.setWidget(self.scroll_widget)
+        layout.addWidget(self.scroll_area)
+        
+        self.status_label = QLabel("")
+        self.status_label.setStyleSheet("color: #aaaaaa;")
+        layout.addWidget(self.status_label)
+        
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setSpacing(10)
+        
+        self.download_btn = QPushButton(tr("metadata.download_selected", default="Download Selected"))
+        self.download_btn.setMinimumHeight(32)
+        self.download_btn.setEnabled(False)
+        self.download_btn.clicked.connect(self.start_download)
+        
+        self.cancel_btn = QPushButton(tr("dialog.cancel", default="Cancel"))
+        self.cancel_btn.setMinimumHeight(32)
+        self.cancel_btn.clicked.connect(self.reject)
+        
+        bottom_layout.addStretch()
+        bottom_layout.addWidget(self.download_btn)
+        bottom_layout.addWidget(self.cancel_btn)
+        layout.addLayout(bottom_layout)
+        
+        self.start_search()
+        
+    def start_search(self):
+        try:
+            print("[CoverSearchDialog] start_search called")
+            self.stop_threads()
+            self.clear_grid()
+            
+            query = self.query_edit.text().strip()
+            print(f"[CoverSearchDialog] Initiating search for query: '{query}'")
+            if not query:
+                print("[CoverSearchDialog] Search query is empty. Skipping.")
+                return
+                
+            self.status_label.setText(tr("metadata.searching", default="Searching..."))
+            self.search_btn.setEnabled(False)
+            self.download_btn.setEnabled(False)
+            
+            self.search_worker = SearchWorker(query)
+            self.search_worker.results_found.connect(self.on_search_success)
+            self.search_worker.error_occurred.connect(self.on_search_error)
+            self.search_worker.finished.connect(self.on_search_finished)
+            self.search_worker.start()
+            print("[CoverSearchDialog] Search worker thread successfully started")
+        except Exception as e:
+            import traceback
+            print("[CoverSearchDialog] Error inside start_search:")
+            traceback.print_exc()
+            self.status_label.setText(f"Error starting search: {e}")
+            self.search_btn.setEnabled(True)
+        
+    def on_search_success(self, results):
+        try:
+            print(f"[CoverSearchDialog] on_search_success received {len(results)} results")
+            self.results = results
+            if not results:
+                self.status_label.setText(tr("metadata.no_covers_found", default="No covers found"))
+                return
+                
+            self.status_label.setText(f"Found {len(results)} covers. Loading previews...")
+            
+            for idx, res in enumerate(results):
+                widget = CoverSearchResultWidget(idx, res, self)
+                widget.clicked.connect(self.on_widget_clicked)
+                self.result_widgets.append(widget)
+                
+                row = idx // 3
+                col = idx % 3
+                self.grid_layout.addWidget(widget, row, col)
+                
+            urls = [res.get('image') for res in results]
+            print(f"[CoverSearchDialog] Starting PreviewLoader for {len(urls)} previews")
+            self.preview_loader = PreviewLoader(urls)
+            self.preview_loader.preview_ready.connect(self.on_preview_ready)
+            self.preview_loader.start()
+        except Exception as e:
+            import traceback
+            print("[CoverSearchDialog] Error inside on_search_success:")
+            traceback.print_exc()
+            self.status_label.setText(f"Error loading results: {e}")
+        
+    def on_search_error(self, err_msg):
+        print(f"[CoverSearchDialog] on_search_error received: '{err_msg}'")
+        self.status_label.setText(f"Search error: {err_msg}")
+        
+    def on_search_finished(self):
+        print("[CoverSearchDialog] Search worker finished")
+        self.search_btn.setEnabled(True)
+        
+    def on_preview_ready(self, idx, pixmap):
+        try:
+            if idx < len(self.result_widgets):
+                self.result_widgets[idx].set_pixmap(pixmap)
+        except Exception as e:
+            print(f"[CoverSearchDialog] Error setting preview pixmap at index {idx}: {e}")
+            
+    def on_widget_clicked(self):
+        try:
+            sender = self.sender()
+            if sender:
+                sender.set_selected(not sender.is_selected)
+                print(f"[CoverSearchDialog] Selection state of item {sender.index} changed to {sender.is_selected}")
+                
+            any_selected = any(w.is_selected for w in self.result_widgets)
+            self.download_btn.setEnabled(any_selected)
+        except Exception as e:
+            print(f"[CoverSearchDialog] Error processing widget click: {e}")
+        
+    def start_download(self):
+        try:
+            selected_urls = []
+            for w in self.result_widgets:
+                if w.is_selected:
+                    selected_urls.append(w.result_data.get('image'))
+                    
+            print(f"[CoverSearchDialog] start_download with {len(selected_urls)} items")
+            if not selected_urls:
+                print("[CoverSearchDialog] No items selected for download. Skipping.")
+                return
+                
+            self.status_label.setText(tr("metadata.downloading", default="Downloading..."))
+            self.download_btn.setEnabled(False)
+            self.search_btn.setEnabled(False)
+            
+            self.download_worker = DownloadWorker(selected_urls, self.audiobook_dir)
+            self.download_worker.progress.connect(self.on_download_progress)
+            self.download_worker.finished_signal.connect(self.on_download_finished)
+            self.download_worker.start()
+            print("[CoverSearchDialog] Download worker thread successfully started")
+        except Exception as e:
+            import traceback
+            print("[CoverSearchDialog] Error starting download worker:")
+            traceback.print_exc()
+            self.status_label.setText(f"Error starting download: {e}")
+            self.download_btn.setEnabled(True)
+            self.search_btn.setEnabled(True)
+        
+    def on_download_progress(self, current, total):
+        self.status_label.setText(f"Downloading cover {current} of {total}...")
+        
+    def on_download_finished(self, success_count, err_msg):
+        try:
+            print(f"[CoverSearchDialog] on_download_finished received: success_count={success_count}, error='{err_msg}'")
+            self.download_btn.setEnabled(True)
+            self.search_btn.setEnabled(True)
+            
+            if err_msg and success_count == 0:
+                print(f"[CoverSearchDialog] Download failed completely: {err_msg}")
+                QMessageBox.critical(self, tr("error"), err_msg)
+                self.status_label.setText(f"Download error: {err_msg}")
+            else:
+                print(f"[CoverSearchDialog] Download finished. Successfully saved {success_count} covers.")
+                self.accept()
+        except Exception as e:
+            import traceback
+            print("[CoverSearchDialog] Error inside on_download_finished:")
+            traceback.print_exc()
+            
+    def stop_threads(self):
+        print("[CoverSearchDialog] stop_threads called")
+        if self.search_worker and self.search_worker.isRunning():
+            print("[CoverSearchDialog] Terminating search worker thread...")
+            self.search_worker.terminate()
+            self.search_worker.wait()
+            print("[CoverSearchDialog] Search worker thread terminated.")
+        self.search_worker = None
+        
+        if self.preview_loader:
+            print("[CoverSearchDialog] Stopping preview loader thread...")
+            self.preview_loader.running = False
+            self.preview_loader.wait()
+            print("[CoverSearchDialog] Preview loader thread stopped.")
+        self.preview_loader = None
+        
+        if self.download_worker and self.download_worker.isRunning():
+            print("[CoverSearchDialog] Terminating download worker thread...")
+            self.download_worker.terminate()
+            self.download_worker.wait()
+            print("[CoverSearchDialog] Download worker thread terminated.")
+        self.download_worker = None
+        
+    def clear_grid(self):
+        print("[CoverSearchDialog] clear_grid called")
+        for widget in self.result_widgets:
+            widget.deleteLater()
+        self.result_widgets = []
+        self.results = []
+        
+        while self.grid_layout.count():
+            item = self.grid_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+                
+    def closeEvent(self, event):
+        print("[CoverSearchDialog] closeEvent triggered")
+        self.stop_threads()
+        super().closeEvent(event)
+        
+    def reject(self):
+        print("[CoverSearchDialog] reject triggered")
+        self.stop_threads()
+        super().reject()
+
