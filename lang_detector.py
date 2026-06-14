@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-lang_detector.py — определение языка аудиокниги по имени папки.
+lang_detector.py — audiobook language detection based on the folder name.
 
-Поддерживаемые языки
-────────────────────
-Нелатинские скрипты (однозначное определение):
+Supported Languages
+───────────────────
+Non-Latin scripts (unambiguous detection):
   ar  Arabic      — U+0600–U+06FF
   hi  Hindi       — U+0900–U+097F  (Devanagari)
   hy  Armenian    — U+0530–U+058F
-  ja  Japanese    — U+3040–U+30FF  (кана) + CJK
+  ja  Japanese    — U+3040–U+30FF  (Kana) + CJK
   ko  Korean      — U+AC00–U+D7AF  (Hangul)
   th  Thai        — U+0E00–U+0E7F
-  zh  Chinese     — U+4E00–U+9FFF  (CJK без кана)
+  zh  Chinese     — U+4E00–U+9FFF  (CJK without Kana)
 
-Кириллические скрипты:
-  ru  Russian     — кириллица без специфичных букв
+Cyrillic scripts:
+  ru  Russian     — Cyrillic without specific characters
   uk  Ukrainian   — єїіґ
   be  Belarusian  — ў
 
-Латинские скрипты (эвристика по символам и словам):
+Latin scripts (heuristics by characters and words):
   de  German      — äöüß
   fr  French      — àâæçèéêëîïôùûüœ
   es  Spanish     — ñ
@@ -28,22 +28,22 @@ lang_detector.py — определение языка аудиокниги по
   tr  Turkish     — çğışöü
   fi  Finnish     — åäö
   it  Italian     — àèéìíîòóùú
-  en  English     — the/and/of/in/a (стоп-слова)
+  en  English     — the/and/of/in/a (stop words)
 
-Транслитерированный русский:
-  Имена с суффиксами skiy/aya/niy/vich/ovna/evna и длинными словами → ru
+Transliterated Russian:
+  Names with suffixes skiy/aya/niy/vich/ovna/evna and long words → ru
 
 API
 ───
   detect(folder_name: str) -> str
-      Возвращает ISO 639-1 код языка (например 'ru', 'en', 'de', 'zh', ...).
-      Никогда не бросает исключений.
+      Returns the ISO 639-1 language code (e.g., 'ru', 'en', 'de', 'zh', ...).
+      Never raises exceptions.
 
   detect_detailed(folder_name: str) -> DetectResult
-      Возвращает именованный кортеж с деталями голосования.
+      Returns a named tuple with voting details.
 
-Пример
-──────
+Example
+───────
   >>> from lang_detector import detect
   >>> detect("Лев Толстой - Война и мир [Александр Клюквин, 2008, 192kbps, MP3]")
   'ru'
@@ -59,7 +59,7 @@ from typing import NamedTuple
 __all__ = ["detect", "detect_detailed", "DetectResult", "SUPPORTED_LANGUAGES"]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Публичный список поддерживаемых языков
+# Public list of supported languages
 # ─────────────────────────────────────────────────────────────────────────────
 
 SUPPORTED_LANGUAGES: frozenset[str] = frozenset({
@@ -69,19 +69,19 @@ SUPPORTED_LANGUAGES: frozenset[str] = frozenset({
 })
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Внутренние константы
+# Internal constants
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Нелатинские скрипты, которые определяются однозначно (Rule 0)
+# Non-Latin scripts determined unambiguously (Rule 0)
 _NON_LATIN_SCRIPTS: frozenset[str] = frozenset({"ar", "hi", "hy", "ja", "ko", "th", "zh"})
 
-# Нормализация внутренних кодов → ISO 639-1
+# Normalization of internal codes → ISO 639-1
 _NORMALIZE: dict[str, str] = {
-    # Внутренние псевдокоды
+    # Internal pseudo-codes
     "ru/cyrillic": "ru",
     "ru-translit": "ru",
     "en/latin":    "en",
-    # ISO коды
+    # ISO codes
     "ru": "ru", "en": "en", "uk": "uk", "be": "be",
     "de": "de", "fr": "fr", "es": "es", "pl": "pl",
     "cs": "cs", "sk": "cs", "it": "it", "ro": "ro",
@@ -89,20 +89,20 @@ _NORMALIZE: dict[str, str] = {
     "he": "he", "ja": "ja", "tr": "tr", "fi": "fi",
     "hi": "hi", "hy": "hy", "ko": "ko", "th": "th",
     "pt": "pt", "vi": "vi", "id": "id",
-    # langdetect иногда возвращает близкие кириллические языки
+    # langdetect sometimes returns similar Cyrillic languages
     "bg": "ru", "mk": "ru", "sr": "ru",
-    # Служебные
+    # Service codes
     "mixed":     "unknown",
     "unknown":   "unknown",
     "too_short": "unknown",
     "error":     "unknown",
 }
 
-# Веса методов в голосовании
+# Method weights in voting
 _METHOD_WEIGHT: dict[str, int] = {"v1": 1, "v2": 2, "v4": 3}
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Уникальные символы языков
+# Unique characters of languages
 # ─────────────────────────────────────────────────────────────────────────────
 
 _LANG_CHAR_HINTS: dict[str, set[str]] = {
@@ -119,8 +119,8 @@ _LANG_CHAR_HINTS: dict[str, set[str]] = {
     "it": set("àèéìíîòóùú"),
 }
 
-# Характерные слова для определения языка
-# Не включаем ' i ' — Roman numeral ловушка (Part I, Vol. I)
+# Distinctive words for language detection
+# Do not include ' i ' — Roman numeral trap (Part I, Vol. I)
 _LANG_WORD_HINTS: dict[str, list[str]] = {
     "en": ["the ", " of ", " and ", " in ", " a ", "'s "],
     "de": [" der ", " die ", " das ", " ein ", " und "],
@@ -130,19 +130,19 @@ _LANG_WORD_HINTS: dict[str, list[str]] = {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Паттерны транслита и английских стоп-слов
+# Transliteration patterns and English stop words
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Паттерны транслитерированного русского.
-# Намеренно НЕ включаем: 'ov', 'ev', 'ich', 'ova', 'eva' — дают ложные
-# срабатывания на немецких (Schachnovelle) и японских (Takahashi) именах.
+# Transliterated Russian patterns.
+# Deliberately do NOT include: 'ov', 'ev', 'ich', 'ova', 'eva' — they produce false
+# positives on German (Schachnovelle) and Japanese (Takahashi) names.
 _RU_TRANSLIT_PATTERNS: list[str] = [
     r"\b(aya|oye|ogo|ego|niy|naya|skiy|skaya|skie|skoe|ikh|yikh)\b",
     r"\b(ovna|evna|vich)\b",
     r"\b(по|из|на|за|до|от|во|со|об|под|над|про|для|без)\b",
 ]
 
-# Паттерн для V2 (более полный список суффиксов)
+# Pattern for V2 (a more comprehensive list of suffixes)
 _RU_TRANSLIT_RE = re.compile(
     r"\b(aya|skiy|skaya|skie|skoe|niya|niy|ogo|ego|ikh|yikh|evna|ovna|vich"
     r"|glavnoe|rodah|zhizn|noch|voin|mech|krov|zemla|zvezd)\b",
@@ -155,24 +155,24 @@ _EN_PATTERNS: list[str] = [
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Вспомогательная функция
+# Helper function
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _strip_metadata(text: str) -> str:
-    """Убирает [...] и (...) — метаданные формата (kbps, MP3, год и т.п.).
+    """Removes [...] and (...) — format metadata (kbps, MP3, year, etc.).
 
-    Пример:
-        'Автор - Название [Чтец, 2020, 128kbps, MP3]' → 'Автор - Название'
+    Example:
+        'Author - Title [Narrator, 2020, 128kbps, MP3]' → 'Author - Title'
     """
     return re.sub(r"\[.*?\]|\(.*?\)", " ", text).strip()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Детектор V1: Unicode-диапазоны
+# Detector V1: Unicode ranges
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _detect_v1(text: str) -> str:
-    """Определяет язык по Unicode-скрипту символов в core-части текста."""
+    """Detects language by the Unicode script of characters in the core text."""
     core = _strip_metadata(text)
 
     cyrillic   = sum(1 for c in core if "\u0400" <= c <= "\u04FF")
@@ -186,7 +186,7 @@ def _detect_v1(text: str) -> str:
     hangul     = sum(1 for c in core if "\uAC00" <= c <= "\uD7AF")
     thai       = sum(1 for c in core if "\u0E00" <= c <= "\u0E7F")
 
-    # ja vs zh: кана уникальна для японского
+    # ja vs zh: Kana is unique to Japanese
     japanese = kana + (cjk if kana > 0 else 0)
     chinese  = cjk if kana == 0 else 0
 
@@ -212,16 +212,16 @@ def _detect_v1(text: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Детектор V2: гибрид (Unicode + символы + слова)
+# Detector V2: hybrid (Unicode + characters + words)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _detect_v2(text: str) -> str:
-    """Гибрид: нелатинские скрипты → кириллица → транслит → символы → слова."""
+    """Hybrid: non-Latin scripts → Cyrillic → translit → characters → words."""
     core  = _strip_metadata(text)
     lower = core.lower()
     chars = set(lower)
 
-    # — Ранний выход: однозначные нелатинские скрипты —
+    # — Early exit: unambiguous non-Latin scripts —
     if any("\u0900" <= c <= "\u097F" for c in core): return "hi"
     if any("\u0530" <= c <= "\u058F" for c in core): return "hy"
     if any("\uAC00" <= c <= "\uD7AF" for c in core): return "ko"
@@ -233,7 +233,7 @@ def _detect_v2(text: str) -> str:
     if cjk  > 0: return "zh"
     if any("\u0600" <= c <= "\u06FF" for c in core): return "ar"
 
-    # — Кириллица —
+    # — Cyrillic —
     cyrillic = sum(1 for c in core if "\u0400" <= c <= "\u04FF")
     latin    = sum(1 for c in core if "A" <= c.upper() <= "Z")
 
@@ -242,17 +242,17 @@ def _detect_v2(text: str) -> str:
         if chars & set("єїіґ"): return "uk"
         return "ru"
 
-    # — Транслит —
+    # — Translit —
     if latin > 0 and _RU_TRANSLIT_RE.search(lower):
         return "ru-translit"
 
-    # — Уникальные символы Latin-языков —
+    # — Unique characters of Latin languages —
     if latin > 0:
         for lang, hint_chars in _LANG_CHAR_HINTS.items():
             if chars & hint_chars:
                 return lang
 
-    # — Ключевые слова —
+    # — Keywords —
     for lang, words in _LANG_WORD_HINTS.items():
         if any(w in lower for w in words):
             return lang
@@ -264,16 +264,16 @@ def _detect_v2(text: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Детектор V4: паттерны + транслит
+# Detector V4: patterns + translit
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _detect_v4(text: str) -> str:
-    """Определяет язык через регулярные выражения и эвристику длины слов."""
+    """Detects language using regular expressions and word length heuristics."""
     core      = _strip_metadata(text)
     lower     = core.lower()
     full_lower = text.lower()
 
-    # — Ранний выход: нелатинские скрипты —
+    # — Early exit: non-Latin scripts —
     if any("\u0900" <= c <= "\u097F" for c in core): return "hi"
     if any("\u0530" <= c <= "\u058F" for c in core): return "hy"
     if any("\uAC00" <= c <= "\uD7AF" for c in core): return "ko"
@@ -286,7 +286,7 @@ def _detect_v4(text: str) -> str:
     if cjk    > 0:  return "zh"
     if arabic > 2:  return "ar"
 
-    # — Кириллица —
+    # — Cyrillic —
     cyrillic = sum(1 for c in core if "\u0400" <= c <= "\u04FF")
     if cyrillic > 3:
         if "ў" in lower:                    return "be"
@@ -297,8 +297,8 @@ def _detect_v4(text: str) -> str:
     if latin == 0:
         return "unknown"
 
-    # 1. Спецсимволы языков (в ПОЛНОМ тексте — символ может быть в имени чтеца
-    #    внутри скобок, например "Büttner" → ü → de)
+    # 1. Special language characters (in FULL text — the character might be in the narrator's name
+    #    inside brackets, e.g., "Büttner" → ü → de)
     full_chars = set(full_lower)
     for lang, hint_chars in _LANG_CHAR_HINTS.items():
         if lang in ("uk", "be"):
@@ -306,16 +306,16 @@ def _detect_v4(text: str) -> str:
         if full_chars & hint_chars:
             return lang
 
-    # 2. Транслит
+    # 2. Translit
     for pat in _RU_TRANSLIT_PATTERNS:
         if re.search(pat, lower, re.IGNORECASE):
             return "ru-translit"
 
-    # 3. Английские стоп-слова
+    # 3. English stop words
     if any(re.search(p, lower) for p in _EN_PATTERNS):
         return "en"
 
-    # 4. Эвристика: длинные слова без маркеров → вероятно транслит
+    # 4. Heuristic: long words without markers → likely translit
     words = re.findall(r"[a-zA-Z]+", core)
     if words and sum(len(w) for w in words) / len(words) > 6:
         return "ru-translit"
@@ -324,58 +324,58 @@ def _detect_v4(text: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Публичный API
+# Public API
 # ─────────────────────────────────────────────────────────────────────────────
 
 class DetectResult(NamedTuple):
-    """Детальный результат определения языка."""
+    """Detailed language detection result."""
     lang: str
-    """ISO 639-1 код языка или 'unknown'."""
+    """ISO 639-1 language code or 'unknown'."""
     rule: str
-    """Правило, которое дало результат: 'script-rule', 'translit-rule',
-    'cyrillic-rule', или числовая строка вида 'vote:N'."""
+    """The rule that determined the result: 'script-rule', 'translit-rule',
+    'cyrillic-rule', or a numeric string like 'vote:N'."""
     v1: str
-    """Результат V1 (Unicode-диапазоны)."""
+    """Result from V1 (Unicode ranges)."""
     v2: str
-    """Результат V2 (гибрид)."""
+    """Result from V2 (hybrid)."""
     v4: str
-    """Результат V4 (паттерны + эвристика)."""
+    """Result from V4 (patterns + heuristics)."""
 
 
 def detect_detailed(folder_name: str) -> DetectResult:
-    """Определяет язык и возвращает полный отчёт о принятом решении.
+    """Detects language and returns a complete report of the decision made.
 
     Args:
-        folder_name: Имя папки аудиокниги (поддерживает любые Unicode-скрипты).
+        folder_name: The audiobook folder name (supports any Unicode scripts).
 
     Returns:
-        :class:`DetectResult` — именованный кортеж с lang, rule, v1, v2, v4.
+        :class:`DetectResult` — a named tuple with lang, rule, v1, v2, v4.
 
-    Никогда не бросает исключений.
+    Never raises exceptions.
     """
     try:
         return _detect_detailed_impl(folder_name)
-    except Exception:  # pragma: no cover — страховка на случай неожиданных данных
+    except Exception:  # pragma: no cover — safety net for unexpected data
         return DetectResult(lang="unknown", rule="error", v1="unknown", v2="unknown", v4="unknown")
 
 
 def detect(folder_name: str) -> str:
-    """Определяет язык аудиокниги по имени папки.
+    """Detects audiobook language from the folder name.
 
     Args:
-        folder_name: Имя папки (например 'Толстой - Война и мир [2008, MP3]').
+        folder_name: Folder name (e.g., 'Tolstoy - War and Peace [2008, MP3]').
 
     Returns:
-        ISO 639-1 код языка (``'ru'``, ``'en'``, ``'de'``, ...) или
-        ``'unknown'`` если определить не удалось.
+        ISO 639-1 language code (``'ru'``, ``'en'``, ``'de'``, ...) or
+        ``'unknown'`` if detection failed.
 
-    Никогда не бросает исключений.
+    Never raises exceptions.
     """
     return detect_detailed(folder_name).lang
 
 
 def _detect_detailed_impl(text: str) -> DetectResult:
-    """Внутренняя реализация без try/except."""
+    """Internal implementation without try/except."""
     r1 = _detect_v1(text)
     r2 = _detect_v2(text)
     r4 = _detect_v4(text)
@@ -385,30 +385,30 @@ def _detect_detailed_impl(text: str) -> DetectResult:
 
     has_cyrillic = any("\u0400" <= c <= "\u04FF" for c in text)
 
-    # ── Правило 0: оба V2 и V4 дали один нелатинский скрипт ──
+    # ── Rule 0: both V2 and V4 yielded the same non-Latin script ──
     if n2 in _NON_LATIN_SCRIPTS and n2 == n4:
         return DetectResult(lang=n2, rule="script-rule", v1=r1, v2=r2, v4=r4)
 
-    # ── Правило 0b: V2 уверен, V1 согласен ──
+    # ── Rule 0b: V2 is confident, V1 agrees ──
     n1 = _NORMALIZE.get(r1, r1)
     if n2 in _NON_LATIN_SCRIPTS and n1 == n2:
         return DetectResult(lang=n2, rule="script-rule", v1=r1, v2=r2, v4=r4)
 
-    # ── Правило 1: явный транслит (V4 специализируется) ──
+    # ── Rule 1: explicit translit (V4 specializes) ──
     if r4 == "ru-translit":
         return DetectResult(lang="ru", rule="translit-rule", v1=r1, v2=r2, v4=r4)
 
-    # ── Правило 2: кириллица + V4 уверен в ru/uk/be ──
+    # ── Rule 2: Cyrillic + V4 is confident in ru/uk/be ──
     if has_cyrillic and n4 in ("ru", "uk", "be"):
         return DetectResult(lang=n4, rule="cyrillic-rule", v1=r1, v2=r2, v4=r4)
 
-    # ── Правило 2b: V4 нашёл однозначный символ de/fr, кириллицы нет ──
-    # Например: "Büttner" → ü → V4='de', но V2='en' (ü в скобках, core без ü).
-    # V4 специально проверяет ПОЛНЫЙ текст для de/fr, поэтому доверяем ему.
+    # ── Rule 2b: V4 found an unambiguous de/fr character, no Cyrillic present ──
+    # For example: "Büttner" → ü → V4='de', but V2='en' (ü inside brackets, core without ü).
+    # V4 specifically checks the FULL text for de/fr, so we trust it.
     if not has_cyrillic and n4 in ("de", "fr"):
         return DetectResult(lang=n4, rule="char-rule", v1=r1, v2=r2, v4=r4)
 
-    # ── Правило 3: взвешенное голосование V1+V2+V4 ──
+    # ── Rule 3: weighted voting V1+V2+V4 ──
     votes: Counter[str] = Counter()
     for key, raw, weight in (("v1", r1, 1), ("v2", r2, 2), ("v4", r4, 3)):
         norm = _NORMALIZE.get(raw, raw)
