@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.6]
-- **Metadata**: Added a native cover search scraper for litres.ru that displays high-resolution covers instantly while general web search results load in the background.
+- **Metadata**: Added native cover search scrapers (Litres, Storytel, and Goodreads) that display high-resolution covers instantly before falling back to general web search.
 - **Metadata**: Added online cover search with hover previews to the metadata editor.
 
 ## [1.7.5]

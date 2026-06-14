@@ -782,6 +782,8 @@ class SearchWorker(QThread):
                 
             is_cyrillic = any('\u0400' <= ch <= '\u04FF' for ch in self.query)
             litres_results = []
+            direct_results = []
+            
             if is_cyrillic:
                 try:
                     print(f"[SearchWorker] Querying LitresScraper directly...")
@@ -793,6 +795,30 @@ class SearchWorker(QThread):
                         self.results_found.emit(litres_results)
                 except Exception as e:
                     print(f"[SearchWorker] LitresScraper failed: {e}")
+            
+            try:
+                print(f"[SearchWorker] Querying StorytelScraper directly...")
+                from storytel_scraper import StorytelScraper
+                scraper = StorytelScraper()
+                storytel_res = scraper.search(self.query)
+                print(f"[SearchWorker] StorytelScraper found {len(storytel_res)} results")
+                if storytel_res:
+                    direct_results.extend(storytel_res)
+                    self.results_found.emit(storytel_res)
+            except Exception as e:
+                print(f"[SearchWorker] StorytelScraper failed: {e}")
+
+            try:
+                print(f"[SearchWorker] Querying GoodreadsScraper directly...")
+                from goodreads_scraper import GoodreadsScraper
+                scraper = GoodreadsScraper()
+                goodreads_res = scraper.search(self.query)
+                print(f"[SearchWorker] GoodreadsScraper found {len(goodreads_res)} results")
+                if goodreads_res:
+                    direct_results.extend(goodreads_res)
+                    self.results_found.emit(goodreads_res)
+            except Exception as e:
+                print(f"[SearchWorker] GoodreadsScraper failed: {e}")
             
             # Now run general search via DDGS
             general_results = []
@@ -808,20 +834,26 @@ class SearchWorker(QThread):
                         print(f"[SearchWorker] General DDGS attempt {attempt + 1} returned {len(general_results)} results. Retrying...")
                     except Exception as e:
                         print(f"[SearchWorker] General DDGS attempt {attempt + 1} failed: {e}")
-                        if attempt == max_attempts - 1 and not litres_results:
+                        if attempt == max_attempts - 1 and not litres_results and not direct_results:
                             raise e
                     if attempt < max_attempts - 1:
                         time.sleep(1.0)
             except Exception as e:
                 print(f"[SearchWorker] DDGS general search failed: {e}")
-                if not litres_results:
+                if not litres_results and not direct_results:
                     raise e
                     
-            # Merge results, keeping litres_results first
+            # Merge results, keeping litres/direct results first
             seen_images = set()
             results = []
             
             for res in litres_results:
+                img_url = res.get('image')
+                if img_url and img_url not in seen_images:
+                    seen_images.add(img_url)
+                    results.append(res)
+                    
+            for res in direct_results:
                 img_url = res.get('image')
                 if img_url and img_url not in seen_images:
                     seen_images.add(img_url)
