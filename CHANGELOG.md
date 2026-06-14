@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.3]
+- **Library**: Reorganized the audiobook context menu to display the "Play" action first, followed by a grouped section of all batch-compatible actions (Favorites, Tags, Mark as Read/Unread, Convert to Opus), and placed the single-book "Delete" action at the very bottom.
+- **UI**: Added separator lines around the "Mark as Read" and "Mark as Unread" actions in the context menu to group them visually.
 - **Library**: Added a "Convert to Opus" option to the audiobook context menu, allowing users to convert individual books or multiple selected books at once, followed by an automatic directory rescan to update book entries.
 - **UI**: Fixed an issue in minimal interface mode where the bookmark buttons (Mark and +) were compressed vertically and overlapped by the volume slider.
 
