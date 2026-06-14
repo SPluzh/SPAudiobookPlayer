@@ -374,11 +374,29 @@ def detect(folder_name: str) -> str:
     return detect_detailed(folder_name).lang
 
 
+def _fix_encoding(text: str) -> str:
+    """Correct text encoding issues (e.g., CP1251 read as Latin-1)"""
+    if not text or not isinstance(text, str):
+        return text
+        
+    try:
+        if any(128 <= ord(c) <= 255 for c in text):
+            fixed = text.encode('latin-1').decode('cp1251')
+            if any(1040 <= ord(c) <= 1103 for c in fixed): # A-я in Unicode
+                return fixed
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        pass
+        
+    return text
+
+
 def _detect_detailed_impl(text: str) -> DetectResult:
     """Internal implementation without try/except."""
+    text = _fix_encoding(text)
     r1 = _detect_v1(text)
     r2 = _detect_v2(text)
     r4 = _detect_v4(text)
+
 
     n2 = _NORMALIZE.get(r2, r2)
     n4 = _NORMALIZE.get(r4, r4)
