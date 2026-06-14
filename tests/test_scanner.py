@@ -461,6 +461,60 @@ class TestScanProgressLogging:
         assert mock_scanner._last_was_progress is False
 
 
+class TestSubfolderScanning:
+    """Tests to verify scanning of specific subfolders"""
+
+    def test_scan_only_specified_subfolder(self, mock_scanner, temp_dir):
+        # Create two audiobook folders
+        book_a_dir = temp_dir / "Book A"
+        book_a_dir.mkdir()
+        (book_a_dir / "01.mp3").write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        book_b_dir = temp_dir / "Book B"
+        book_b_dir.mkdir()
+        (book_b_dir / "01.mp3").write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        from pathlib import Path
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': Path(dir).name, 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+
+        try:
+            # 1. Full scan to populate database
+            mock_scanner.scan_directory(str(temp_dir))
+
+            # Verify both are inserted and available
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            c.execute("SELECT path, is_available FROM audiobooks WHERE is_folder = 0 ORDER BY path")
+            rows = c.fetchall()
+            assert len(rows) == 2
+            assert rows[0] == ("Book A", 1)
+            assert rows[1] == ("Book B", 1)
+
+            # 2. Delete Book A directory from disk, but keep Book B directory
+            import shutil
+            shutil.rmtree(book_a_dir)
+
+            # Run scan targeting ONLY Book A subfolder
+            mock_scanner.scan_directory(str(temp_dir), subfolder_path="Book A")
+
+            # Verify Book A is now unavailable (is_available = 0), but Book B is still available (is_available = 1)
+            c.execute("SELECT path, is_available FROM audiobooks WHERE is_folder = 0 ORDER BY path")
+            rows = c.fetchall()
+            assert len(rows) == 2
+            assert rows[0] == ("Book A", 0)
+            assert rows[1] == ("Book B", 1)
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+
 
 
 

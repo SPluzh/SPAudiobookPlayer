@@ -2019,7 +2019,7 @@ class AudiobookPlayerWindow(QMainWindow):
         if not self.player.is_playing() and duration > 0 and pos >= chapter_end - 1.5:
             self.on_next_clicked()
 
-    def rescan_directory(self):
+    def rescan_directory(self, target_path: str = ""):
         """Initiate a comprehensive scan of the configured media directory with progress feedback via a dialog"""
         if not self.default_path:
             QMessageBox.warning(self, tr("settings.title"), tr("settings.specify_path"))
@@ -2042,7 +2042,8 @@ class AudiobookPlayerWindow(QMainWindow):
 
             dialog.finished.connect(on_finished)
             dialog.show()
-            dialog.start_scan(self.default_path, self.ffprobe_path)
+            subfolder_path = target_path if target_path else None
+            dialog.start_scan(self.default_path, self.ffprobe_path, subfolder_path=subfolder_path)
 
         start_scanning_process()
 

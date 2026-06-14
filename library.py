@@ -362,11 +362,12 @@ class ScannerThread(QThread):
     progress = pyqtSignal(str)  # Log message signal
     finished_scan = pyqtSignal(int)  # Number of audiobooks found signal
 
-    def __init__(self, root_path, ffprobe_path=None):
+    def __init__(self, root_path, ffprobe_path=None, subfolder_path=None):
         """Initialize the scanner thread with target path and optional ffprobe path"""
         super().__init__()
         self.root_path = root_path
         self.ffprobe_path = ffprobe_path
+        self.subfolder_path = subfolder_path
 
     def run(self):
         """Execute the scan process"""
@@ -405,7 +406,7 @@ class ScannerThread(QThread):
             scanner = AudiobookScanner(
                 "settings.ini"
             )  # AudiobookScanner handles resources/ internally
-            count = scanner.scan_directory(self.root_path)
+            count = scanner.scan_directory(self.root_path, subfolder_path=self.subfolder_path)
 
             # Restore stdout
             sys.stdout = old_stdout
@@ -525,9 +526,9 @@ class ScanProgressDialog(QDialog):
 
         self.thread = None
 
-    def start_scan(self, root_path, ffprobe_path=None):
+    def start_scan(self, root_path, ffprobe_path=None, subfolder_path=None):
         """Start the background scanning thread"""
-        self.thread = ScannerThread(root_path, ffprobe_path)
+        self.thread = ScannerThread(root_path, ffprobe_path, subfolder_path)
         self.thread.progress.connect(self.append_log)
         self.thread.finished_scan.connect(self.on_finished)
         self.thread.start()
@@ -2124,7 +2125,7 @@ class LibraryWidget(QWidget):
     show_folders_toggled = pyqtSignal(bool)  # Emits the new state of the folders toggle
     delete_requested = pyqtSignal(int, str, bool)  # Emits (audiobook_id, rel_path, delete_from_disk)
     folder_delete_requested = pyqtSignal(str)  # Emits folder relative path
-    scan_requested = pyqtSignal()
+    scan_requested = pyqtSignal(str)
     settings_requested = pyqtSignal()  # Propagate settings request
     sort_order_changed = pyqtSignal(str, str, str)  # Emits (filter_mode, sort_order, sort_field)
 
@@ -3425,7 +3426,7 @@ class LibraryWidget(QWidget):
             dialog.file_converted.connect(
                 lambda old, new, br: self.db.update_file_extension(old, new, br)
             )
-            dialog.conversion_complete.connect(self.scan_requested.emit)
+            dialog.conversion_complete.connect(lambda: self.scan_requested.emit(""))
             print("[DEBUG] Executing dialog")
             dialog.exec()
             print("[DEBUG] Dialog finished")
@@ -3825,7 +3826,7 @@ class LibraryWidget(QWidget):
         try:
             self.db.set_folder_merged(path, True)
             # Trigger a rescan to update the library structure
-            self.scan_requested.emit()
+            self.scan_requested.emit(path)
         except Exception as e:
             QMessageBox.critical(
                 self, tr("window.title"), f"Error merging folders: {str(e)}"

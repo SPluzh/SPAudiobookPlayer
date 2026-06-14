@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.5]
+- **Scanner**: Optimized folder merge updates by scanning only the merged subfolder instead of the entire library.
+
 ## [1.7.4]
 - **Library**: Added checkbox selection support for folder items in mass selection mode, enabling recursive selection and deselection of all nested contents.
 - **Metadata**: Added support for bulk/mass editing of metadata for multiple selected audiobooks, complete with field-activation checkboxes and default preset states.

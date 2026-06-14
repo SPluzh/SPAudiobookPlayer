@@ -2153,7 +2153,7 @@ class AudiobookScanner:
         if extras:
             self._log(f"    {' '.join(extras)}")
 
-    def scan_directory(self, root_path, verbose=False):
+    def scan_directory(self, root_path, subfolder_path=None, verbose=False):
         """Perform recursive directory scanning for audiobooks"""
         start_time = time.time()
         self._log_header(self.tr("scanner.scan_start"))
@@ -2164,6 +2164,13 @@ class AudiobookScanner:
         if not root.exists():
             self._log_error(self.tr("scanner.error_not_exists"))
             return 0
+        
+        subfolder = None
+        if subfolder_path:
+            subfolder = Path(subfolder_path)
+            if not subfolder.is_absolute():
+                subfolder = root / subfolder
+            self._log_item("Subfolder", str(subfolder))
         
         with sqlite3.connect(self.db_file) as conn:
             c = conn.cursor()
@@ -2204,7 +2211,15 @@ class AudiobookScanner:
                      self._log(f"    [MERGED] {mp}")
             
             # Reset availability for all books before scanning
-            c.execute("UPDATE audiobooks SET is_available = 0")
+            if subfolder:
+                subfolder_rel = str(subfolder.relative_to(root))
+                c.execute("""
+                    UPDATE audiobooks 
+                    SET is_available = 0 
+                    WHERE path = ? OR path LIKE ?
+                """, (subfolder_rel, subfolder_rel + os.sep + '%'))
+            else:
+                c.execute("UPDATE audiobooks SET is_available = 0")
             
             c.execute("SELECT COUNT(*) FROM temp_state")
             saved_count = c.fetchone()[0]
@@ -2215,7 +2230,8 @@ class AudiobookScanner:
             self._log_section(self.tr("scanner.searching_books"))
             
             folders = []
-            for dirpath, dirnames, filenames in os.walk(root):
+            walk_target = subfolder if subfolder else root
+            for dirpath, dirnames, filenames in os.walk(walk_target):
                 d = Path(dirpath)
                 try:
                     rel_path_str = str(d.relative_to(root))
@@ -2245,20 +2261,21 @@ class AudiobookScanner:
             
             # Find standalone files and M3U playlists in root early to get total count
             standalone_files = []
-            try:
-                for f in root.iterdir():
-                    if f.is_file() and f.suffix.lower() in self.audio_extensions:
-                        standalone_files.append(f)
-            except PermissionError:
-                pass
-
             standalone_m3u = []
-            try:
-                for f in root.iterdir():
-                    if f.is_file() and f.suffix.lower() in ('.m3u', '.m3u8'):
-                        standalone_m3u.append(f)
-            except PermissionError:
-                pass
+            if not subfolder:
+                try:
+                    for f in root.iterdir():
+                        if f.is_file() and f.suffix.lower() in self.audio_extensions:
+                            standalone_files.append(f)
+                except PermissionError:
+                    pass
+
+                try:
+                    for f in root.iterdir():
+                        if f.is_file() and f.suffix.lower() in ('.m3u', '.m3u8'):
+                            standalone_m3u.append(f)
+                except PermissionError:
+                    pass
             
             total_items = len(folders) + len(standalone_files) + len(standalone_m3u)
             
