@@ -788,13 +788,13 @@ class SearchWorker(QThread):
                 # DDG degrades site: results when requests come too fast from the
                 # same session, so we use a single attempt with a fresh context and
                 # only retry once after a longer pause.
-                litres_query = f'site:litres.ru {self.query}'
+                litres_query = f'site:"litres.ru" {self.query}'
                 litres_results = []
                 for attempt in range(2):
                     try:
                         print(f"[SearchWorker] Attempting litres.ru search (attempt {attempt + 1})...")
                         with DDGS() as ddgs:
-                            litres_results = list(ddgs.images(litres_query, region=region, safesearch='off', max_results=60))
+                            litres_results = list(ddgs.images(litres_query, region=region, safesearch='on', max_results=60))
                         if litres_results:
                             break
                     except Exception as e:
