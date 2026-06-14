@@ -1921,11 +1921,11 @@ class AudiobookScanner:
             pass
 
     def _calculate_state_hash(self, files, cover_file=None, description_file=None):
-        """Calculate hash based on audio files, cover image, and description file
+        """Calculate hash based on audio files, cover image(s), and description file
         
         Args:
             files: List of audio file paths
-            cover_file: Path to cover image file (optional)
+            cover_file: Path or list/tuple of paths to cover image files (optional)
             description_file: Path to description text file (optional)
         
         Returns:
@@ -1941,15 +1941,21 @@ class AudiobookScanner:
             except Exception:
                 continue
         
-        # Cover file (original path, not cached)
+        # Cover files (can be a single path, a list/tuple of paths, or None)
         if cover_file:
-            try:
-                cover_path = Path(cover_file)
-                if cover_path.exists():
-                    stat = cover_path.stat()
-                    state_info.append(f"COVER|{cover_path.name}|{stat.st_size}|{stat.st_mtime}")
-            except Exception:
-                pass
+            if isinstance(cover_file, (list, tuple, set)):
+                cover_files = cover_file
+            else:
+                cover_files = [cover_file]
+                
+            for c_file in cover_files:
+                try:
+                    cover_path = Path(c_file)
+                    if cover_path.exists():
+                        stat = cover_path.stat()
+                        state_info.append(f"COVER|{cover_path.name}|{stat.st_size}|{stat.st_mtime}")
+                except Exception:
+                    pass
         
         # Description file
         if description_file:
@@ -1964,6 +1970,28 @@ class AudiobookScanner:
         # Sort for consistency
         state_str = "\n".join(sorted(state_info))
         return hashlib.md5(state_str.encode('utf-8')).hexdigest()
+
+    def _find_all_root_cover_files(self, directory):
+        """Find all cover image files in the root directory only (no rglob)
+        
+        Args:
+            directory: Path to the audiobook directory
+            
+        Returns:
+            List of string paths to cover files
+        """
+        path_obj = Path(directory)
+        if path_obj.is_file():
+            return []
+            
+        covers = []
+        try:
+            for f in path_obj.iterdir():
+                if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.webp'}:
+                    covers.append(str(f))
+        except (PermissionError, OSError):
+            pass
+        return sorted(covers)
 
     def _find_cover_file(self, directory):
         """Find original cover image file (without caching)
@@ -2358,23 +2386,41 @@ class AudiobookScanner:
                         if f.is_file() and f.suffix.lower() in self.audio_extensions
                     )
                 
-                # Find cover and description files BEFORE calculating hash
-                cover_file_path = self._find_cover_file(folder)
+                # Query database for existing record
+                c.execute("SELECT id, state_hash, codec, total_size, cover_path FROM audiobooks WHERE path = ?", (str(rel),))
+                existing_row_data = c.fetchone()
+                
+                # Fast determination of cover files and description file to use in state hash (no rglob)
+                cover_files = []
+                if existing_row_data and existing_row_data[4]:
+                    db_cover = existing_row_data[4]
+                    cover_p = Path(db_cover)
+                    if not cover_p.is_absolute():
+                        cover_p = root / cover_p
+                    try:
+                        if cover_p.is_file():
+                            cover_files.append(str(cover_p))
+                    except Exception:
+                        pass
+                
+                # Also include all root covers to detect new covers added to root
+                root_covers = self._find_all_root_cover_files(folder)
+                for rc in root_covers:
+                    if rc not in cover_files:
+                        cover_files.append(rc)
+                
                 description_file_path = self._find_description_file(folder)
                 
-                # Verbose logging
+                # Verbose logging (using primary cover file if found)
                 if verbose:
-                    if cover_file_path:
-                        self._log_info(f"Cover: {Path(cover_file_path).name}", indent=2)
+                    primary_cover = cover_files[0] if cover_files else None
+                    if primary_cover:
+                        self._log_info(f"Cover: {Path(primary_cover).name}", indent=2)
                     if description_file_path:
                         self._log_info(f"Description: {Path(description_file_path).name}", indent=2)
                 
-                # Calculate current state hash (including cover and description)
-                current_state_hash = self._calculate_state_hash(files, cover_file_path, description_file_path)
-                
-                # Check for existing record and state hash
-                c.execute("SELECT id, state_hash, codec, total_size FROM audiobooks WHERE path = ?", (str(rel),))
-                existing_row_data = c.fetchone()
+                # Calculate current state hash (extremely fast!)
+                current_state_hash = self._calculate_state_hash(files, cover_files, description_file_path)
                 
                 # Skip if valid existing record found and codec is populated
                 if existing_row_data:

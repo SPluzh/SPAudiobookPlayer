@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.6]
+- **Scanner**: Dramatically optimized library rescanning speed by avoiding slow recursive searches for cover files in unchanged audiobook folders.
+
 ## [1.7.5]
 - **Scanner**: Optimized folder merge updates by scanning only the merged subfolder instead of the entire library.
 

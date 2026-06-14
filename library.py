@@ -3304,10 +3304,11 @@ class LibraryWidget(QWidget):
                 lambda _: self.mark_as_unread(audiobook_id, path)
             )
             menu.addAction(mark_unread_action)
+            menu.addSeparator()
 
             # Convert to Opus Action (Batch compatible)
             convert_opus_action = QAction(tr("library.menu_convert_opus"), self)
-            opus_icon = get_icon("convert_opus")
+            opus_icon = get_icon("opus")
             if opus_icon.isNull():
                 opus_icon = get_icon("context_edit_metadata")
             convert_opus_action.setIcon(opus_icon)
@@ -3315,7 +3316,6 @@ class LibraryWidget(QWidget):
                 lambda _, p=path: self.open_opus_converter(p)
             )
             menu.addAction(convert_opus_action)
-            menu.addSeparator()
 
             # 3. Non-batch operations / other
             # Edit Metadata
@@ -3325,6 +3325,7 @@ class LibraryWidget(QWidget):
                 lambda _: self.open_metadata_editor(audiobook_id, path)
             )
             menu.addAction(edit_metadata_action)
+            menu.addSeparator()
 
             # Open Folder
             open_folder_action = QAction(tr("library.menu_open_folder"), self)

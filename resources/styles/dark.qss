@@ -934,7 +934,7 @@ QMenu::item:pressed {
 
 QMenu::separator {
     height: 1px;
-    background-color: @border;
+    background-color: #555555;
     margin: 5px 10px;
 }
 
