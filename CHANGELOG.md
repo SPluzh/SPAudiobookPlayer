@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.7.4]
 - **Scanner**: Added support for extracting language, writing year, and recording year
+- **Scanner**: Added real-time scanning progress tracking with percentage and audiobook count in the progress bar and status label.
 
 ## [1.7.3]
 - **Library**: Reorganized the audiobook context menu to display the "Play" action first, followed by a grouped section of all batch-compatible actions (Favorites, Tags, Mark as Read/Unread, Convert to Opus), and placed the single-book "Delete" action at the very bottom.

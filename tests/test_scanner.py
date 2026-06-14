@@ -404,4 +404,63 @@ class TestScannerExecution:
             conn.close()
 
 
+class TestScanProgressLogging:
+    """Tests to verify scanning progress logging outputs correct format and data"""
+
+    def test_scan_progress_logging(self, mock_scanner, temp_dir):
+        # Create multiple audiobook folders
+        for name in ["Book A", "Book B"]:
+            book_dir = temp_dir / name
+            book_dir.mkdir()
+            mp3_file = book_dir / "01.mp3"
+            mp3_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+            
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': 'Title', 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+        
+        logged_lines = []
+        def mock_log(message, end='\n'):
+            logged_lines.append((message, end))
+            
+        mock_scanner._log = mock_log
+        
+        try:
+            mock_scanner.scan_directory(str(temp_dir))
+            
+            # Check that we logged progress
+            progress_logs = [m for m, e in logged_lines if "\r" in m and "% | " in m]
+            assert len(progress_logs) > 0
+            
+            # Verify structure and format: "percent% | [current/total] Book Title"
+            # It should have e.g., "50% | [1/2] Book A" or "100% | [2/2] Book B"
+            assert any("50% | " in m for m in progress_logs)
+            assert any("100% | " in m for m in progress_logs)
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+    def test_log_progress_clearing(self, mock_scanner, capsys):
+        mock_scanner._last_was_progress = False
+        
+        # Log a progress line
+        mock_scanner._log("\r50% | processing", end="")
+        captured = capsys.readouterr()
+        assert captured.out == "\r50% | processing"
+        assert mock_scanner._last_was_progress is True
+        
+        # Log a standard line (should trigger clearing of progress line)
+        mock_scanner._log("Finished processing book")
+        captured = capsys.readouterr()
+        # Should contain the clear sequence followed by the new log message
+        assert "\r" + " " * 90 + "\r" in captured.out
+        assert "Finished processing book\n" in captured.out
+        assert mock_scanner._last_was_progress is False
+
+
+
+
 

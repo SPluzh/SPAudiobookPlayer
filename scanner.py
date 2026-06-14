@@ -28,6 +28,12 @@ class AudiobookScanner:
     
     def _log(self, message: str, end: str = '\n'):
         """Helper to print formatted messages"""
+        if getattr(self, '_last_was_progress', False) and not message.startswith('\r'):
+            # Clear progress line from both console and GUI
+            print("\r" + " " * 90 + "\r", end="", flush=True)
+            self._last_was_progress = False
+        if message.startswith('\r'):
+            self._last_was_progress = True
         print(message, end=end, flush=True)
 
     def _log_header(self, title: str):
@@ -2237,6 +2243,25 @@ class AudiobookScanner:
             
             self._log_info(self.tr("scanner.found_folders", count=len(folders)))
             
+            # Find standalone files and M3U playlists in root early to get total count
+            standalone_files = []
+            try:
+                for f in root.iterdir():
+                    if f.is_file() and f.suffix.lower() in self.audio_extensions:
+                        standalone_files.append(f)
+            except PermissionError:
+                pass
+
+            standalone_m3u = []
+            try:
+                for f in root.iterdir():
+                    if f.is_file() and f.suffix.lower() in ('.m3u', '.m3u8'):
+                        standalone_m3u.append(f)
+            except PermissionError:
+                pass
+            
+            total_items = len(folders) + len(standalone_files) + len(standalone_m3u)
+            
             # Cleanup old cache entries (older than 30 days)
             c.execute("DELETE FROM file_metadata_cache WHERE cached_at < datetime('now', '-30 days')")
             
@@ -2286,6 +2311,11 @@ class AudiobookScanner:
             for idx, folder in enumerate(folders, 1):
                 rel = folder.relative_to(root)
                 parent = rel.parent if str(rel.parent) != '.' else ''
+                
+                # Log progress
+                percent = int(idx * 100 / total_items) if total_items > 0 else 0
+                progress_text = self.tr("scanner.processing_item", current=idx, total=total_items, name=folder.name)
+                self._log(f"\r{percent}% | {progress_text}", end="")
                 
                 m3u_files = self._find_playlist_files(folder)
                 if m3u_files:
@@ -2744,34 +2774,28 @@ class AudiobookScanner:
             # --- Process Standalone Files in Root ---
             self._log_section(self.tr("scanner.processing_standalone"))
             
-            standalone_files = []
-            try:
-                for f in root.iterdir():
-                    if f.is_file() and f.suffix.lower() in self.audio_extensions:
-                        # Check minimal criteria for mp3 to be considering a "book" in root
-                        # For now, just accept all supported audio files in root as books
-                        standalone_files.append(f)
-            except PermissionError:
-                pass
-
             if standalone_files:
                 self._log_info(self.tr("scanner.standalone_found", count=len(standalone_files)))
-                for f in standalone_files:
+                for s_idx, f in enumerate(standalone_files, 1):
+                    # Progress logging for standalone files
+                    global_idx = len(folders) + s_idx
+                    percent = int(global_idx * 100 / total_items) if total_items > 0 else 0
+                    progress_text = self.tr("scanner.processing_item", current=global_idx, total=total_items, name=f.name)
+                    self._log(f"\r{percent}% | {progress_text}", end="")
+                    
                     self._process_standalone_file(f, root, conn, verbose=verbose)
             else:
                 self._log_info(self.tr("scanner.standalone_found", count=0))
 
             # --- Process Standalone M3U Playlists in Root ---
-            standalone_m3u = []
-            try:
-                for f in root.iterdir():
-                    if f.is_file() and f.suffix.lower() in ('.m3u', '.m3u8'):
-                        standalone_m3u.append(f)
-            except PermissionError:
-                pass
-
             if standalone_m3u:
-                for m3u_file in standalone_m3u:
+                for m_idx, m3u_file in enumerate(standalone_m3u, 1):
+                    # Progress logging for standalone m3u playlists
+                    global_idx = len(folders) + len(standalone_files) + m_idx
+                    percent = int(global_idx * 100 / total_items) if total_items > 0 else 0
+                    progress_text = self.tr("scanner.processing_item", current=global_idx, total=total_items, name=m3u_file.name)
+                    self._log(f"\r{percent}% | {progress_text}", end="")
+                    
                     rel_m3u = m3u_file.relative_to(root)
                     self._save_playlist_as_book(
                         m3u_path=m3u_file,

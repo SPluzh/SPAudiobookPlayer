@@ -537,6 +537,23 @@ class ScanProgressDialog(QDialog):
         cursor = self.console.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
 
+        # Try to parse progress percentage and item count to update the progress bar
+        # Format: "15% | [15/100] Book Title"
+        import re
+        match = re.search(r'(\d+)%\s+\|\s+\[(\d+)/(\d+)\]', text)
+        if match:
+            percent = int(match.group(1))
+            current = int(match.group(2))
+            total = int(match.group(3))
+            
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setValue(percent)
+            self.progress_bar.setTextVisible(True)
+            self.progress_bar.setFormat(f"{percent}% ({current}/{total})")
+            
+            # Update status label to show current phase
+            self.status_label.setText(f"{tr('scanner.processing_books')}: {current}/{total}")
+
         # Handle \r (carriage return) by overwriting the current line
         if "\r" in text:
             parts = text.split("\r")
