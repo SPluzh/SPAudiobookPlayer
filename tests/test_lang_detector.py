@@ -168,6 +168,15 @@ class TestChinese:
         assert d(folder) == "zh"
 
 
+class TestHebrew:
+    @pytest.mark.parametrize("folder", [
+        "\u05e2\u05de\u05d5\u05e1 \u05e2\u05d5\u05d6 - \u05de\u05d9\u05db\u05d0\u05dc \u05e9\u05dc\u05d9 [2010]",
+        "\u05d3\u05d5\u05d9\u05d3 \u05d2\u05e8\u05d5\u05e1\u05de\u05df - \u05d0\u05e9\u05d4 \u05d1\u05d5\u05e8\u05d7\u05ea \u05de\u05d1\u05e9\u05d5\u05e8\u05d4 [2015]",
+    ])
+    def test_hebrew_books(self, folder):
+        assert d(folder) == "he"
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Кириллические языки
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -215,6 +224,24 @@ class TestTransliteratedRussian:
         # Тест: главное, что не падает и возвращает строку.
         result = d("Akutagawa - Rashomon [Tanaka, 2015, 96kbps, MP3]")
         assert isinstance(result, str) and result != ""
+
+
+class TestUkrainian:
+    @pytest.mark.parametrize("folder", [
+        "Іван Франко - Захар Беркут [2015, MP3]",
+        "Леся Українка - Лісова пісня [2011]",
+    ])
+    def test_ukrainian_books(self, folder):
+        assert d(folder) == "uk"
+
+
+class TestBelarusian:
+    @pytest.mark.parametrize("folder", [
+        "Васіль Быкаў - Доўгая дарога дадому [2003, MP3]",
+        "Янка Купалаў - Курган [2005]",
+    ])
+    def test_belarusian_books(self, folder):
+        assert d(folder) == "be"
 
 
 class TestMixedScripts:
@@ -295,11 +322,13 @@ class TestFrench:
 
 
 class TestSpanish:
+    @pytest.mark.parametrize("folder", [
+        "Gabriel García Márquez - Cien años de soledad [Gustavo Bonfigli, 2006, M4B]",
+    ])
+    def test_spanish_books(self, folder):
+        assert d(folder) == "es"
+
     @pytest.mark.parametrize("folder,expected", [
-        pytest.param(
-            "Gabriel García Márquez - Cien años de soledad [Gustavo Bonfigli, 2006, M4B]", "es",
-            marks=pytest.mark.xfail(reason="V4 не проверяет ñ → en побеждает", strict=True)
-        ),
         pytest.param(
             "Jorge Luis Borges - Ficciones [Federico Salles, 2014, 128kbps, MP3]", "es",
             marks=pytest.mark.xfail(reason="Нет испанских маркеров → V4='en'", strict=True)
@@ -321,6 +350,68 @@ class TestTurkish:
         ),
     ])
     def test_turkish_xfail(self, folder, expected):
+        assert d(folder) == expected
+
+
+class TestPolish:
+    @pytest.mark.parametrize("folder", [
+        "Stanisław Lem - Solaris [1961, MP3]",
+        "Andrzej Sapkowski - Ostatnie życzenie [2015]",
+    ])
+    def test_polish_books(self, folder):
+        assert d(folder) == "pl"
+
+
+class TestCzechSlovak:
+    @pytest.mark.parametrize("folder", [
+        "Milan Kundera - Nesnesitelná lehkost bytí [2004]",
+        "Karel Čapek - R.U.R. [2010]",
+    ])
+    def test_czech_slovak_books(self, folder):
+        assert d(folder) == "cs"
+
+
+class TestRomanian:
+    @pytest.mark.parametrize("folder", [
+        "Ion Creangă - Amintiri din copilărie [2015]",
+    ])
+    def test_romanian_books(self, folder):
+        assert d(folder) == "ro"
+
+
+class TestFinnish:
+    @pytest.mark.parametrize("folder,expected", [
+        pytest.param(
+            "Mika Waltari - Sinuhe egyptiläinen [2008]", "fi",
+            marks=pytest.mark.xfail(reason="ä пересекается с немецким → de", strict=True)
+        ),
+        pytest.param(
+            "Tove Jansson - Muumipeikko ja pyrstötähti [2012]", "fi",
+            marks=pytest.mark.xfail(reason="ä/ö пересекаются с немецким → de", strict=True)
+        ),
+    ])
+    def test_finnish_xfail(self, folder, expected):
+        assert d(folder) == expected
+
+
+class TestItalian:
+    @pytest.mark.parametrize("folder", [
+        "Italo Calvino - E così via [2008]",
+    ])
+    def test_italian_books(self, folder):
+        assert d(folder) == "it"
+
+    @pytest.mark.parametrize("folder,expected", [
+        pytest.param(
+            "Alessandro Manzoni - I Promessi Sposi [della, 2011]", "it",
+            marks=pytest.mark.xfail(reason="Средняя длина слова > 6 -> ru-translit", strict=True)
+        ),
+        pytest.param(
+            "Italo Calvino - Il barone rampante [2006]", "it",
+            marks=pytest.mark.xfail(reason="Начальное 'Il' без пробела слева -> en", strict=True)
+        ),
+    ])
+    def test_italian_xfail(self, folder, expected):
         assert d(folder) == expected
 
 
@@ -357,6 +448,20 @@ class TestRealWorldFolders:
         ("สุนทรภู่ - พระอภัยมณี [ผู้อ่าน: สมชาย, 2017, 96kbps, MP3]", "th"),
         # Китайский
         ("曹雪芹 - 红楼梦 [朗读: 张三, 2010, 64kbps, M4B]", "zh"),
+        # Армянский
+        ("Րաֆֆի - Սամվել [Աշոտ Ղազարյան, 2015, 128kbps, MP3]", "hy"),
+        # Иврит
+        ("\u05e2\u05de\u05d5\u05e1 \u05e2\u05d5\u05d6 - \u05de\u05d9\u05db\u05d0\u05dc \u05e9\u05dc\u05d9 [2010]", "he"),
+        # Украинский
+        ("Іван Франко - Захар Беркут [2015, MP3]", "uk"),
+        # Белорусский
+        ("Васіль Быкаў - Доўгая дарога дадому [2003, MP3]", "be"),
+        # Польский
+        ("Stanisław Lem - Solaris [1961, MP3]", "pl"),
+        # Чешский
+        ("Karel Čapek - R.U.R. [2010]", "cs"),
+        # Румынский
+        ("Ion Creangă - Amintiri din copilărie [2015]", "ro"),
     ])
     def test_real_folders(self, folder, expected):
         assert d(folder) == expected
@@ -463,3 +568,7 @@ def test_no_empty_result(folder):
 def test_detailed_consistent_with_detect(folder):
     """detect_detailed().lang всегда совпадает с detect()."""
     assert detect_detailed(folder).lang == detect(folder)
+
+
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__, "-v"]))

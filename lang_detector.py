@@ -238,8 +238,8 @@ def _detect_v2(text: str) -> str:
     latin    = sum(1 for c in core if "A" <= c.upper() <= "Z")
 
     if cyrillic > 3:
-        if chars & set("єїіґ"): return "uk"
         if "ў" in chars:        return "be"
+        if chars & set("єїіґ"): return "uk"
         return "ru"
 
     # — Транслит —
@@ -289,8 +289,8 @@ def _detect_v4(text: str) -> str:
     # — Кириллица —
     cyrillic = sum(1 for c in core if "\u0400" <= c <= "\u04FF")
     if cyrillic > 3:
-        if any(c in "єїіґ" for c in lower): return "uk"
         if "ў" in lower:                    return "be"
+        if any(c in "єїіґ" for c in lower): return "uk"
         return "ru"
 
     latin = sum(1 for c in core if "A" <= c.upper() <= "Z")
@@ -299,10 +299,12 @@ def _detect_v4(text: str) -> str:
 
     # 1. Спецсимволы языков (в ПОЛНОМ тексте — символ может быть в имени чтеца
     #    внутри скобок, например "Büttner" → ü → de)
-    if set("äöüß") & set(full_lower):
-        return "de"
-    if set("àâæçèéêëîïôùûüœ") & set(full_lower):
-        return "fr"
+    full_chars = set(full_lower)
+    for lang, hint_chars in _LANG_CHAR_HINTS.items():
+        if lang in ("uk", "be"):
+            continue
+        if full_chars & hint_chars:
+            return lang
 
     # 2. Транслит
     for pat in _RU_TRANSLIT_PATTERNS:
