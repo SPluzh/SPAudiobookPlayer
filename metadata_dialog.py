@@ -766,14 +766,36 @@ class SearchWorker(QThread):
         
     def run(self):
         import traceback
+        import time
         try:
             print(f"[SearchWorker] Starting search for query: '{self.query}'")
             try:
                 from ddgs import DDGS
             except ImportError:
                 from duckduckgo_search import DDGS
-            with DDGS() as ddgs:
-                results = list(ddgs.images(self.query, safesearch='off', max_results=60))
+            
+            # Detect region based on Cyrillic presence
+            region = 'wt-wt'
+            if self.query and any(ord(c) in range(0x0400, 0x0500) for c in self.query):
+                region = 'ru-ru'
+                print(f"[SearchWorker] Cyrillic characters detected, setting region='{region}'")
+                
+            results = []
+            max_attempts = 3
+            for attempt in range(max_attempts):
+                try:
+                    with DDGS() as ddgs:
+                        results = list(ddgs.images(self.query, region=region, safesearch='off', max_results=60))
+                    if len(results) > 1:
+                        break
+                    print(f"[SearchWorker] Attempt {attempt + 1} returned {len(results)} results. Retrying...")
+                except Exception as e:
+                    print(f"[SearchWorker] Attempt {attempt + 1} failed with exception: {e}")
+                    if attempt == max_attempts - 1:
+                        raise e
+                if attempt < max_attempts - 1:
+                    time.sleep(1.0)
+                    
             print(f"[SearchWorker] Search completed successfully, found {len(results)} results")
             self.results_found.emit(results)
         except Exception as e:

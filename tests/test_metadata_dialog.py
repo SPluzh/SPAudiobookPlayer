@@ -260,8 +260,15 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
     
     # 4. Test SearchWorker with mocked duckduckgo_search
     from metadata_dialog import SearchWorker, DownloadWorker
+    import time
+    monkeypatch.setattr(time, "sleep", lambda x: None)
     
-    mock_results = [{"title": "Cover 1", "image": "http://example.com/cover1.jpg", "width": 100, "height": 100}]
+    mock_results = [
+        {"title": "Cover 1", "image": "http://example.com/cover1.jpg", "width": 100, "height": 100},
+        {"title": "Cover 2", "image": "http://example.com/cover2.jpg", "width": 200, "height": 200}
+    ]
+    
+    captured_kwargs = []
     
     class MockDDGS:
         def __init__(self, *args, **kwargs):
@@ -271,6 +278,7 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
         def __exit__(self, exc_type, exc_val, exc_tb):
             pass
         def images(self, query, *args, **kwargs):
+            captured_kwargs.append((query, kwargs))
             return mock_results
             
     try:
@@ -280,15 +288,58 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
         pass
     monkeypatch.setattr("duckduckgo_search.DDGS", MockDDGS)
     
+    # Test standard non-Cyrillic search
     worker = SearchWorker("test query")
     results = []
-    
-    def on_found(res):
-        results.extend(res)
-        
-    worker.results_found.connect(on_found)
+    worker.results_found.connect(results.extend)
     worker.run()
     assert results == mock_results
+    assert len(captured_kwargs) == 1
+    assert captured_kwargs[0][1].get('region') == 'wt-wt'
+    
+    # Test Cyrillic query region selection
+    captured_kwargs.clear()
+    worker_ru = SearchWorker("Макс Фрай")
+    results_ru = []
+    worker_ru.results_found.connect(results_ru.extend)
+    worker_ru.run()
+    assert results_ru == mock_results
+    assert len(captured_kwargs) == 1
+    assert captured_kwargs[0][1].get('region') == 'ru-ru'
+
+    # Test retry logic: first attempt returns 1 result, second attempt returns 2 results
+    retry_results = [
+        [{"title": "Ad", "image": "http://example.com/ad.jpg", "width": 50, "height": 50}],
+        mock_results
+    ]
+    retry_calls = 0
+    
+    class MockDDGSRetry:
+        def __init__(self, *args, **kwargs):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+        def images(self, query, *args, **kwargs):
+            nonlocal retry_calls
+            res = retry_results[retry_calls]
+            retry_calls += 1
+            return res
+            
+    monkeypatch.setattr("duckduckgo_search.DDGS", MockDDGSRetry)
+    try:
+        monkeypatch.setattr("ddgs.DDGS", MockDDGSRetry)
+    except ImportError:
+        pass
+        
+    worker_retry = SearchWorker("retry test")
+    results_retry = []
+    worker_retry.results_found.connect(results_retry.extend)
+    worker_retry.run()
+    
+    assert retry_calls == 2
+    assert results_retry == mock_results
 
     # 5. Test DownloadWorker with mocked urlopen
     class MockResponse:
