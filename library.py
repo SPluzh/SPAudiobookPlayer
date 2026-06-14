@@ -1812,6 +1812,15 @@ class LibraryTree(QTreeWidget):
         )
         self.mass_selection_mode = False
         self.selected_audiobook_paths = set()
+        # When True, scrollTo() calls from Qt internals (focus changes, etc.) are ignored.
+        # Set to True during context menu to prevent the list from jumping.
+        self._suppress_scroll = False
+
+    def scrollTo(self, index, hint=QTreeWidget.ScrollHint.EnsureVisible):
+        """Block automatic scroll-to-current triggered by Qt focus changes during menu display"""
+        if self._suppress_scroll:
+            return
+        super().scrollTo(index, hint)
 
     def wheelEvent(self, event):
         """Override wheel event to scroll by single row instead of multiple rows"""
@@ -1953,6 +1962,9 @@ class LibraryTree(QTreeWidget):
 
     def mousePressEvent(self, event):
         """Identify clicks on the custom 'Play' button to initiate playback without selecting the item"""
+        if event.button() == Qt.MouseButton.RightButton:
+            item = self.itemAt(event.pos())
+            print(f"[DEBUG RIGHT CLICK] Mouse right click event at {event.pos()}. Item: {item.text(0) if item else 'None'} | Path: {item.data(0, Qt.ItemDataRole.UserRole) if item else 'None'}", flush=True)
         if event.button() == Qt.MouseButton.LeftButton:
             # Check placeholder click
             if self.topLevelItemCount() == 0 and not self.has_any_content:
@@ -2114,6 +2126,23 @@ class LibraryTree(QTreeWidget):
         root = self.invisibleRootItem()
         for i in range(root.childCount()):
             sync_item(root.child(i))
+
+    def focusInEvent(self, event):
+        print(f"[DEBUG FOCUS] LibraryTree focusInEvent. FocusPolicy: {self.focusPolicy()}", flush=True)
+        import traceback
+        traceback.print_stack()
+        super().focusInEvent(event)
+
+    def focusOutEvent(self, event):
+        print(f"[DEBUG FOCUS] LibraryTree focusOutEvent. FocusPolicy: {self.focusPolicy()}", flush=True)
+        import traceback
+        traceback.print_stack()
+        super().focusOutEvent(event)
+
+    def changeEvent(self, event):
+        if event.type() == QEvent.Type.ActivationChange:
+            print(f"[DEBUG WINDOW] LibraryTree Window activation changed. Active: {self.isActiveWindow()}", flush=True)
+        super().changeEvent(event)
 
 
 class LibraryWidget(QWidget):
@@ -2397,6 +2426,8 @@ class LibraryWidget(QWidget):
             self.tree.setItemDelegate(self.delegate)
 
         layout.addWidget(self.tree)
+
+
 
     def resizeEvent(self, event):
         """Update button labels when the widget is resized to avoid layout overflow"""
@@ -3132,245 +3163,259 @@ class LibraryWidget(QWidget):
         if not item:
             return
 
-        role = item.data(0, Qt.ItemDataRole.UserRole + 1)
-        path = item.data(0, Qt.ItemDataRole.UserRole)
+        # Freeze scroll for the entire context-menu lifetime so that Qt's internal
+        # focus-change machinery (menu open / hover / close) cannot scroll the list.
+        vbar = self.tree.verticalScrollBar()
+        saved_scroll = vbar.value()
+        self.tree._suppress_scroll = True
+        try:
+            self.tree.setCurrentItem(item)
+            vbar.setValue(saved_scroll)
 
-        if role == "audiobook":
-            # Audiobook context menu (existing logic)
-            info = self.db.get_audiobook_info(path)
-            if not info:
-                return
-            audiobook_id = info[0]
+            role = item.data(0, Qt.ItemDataRole.UserRole + 1)
+            path = item.data(0, Qt.ItemDataRole.UserRole)
 
-            selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
-            mass_mode = getattr(self.tree, "mass_selection_mode", False)
-            is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
+            if role == "audiobook":
+                # Audiobook context menu (existing logic)
+                info = self.db.get_audiobook_info(path)
+                if not info:
+                    return
+                audiobook_id = info[0]
 
-            if is_batch:
-                batch_books = []
-                for p in selected_paths:
-                    info_b = self.db.get_audiobook_info(p)
-                    if info_b:
-                        batch_books.append((info_b[0], p))
+                selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+                mass_mode = getattr(self.tree, "mass_selection_mode", False)
+                is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
 
-            # Fetch fresh favorite status
-            if is_batch:
-                is_favorite = True
-                for bid, bp in batch_books:
-                    book_data = self.db.get_audiobook_by_path(bp)
-                    if book_data and not book_data.get("is_favorite", False):
-                        is_favorite = False
-                        break
-            else:
-                is_favorite = False
-                status_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
-                if status_data and len(status_data) >= 3:
-                    is_favorite = status_data[2]
+                if is_batch:
+                    batch_books = []
+                    for p in selected_paths:
+                        info_b = self.db.get_audiobook_info(p)
+                        if info_b:
+                            batch_books.append((info_b[0], p))
 
-            duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4]
+                # Fetch fresh favorite status
+                if is_batch:
+                    is_favorite = True
+                    for bid, bp in batch_books:
+                        book_data = self.db.get_audiobook_by_path(bp)
+                        if book_data and not book_data.get("is_favorite", False):
+                            is_favorite = False
+                            break
+                else:
+                    is_favorite = False
+                    status_data = item.data(0, Qt.ItemDataRole.UserRole + 3)
+                    if status_data and len(status_data) >= 3:
+                        is_favorite = status_data[2]
 
-            menu = QMenu()
-            menu.setObjectName("libraryContextMenu")
+                duration = item.data(0, Qt.ItemDataRole.UserRole + 2)[4]
 
-            play_action = QAction(tr("library.context_play"), self)
-            play_action.setIcon(get_icon("context_play"))
-            play_action.triggered.connect(
-                lambda _: self.on_item_double_clicked(item, 0)
-            )
-            menu.addAction(play_action)
-            menu.addSeparator()
+                menu = QMenu(self.tree)
+                menu.setObjectName("libraryContextMenu")
 
-            # Favorites Action (Batch compatible)
-            fav_text = (
-                tr("library.menu_remove_favorite")
-                if is_favorite
-                else tr("library.menu_add_favorite")
-            )
-            fav_icon = get_icon(
-                "context_favorite_on" if is_favorite else "context_favorite_off"
-            )
+                play_action = QAction(tr("library.context_play"), self)
+                play_action.setIcon(get_icon("context_play"))
+                play_action.triggered.connect(
+                    lambda _: self.on_item_double_clicked(item, 0)
+                )
+                menu.addAction(play_action)
+                menu.addSeparator()
 
-            # Fallback icons if resource not present
-            if not fav_icon or fav_icon.isNull():
-                fav_icon = self.style().standardIcon(
-                    QStyle.StandardPixmap.SP_DialogYesButton
+                # Favorites Action (Batch compatible)
+                fav_text = (
+                    tr("library.menu_remove_favorite")
+                    if is_favorite
+                    else tr("library.menu_add_favorite")
+                )
+                fav_icon = get_icon(
+                    "context_favorite_on" if is_favorite else "context_favorite_off"
                 )
 
-            fav_action = QAction(fav_text, self)
-            fav_action.setIcon(fav_icon)
-            fav_action.triggered.connect(
-                lambda _: self.toggle_favorite(audiobook_id, path)
-            )
-            menu.addAction(fav_action)
-
-            # Tags Submenu (Batch compatible)
-            tags_menu = menu.addMenu(tr("tags.menu_title"))
-            tags_menu.setObjectName("libraryContextMenu")
-            tags_menu.setIcon(
-                get_icon("context_tags")
-            )  # Ensure icon exists or fallback logic if needed
-
-            # Populate with existing tags
-            all_tags = self.db.get_all_tags()
-            if is_batch:
-                common_tag_ids = None
-                for bid, bp in batch_books:
-                    tags = self.db.get_tags_for_audiobook(bid)
-                    tids = {t["id"] for t in tags}
-                    if common_tag_ids is None:
-                        common_tag_ids = tids
-                    else:
-                        common_tag_ids.intersection_update(tids)
-                current_tag_ids = common_tag_ids if common_tag_ids is not None else set()
-            else:
-                current_tags = self.db.get_tags_for_audiobook(audiobook_id)
-                current_tag_ids = {t["id"] for t in current_tags}
-
-            if all_tags:
-                for tag in all_tags:
-                    # Create checkable action for each tag
-                    tag_action = QAction(tag["name"], self)
-                    tag_action.setCheckable(True)
-                    tag_action.setChecked(tag["id"] in current_tag_ids)
-
-                    # Set color icon if available
-                    if tag.get("color"):
-                        pixmap = QPixmap(14, 14)
-                        pixmap.fill(Qt.GlobalColor.transparent)
-
-                        painter = QPainter(pixmap)
-                        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-                        # Draw colored rounded rect background
-                        painter.setBrush(QColor(tag["color"]))
-                        painter.setPen(Qt.PenStyle.NoPen)
-                        painter.drawRoundedRect(0, 0, 14, 14, 3, 3)
-
-                        # Draw an accent-colored dot in the middle if the tag is checked
-                        if tag["id"] in current_tag_ids:
-                            _, accent_color = StyleManager.get_theme_property("theme_primary")
-                            painter.setBrush(accent_color)
-                            painter.drawEllipse(5, 5, 4, 4)
-
-                        painter.end()
-                        tag_action.setIcon(QIcon(pixmap))
-
-                    # Connect signal
-                    tag_action.triggered.connect(
-                        lambda checked,
-                        tid=tag["id"],
-                        p=path: self.toggle_tag_from_context_menu(
-                            audiobook_id, tid, p, checked
-                        )
+                # Fallback icons if resource not present
+                if not fav_icon or fav_icon.isNull():
+                    fav_icon = self.style().standardIcon(
+                        QStyle.StandardPixmap.SP_DialogYesButton
                     )
-                    tags_menu.addAction(tag_action)
 
-                tags_menu.addSeparator()
+                fav_action = QAction(fav_text, self)
+                fav_action.setIcon(fav_icon)
+                fav_action.triggered.connect(
+                    lambda _: self.toggle_favorite(audiobook_id, path)
+                )
+                menu.addAction(fav_action)
 
-            assign_action = QAction(tr("tags.menu_assign"), self)
-            assign_action.triggered.connect(
-                lambda _: self.open_tag_assignment(audiobook_id, path)
-            )
-            tags_menu.addAction(assign_action)
+                # Tags Submenu (Batch compatible)
+                tags_menu = menu.addMenu(tr("tags.menu_title"))
+                tags_menu.setObjectName("libraryContextMenu")
+                tags_menu.setIcon(
+                    get_icon("context_tags")
+                )  # Ensure icon exists or fallback logic if needed
 
-            clear_tags_action = QAction(tr("tags.menu_clear_all"), self)
-            clear_tags_action.triggered.connect(
-                lambda _: self.clear_all_tags(audiobook_id, path)
-            )
-            if is_batch:
-                has_any_tags = False
-                for bid, bp in batch_books:
-                    if self.db.get_tags_for_audiobook(bid):
-                        has_any_tags = True
-                        break
-                clear_tags_action.setEnabled(has_any_tags)
-            else:
-                clear_tags_action.setEnabled(bool(current_tag_ids))
-            tags_menu.addAction(clear_tags_action)
+                # Populate with existing tags
+                all_tags = self.db.get_all_tags()
+                if is_batch:
+                    common_tag_ids = None
+                    for bid, bp in batch_books:
+                        tags = self.db.get_tags_for_audiobook(bid)
+                        tids = {t["id"] for t in tags}
+                        if common_tag_ids is None:
+                            common_tag_ids = tids
+                        else:
+                            common_tag_ids.intersection_update(tids)
+                    current_tag_ids = common_tag_ids if common_tag_ids is not None else set()
+                else:
+                    current_tags = self.db.get_tags_for_audiobook(audiobook_id)
+                    current_tag_ids = {t["id"] for t in current_tags}
 
-            menu.addSeparator()
+                if all_tags:
+                    for tag in all_tags:
+                        # Create checkable action for each tag
+                        tag_action = QAction(tag["name"], self)
+                        tag_action.setCheckable(True)
+                        tag_action.setChecked(tag["id"] in current_tag_ids)
 
-            # Mark Read/Unread Actions (Batch compatible)
-            mark_read_action = QAction(tr("library.menu_mark_read"), self)
-            mark_read_action.setIcon(get_icon("context_mark_read"))
-            mark_read_action.triggered.connect(
-                lambda _: self.mark_as_read(audiobook_id, duration, path)
-            )
-            menu.addAction(mark_read_action)
+                        # Set color icon if available
+                        if tag.get("color"):
+                            pixmap = QPixmap(14, 14)
+                            pixmap.fill(Qt.GlobalColor.transparent)
 
-            mark_unread_action = QAction(tr("library.menu_mark_unread"), self)
-            mark_unread_action.setIcon(get_icon("context_mark_unread"))
-            mark_unread_action.triggered.connect(
-                lambda _: self.mark_as_unread(audiobook_id, path)
-            )
-            menu.addAction(mark_unread_action)
-            menu.addSeparator()
+                            painter = QPainter(pixmap)
+                            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-            # Convert to Opus Action (Batch compatible)
-            convert_opus_action = QAction(tr("library.menu_convert_opus"), self)
-            opus_icon = get_icon("opus")
-            if opus_icon.isNull():
-                opus_icon = get_icon("context_edit_metadata")
-            convert_opus_action.setIcon(opus_icon)
-            convert_opus_action.triggered.connect(
-                lambda _, p=path: self.open_opus_converter(p)
-            )
-            menu.addAction(convert_opus_action)
+                            # Draw colored rounded rect background
+                            painter.setBrush(QColor(tag["color"]))
+                            painter.setPen(Qt.PenStyle.NoPen)
+                            painter.drawRoundedRect(0, 0, 14, 14, 3, 3)
 
-            # 3. Non-batch operations / other
-            # Edit Metadata
-            edit_metadata_action = QAction(tr("library.menu_edit_metadata"), self)
-            edit_metadata_action.setIcon(get_icon("context_edit_metadata"))
-            edit_metadata_action.triggered.connect(
-                lambda _: self.open_metadata_editor(audiobook_id, path)
-            )
-            menu.addAction(edit_metadata_action)
-            menu.addSeparator()
+                            # Draw an accent-colored dot in the middle if the tag is checked
+                            if tag["id"] in current_tag_ids:
+                                _, accent_color = StyleManager.get_theme_property("theme_primary")
+                                painter.setBrush(accent_color)
+                                painter.drawEllipse(5, 5, 4, 4)
 
-            # Open Folder
-            open_folder_action = QAction(tr("library.menu_open_folder"), self)
-            open_folder_action.setIcon(get_icon("context_open_folder"))
-            open_folder_action.triggered.connect(lambda _: self.open_folder(path))
-            menu.addAction(open_folder_action)
-            menu.addSeparator()
+                            painter.end()
+                            tag_action.setIcon(QIcon(pixmap))
 
-            # 4. Delete Action (Last line, single book only)
-            delete_action = QAction(tr("library.menu_delete"), self)
-            delete_action.setIcon(get_icon("delete"))
-            delete_action.triggered.connect(
-                lambda _: self.confirm_delete(audiobook_id, path)
-            )
-            menu.addAction(delete_action)
+                        # Connect signal
+                        tag_action.triggered.connect(
+                            lambda checked,
+                            tid=tag["id"],
+                            p=path: self.toggle_tag_from_context_menu(
+                                audiobook_id, tid, p, checked
+                            )
+                        )
+                        tags_menu.addAction(tag_action)
 
-            menu.exec(self.tree.viewport().mapToGlobal(pos))
+                    tags_menu.addSeparator()
 
-        elif role == "folder":
-            # Folder context menu
-            menu = QMenu()
-            menu.setObjectName("libraryContextMenu")
+                assign_action = QAction(tr("tags.menu_assign"), self)
+                assign_action.triggered.connect(
+                    lambda _: self.open_tag_assignment(audiobook_id, path)
+                )
+                tags_menu.addAction(assign_action)
 
-            open_folder_action = QAction(tr("library.menu_open_folder"), self)
-            open_folder_action.setIcon(get_icon("context_open_folder"))
-            open_folder_action.triggered.connect(lambda _: self.open_folder(path))
-            menu.addAction(open_folder_action)
+                clear_tags_action = QAction(tr("tags.menu_clear_all"), self)
+                clear_tags_action.triggered.connect(
+                    lambda _: self.clear_all_tags(audiobook_id, path)
+                )
+                if is_batch:
+                    has_any_tags = False
+                    for bid, bp in batch_books:
+                        if self.db.get_tags_for_audiobook(bid):
+                            has_any_tags = True
+                            break
+                    clear_tags_action.setEnabled(has_any_tags)
+                else:
+                    clear_tags_action.setEnabled(bool(current_tag_ids))
+                tags_menu.addAction(clear_tags_action)
 
-            menu.addSeparator()
+                menu.addSeparator()
 
-            delete_action = QAction(tr("library.menu_delete_folder"), self)
-            delete_action.setIcon(get_icon("delete"))
-            delete_action.triggered.connect(lambda _: self.confirm_delete_folder(path))
-            menu.addAction(delete_action)
+                # Mark Read/Unread Actions (Batch compatible)
+                mark_read_action = QAction(tr("library.menu_mark_read"), self)
+                mark_read_action.setIcon(get_icon("context_mark_read"))
+                mark_read_action.triggered.connect(
+                    lambda _: self.mark_as_read(audiobook_id, duration, path)
+                )
+                menu.addAction(mark_read_action)
 
-            menu.addSeparator()
+                mark_unread_action = QAction(tr("library.menu_mark_unread"), self)
+                mark_unread_action.setIcon(get_icon("context_mark_unread"))
+                mark_unread_action.triggered.connect(
+                    lambda _: self.mark_as_unread(audiobook_id, path)
+                )
+                menu.addAction(mark_unread_action)
+                menu.addSeparator()
 
-            merge_action = QAction(tr("library.menu_merge_folders"), self)
-            merge_action.setIcon(get_icon("merge"))
-            merge_action.triggered.connect(
-                lambda _: self.on_merge_folders_requested(path)
-            )
-            menu.addAction(merge_action)
+                # Convert to Opus Action (Batch compatible)
+                convert_opus_action = QAction(tr("library.menu_convert_opus"), self)
+                opus_icon = get_icon("opus")
+                if opus_icon.isNull():
+                    opus_icon = get_icon("context_edit_metadata")
+                convert_opus_action.setIcon(opus_icon)
+                convert_opus_action.triggered.connect(
+                    lambda _, p=path: self.open_opus_converter(p)
+                )
+                menu.addAction(convert_opus_action)
 
-            menu.exec(self.tree.viewport().mapToGlobal(pos))
+                # 3. Non-batch operations / other
+                # Edit Metadata
+                edit_metadata_action = QAction(tr("library.menu_edit_metadata"), self)
+                edit_metadata_action.setIcon(get_icon("context_edit_metadata"))
+                edit_metadata_action.triggered.connect(
+                    lambda _: self.open_metadata_editor(audiobook_id, path)
+                )
+                menu.addAction(edit_metadata_action)
+                menu.addSeparator()
+
+                # Open Folder
+                open_folder_action = QAction(tr("library.menu_open_folder"), self)
+                open_folder_action.setIcon(get_icon("context_open_folder"))
+                open_folder_action.triggered.connect(lambda _: self.open_folder(path))
+                menu.addAction(open_folder_action)
+                menu.addSeparator()
+
+                # 4. Delete Action (Last line, single book only)
+                delete_action = QAction(tr("library.menu_delete"), self)
+                delete_action.setIcon(get_icon("delete"))
+                delete_action.triggered.connect(
+                    lambda _: self.confirm_delete(audiobook_id, path)
+                )
+                menu.addAction(delete_action)
+
+                menu.exec(self.tree.viewport().mapToGlobal(pos))
+
+            elif role == "folder":
+                # Folder context menu
+                menu = QMenu(self.tree)
+                menu.setObjectName("libraryContextMenu")
+
+                open_folder_action = QAction(tr("library.menu_open_folder"), self)
+                open_folder_action.setIcon(get_icon("context_open_folder"))
+                open_folder_action.triggered.connect(lambda _: self.open_folder(path))
+                menu.addAction(open_folder_action)
+
+                menu.addSeparator()
+
+                delete_action = QAction(tr("library.menu_delete_folder"), self)
+                delete_action.setIcon(get_icon("delete"))
+                delete_action.triggered.connect(lambda _: self.confirm_delete_folder(path))
+                menu.addAction(delete_action)
+
+                menu.addSeparator()
+
+                merge_action = QAction(tr("library.menu_merge_folders"), self)
+                merge_action.setIcon(get_icon("merge"))
+                merge_action.triggered.connect(
+                    lambda _: self.on_merge_folders_requested(path)
+                )
+                menu.addAction(merge_action)
+
+                menu.exec(self.tree.viewport().mapToGlobal(pos))
+
+        finally:
+            self.tree._suppress_scroll = False
+            vbar.setValue(saved_scroll)
+
 
     def open_opus_converter(self, clicked_path: str):
         """Open Opus conversion dialog for the clicked book (or all selected in batch mode)"""
