@@ -40,6 +40,20 @@ class TestParseAudiobookName:
         # Multiple dashes
         ("Author - Title - Subtitle (Narrator)", 
          ("Author", "Title - Subtitle", "Narrator")),
+         
+        # Multiple narrators
+        ("Борис Акунин - Азазель (А.Филиппенко, С.Безруков, О.Аросева, И.Безрукова)",
+         ("Борис Акунин", "Азазель", "А.Филиппенко, С.Безруков, О.Аросева, И.Безрукова")),
+        ("Борис Акунин - Левиафан (А.Клюквин, С.Чонишвили, Д.Мороз, А.Котов)",
+         ("Борис Акунин", "Левиафан", "А.Клюквин, С.Чонишвили, Д.Мороз, А.Котов")),
+         
+        # Mixed narrator and technical info
+        ("Author - Title (А.Филиппенко, 2003, 192kbps)",
+         ("Author", "Title", "А.Филиппенко")),
+         
+        # Multiple brackets
+        ("Борис Акунин - Азазель (А.Филиппенко, С.Безруков, О.Аросева, И.Безрукова) (2003)",
+         ("Борис Акунин", "Азазель", "А.Филиппенко, С.Безруков, О.Аросева, И.Безрукова")),
     ])
     def test_parse_variations(self, folder, expected):
         result = AudiobookScanner._parse_audiobook_name(folder)

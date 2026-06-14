@@ -217,34 +217,68 @@ class AudiobookScanner:
     @staticmethod
     def _parse_audiobook_name(folder_name):
         """Parse audiobook folder name into author, title, and narrator"""
-        narrator = ''
         folder_name_clean = folder_name.strip()
         
-        # Look for square or round brackets at the end
-        m = re.search(r'[\[\(](.+?)[\]\)]$', folder_name_clean)
-        if m:
-            bracket_content = m.group(1).strip()
-            folder_name_clean = folder_name_clean[:m.start()].strip()
+        def extract_last_bracket(s):
+            if not s:
+                return None, s
+            s = s.strip()
+            if not (s.endswith(')') or s.endswith(']')):
+                return None, s
+            
+            closing = s[-1]
+            opening = '(' if closing == ')' else '['
+            
+            balance = 0
+            for i in range(len(s) - 1, -1, -1):
+                if s[i] == closing:
+                    balance += 1
+                elif s[i] == opening:
+                    balance -= 1
+                    if balance == 0:
+                        # Found the matching opening bracket
+                        bracket_content = s[i+1:-1]
+                        remaining_content = s[:i].strip()
+                        return bracket_content, remaining_content
+            return None, s
+
+        narrator_parts = []
+        
+        # Extract brackets from right to left
+        while True:
+            bracket_content, remaining = extract_last_bracket(folder_name_clean)
+            if bracket_content is None:
+                break
+                
+            folder_name_clean = remaining
             
             # Split by commas
             parts = [p.strip() for p in bracket_content.split(',')]
             
-            if parts:
-                first_part = parts[0]
-                
+            cleaned_parts = []
+            for part in parts:
                 # Check if it's NOT technical info
                 is_technical = (
-                    re.match(r'^\d{4}$', first_part) or  # Year
-                    any(kw in first_part.lower() for kw in ['kbps', 'mp3', 'm4b', 'flac', 'ogg', 'wav'])
+                    re.match(r'^\d{4}$', part) or  # Year
+                    any(kw in part.lower() for kw in ['kbps', 'mp3', 'm4b', 'flac', 'ogg', 'wav', 'opus', 'ape', 'aac'])
                 )
                 
                 if not is_technical:
                     # Remove "narrated by" or equivalent prefixes
-                    narrator = re.sub(r'^(чит\.|читает)\s+', '', first_part, flags=re.IGNORECASE).strip()
+                    p_clean = re.sub(r'^(чит\.|читает)\s+', '', part, flags=re.IGNORECASE).strip()
                     
                     # Remove studio abbreviations in brackets if present
-                    if re.search(r'\([А-ЯA-Z]{2,5}\)$', narrator):
-                        narrator = re.sub(r'\s*\([А-ЯA-Z]{2,5}\)$', '', narrator).strip()
+                    if re.search(r'\([А-ЯA-Z]{2,5}\)$', p_clean):
+                        p_clean = re.sub(r'\s*\([А-ЯA-Z]{2,5}\)$', '', p_clean).strip()
+                    
+                    if p_clean:
+                        cleaned_parts.append(p_clean)
+            
+            if cleaned_parts:
+                # Insert at the beginning since we are extracting from right to left
+                narrator_parts = cleaned_parts + narrator_parts
+                
+        narrator = ", ".join(narrator_parts)
         
         # Split author and title by dash/hyphen
         m2 = re.split(r'\s*[–—-]\s*', folder_name_clean, maxsplit=1)
