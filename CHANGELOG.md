@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.7.5]
 - **Scanner**: Optimized folder merge updates by scanning only the merged subfolder instead of the entire library.
+- **Scanner**: Optimized library rescanning speed by avoiding slow recursive searches for cover files in unchanged audiobook folders.
 
 ## [1.7.4]
 - **Library**: Added checkbox selection support for folder items in mass selection mode, enabling recursive selection and deselection of all nested contents.
