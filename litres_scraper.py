@@ -33,9 +33,8 @@ class LitresScraper:
         """
         print(f"[LitresScraper] Searching for '{query}'...")
         encoded_query = urllib.parse.quote(query)
-        # Ищем без жесткого type=audiokniga, чтобы получить максимум обложек (и текстовых книг тоже),
-        # но в результатах отдадим приоритет аудиокнигам.
-        url = f"{self.BASE_URL}/search/?q={encoded_query}"
+        # Ищем по аудиокнигам и тексту для получения нужного типа обложек
+        url = f"{self.BASE_URL}/search/?q={encoded_query}&art_types=audiobook&art_types=text_book"
         
         html = self._fetch(url)
         if not html:
