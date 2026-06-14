@@ -200,7 +200,10 @@
     "progress": "{percent}%",
     "no_title": "ไม่มีชื่อ",
     "separator": "•",
-    "size_prefix": "💾"
+    "size_prefix": "💾",
+    "year_written_prefix": "✍️",
+    "year_recorded_prefix": "💿",
+    "language_prefix": "🌐"
   },
   "settings": {
     "title": "การตั้งค่า",

@@ -200,7 +200,10 @@
     "size_prefix": "💾",
     "progress": "{percent}%",
     "no_title": "Без названия",
-    "separator": "•"
+    "separator": "•",
+    "year_written_prefix": "✍️",
+    "year_recorded_prefix": "💿",
+    "language_prefix": "🌐"
   },
   "settings": {
     "title": "Настройки",

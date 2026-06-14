@@ -964,7 +964,8 @@ class DatabaseManager:
                        listened_duration, progress_percent, is_started, is_completed,
                        codec, bitrate_min, bitrate_max, bitrate_mode, container,
                        time_added, time_started, time_finished, is_favorite, description,
-                       cover_path, cached_cover_path, total_size, COALESCE(is_playlist, 0) as is_playlist
+                       cover_path, cached_cover_path, total_size, COALESCE(is_playlist, 0) as is_playlist,
+                       language, year_written, year_recorded
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -994,7 +995,10 @@ class DatabaseManager:
                     'cover_path': row[19],
                     'cached_cover_path': row[20],
                     'total_size': row[21],
-                    'is_playlist': bool(row[22])
+                    'is_playlist': bool(row[22]),
+                    'language': row[23],
+                    'year_written': row[24],
+                    'year_recorded': row[25]
                 }
             return None
         except sqlite3.Error as e:

@@ -642,6 +642,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.info_file_count_icon = get_icon("info_file_count")
         self.info_duration_icon = get_icon("info_duration")
         self.info_size_icon = get_icon("info_size")
+        self.info_language_icon = get_icon("languages")
 
         # Nesting lines color palette
         self.NESTING_COLORS = [
@@ -1132,6 +1133,9 @@ class MultiLineDelegate(QStyledItemDelegate):
         ) = data[:12]
         description = data[12] if len(data) > 12 else ""
         total_size = data[13] if len(data) > 13 else 0
+        language = data[14] if len(data) > 14 else None
+        year_written = data[15] if len(data) > 15 else None
+        year_recorded = data[16] if len(data) > 16 else None
 
         # Unpack status data for favorites and progress tracking
         status_data = index.data(Qt.ItemDataRole.UserRole + 3)
@@ -1489,7 +1493,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 self.author_icon.paint(painter, icon_rect)
                 painter.restore()
                 
-                author_x += icon_size + 6
+                author_x += icon_size + 3
 
             rect = QRect(author_x, text_y, option.rect.right() - author_x - self.horizontal_padding, line_height)
             painter.drawText(
@@ -1522,7 +1526,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 self.narrator_icon.paint(painter, icon_rect)
                 painter.restore()
                 
-                narrator_x += icon_size + 6
+                narrator_x += icon_size + 3
                 icon_drawn = True
                 
             if icon_drawn:
@@ -1601,6 +1605,33 @@ class MultiLineDelegate(QStyledItemDelegate):
                 font_tech, color_tech = self._get_style("delegate_file_count")
                 info_parts.append((self.info_bitrate_icon, full_tech_text, font_tech, color_tech))
 
+        # Writing Year metadata
+        if year_written and str(year_written).strip():
+            font_yw, color_yw = self._get_style("delegate_file_count")
+            if self.author_icon and not self.author_icon.isNull():
+                info_parts.append((self.author_icon, str(year_written), font_yw, color_yw))
+            else:
+                yw_prefix = tr("delegate.year_written_prefix", default="✍️")
+                info_parts.append((None, f"{yw_prefix} {year_written}", font_yw, color_yw))
+
+        # Recording Year metadata
+        if year_recorded and str(year_recorded).strip():
+            font_yr, color_yr = self._get_style("delegate_file_count")
+            if self.narrator_icon and not self.narrator_icon.isNull():
+                info_parts.append((self.narrator_icon, str(year_recorded), font_yr, color_yr))
+            else:
+                yr_prefix = tr("delegate.year_recorded_prefix", default="💿")
+                info_parts.append((None, f"{yr_prefix} {year_recorded}", font_yr, color_yr))
+
+        # Language metadata
+        if language and str(language).strip():
+            font_lang, color_lang = self._get_style("delegate_file_count")
+            if self.info_language_icon and not self.info_language_icon.isNull():
+                info_parts.append((self.info_language_icon, language, font_lang, color_lang))
+            else:
+                lang_prefix = tr("delegate.language_prefix", default="🌐")
+                info_parts.append((None, f"{lang_prefix} {language}", font_lang, color_lang))
+
         # Draw consolidated info line with custom formatting/spacing
         if info_parts and getattr(self, "show_detailed_info", True):
             current_x = text_x
@@ -1623,7 +1654,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                     icon.paint(painter, icon_rect)
                     painter.restore()
 
-                    current_x += icon_size + 6
+                    current_x += icon_size + 3
 
                 rect = QRect(current_x, text_y, text_width + 10, line_height)
                 painter.drawText(
@@ -2961,6 +2992,9 @@ class LibraryWidget(QWidget):
                 data["container"],
                 data.get("description", ""),
                 data.get("total_size", 0),
+                data.get("language"),
+                data.get("year_written"),
+                data.get("year_recorded"),
             ),
         )
         # Store status flags for client-side filtering
@@ -4028,6 +4062,9 @@ class LibraryWidget(QWidget):
                     data["container"],
                     data.get("description", ""),
                     data.get("total_size", 0),
+                    data.get("language"),
+                    data.get("year_written"),
+                    data.get("year_recorded"),
                 ),
             )
             if "is_started" in data and "is_completed" in data:

@@ -182,7 +182,10 @@
     "progress": "{percent}%",
     "no_title": "제목 없음",
     "separator": "•",
-    "size_prefix": "💾"
+    "size_prefix": "💾",
+    "year_written_prefix": "✍️",
+    "year_recorded_prefix": "💿",
+    "language_prefix": "🌐"
   },
   "settings": {
     "title": "설정",

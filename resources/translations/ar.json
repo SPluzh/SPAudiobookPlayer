@@ -182,7 +182,10 @@
     "progress": "{percent}%",
     "no_title": "بدون عنوان",
     "separator": "•",
-    "size_prefix": "💾"
+    "size_prefix": "💾",
+    "year_written_prefix": "✍️",
+    "year_recorded_prefix": "💿",
+    "language_prefix": "🌐"
   },
   "settings": {
     "title": "الإعدادات",
