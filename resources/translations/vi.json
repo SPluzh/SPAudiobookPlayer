@@ -109,7 +109,10 @@
     "sort_by_date_finished": "Ngày hoàn thành",
     "sort_by_progress": "Tiến độ đọc",
     "tooltip_sort_field": "Sắp xếp theo...",
-    "delete_from_disk_checkbox": "Đồng thời xóa các tệp sách nói khỏi đĩa"
+    "delete_from_disk_checkbox": "Đồng thời xóa các tệp sách nói khỏi đĩa",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "Âm lượng",

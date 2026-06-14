@@ -2633,14 +2633,59 @@ class LibraryWidget(QWidget):
         self.current_playing_item = None
         self._expanded_paths_cache = self.get_expanded_folder_paths()
         self.tree.clear()
+        data_to_display = {}
 
         # Helper to generate the key for client-side sorting
         def make_sort_key(field, reverse):
             def key_fn(x):
                 is_folder = x.get("is_folder", False)
                 if is_folder:
-                    # Folders are always sorted by their name
-                    val = (x.get("name") or "").lower()
+                    if field == "name":
+                        val = (x.get("name") or "").lower()
+                        return (1, val) if reverse else (0, val)
+                    
+                    # For other fields, determine folder value based on books inside it
+                    books_inside = []
+                    visited = set()
+                    def recurse(path):
+                        if path in visited:
+                            return
+                        visited.add(path)
+                        for item in data_to_display.get(path, []):
+                            if item.get("is_folder"):
+                                recurse(item["path"])
+                            else:
+                                books_inside.append(item)
+                    recurse(x["path"])
+                    
+                    if not books_inside:
+                        return (0, "") if reverse else (1, "")
+                    
+                    # Extract values for each book
+                    book_vals = []
+                    for b in books_inside:
+                        b_val = b.get(field)
+                        if b_val is not None and b_val != "":
+                            if field in ("author", "language"):
+                                book_vals.append(str(b_val).lower())
+                            else:
+                                if isinstance(b_val, (int, float)):
+                                    book_vals.append(b_val)
+                                else:
+                                    try:
+                                        book_vals.append(float(b_val))
+                                    except (ValueError, TypeError):
+                                        book_vals.append(str(b_val))
+                    
+                    if not book_vals:
+                        return (0, "") if reverse else (1, "")
+                    
+                    try:
+                        val = max(book_vals) if reverse else min(book_vals)
+                    except TypeError:
+                        str_vals = [str(v) for v in book_vals]
+                        val = max(str_vals) if reverse else min(str_vals)
+                    
                     return (1, val) if reverse else (0, val)
                 
                 if field == "name":
@@ -2653,7 +2698,7 @@ class LibraryWidget(QWidget):
                     # Empty values always go to the end of the list, regardless of sort order
                     return (0, "") if reverse else (1, "")
                 
-                if field in ("name", "author"):
+                if field in ("name", "author", "language"):
                     val = str(val).lower()
                 else:
                     # Keep numeric type if possible for proper numeric sorting, fallback to str
@@ -2791,9 +2836,9 @@ class LibraryWidget(QWidget):
                     books = [x for x in items if not x.get("is_folder")]
                     
                     reverse_sort = (self.sort_order == "desc")
-                    # Two-pass sort for consistent tie-breaking within each folder group
-                    folders.sort(key=lambda x: (x.get("name") or "").lower())
-                    folders.sort(key=make_sort_key(self.sort_field, reverse_sort), reverse=reverse_sort)
+                    # Sort folders strictly alphabetically by name, honoring the sorting direction
+                    folders.sort(key=lambda x: (x.get("name") or "").lower(), reverse=reverse_sort)
+                    # Two-pass sort for consistent tie-breaking within book group
                     books.sort(key=lambda x: (x.get("title") or x.get("name") or "").lower())
                     books.sort(key=make_sort_key(self.sort_field, reverse_sort), reverse=reverse_sort)
                     
@@ -4092,7 +4137,10 @@ class LibraryWidget(QWidget):
             ("time_added", "library.sort_by_date_added"),
             ("last_updated", "library.sort_by_last_read"),
             ("time_finished", "library.sort_by_date_finished"),
-            ("progress_percent", "library.sort_by_progress")
+            ("progress_percent", "library.sort_by_progress"),
+            ("year_written", "library.sort_by_year_written"),
+            ("year_recorded", "library.sort_by_year_recorded"),
+            ("language", "library.sort_by_language")
         ]
         
         current = self.sort_field
@@ -4120,7 +4168,10 @@ class LibraryWidget(QWidget):
                 "time_added": "sort_by_date_added",
                 "last_updated": "sort_by_last_read",
                 "time_finished": "sort_by_date_finished",
-                "progress_percent": "sort_by_progress"
+                "progress_percent": "sort_by_progress",
+                "year_written": "sort_by_year_written",
+                "year_recorded": "sort_by_year_recorded",
+                "language": "sort_by_language"
             }
             loc_key = field_map.get(self.sort_field, "sort_by_name")
             field_name = tr(f"library.{loc_key}")

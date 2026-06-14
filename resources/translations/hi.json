@@ -91,7 +91,10 @@
     "sort_by_date_finished": "समाप्त होने की तिथि",
     "sort_by_progress": "पढ़ने की प्रगति",
     "tooltip_sort_field": "क्रमबद्ध करें...",
-    "delete_from_disk_checkbox": "डिस्क से ऑडियोबुक फ़ाइलें भी हटाएं"
+    "delete_from_disk_checkbox": "डिस्क से ऑडियोबुक फ़ाइलें भी हटाएं",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "वॉल्यूम",

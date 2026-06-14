@@ -91,7 +91,10 @@
     "sort_by_date_finished": "聴了日",
     "sort_by_progress": "読書進捗",
     "tooltip_sort_field": "並べ替え...",
-    "delete_from_disk_checkbox": "ディスクからオーディオブックファイルも削除する"
+    "delete_from_disk_checkbox": "ディスクからオーディオブックファイルも削除する",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "音量",

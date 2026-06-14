@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 - **Metadata**: Added support for bulk/mass editing of metadata for multiple selected audiobooks, complete with field-activation checkboxes and default preset states.
 - **Scanner**: Added support for extracting language, writing year, and recording year
 - **Scanner**: Added real-time scanning progress tracking with percentage and audiobook count in the progress bar and status label.
+- **Library**: Added sorting options for book writing date, audiobook recording date, and language.
+- **Library**: Refined folder view sorting to always sort folders alphabetically (ascending or descending) while audiobooks inside them follow the chosen sort field.
 
 ## [1.7.3]
 - **Library**: Reorganized the audiobook context menu to display the "Play" action first, followed by a grouped section of all batch-compatible actions (Favorites, Tags, Mark as Read/Unread, Convert to Opus), and placed the single-book "Delete" action at the very bottom.

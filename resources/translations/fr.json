@@ -91,7 +91,10 @@
     "sort_by_date_finished": "Date de fin",
     "sort_by_progress": "Progression de lecture",
     "tooltip_sort_field": "Trier par...",
-    "delete_from_disk_checkbox": "Supprimer également les fichiers du livre audio du disque"
+    "delete_from_disk_checkbox": "Supprimer également les fichiers du livre audio du disque",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "Volume",

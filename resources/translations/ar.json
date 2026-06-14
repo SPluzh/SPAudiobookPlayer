@@ -91,7 +91,10 @@
     "sort_by_date_finished": "تاريخ الانتهاء",
     "sort_by_progress": "تقدم القراءة",
     "tooltip_sort_field": "ترتيب حسب...",
-    "delete_from_disk_checkbox": "احذف أيضًا ملفات الكتاب الصوتي من القرص"
+    "delete_from_disk_checkbox": "احذف أيضًا ملفات الكتاب الصوتي من القرص",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "مستوى الصوت",

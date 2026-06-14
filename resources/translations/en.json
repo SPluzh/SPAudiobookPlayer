@@ -109,7 +109,10 @@
     "description_title": "Audiobook Description",
     "no_tags_available": "No tags available",
     "tooltip_favorites": "Show only favorite books",
-    "tooltip_tags": "Filter by tags"
+    "tooltip_tags": "Filter by tags",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "Volume",

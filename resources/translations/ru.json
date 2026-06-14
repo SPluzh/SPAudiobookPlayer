@@ -109,7 +109,10 @@
     "description_title": "Описание аудиокниги",
     "no_tags_available": "Нет доступных тегов",
     "tooltip_favorites": "Показать только избранные книги",
-    "tooltip_tags": "Фильтр по тегам"
+    "tooltip_tags": "Фильтр по тегам",
+    "sort_by_year_written": "Дата написания",
+    "sort_by_year_recorded": "Дата озвучания",
+    "sort_by_language": "Язык"
   },
   "player": {
     "volume": "Громкость",

@@ -109,7 +109,10 @@
     "sort_by_date_finished": "วันที่ฟังจบ",
     "sort_by_progress": "ความคืบหน้าการอ่าน",
     "tooltip_sort_field": "จัดเรียงตาม...",
-    "delete_from_disk_checkbox": "ลบไฟล์หนังสือเสียงออกจากดิสก์ด้วย"
+    "delete_from_disk_checkbox": "ลบไฟล์หนังสือเสียงออกจากดิสก์ด้วย",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "ระดับเสียง",

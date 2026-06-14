@@ -91,7 +91,10 @@
     "sort_by_date_finished": "Fecha de finalización",
     "sort_by_progress": "Progreso de lectura",
     "tooltip_sort_field": "Ordenar por...",
-    "delete_from_disk_checkbox": "Eliminar también los archivos del audiolibro del disco"
+    "delete_from_disk_checkbox": "Eliminar también los archivos del audiolibro del disco",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "Volumen",

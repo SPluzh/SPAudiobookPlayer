@@ -91,7 +91,10 @@
     "sort_by_date_finished": "播放完毕日期",
     "sort_by_progress": "阅读进度",
     "tooltip_sort_field": "排序方式...",
-    "delete_from_disk_checkbox": "同时从磁盘删除有声书文件"
+    "delete_from_disk_checkbox": "同时从磁盘删除有声书文件",
+    "sort_by_year_written": "Writing date",
+    "sort_by_year_recorded": "Recording date",
+    "sort_by_language": "Language"
   },
   "player": {
     "volume": "音量",
