@@ -201,3 +201,123 @@ def test_mass_select_mark_actions(tmp_path):
         assert item_a.data(0, Qt.ItemDataRole.UserRole + 3) == (False, False, False)
         assert item_b.data(0, Qt.ItemDataRole.UserRole + 3) == (False, False, False)
 
+
+def test_folder_mass_selection(tmp_path):
+    from PyQt6.QtCore import Qt
+    app = QApplication.instance() or QApplication([])
+
+    resources_dir = tmp_path / "resources"
+    resources_dir.mkdir(parents=True, exist_ok=True)
+    
+    settings_file = resources_dir / "settings.ini"
+    with open(settings_file, "w", encoding="utf-8") as f:
+        f.write(
+            "[Library]\n"
+            "remember_filter_folders=True\n"
+            "show_folders=True\n"
+        )
+
+    with patch('main.DatabaseManager') as mock_db_class, \
+         patch('main.BassPlayer'), \
+         patch('main.get_base_path', return_value=tmp_path):
+         
+        mock_db = mock_db_class.return_value
+        mock_db.get_audiobook_count.return_value = 2
+        mock_db.get_all_audiobook_tags.return_value = {}
+        mock_db.get_all_tags.return_value = []
+
+        def make_mock_book(id_, path, name):
+            return {
+                "id": id_,
+                "path": path,
+                "name": name,
+                "title": name,
+                "author": "Author",
+                "narrator": "Narrator X",
+                "time_added": 100.0,
+                "is_folder": False,
+                "file_count": 1,
+                "duration": 1000,
+                "listened_duration": 0,
+                "progress_percent": 0.0,
+                "codec": "mp3",
+                "bitrate_min": 128,
+                "bitrate_max": 128,
+                "bitrate_mode": "cbr",
+                "container": "mp3",
+                "description": "",
+                "total_size": 1000000,
+                "is_started": False,
+                "is_completed": False,
+                "is_favorite": False,
+            }
+
+        # Return a structure with folders and subfolders
+        mock_db.load_audiobooks_from_db.return_value = {
+            "": [
+                {
+                    "is_folder": True,
+                    "path": "path/FolderX",
+                    "name": "Folder X",
+                    "is_expanded": True,
+                }
+            ],
+            "path/FolderX": [
+                make_mock_book(1, "path/FolderX/BookA", "Book A"),
+                make_mock_book(2, "path/FolderX/BookB", "Book B"),
+            ]
+        }
+
+        window = AudiobookPlayerWindow()
+        library = window.library_widget
+        library.load_audiobooks(use_cache=False)
+
+        tree = library.tree
+        assert tree.topLevelItemCount() > 0
+        
+        # Enable mass select mode
+        library.btn_mass_select.click()
+        assert tree.mass_selection_mode is True
+
+        # Let's locate the tree items
+        root_item = tree.invisibleRootItem()
+        folder_item = root_item.child(0)
+        assert folder_item.text(0).startswith("Folder X")
+        assert folder_item.data(0, Qt.ItemDataRole.UserRole + 1) == "folder"
+
+        book_a_item = folder_item.child(0)
+        book_b_item = folder_item.child(1)
+
+        # 1. Test clicking a folder recursively selects children
+        tree._set_item_selected_recursive(folder_item, True)
+        tree._update_parent_checkbox_states(folder_item)
+
+        assert "path/FolderX" in tree.selected_audiobook_paths
+        assert "path/FolderX/BookA" in tree.selected_audiobook_paths
+        assert "path/FolderX/BookB" in tree.selected_audiobook_paths
+
+        # 2. Test deselecting a child deselects the parent folder
+        tree.selected_audiobook_paths.remove("path/FolderX/BookA")
+        tree._update_parent_checkbox_states(book_a_item)
+        assert "path/FolderX" not in tree.selected_audiobook_paths
+        assert "path/FolderX/BookB" in tree.selected_audiobook_paths
+
+        # 3. Test selecting the child again selects the parent folder back
+        tree.selected_audiobook_paths.add("path/FolderX/BookA")
+        tree._update_parent_checkbox_states(book_a_item)
+        assert "path/FolderX" in tree.selected_audiobook_paths
+        assert "path/FolderX/BookB" in tree.selected_audiobook_paths
+
+        # 4. Test deselecting folder recursively deselects children
+        tree._set_item_selected_recursive(folder_item, False)
+        tree._update_parent_checkbox_states(folder_item)
+        assert "path/FolderX" not in tree.selected_audiobook_paths
+        assert "path/FolderX/BookA" not in tree.selected_audiobook_paths
+        assert "path/FolderX/BookB" not in tree.selected_audiobook_paths
+
+        # 5. Test select_all_audiobooks selects folders too via sync
+        library.select_all_audiobooks()
+        assert "path/FolderX" in tree.selected_audiobook_paths
+        assert "path/FolderX/BookA" in tree.selected_audiobook_paths
+        assert "path/FolderX/BookB" in tree.selected_audiobook_paths
+

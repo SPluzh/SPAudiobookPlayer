@@ -916,11 +916,59 @@ class MultiLineDelegate(QStyledItemDelegate):
             painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
             icon.paint(painter, icon_rect)
 
+        # Draw mass selection checkbox if mode is active
+        tree = getattr(self, "tree", None) or self.parent()
+        mass_mode = getattr(tree, "mass_selection_mode", False)
+        if mass_mode:
+            cb_rect = self.get_checkbox_rect(QRectF(icon_rect))
+            selected_paths = getattr(tree, "selected_audiobook_paths", set())
+            is_checked = folder_path in selected_paths
+            
+            painter.save()
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            
+            border_color = QColor("#555555")
+            _, accent_color = self._get_style("delegate_accent")
+            
+            is_over_cb = False
+            if self.mouse_pos and cb_rect.contains(QPointF(self.mouse_pos)):
+                is_over_cb = True
+                
+            if is_checked:
+                bg_color = accent_color
+                if is_over_cb:
+                    bg_color = bg_color.lighter(110)
+                painter.setBrush(bg_color)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawRoundedRect(cb_rect, 4.0, 4.0)
+                
+                checkmark_path = QPainterPath()
+                w = cb_rect.width()
+                h = cb_rect.height()
+                checkmark_path.moveTo(cb_rect.left() + w * 0.25, cb_rect.top() + h * 0.5)
+                checkmark_path.lineTo(cb_rect.left() + w * 0.45, cb_rect.top() + h * 0.75)
+                checkmark_path.lineTo(cb_rect.left() + w * 0.75, cb_rect.top() + h * 0.35)
+                
+                pen = QPen(Qt.GlobalColor.white, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+                painter.setPen(pen)
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.drawPath(checkmark_path)
+            else:
+                bg_color = QColor(Qt.GlobalColor.transparent)
+                if is_over_cb:
+                    border_color = border_color.lighter(130)
+                painter.setBrush(bg_color)
+                painter.setPen(QPen(border_color, 1.5))
+                painter.drawRoundedRect(cb_rect, 4.0, 4.0)
+                
+            painter.restore()
+
         text = index.data(Qt.ItemDataRole.DisplayRole)
+        text_x = icon_rect.right() + (43 if mass_mode else 8)
         text_rect = QRect(
-            icon_rect.right() + 8,
+            text_x,
             option.rect.top(),
-            option.rect.right() - icon_rect.right() - 18,
+            option.rect.right() - text_x - 18,
             option.rect.height(),
         )
         painter.drawText(text_rect, Qt.AlignmentFlag.AlignVCenter, text or "")
@@ -974,7 +1022,16 @@ class MultiLineDelegate(QStyledItemDelegate):
     def get_icon_rect(self, rect: QRect, index) -> QRect:
         """Calculate the rect for the cover icon, taking progress bar into account"""
         item_type = index.data(Qt.ItemDataRole.UserRole + 1)
-        if item_type != "audiobook":
+        if item_type == "folder":
+            nesting_offset = self.get_nesting_offset(index)
+            icon_size = 20
+            return QRect(
+                rect.left() + nesting_offset + self.horizontal_padding,
+                rect.top() + (rect.height() - icon_size) // 2,
+                icon_size,
+                icon_size,
+            )
+        elif item_type != "audiobook":
             return QRect()
 
         nesting_offset = self.get_nesting_offset(index)
@@ -1832,18 +1889,18 @@ class LibraryTree(QTreeWidget):
 
             if index.isValid():
                 item_type = index.data(Qt.ItemDataRole.UserRole + 1)
-                if item_type == "audiobook":
-                    rect = self.visualRect(index)
-                    icon_rect = delegate.get_icon_rect(rect, index)
-                    
-                    # Check checkbox hover first
-                    if self.mass_selection_mode and hasattr(delegate, "get_checkbox_rect"):
-                        cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
-                        if cb_rect.contains(QPointF(event.pos())):
-                            self.setCursor(Qt.CursorShape.PointingHandCursor)
-                            self.viewport().update()
-                            return
+                rect = self.visualRect(index)
+                icon_rect = delegate.get_icon_rect(rect, index)
+                
+                # Check checkbox hover first for both folders and audiobooks
+                if self.mass_selection_mode and hasattr(delegate, "get_checkbox_rect"):
+                    cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
+                    if cb_rect.contains(QPointF(event.pos())):
+                        self.setCursor(Qt.CursorShape.PointingHandCursor)
+                        self.viewport().update()
+                        return
 
+                if item_type == "audiobook":
                     play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
                     if play_rect.contains(QPointF(event.pos())):
                         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1906,24 +1963,36 @@ class LibraryTree(QTreeWidget):
             index = self.indexAt(event.pos())
             if index.isValid():
                 item_type = index.data(Qt.ItemDataRole.UserRole + 1)
-                if item_type == "audiobook":
-                    delegate = self.itemDelegate()
-                    if delegate and hasattr(delegate, "get_play_button_rect"):
-                        rect = self.visualRect(index)
-                        icon_rect = delegate.get_icon_rect(rect, index)
-                        
-                        # Check checkbox click first in mass selection mode
-                        if self.mass_selection_mode and hasattr(delegate, "get_checkbox_rect"):
-                            cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
-                            if cb_rect.contains(QPointF(event.pos())):
-                                path = index.data(Qt.ItemDataRole.UserRole)
+                delegate = self.itemDelegate()
+                if delegate and hasattr(delegate, "get_play_button_rect"):
+                    rect = self.visualRect(index)
+                    icon_rect = delegate.get_icon_rect(rect, index)
+                    
+                    # Check checkbox click first in mass selection mode
+                    if self.mass_selection_mode and hasattr(delegate, "get_checkbox_rect"):
+                        cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
+                        if cb_rect.contains(QPointF(event.pos())):
+                            path = index.data(Qt.ItemDataRole.UserRole)
+                            if item_type == "folder":
+                                # Toggle folder selection recursively
+                                is_checked = path in self.selected_audiobook_paths
+                                item = self.itemFromIndex(index)
+                                if item:
+                                    self._set_item_selected_recursive(item, not is_checked)
+                                    self._update_parent_checkbox_states(item)
+                            else:
+                                # Toggle single audiobook
                                 if path in self.selected_audiobook_paths:
                                     self.selected_audiobook_paths.remove(path)
                                 else:
                                     self.selected_audiobook_paths.add(path)
-                                self.viewport().update()
-                                return
+                                item = self.itemFromIndex(index)
+                                if item:
+                                    self._update_parent_checkbox_states(item)
+                            self.viewport().update()
+                            return
 
+                    if item_type == "audiobook":
                         play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
                         if play_rect.contains(QPointF(event.pos())):
                             path = index.data(Qt.ItemDataRole.UserRole)
@@ -1976,6 +2045,74 @@ class LibraryTree(QTreeWidget):
 
     def _emit_favorite_clicked(self, path):
         self.favorite_clicked.emit(path)
+
+    def _set_item_selected_recursive(self, item: QTreeWidgetItem, select: bool):
+        """Recursively select or deselect a tree item and all its children"""
+        path = item.data(0, Qt.ItemDataRole.UserRole)
+        if path:
+            if select:
+                self.selected_audiobook_paths.add(path)
+            else:
+                self.selected_audiobook_paths.discard(path)
+        
+        # Recursively select/deselect all children
+        for i in range(item.childCount()):
+            child = item.child(i)
+            self._set_item_selected_recursive(child, select)
+
+    def _update_parent_checkbox_states(self, item: QTreeWidgetItem):
+        """Walk up the tree and update the checked state of parent folders based on their children's checked states."""
+        parent = item.parent()
+        if not parent:
+            return
+        
+        # Check if all children of the parent are in selected_audiobook_paths
+        all_children_selected = True
+        for i in range(parent.childCount()):
+            child = parent.child(i)
+            child_path = child.data(0, Qt.ItemDataRole.UserRole)
+            if child_path not in self.selected_audiobook_paths:
+                all_children_selected = False
+                break
+        
+        parent_path = parent.data(0, Qt.ItemDataRole.UserRole)
+        if parent_path:
+            if all_children_selected:
+                self.selected_audiobook_paths.add(parent_path)
+            else:
+                self.selected_audiobook_paths.discard(parent_path)
+        
+        # Continue walking up the tree
+        self._update_parent_checkbox_states(parent)
+
+    def _sync_all_folder_checkbox_states(self):
+        """Traverse the tree bottom-up to sync folder checkbox states with their children."""
+        def sync_item(item):
+            # First sync children recursively (post-order traversal)
+            for i in range(item.childCount()):
+                sync_item(item.child(i))
+            
+            # Now sync this item if it is a folder
+            item_type = item.data(0, Qt.ItemDataRole.UserRole + 1)
+            if item_type == "folder":
+                folder_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if folder_path:
+                    has_children = item.childCount() > 0
+                    all_selected = True
+                    for i in range(item.childCount()):
+                        child = item.child(i)
+                        child_path = child.data(0, Qt.ItemDataRole.UserRole)
+                        if child_path not in self.selected_audiobook_paths:
+                            all_selected = False
+                            break
+                    if has_children and all_selected:
+                        self.selected_audiobook_paths.add(folder_path)
+                    else:
+                        self.selected_audiobook_paths.discard(folder_path)
+
+        root = self.invisibleRootItem()
+        for i in range(root.childCount()):
+            sync_item(root.child(i))
 
 
 class LibraryWidget(QWidget):
@@ -4030,6 +4167,7 @@ class LibraryWidget(QWidget):
         
         visible_paths = self.get_all_visible_audiobook_paths()
         self.tree.selected_audiobook_paths.update(visible_paths)
+        self.tree._sync_all_folder_checkbox_states()
         self.tree.viewport().update()
 
     def deselect_all_audiobooks(self):
