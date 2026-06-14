@@ -58,7 +58,10 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 is_merged INTEGER DEFAULT 0,
                 total_size INTEGER DEFAULT 0,
                 is_playlist INTEGER DEFAULT 0,
-                playlist_path TEXT
+                playlist_path TEXT,
+                language TEXT,
+                year_written TEXT,
+                year_recorded TEXT
             )
         """)
         
@@ -219,6 +222,24 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         # Migration: add playlist_path column
         try:
             c.execute("ALTER TABLE audiobooks ADD COLUMN playlist_path TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+        # Migration: add language column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN language TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+        # Migration: add year_written column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN year_written TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+        # Migration: add year_recorded column
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN year_recorded TEXT")
         except sqlite3.OperationalError:
             pass
 
@@ -475,7 +496,7 @@ class DatabaseManager:
                 is_started, is_completed, is_available, is_expanded, last_updated,
                 codec, bitrate_min, bitrate_max, bitrate_mode, container,
                 time_added, time_started, time_finished, is_favorite, is_merged, description, total_size,
-                COALESCE(is_playlist, 0) as is_playlist, id
+                COALESCE(is_playlist, 0) as is_playlist, id, language, year_written, year_recorded
             '''
             
             columns_with_prefix = '''
@@ -484,7 +505,7 @@ class DatabaseManager:
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
                 p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
                 p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.description, p.total_size,
-                COALESCE(p.is_playlist, 0) as is_playlist, p.id
+                COALESCE(p.is_playlist, 0) as is_playlist, p.id, p.language, p.year_written, p.year_recorded
             '''
             
             if filter_type == 'all':
@@ -559,7 +580,7 @@ class DatabaseManager:
                 is_started, is_completed, is_available, is_expanded, last_updated, \
                 codec, bitrate_min, bitrate_max, bitrate_mode, container, \
                 time_added, time_started, time_finished, is_favorite, is_merged, description, total_size, \
-                is_playlist, audiobook_id = row
+                is_playlist, audiobook_id, language, year_written, year_recorded = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -592,7 +613,10 @@ class DatabaseManager:
                     'is_playlist': bool(is_playlist),
                     'description': description,
                     'total_size': total_size or 0,
-                    'id': audiobook_id
+                    'id': audiobook_id,
+                    'language': language,
+                    'year_written': year_written,
+                    'year_recorded': year_recorded
                 })
             
             return data_by_parent

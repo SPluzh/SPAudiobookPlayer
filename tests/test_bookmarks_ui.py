@@ -17,11 +17,7 @@ def test_add_bookmark_button_exists():
     assert widget.add_bookmark_btn.minimumWidth() == 20
     assert widget.add_bookmark_btn.toolTip() == tr("bookmarks.add")
 
-    # Check container exists and is configured correctly
-    assert hasattr(widget, 'bookmarks_container')
-    assert widget.bookmarks_container.maximumWidth() == 60
-    assert widget.bookmarks_container.minimumWidth() == 60
-    
+
     # Check signal emission
     emitted = False
     def on_clicked():

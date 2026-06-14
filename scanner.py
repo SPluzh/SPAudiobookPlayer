@@ -11,6 +11,7 @@ import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 from database import init_database
+from lang_detector import detect as detect_language
 from PyQt6.QtGui import QImage
 from PyQt6.QtCore import Qt
 
@@ -208,7 +209,18 @@ class AudiobookScanner:
                 fixed = text.encode('latin-1').decode('cp1251')
                 # If Cyrillic characters appear, correction was likely successful
                 if any(1040 <= ord(c) <= 1103 for c in fixed): # A-я in Unicode
-                    return fixed
+                    # Ensure no single word contains both Latin and Cyrillic characters,
+                    # which would indicate a false correction on accented Latin characters
+                    words = re.findall(r'[A-Za-z\u0400-\u04FF\u0401\u0451]+', fixed)
+                    has_mixed = False
+                    for w in words:
+                        has_latin = any(('a' <= c <= 'z') or ('A' <= c <= 'Z') for c in w)
+                        has_cyrillic = any('\u0400' <= c <= '\u04FF' or c in '\u0401\u0451' for c in w)
+                        if has_latin and has_cyrillic:
+                            has_mixed = True
+                            break
+                    if not has_mixed:
+                        return fixed
         except (UnicodeEncodeError, UnicodeDecodeError):
             pass
             
@@ -289,6 +301,125 @@ class AudiobookScanner:
             title = folder_name_clean
         
         return author.strip(), title.strip(), narrator.strip()
+
+    @staticmethod
+    def _detect_language(folder_name):
+        """Detect audiobook language from folder name using lang_detector.
+        
+        Returns:
+            ISO 639-1 language code (e.g. 'ru', 'en') or 'unknown'.
+            Never raises exceptions.
+        """
+        try:
+            return detect_language(folder_name)
+        except Exception:
+            return 'unknown'
+
+    def _extract_orig_year(self, file_path):
+        """Extract original publication year from audio file tags.
+        
+        Reads TDOR/TORY (MP3), ©opd/original_release_date (M4B),
+        original_date (FLAC), Original Year (APE).
+        
+        Returns:
+            Year string (e.g. '1978') or None if not found.
+        """
+        try:
+            from mutagen import File
+            audio = File(file_path)
+            if not audio:
+                return None
+
+            suffix = Path(file_path).suffix.lower()
+            orig_year = None
+
+            if suffix == '.mp3':
+                id3 = audio.tags
+                if id3:
+                    orig_year = id3.get('TDOR') or id3.get('TORY')
+            elif suffix in ('.m4a', '.m4b', '.mp4'):
+                orig_year = (audio.get('\xa9opd') or
+                             audio.get('original_release_date') or
+                             audio.get('original-release-date'))
+            elif suffix == '.flac':
+                orig_year = (audio.get('original_release_date') or
+                             audio.get('original_date') or
+                             audio.get('original_year') or
+                             audio.get('ORIGINAL_RELEASE_DATE') or
+                             audio.get('ORIGINAL_DATE') or
+                             audio.get('ORIGINAL_YEAR'))
+            elif suffix == '.ape':
+                orig_year = (audio.get('Original Year') or
+                             audio.get('original year'))
+
+            if orig_year:
+                return str(orig_year[0] if isinstance(orig_year, list) else orig_year).strip()
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _parse_years(folder_name, rec_tag, orig_tag):
+        """Determine book writing year and audiobook recording year.
+
+        Sources (all combined):
+          1. rec_tag  — recording year from audio tags (TDRC, ©day, date, Year)
+          2. orig_tag — original publication year from audio tags (TDOR, ©opd, original_date)
+          3. folder_name — all 4-digit years found anywhere in the folder name
+
+        Logic:
+          - If ≥ 2 years found → smallest = year_written, largest = year_recorded.
+          - If 1 year found:
+              · year ≥ 2000 OR audio keyword nearby → year_recorded
+              · otherwise → year_written
+
+        Returns:
+            (year_written, year_recorded) — strings like '2008' or None.
+        """
+        import datetime
+        current_year = datetime.date.today().year
+
+        tag_years = set()
+        for tag in (rec_tag, orig_tag):
+            if tag:
+                for y in re.findall(r'\b\d{4}\b', tag):
+                    if 1800 <= int(y) <= current_year:
+                        tag_years.add(int(y))
+
+        # Scan folder name for 4-digit years and detect audio context
+        folder_years = []
+        for match in re.finditer(r'\b\d{4}\b', folder_name):
+            y_val = int(match.group(0))
+            if 1800 <= y_val <= current_year:
+                pos = match.start()
+                context = folder_name[max(0, pos - 30):min(len(folder_name), pos + 30)]
+                is_audio = any(kw in context.lower() for kw in [
+                    'чит', 'гол', 'кня', 'клю', 'кир', 'ав', 'ауди', 'изд',
+                    'kbps', 'mp3', 'm4b', 'flac', 'мелод'
+                ])
+                folder_years.append((y_val, is_audio))
+
+        all_years = list(tag_years)
+        for y, _ in folder_years:
+            if y not in all_years:
+                all_years.append(y)
+        all_years.sort()
+
+        year_written = None
+        year_recorded = None
+
+        if len(all_years) >= 2:
+            year_written  = str(all_years[0])
+            year_recorded = str(all_years[-1])
+        elif len(all_years) == 1:
+            single_year = all_years[0]
+            is_aud = next((is_a for y, is_a in folder_years if y == single_year), False)
+            if is_aud or single_year >= 2000:
+                year_recorded = str(single_year)
+            else:
+                year_written = str(single_year)
+
+        return year_written, year_recorded
     
     
     def _extract_file_tags(self, file_path):
@@ -818,6 +949,12 @@ class AudiobookScanner:
 
         f_author, f_title, f_narrator = self._parse_audiobook_name(name)
 
+        # Detect language from folder/playlist name
+        language = self._detect_language(name)
+
+        # Parse writing year and recording year from playlist name (no tag access)
+        year_written, year_recorded = self._parse_years(name, None, None)
+
         try:
             stat = m3u_path.stat()
             state_str = f"{rel_m3u}|{stat.st_size}|{stat.st_mtime}"
@@ -955,6 +1092,7 @@ class AudiobookScanner:
             c.execute("""
                 UPDATE audiobooks
                 SET parent_path=?, name=?, author=?, title=?, narrator=?,
+                    language=?, year_written=?, year_recorded=?,
                     file_count=?, duration=?, is_folder=0,
                     is_playlist=1, playlist_path=?,
                     cover_path=?, cached_cover_path=?,
@@ -963,6 +1101,7 @@ class AudiobookScanner:
                     total_size=?
                 WHERE path=?
             """, (parent_path, name, f_author, f_title, f_narrator,
+                  language, year_written, year_recorded,
                   file_count, total_duration, rel_m3u,
                   cover, cover_cached, current_state_hash,
                   common_codec, bitrate_min, bitrate_max, bitrate_mode, container_val,
@@ -971,14 +1110,16 @@ class AudiobookScanner:
             c.execute("""
                 INSERT INTO audiobooks
                 (path, parent_path, name, author, title, narrator,
+                 language, year_written, year_recorded,
                  file_count, duration, is_folder, is_playlist, playlist_path,
                  cover_path, cached_cover_path, state_hash,
                  listened_duration, progress_percent, current_file_index,
                  current_position, playback_speed, is_started, is_completed,
                  is_available, codec, bitrate_min, bitrate_max, bitrate_mode, container,
                  total_size, time_added)
-                VALUES (?,?,?,?,?,?,?,?,0,1,?,?,?,?,0,0,0,0,1.0,0,0,1,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,0,1,?,?,?,?,0,0,0,0,1.0,0,0,1,?,?,?,?,?,?,CURRENT_TIMESTAMP)
             """, (book_path, parent_path, name, f_author, f_title, f_narrator,
+                  language, year_written, year_recorded,
                   file_count, total_duration, rel_m3u,
                   cover, cover_cached, current_state_hash,
                   common_codec, bitrate_min, bitrate_max, bitrate_mode, container_val,
@@ -1022,7 +1163,10 @@ class AudiobookScanner:
             bitrate_mode=bitrate_mode or '',
             cover=cover_cached,
             cue_count=0,
-            problems=sum(1 for e in entries if e['duration'] == 0)
+            problems=sum(1 for e in entries if e['duration'] == 0),
+            language=language,
+            year_written=year_written,
+            year_recorded=year_recorded
         )
 
     def _process_playlist_in_folder(self, folder, root, m3u_files, conn, save_folder_callback, verbose=False):
@@ -1948,7 +2092,7 @@ class AudiobookScanner:
         except Exception:
             return ""
 
-    def _log_book_summary(self, title, author, narrator, duration, file_count, codec, bitrate, bitrate_mode, cover, cue_count, problems):
+    def _log_book_summary(self, title, author, narrator, duration, file_count, codec, bitrate, bitrate_mode, cover, cue_count, problems, language=None, year_written=None, year_recorded=None):
         """Print a consolidated summary of the book"""
         self._log("") # Empty line before book
         
@@ -1979,7 +2123,18 @@ class AudiobookScanner:
         tech_line = f"    {time_str} | {files_str} | {codec.upper()} {bitrate_str}"
         self._log(tech_line)
         
-        # Line 4: Extras (Cover, CUE, Problems)
+        # Line 4: Metadata (Language, Written, Recorded)
+        meta_parts = []
+        if language:
+            meta_parts.append(f"Language: {language}")
+        if year_written:
+            meta_parts.append(f"Written: {year_written}")
+        if year_recorded:
+            meta_parts.append(f"Recorded: {year_recorded}")
+        if meta_parts:
+            self._log(f"    {' | '.join(meta_parts)}")
+
+        # Line 5: Extras (Cover, CUE, Problems)
         extras = []
         if cover:
             extras.append("[Cover: OK]")
@@ -2208,6 +2363,17 @@ class AudiobookScanner:
                 author = f_author or t_author
                 title = f_title or t_title
                 narrator = f_narrator or t_narrator
+
+                # Detect language from folder name
+                language = self._detect_language(folder.name)
+
+                # t_year already extracted by _extract_metadata — reuse as rec_tag (no double read)
+                # Only fetch orig_year (TDOR/©opd/original_date) which _extract_metadata doesn't provide
+                orig_year = self._extract_orig_year(files[0]) if files else None
+
+                # Parse writing year and recording year
+                # Sources: t_year (tag), orig_year (tag), folder.name (regex scan)
+                year_written, year_recorded = self._parse_years(folder.name, t_year or None, orig_year)
                 
                 # Analyze files in parallel
                 file_count = len(files)
@@ -2314,7 +2480,10 @@ class AudiobookScanner:
                     bitrate_mode=bitrate_mode,
                     cover=cover_cached, 
                     cue_count=len(cue_data_chapters) if cue_data_chapters else 0,
-                    problems=failed_count
+                    problems=failed_count,
+                    language=language,
+                    year_written=year_written,
+                    year_recorded=year_recorded
                 )
                 
                 # Restore state from temp table if possible
@@ -2374,6 +2543,9 @@ class AudiobookScanner:
                             tag_title = ?,
                             tag_narrator = ?,
                             tag_year = ?,
+                            language = ?,
+                            year_written = ?,
+                            year_recorded = ?,
                             cover_path = ?,
                             cached_cover_path = ?,
                             file_count = ?,
@@ -2401,6 +2573,9 @@ class AudiobookScanner:
                         t_title,
                         t_narrator,
                         t_year,
+                        language,
+                        year_written,
+                        year_recorded,
                         cover,
                         cover_cached,
                         file_count,
@@ -2425,6 +2600,7 @@ class AudiobookScanner:
                             path, parent_path, name,
                             author, title, narrator,
                             tag_author, tag_title, tag_narrator, tag_year,
+                            language, year_written, year_recorded,
                             cover_path, cached_cover_path,
                             file_count, duration,
                             listened_duration,
@@ -2440,7 +2616,7 @@ class AudiobookScanner:
                             codec, bitrate_min, bitrate_max, bitrate_mode, container,
                             time_added, is_merged, description, total_size
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
                     """, (
                         str(rel),
                         str(parent),
@@ -2452,6 +2628,9 @@ class AudiobookScanner:
                         t_title,
                         t_narrator,
                         t_year,
+                        language,
+                        year_written,
+                        year_recorded,
                         cover,
                         cover_cached,
                         file_count,
@@ -2612,6 +2791,11 @@ class AudiobookScanner:
             c.execute("DROP TABLE temp_state")
             conn.commit()
         
+        try:
+            conn.close()
+        except Exception:
+            pass
+        
         # Result statistics
         elapsed_time = time.time() - start_time
         elapsed_minutes = int(elapsed_time // 60)
@@ -2681,6 +2865,15 @@ class AudiobookScanner:
         title = f_title or t_title or file_path.stem
         narrator = f_narrator or t_narrator
         
+        # Detect language from file name
+        language = self._detect_language(file_path.name)
+
+        # Extract original year from tags
+        orig_year = self._extract_orig_year(file_path)
+
+        # Parse years
+        year_written, year_recorded = self._parse_years(file_path.name, t_year or None, orig_year)
+        
         # Analyze file
         info = self._analyze_file(file_path, verbose)
         file_duration = info['duration']
@@ -2743,8 +2936,6 @@ class AudiobookScanner:
         except Exception:
             pass
 
-        # Create/Update DB Record
-        
         # Check if record already exists (again, to get ID)
         if existing_row_data:
              c.execute("""
@@ -2773,7 +2964,10 @@ class AudiobookScanner:
                     is_merged = 0,
                     description = ?,
                     total_size = ?,
-                    is_folder = 0
+                    is_folder = 0,
+                    language = ?,
+                    year_written = ?,
+                    year_recorded = ?
                 WHERE path = ?
             """, (
                 str(parent),
@@ -2797,11 +2991,14 @@ class AudiobookScanner:
                 container,
                 tags.get('comment', ''),
                 total_size,
+                language,
+                year_written,
+                year_recorded,
                 str(rel)
             ))
              book_id = existing_row_data[0]
         else:
-            c.execute("""
+             c.execute("""
                 INSERT INTO audiobooks
                 (
                     path, parent_path, name,
@@ -2820,9 +3017,10 @@ class AudiobookScanner:
                     is_available,
                     state_hash,
                     codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                    time_added, is_merged, description, total_size
+                    time_added, is_merged, description, total_size,
+                    language, year_written, year_recorded
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?, ?, ?, ?)
             """, (
                 str(rel),
                 str(parent),
@@ -2852,10 +3050,13 @@ class AudiobookScanner:
                 bitrate_mode,
                 container,
                 tags.get('comment', ''),
-                total_size
+                total_size,
+                language,
+                year_written,
+                year_recorded
             ))
-            c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
-            book_id = c.fetchone()[0]
+             c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
+             book_id = c.fetchone()[0]
 
         # Scan and cache all available covers, and save to audiobook_covers table
         self._scan_and_save_all_covers(conn, file_path, str(rel), book_id, cover_cached)
@@ -2920,7 +3121,10 @@ class AudiobookScanner:
             bitrate_mode=bitrate_mode,
             cover=cover_cached, 
             cue_count=0,
-            problems=1 if file_duration == 0 else 0
+            problems=1 if file_duration == 0 else 0,
+            language=language,
+            year_written=year_written,
+            year_recorded=year_recorded
         )
 
 

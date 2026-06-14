@@ -383,7 +383,18 @@ def _fix_encoding(text: str) -> str:
         if any(128 <= ord(c) <= 255 for c in text):
             fixed = text.encode('latin-1').decode('cp1251')
             if any(1040 <= ord(c) <= 1103 for c in fixed): # A-я in Unicode
-                return fixed
+                # Ensure no single word contains both Latin and Cyrillic characters,
+                # which would indicate a false correction on accented Latin characters
+                words = re.findall(r'[A-Za-z\u0400-\u04FF\u0401\u0451]+', fixed)
+                has_mixed = False
+                for w in words:
+                    has_latin = any(('a' <= c <= 'z') or ('A' <= c <= 'Z') for c in w)
+                    has_cyrillic = any('\u0400' <= c <= '\u04FF' or c in '\u0401\u0451' for c in w)
+                    if has_latin and has_cyrillic:
+                        has_mixed = True
+                        break
+                if not has_mixed:
+                    return fixed
     except (UnicodeEncodeError, UnicodeDecodeError):
         pass
         

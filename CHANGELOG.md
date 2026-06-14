@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.4]
+- **Scanner**: Added support for extracting language, writing year, and recording year
+
 ## [1.7.3]
 - **Library**: Reorganized the audiobook context menu to display the "Play" action first, followed by a grouped section of all batch-compatible actions (Favorites, Tags, Mark as Read/Unread, Convert to Opus), and placed the single-book "Delete" action at the very bottom.
 - **Library**: Added a "Convert to Opus" option to the audiobook context menu, allowing users to convert individual books or multiple selected books at once, followed by an automatic directory rescan to update book entries.

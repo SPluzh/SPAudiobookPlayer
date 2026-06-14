@@ -235,3 +235,173 @@ class TestScanAndSaveAllCovers:
         assert row[0] is None
         assert row[1] is None
 
+
+class TestDetectLanguage:
+    """Tests for _detect_language method"""
+    
+    @pytest.mark.parametrize("folder_name,expected", [
+        ("Толстой Лев - Война и мир", "ru"),
+        ("Tolkien J.R.R. - The Lord of the Rings", "en"),
+        ("The Matrix [English]", "en"),
+        ("Абзац 123", "ru"),
+        ("", "unknown"),
+        (None, "unknown"),
+    ])
+    def test_detect_language(self, folder_name, expected):
+        assert AudiobookScanner._detect_language(folder_name) == expected
+
+
+class TestParseYears:
+    """Tests for _parse_years method"""
+
+    def test_no_years(self):
+        written, recorded = AudiobookScanner._parse_years("Book Title", None, None)
+        assert written is None
+        assert recorded is None
+
+    def test_single_year_pre_2000_no_keyword(self):
+        # Default behavior for single old year without keyword: year_written
+        written, recorded = AudiobookScanner._parse_years("Pushkin - Evgeniy Onegin (1833)", None, None)
+        assert written == "1833"
+        assert recorded is None
+
+    def test_single_year_post_2000_no_keyword(self):
+        # Single recent year: year_recorded
+        written, recorded = AudiobookScanner._parse_years("Some Author - Modern Book (2015)", None, None)
+        assert written is None
+        assert recorded == "2015"
+
+    def test_single_year_pre_2000_with_keyword(self):
+        # Single old year but contains keyword like "чит" or "mp3": year_recorded
+        written, recorded = AudiobookScanner._parse_years("Old Book [чит. Клюквин, 1995, MP3]", None, None)
+        assert written is None
+        assert recorded == "1995"
+
+    def test_multiple_years(self):
+        # Multiple years: smallest is written, largest is recorded
+        written, recorded = AudiobookScanner._parse_years("Author - Book [Narrator, 1978, 2008]", None, None)
+        assert written == "1978"
+        assert recorded == "2008"
+
+    def test_multiple_years_with_tags(self):
+        # Combine folder and tags, smallest is written, largest is recorded
+        written, recorded = AudiobookScanner._parse_years("Author - Book [1999]", "2012", "1954")
+        # Years found: 1999, 2012, 1954
+        assert written == "1954"
+        assert recorded == "2012"
+
+
+class TestScannerExecution:
+    """Tests to verify full scanner execution does not crash during database inserts"""
+
+    def test_scan_audiobook_folder_inserts_successfully(self, mock_scanner, temp_dir):
+        # Create an audiobook folder
+        book_dir = temp_dir / "Budzhold - Barrayar"
+        book_dir.mkdir()
+        
+        # Create a mock mp3 file
+        mp3_file = book_dir / "01.mp3"
+        mp3_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+        
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        def mock_extract(directory, files):
+            return {
+                'author': 'Budzhold',
+                'title': 'Barrayar',
+                'narrator': '',
+                'year': '2005'
+            }
+            
+        def mock_analyze(path, verbose=False):
+            return {
+                'duration': 100.0,
+                'bitrate': 128,
+                'codec': 'mp3',
+                'container': 'mp3',
+                'is_vbr': False,
+                'needs_ffprobe': False
+            }
+            
+        mock_scanner._extract_metadata = mock_extract
+        mock_scanner._analyze_file_fast = mock_analyze
+        
+        try:
+            # Execute scan
+            mock_scanner.scan_directory(str(temp_dir))
+            
+            # Verify database entry was inserted
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            c.execute("SELECT path, author, title, language, year_recorded FROM audiobooks WHERE is_folder = 0")
+            row = c.fetchone()
+            assert row is not None
+            assert "Barrayar" in row[0]
+            assert row[1] == "Budzhold"
+            assert row[2] == "Barrayar"
+            assert row[3] in ("en", "ru")
+            assert row[4] == "2005"
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+    def test_process_standalone_file_inserts_language_and_years(self, mock_scanner, temp_dir):
+        # Create a standalone audio file in root
+        standalone_file = temp_dir / "Лев Толстой - Анна Каренина [1978, 2010].mp3"
+        standalone_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        import sqlite3
+        conn = sqlite3.connect(mock_scanner.db_file)
+        
+        # Initialize temp_state table which _process_standalone_file expects
+        c = conn.cursor()
+        c.execute("CREATE TABLE temp_state (path TEXT, listened_duration REAL, progress_percent INTEGER, current_file_index INTEGER, current_position REAL, playback_speed REAL, is_started INTEGER, is_completed INTEGER)")
+        conn.commit()
+
+        # Mock _extract_file_tags, _analyze_file
+        original_extract_tags = mock_scanner._extract_file_tags
+        original_analyze = mock_scanner._analyze_file
+
+        mock_scanner._extract_file_tags = lambda path: {
+            'author': 'Лев Толстой',
+            'title': 'Анна Каренина',
+            'album': '',
+            'year': '2010',
+            'genre': '',
+            'comment': '',
+            'narrator': '',
+            'track': None
+        }
+
+        mock_scanner._analyze_file = lambda path, verbose=False: {
+            'duration': 200.0,
+            'bitrate': 128000,
+            'codec': 'mp3',
+            'container': 'mp3',
+            'is_vbr': False
+        }
+
+        try:
+            mock_scanner._process_standalone_file(standalone_file, temp_dir, conn)
+            
+            # Verify database entry has language and years
+            c.execute("SELECT path, author, title, language, year_written, year_recorded FROM audiobooks WHERE is_folder = 0")
+            row = c.fetchone()
+            assert row is not None
+            assert "Анна Каренина" in row[0]
+            assert row[1] == "Лев Толстой"
+            assert row[2] == "Анна Каренина"
+            assert row[3] == "ru"  # Russian language detected
+            assert row[4] == "1978"
+            assert row[5] == "2010"
+        finally:
+            mock_scanner._extract_file_tags = original_extract_tags
+            mock_scanner._analyze_file = original_analyze
+            conn.close()
+
+
+
