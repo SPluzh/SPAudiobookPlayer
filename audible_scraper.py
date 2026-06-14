@@ -40,11 +40,7 @@ class AudibleScraper:
         print(f"[AudibleScraper] Searching for '{query}'...")
         encoded_query = urllib.parse.quote(query)
         
-        is_cyrillic = any('\u0400' <= ch <= '\u04FF' for ch in query)
-        if is_cyrillic:
-            base_urls = ["https://www.audible.de", "https://www.audible.co.uk", "https://www.audible.com"]
-        else:
-            base_urls = ["https://www.audible.com", "https://www.audible.co.uk", "https://www.audible.de"]
+        base_urls = ["https://www.audible.com", "https://www.audible.co.uk", "https://www.audible.de"]
             
         html = None
         used_base_url = ""
@@ -155,15 +151,14 @@ class AudibleScraper:
                     from duckduckgo_search import DDGS
                 
                 import time
-                region = 'ru-ru' if is_cyrillic else 'wt-wt'
                 max_attempts = 3
                 raw_results = []
                 for attempt in range(max_attempts):
                     try:
                         with DDGS() as ddgs:
                             ddg_query = f"site:audible.com {query}"
-                            print(f"[AudibleScraper] DDGS fallback attempt {attempt + 1}: querying '{ddg_query}' with region '{region}'...")
-                            raw_results = list(ddgs.images(ddg_query, region=region, safesearch='off', max_results=limit))
+                            print(f"[AudibleScraper] DDGS fallback attempt {attempt + 1}: querying '{ddg_query}'...")
+                            raw_results = list(ddgs.images(ddg_query, safesearch='off', max_results=limit))
                         if len(raw_results) > 0:
                             break
                     except Exception as e:

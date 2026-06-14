@@ -112,10 +112,22 @@ class GoodreadsScraper:
                     from ddgs import DDGS
                 except ImportError:
                     from duckduckgo_search import DDGS
-                    
-                with DDGS() as ddgs:
-                    ddg_query = f"site:goodreads.com {query}"
-                    raw_results = list(ddgs.images(ddg_query, safesearch='off', max_results=limit))
+                
+                import time
+                max_attempts = 3
+                raw_results = []
+                for attempt in range(max_attempts):
+                    try:
+                        with DDGS() as ddgs:
+                            ddg_query = f"site:goodreads.com {query}"
+                            print(f"[GoodreadsScraper] DDGS fallback attempt {attempt + 1}: querying '{ddg_query}'...")
+                            raw_results = list(ddgs.images(ddg_query, safesearch='off', max_results=limit))
+                        if len(raw_results) > 0:
+                            break
+                    except Exception as e:
+                        print(f"[GoodreadsScraper] DDGS fallback attempt {attempt + 1} failed: {e}")
+                    if attempt < max_attempts - 1:
+                        time.sleep(1.0)
                     
                 for res in raw_results:
                     title = res.get("title", "")

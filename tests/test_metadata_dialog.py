@@ -275,9 +275,14 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
         def search(self, query, limit=40):
             return []
             
+    class MockLitresScraper:
+        def search(self, query):
+            return []
+            
     monkeypatch.setattr("goodreads_scraper.GoodreadsScraper", MockGoodreadsScraper)
     monkeypatch.setattr("storytel_scraper.StorytelScraper", MockStorytelScraper)
     monkeypatch.setattr("audible_scraper.AudibleScraper", MockAudibleScraper)
+    monkeypatch.setattr("litres_scraper.LitresScraper", MockLitresScraper)
     
     mock_results = [
         {"title": "Cover 1", "image": "http://example.com/cover1.jpg", "width": 100, "height": 100},
@@ -304,23 +309,17 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
         pass
     monkeypatch.setattr("duckduckgo_search.DDGS", MockDDGS)
     
-    # Test standard non-Cyrillic search
+    # Test standard search
     worker = SearchWorker("test query")
     results = []
     worker.results_found.connect(results.extend)
     worker.run()
     assert results == mock_results
     assert len(captured_kwargs) == 1
-    assert captured_kwargs[0][1].get('region') == 'wt-wt'
+    assert 'region' not in captured_kwargs[0][1]
     
-    # Test Cyrillic query region selection
+    # Test Cyrillic query search
     captured_kwargs.clear()
-    
-    # Mock LitresScraper to return empty list to trigger DDG fallback and test DDG behavior
-    class MockLitresScraper:
-        def search(self, query):
-            return []
-    monkeypatch.setattr("litres_scraper.LitresScraper", MockLitresScraper)
     
     worker_ru = SearchWorker("Макс Фрай")
     results_ru = []
@@ -329,7 +328,7 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
     assert len(results_ru) > 0
     assert len(captured_kwargs) == 1
     assert captured_kwargs[0][0] == "Макс Фрай"
-    assert captured_kwargs[0][1].get('region') == 'ru-ru'
+    assert 'region' not in captured_kwargs[0][1]
 
     # Test retry logic: first attempt returns 1 result, second attempt returns 2 results
     retry_results = [

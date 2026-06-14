@@ -774,29 +774,21 @@ class SearchWorker(QThread):
             except ImportError:
                 from duckduckgo_search import DDGS
             
-            # Auto-detect region: use 'ru-ru' for Cyrillic queries so Russian
-            # sites (litres.ru, labirint.ru, etc.) appear in the results,
-            # just as they do in a browser with geo-location enabled.
-            region = 'ru-ru' if any('\u0400' <= ch <= '\u04FF' for ch in self.query) else 'wt-wt'
-            print(f"[SearchWorker] Auto-detected region: '{region}' for query: '{self.query}'")
-                
-            is_cyrillic = any('\u0400' <= ch <= '\u04FF' for ch in self.query)
             litres_results = []
             direct_results = []
             
-            if is_cyrillic:
-                try:
-                    print(f"[SearchWorker] Querying LitresScraper directly...")
-                    from litres_scraper import LitresScraper
-                    scraper = LitresScraper()
-                    litres_results = scraper.search(self.query)
-                    print(f"[SearchWorker] LitresScraper found {len(litres_results)} results")
-                    if litres_results:
-                        for r in litres_results:
-                            r['source'] = 'Litres'
-                        self.results_found.emit(litres_results)
-                except Exception as e:
-                    print(f"[SearchWorker] LitresScraper failed: {e}")
+            try:
+                print(f"[SearchWorker] Querying LitresScraper directly...")
+                from litres_scraper import LitresScraper
+                scraper = LitresScraper()
+                litres_results = scraper.search(self.query)
+                print(f"[SearchWorker] LitresScraper found {len(litres_results)} results")
+                if litres_results:
+                    for r in litres_results:
+                        r['source'] = 'Litres'
+                    self.results_found.emit(litres_results)
+            except Exception as e:
+                print(f"[SearchWorker] LitresScraper failed: {e}")
             
             try:
                 print(f"[SearchWorker] Querying StorytelScraper directly...")
@@ -849,7 +841,7 @@ class SearchWorker(QThread):
                 for attempt in range(max_attempts):
                     try:
                         with DDGS() as ddgs:
-                            general_results = list(ddgs.images(self.query, region=region, safesearch='off', max_results=60))
+                            general_results = list(ddgs.images(self.query, safesearch='off', max_results=60))
                         if len(general_results) > 1:
                             break
                         print(f"[SearchWorker] General DDGS attempt {attempt + 1} returned {len(general_results)} results. Retrying...")
