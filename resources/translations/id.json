@@ -252,7 +252,10 @@
     "no_cover_text": "Tanpa Sampul",
     "select_cover": "Pilih Sampul:",
     "open_folder_tooltip": "Buka folder yang berisi buku ini",
-    "refresh_covers_tooltip": "Pindai folder untuk sampul baru"
+    "refresh_covers_tooltip": "Pindai folder untuk sampul baru",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "Edit Tag",

@@ -234,7 +234,10 @@
     "no_cover_text": "कोई कवर नहीं",
     "select_cover": "कवर चुनें:",
     "open_folder_tooltip": "इस पुस्तक वाले फ़ोल्डर को खोलें",
-    "refresh_covers_tooltip": "नए कवर के लिए फ़ोल्डर स्कैन करें"
+    "refresh_covers_tooltip": "नए कवर के लिए फ़ोल्डर स्कैन करें",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "टैग संपादित करें",

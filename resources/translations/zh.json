@@ -234,7 +234,10 @@
     "no_cover_text": "无封面",
     "select_cover": "选择封面:",
     "open_folder_tooltip": "打开包含此书的文件夹",
-    "refresh_covers_tooltip": "扫描文件夹以获取新封面"
+    "refresh_covers_tooltip": "扫描文件夹以获取新封面",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "编辑标签",

@@ -234,7 +234,10 @@
     "no_cover_text": "カバーなし",
     "select_cover": "カバーを選択:",
     "open_folder_tooltip": "この本が含まれるフォルダーを開く",
-    "refresh_covers_tooltip": "フォルダーをスキャンして新しいカバーを探す"
+    "refresh_covers_tooltip": "フォルダーをスキャンして新しいカバーを探す",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "タグを編集",

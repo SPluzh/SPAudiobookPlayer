@@ -10,6 +10,30 @@ from pathlib import Path
 from translations import tr
 from utils import get_icon
 
+LANGUAGES_MAP = {
+    "ru": "Русский (ru)",
+    "en": "English (en)",
+    "de": "Deutsch (de)",
+    "fr": "Français (fr)",
+    "es": "Español (es)",
+    "it": "Italiano (it)",
+    "uk": "Українська (uk)",
+    "be": "Беларуская (be)",
+    "zh": "中文 (zh)",
+    "ja": "日本語 (ja)",
+    "ko": "한국어 (ko)",
+    "pl": "Polski (pl)",
+    "tr": "Türkçe (tr)",
+    "ar": "العربية (ar)",
+    "hi": "हिन्दी (hi)",
+    "he": "עברית (he)",
+    "hy": "Հայերեն (hy)",
+    "th": "ไทย (th)",
+    "cs": "Čeština (cs)",
+    "fi": "Suomi (fi)",
+    "ro": "Română (ro)",
+}
+
 class CoverThumbnailWidget(QLabel):
     clicked = pyqtSignal()
     
@@ -82,7 +106,7 @@ class MetadataEditDialog(QDialog):
         
         self.setWindowTitle(tr("metadata.edit_title"))
         self.setModal(True)
-        self.resize(480, 380)
+        self.resize(480, 500)
         
         self.current_data = self.db.get_audiobook_metadata(self.audiobook_id)
         if not self.current_data:
@@ -123,6 +147,7 @@ class MetadataEditDialog(QDialog):
         form_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         
         # Author Field
+        self.author_label = QLabel(tr("metadata.author"))
         self.author_combo = QComboBox()
         self.author_combo.setEditable(True)
         # Prevent resizing based on content
@@ -131,25 +156,54 @@ class MetadataEditDialog(QDialog):
         # Allow inserting any text
         self.author_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.author_combo.setCurrentText(self.current_data.get('author') or "")
-        form_layout.addRow(tr("metadata.author"), self.author_combo)
+        form_layout.addRow(self.author_label, self.author_combo)
         
         # Title Field
+        self.title_label = QLabel(tr("metadata.title"))
         self.title_combo = QComboBox()
         self.title_combo.setEditable(True)
         self.title_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.title_combo.setMinimumWidth(300)
         self.title_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.title_combo.setCurrentText(self.current_data.get('title') or "")
-        form_layout.addRow(tr("metadata.title"), self.title_combo)
+        form_layout.addRow(self.title_label, self.title_combo)
         
         # Narrator Field
+        self.narrator_label = QLabel(tr("metadata.narrator"))
         self.narrator_combo = QComboBox()
         self.narrator_combo.setEditable(True)
         self.narrator_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.narrator_combo.setMinimumWidth(300)
         self.narrator_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.narrator_combo.setCurrentText(self.current_data.get('narrator') or "")
-        form_layout.addRow(tr("metadata.narrator"), self.narrator_combo)
+        form_layout.addRow(self.narrator_label, self.narrator_combo)
+
+        # Language Field
+        self.language_label = QLabel(tr("metadata.language", default="Book Language:"))
+        self.language_combo = QComboBox()
+        self.language_combo.setEditable(True)
+        self.language_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.language_combo.setMinimumWidth(300)
+        self.language_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        form_layout.addRow(self.language_label, self.language_combo)
+
+        # Year Written Field
+        self.year_written_label = QLabel(tr("metadata.year_written", default="Year Written:"))
+        self.year_written_combo = QComboBox()
+        self.year_written_combo.setEditable(True)
+        self.year_written_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.year_written_combo.setMinimumWidth(300)
+        self.year_written_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        form_layout.addRow(self.year_written_label, self.year_written_combo)
+
+        # Year Recorded Field
+        self.year_recorded_label = QLabel(tr("metadata.year_recorded", default="Year Recorded:"))
+        self.year_recorded_combo = QComboBox()
+        self.year_recorded_combo.setEditable(True)
+        self.year_recorded_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.year_recorded_combo.setMinimumWidth(300)
+        self.year_recorded_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        form_layout.addRow(self.year_recorded_label, self.year_recorded_combo)
         
         layout.addLayout(form_layout)
         
@@ -214,6 +268,9 @@ class MetadataEditDialog(QDialog):
         self.author_combo.blockSignals(True)
         self.title_combo.blockSignals(True)
         self.narrator_combo.blockSignals(True)
+        self.language_combo.blockSignals(True)
+        self.year_written_combo.blockSignals(True)
+        self.year_recorded_combo.blockSignals(True)
         
         local_tags = self.db.get_all_book_raw_tags(self.audiobook_id)
         
@@ -243,6 +300,60 @@ class MetadataEditDialog(QDialog):
         self.narrator_combo.addItems(create_suggestion_list(
             self.current_data.get('narrator')
         ))
+
+        # Populate language combo
+        lang_items = []
+        seen_langs = set()
+        
+        curr_lang = self.current_data.get('language') or ""
+        curr_lang_display = LANGUAGES_MAP.get(curr_lang, curr_lang)
+        
+        if curr_lang_display:
+            lang_items.append(curr_lang_display)
+            seen_langs.add(curr_lang_display)
+            
+        for code, display in LANGUAGES_MAP.items():
+            if display not in seen_langs:
+                lang_items.append(display)
+                seen_langs.add(display)
+                
+        self.language_combo.addItems(lang_items)
+        self.language_combo.setCurrentText(curr_lang_display)
+
+        # Populate Year Written combo
+        written_items = []
+        seen_written = set()
+        curr_written = self.current_data.get('year_written') or ""
+        if curr_written:
+            written_items.append(curr_written)
+            seen_written.add(curr_written)
+        tag_year = self.current_data.get('tag_year') or ""
+        if tag_year and tag_year not in seen_written:
+            written_items.append(tag_year)
+            seen_written.add(tag_year)
+        for tag in local_tags:
+            if tag.isdigit() and len(tag) == 4 and tag not in seen_written:
+                written_items.append(tag)
+                seen_written.add(tag)
+        self.year_written_combo.addItems(written_items)
+        self.year_written_combo.setCurrentText(curr_written)
+
+        # Populate Year Recorded combo
+        recorded_items = []
+        seen_recorded = set()
+        curr_recorded = self.current_data.get('year_recorded') or ""
+        if curr_recorded:
+            recorded_items.append(curr_recorded)
+            seen_recorded.add(curr_recorded)
+        if tag_year and tag_year not in seen_recorded:
+            recorded_items.append(tag_year)
+            seen_recorded.add(tag_year)
+        for tag in local_tags:
+            if tag.isdigit() and len(tag) == 4 and tag not in seen_recorded:
+                recorded_items.append(tag)
+                seen_recorded.add(tag)
+        self.year_recorded_combo.addItems(recorded_items)
+        self.year_recorded_combo.setCurrentText(curr_recorded)
         
         self.author_combo.setCurrentText(self.current_data.get('author') or "")
         self.title_combo.setCurrentText(self.current_data.get('title') or "")
@@ -251,6 +362,9 @@ class MetadataEditDialog(QDialog):
         self.author_combo.blockSignals(False)
         self.title_combo.blockSignals(False)
         self.narrator_combo.blockSignals(False)
+        self.language_combo.blockSignals(False)
+        self.year_written_combo.blockSignals(False)
+        self.year_recorded_combo.blockSignals(False)
 
     def fill_from_tags(self):
         """Fill entry fields using the extracted ID3 tags"""
@@ -258,6 +372,7 @@ class MetadataEditDialog(QDialog):
             tag_author = self.current_data.get('tag_author')
             tag_title = self.current_data.get('tag_title')
             tag_narrator = self.current_data.get('tag_narrator')
+            tag_year = self.current_data.get('tag_year')
             
             if tag_author:
                 self.author_combo.setCurrentText(tag_author)
@@ -265,10 +380,25 @@ class MetadataEditDialog(QDialog):
                 self.title_combo.setCurrentText(tag_title)
             if tag_narrator:
                 self.narrator_combo.setCurrentText(tag_narrator)
+            if tag_year:
+                self.year_recorded_combo.setCurrentText(tag_year)
                 
     def update_texts(self):
         """Update UI texts when language changes"""
         self.setWindowTitle(tr("metadata.edit_title"))
+        if hasattr(self, 'author_label') and self.author_label:
+            self.author_label.setText(tr("metadata.author"))
+        if hasattr(self, 'title_label') and self.title_label:
+            self.title_label.setText(tr("metadata.title"))
+        if hasattr(self, 'narrator_label') and self.narrator_label:
+            self.narrator_label.setText(tr("metadata.narrator"))
+        if hasattr(self, 'language_label') and self.language_label:
+            self.language_label.setText(tr("metadata.language", default="Book Language:"))
+        if hasattr(self, 'year_written_label') and self.year_written_label:
+            self.year_written_label.setText(tr("metadata.year_written", default="Year Written:"))
+        if hasattr(self, 'year_recorded_label') and self.year_recorded_label:
+            self.year_recorded_label.setText(tr("metadata.year_recorded", default="Year Recorded:"))
+
         if hasattr(self, 'from_tags_btn') and self.from_tags_btn:
             self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip", default="Fill fields from file tags (ID3)"))
         if hasattr(self, 'refresh_btn') and self.refresh_btn:
@@ -278,10 +408,20 @@ class MetadataEditDialog(QDialog):
 
     def get_data(self):
         """Return the entered metadata as a tuple"""
+        lang_text = self.language_combo.currentText().strip()
+        save_lang = lang_text
+        for code, display in LANGUAGES_MAP.items():
+            if lang_text == display or lang_text.lower() == code:
+                save_lang = code
+                break
+
         return (
             self.author_combo.currentText().strip(),
             self.title_combo.currentText().strip(),
-            self.narrator_combo.currentText().strip()
+            self.narrator_combo.currentText().strip(),
+            save_lang,
+            self.year_written_combo.currentText().strip(),
+            self.year_recorded_combo.currentText().strip()
         )
 
     def on_cover_clicked(self):

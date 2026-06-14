@@ -234,7 +234,10 @@
     "no_cover_text": "Sin portada",
     "select_cover": "Seleccionar portada:",
     "open_folder_tooltip": "Abrir carpeta que contiene este libro",
-    "refresh_covers_tooltip": "Buscar nuevas portadas en la carpeta"
+    "refresh_covers_tooltip": "Buscar nuevas portadas en la carpeta",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "Editar etiqueta",

@@ -234,7 +234,10 @@
     "no_cover_text": "Kapak Yok",
     "select_cover": "Kapak Seç:",
     "open_folder_tooltip": "Bu kitabı içeren klasörü aç",
-    "refresh_covers_tooltip": "Yeni kapaklar için klasörü tara"
+    "refresh_covers_tooltip": "Yeni kapaklar için klasörü tara",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "Etiketi Düzenle",

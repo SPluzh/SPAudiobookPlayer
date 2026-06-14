@@ -252,7 +252,10 @@
     "no_cover_text": "Không có bìa",
     "select_cover": "Chọn bìa:",
     "open_folder_tooltip": "Mở thư mục chứa sách này",
-    "refresh_covers_tooltip": "Quét thư mục để tìm bìa mới"
+    "refresh_covers_tooltip": "Quét thư mục để tìm bìa mới",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "Sửa thẻ",

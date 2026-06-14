@@ -234,7 +234,10 @@
     "no_cover_text": "커버 없음",
     "select_cover": "커버 선택:",
     "open_folder_tooltip": "이 책이 포함된 폴더 열기",
-    "refresh_covers_tooltip": "새 커버를 위해 폴더 스캔"
+    "refresh_covers_tooltip": "새 커버를 위해 폴더 스캔",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "태그 편집",

@@ -234,7 +234,10 @@
     "no_cover_text": "Sem capa",
     "select_cover": "Selecionar capa:",
     "open_folder_tooltip": "Abrir pasta contendo este livro",
-    "refresh_covers_tooltip": "Escanear pasta para novas capas"
+    "refresh_covers_tooltip": "Escanear pasta para novas capas",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "Editar Tag",

@@ -1215,7 +1215,8 @@ class DatabaseManager:
         try:
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT author, title, narrator, tag_author, tag_title, tag_narrator
+                SELECT author, title, narrator, tag_author, tag_title, tag_narrator, tag_year,
+                       language, year_written, year_recorded
                 FROM audiobooks 
                 WHERE id = ?
             ''', (audiobook_id,))
@@ -1228,7 +1229,11 @@ class DatabaseManager:
                     'narrator': row[2],
                     'tag_author': row[3],
                     'tag_title': row[4],
-                    'tag_narrator': row[5]
+                    'tag_narrator': row[5],
+                    'tag_year': row[6],
+                    'language': row[7],
+                    'year_written': row[8],
+                    'year_recorded': row[9]
                 }
             return None
         except sqlite3.Error as e:
@@ -1237,7 +1242,8 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def update_audiobook_metadata(self, audiobook_id: int, author: str, title: str, narrator: str):
+    def update_audiobook_metadata(self, audiobook_id: int, author: str, title: str, narrator: str,
+                                  language: Optional[str] = None, year_written: Optional[str] = None, year_recorded: Optional[str] = None):
         """Update audiobook metadata"""
         if not audiobook_id:
             return
@@ -1247,9 +1253,9 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute('''
                 UPDATE audiobooks
-                SET author = ?, title = ?, narrator = ?
+                SET author = ?, title = ?, narrator = ?, language = ?, year_written = ?, year_recorded = ?
                 WHERE id = ?
-            ''', (author, title, narrator, audiobook_id))
+            ''', (author, title, narrator, language, year_written, year_recorded, audiobook_id))
             conn.commit()
         except sqlite3.Error as e:
             print(f"Database error in update_audiobook_metadata: {e}")

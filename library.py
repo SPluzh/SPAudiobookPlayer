@@ -3470,15 +3470,15 @@ class LibraryWidget(QWidget):
             self.refresh_audiobook_item(path)
 
     def open_metadata_editor(self, audiobook_id: int, path: str):
-        """Open dialog to edit audiobook metadata (author, title, narrator)"""
+        """Open dialog to edit audiobook metadata (author, title, narrator, language, year_written, year_recorded)"""
         dialog = MetadataEditDialog(self.db, audiobook_id, self)
         self.apply_blur()
         if dialog.exec():
             # Get updated data
-            author, title, narrator = dialog.get_data()
+            author, title, narrator, language, year_written, year_recorded = dialog.get_data()
 
             # Update database
-            self.db.update_audiobook_metadata(audiobook_id, author, title, narrator)
+            self.db.update_audiobook_metadata(audiobook_id, author, title, narrator, language, year_written, year_recorded)
 
             # Refresh UI item
             self.refresh_audiobook_item(path)

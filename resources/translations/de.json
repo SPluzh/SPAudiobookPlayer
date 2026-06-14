@@ -234,7 +234,10 @@
     "no_cover_text": "Kein Cover",
     "select_cover": "Cover auswählen:",
     "open_folder_tooltip": "Ordner mit diesem Buch öffnen",
-    "refresh_covers_tooltip": "Ordner nach neuen Covern durchsuchen"
+    "refresh_covers_tooltip": "Ordner nach neuen Covern durchsuchen",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "Tag bearbeiten",

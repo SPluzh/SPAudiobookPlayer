@@ -234,7 +234,10 @@
     "no_cover_text": "Pas de couverture",
     "select_cover": "Sélectionner la couverture :",
     "open_folder_tooltip": "Ouvrir le dossier contenant ce livre",
-    "refresh_covers_tooltip": "Rechercher de nouvelles couvertures dans le dossier"
+    "refresh_covers_tooltip": "Rechercher de nouvelles couvertures dans le dossier",
+    "language": "Book Language:",
+    "year_written": "Year Written:",
+    "year_recorded": "Year Recorded:"
   },
   "tags": {
     "edit_title": "Modifier l'étiquette",
