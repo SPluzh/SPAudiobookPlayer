@@ -1262,6 +1262,30 @@ class DatabaseManager:
         finally:
             conn.close()
 
+    def update_multiple_audiobooks_metadata_fields(self, audiobook_ids: List[int], fields: dict):
+        """Update specific metadata fields for multiple audiobooks"""
+        if not audiobook_ids or not fields:
+            return
+
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            set_parts = []
+            params = []
+            for col, val in fields.items():
+                set_parts.append(f"{col} = ?")
+                params.append(val)
+            
+            placeholders = ", ".join("?" for _ in audiobook_ids)
+            query = f"UPDATE audiobooks SET {', '.join(set_parts)} WHERE id IN ({placeholders})"
+            cursor.execute(query, params + list(audiobook_ids))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in update_multiple_audiobooks_metadata_fields: {e}")
+        finally:
+            conn.close()
+
+
     def get_audiobook_covers(self, audiobook_id: int) -> List[Dict]:
         """Get all cover options for an audiobook"""
         if not audiobook_id:

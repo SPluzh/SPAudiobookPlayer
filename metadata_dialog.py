@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, 
     QPushButton, QDialogButtonBox, QMessageBox, QFormLayout,
-    QScrollArea, QWidget, QApplication
+    QScrollArea, QWidget, QApplication, QCheckBox
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, QRectF
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QPen, QColor
@@ -102,12 +102,27 @@ class MetadataEditDialog(QDialog):
     def __init__(self, db_manager, audiobook_id, parent=None):
         super().__init__(parent)
         self.db = db_manager
-        self.audiobook_id = audiobook_id
         
+        if isinstance(audiobook_id, (list, tuple, set)):
+            self.audiobook_ids = list(audiobook_id)
+            self.is_bulk = True
+            self.audiobook_id = self.audiobook_ids[0] if self.audiobook_ids else None
+        else:
+            self.audiobook_id = audiobook_id
+            self.audiobook_ids = [audiobook_id] if audiobook_id else []
+            self.is_bulk = False
+            
         self.setWindowTitle(tr("metadata.edit_title"))
         self.setModal(True)
-        self.resize(480, 500)
+        if self.is_bulk:
+            self.resize(480, 320)
+        else:
+            self.resize(480, 500)
         
+        if not self.audiobook_id:
+            self.reject()
+            return
+            
         self.current_data = self.db.get_audiobook_metadata(self.audiobook_id)
         if not self.current_data:
             # If no data found (e.g. deleted), close immediately
@@ -142,10 +157,29 @@ class MetadataEditDialog(QDialog):
         scroll_area.setWidget(scroll_content)
         layout.addWidget(scroll_area)
         
+        if self.is_bulk:
+            scroll_area.setVisible(False)
+        
         # Form fields
         form_layout = QFormLayout()
         form_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         
+        # Helper to wrap combobox with QCheckBox
+        def wrap_field_with_checkbox(combo, default_checked=False):
+            cb = QCheckBox()
+            cb.setChecked(not self.is_bulk or default_checked)
+            cb.setVisible(self.is_bulk)
+            cb.toggled.connect(combo.setEnabled)
+            if self.is_bulk:
+                combo.setEnabled(cb.isChecked())
+            
+            field_layout = QHBoxLayout()
+            field_layout.setContentsMargins(0, 0, 0, 0)
+            field_layout.setSpacing(6)
+            field_layout.addWidget(combo, 1)
+            field_layout.addWidget(cb)
+            return cb, field_layout
+
         # Author Field
         self.author_label = QLabel(tr("metadata.author"))
         self.author_combo = QComboBox()
@@ -156,7 +190,8 @@ class MetadataEditDialog(QDialog):
         # Allow inserting any text
         self.author_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.author_combo.setCurrentText(self.current_data.get('author') or "")
-        form_layout.addRow(self.author_label, self.author_combo)
+        self.author_cb, author_layout_field = wrap_field_with_checkbox(self.author_combo, False)
+        form_layout.addRow(self.author_label, author_layout_field)
         
         # Title Field
         self.title_label = QLabel(tr("metadata.title"))
@@ -166,7 +201,8 @@ class MetadataEditDialog(QDialog):
         self.title_combo.setMinimumWidth(300)
         self.title_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.title_combo.setCurrentText(self.current_data.get('title') or "")
-        form_layout.addRow(self.title_label, self.title_combo)
+        self.title_cb, title_layout_field = wrap_field_with_checkbox(self.title_combo, False)
+        form_layout.addRow(self.title_label, title_layout_field)
         
         # Narrator Field
         self.narrator_label = QLabel(tr("metadata.narrator"))
@@ -176,7 +212,8 @@ class MetadataEditDialog(QDialog):
         self.narrator_combo.setMinimumWidth(300)
         self.narrator_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
         self.narrator_combo.setCurrentText(self.current_data.get('narrator') or "")
-        form_layout.addRow(self.narrator_label, self.narrator_combo)
+        self.narrator_cb, narrator_layout_field = wrap_field_with_checkbox(self.narrator_combo, False)
+        form_layout.addRow(self.narrator_label, narrator_layout_field)
 
         # Language Field
         self.language_label = QLabel(tr("metadata.language", default="Book Language:"))
@@ -185,7 +222,8 @@ class MetadataEditDialog(QDialog):
         self.language_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.language_combo.setMinimumWidth(300)
         self.language_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-        form_layout.addRow(self.language_label, self.language_combo)
+        self.language_cb, language_layout_field = wrap_field_with_checkbox(self.language_combo, True)
+        form_layout.addRow(self.language_label, language_layout_field)
 
         # Year Written Field
         self.year_written_label = QLabel(tr("metadata.year_written", default="Year Written:"))
@@ -194,7 +232,8 @@ class MetadataEditDialog(QDialog):
         self.year_written_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.year_written_combo.setMinimumWidth(300)
         self.year_written_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-        form_layout.addRow(self.year_written_label, self.year_written_combo)
+        self.year_written_cb, year_written_layout_field = wrap_field_with_checkbox(self.year_written_combo, False)
+        form_layout.addRow(self.year_written_label, year_written_layout_field)
 
         # Year Recorded Field
         self.year_recorded_label = QLabel(tr("metadata.year_recorded", default="Year Recorded:"))
@@ -203,7 +242,8 @@ class MetadataEditDialog(QDialog):
         self.year_recorded_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.year_recorded_combo.setMinimumWidth(300)
         self.year_recorded_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-        form_layout.addRow(self.year_recorded_label, self.year_recorded_combo)
+        self.year_recorded_cb, year_recorded_layout_field = wrap_field_with_checkbox(self.year_recorded_combo, False)
+        form_layout.addRow(self.year_recorded_label, year_recorded_layout_field)
         
         layout.addLayout(form_layout)
         
@@ -231,6 +271,8 @@ class MetadataEditDialog(QDialog):
         self.open_folder_btn.setFixedSize(std_height, std_height)
         self.open_folder_btn.setToolTip(tr("metadata.open_folder_tooltip", default="Open folder containing this book"))
         self.open_folder_btn.clicked.connect(self.on_open_folder)
+        if self.is_bulk:
+            self.open_folder_btn.setVisible(False)
         
         # Refresh button
         self.refresh_btn = QPushButton()
@@ -240,6 +282,8 @@ class MetadataEditDialog(QDialog):
         self.refresh_btn.setFixedSize(std_height, std_height)
         self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
         self.refresh_btn.clicked.connect(self.on_refresh_covers)
+        if self.is_bulk:
+            self.refresh_btn.setVisible(False)
         
         # From Tags button
         self.from_tags_btn = QPushButton()
@@ -249,6 +293,8 @@ class MetadataEditDialog(QDialog):
         self.from_tags_btn.setFixedSize(std_height, std_height)
         self.from_tags_btn.setToolTip(tr("metadata.from_tags_tooltip", default="Fill fields from file tags (ID3)"))
         self.from_tags_btn.clicked.connect(self.fill_from_tags)
+        if self.is_bulk:
+            self.from_tags_btn.setVisible(False)
         
         # Combine buttons at the bottom: custom buttons on the left, standard on the right
         bottom_layout = QHBoxLayout()
@@ -424,6 +470,27 @@ class MetadataEditDialog(QDialog):
             self.year_recorded_combo.currentText().strip()
         )
 
+    def get_enabled_fields(self):
+        """Return a dict of enabled metadata fields and their values"""
+        author, title, narrator, language, year_written, year_recorded = self.get_data()
+        
+        fields = {}
+        if self.author_cb.isChecked():
+            fields['author'] = author
+        if self.title_cb.isChecked():
+            fields['title'] = title
+        if self.narrator_cb.isChecked():
+            fields['narrator'] = narrator
+        if self.language_cb.isChecked():
+            fields['language'] = language
+        if self.year_written_cb.isChecked():
+            fields['year_written'] = year_written
+        if self.year_recorded_cb.isChecked():
+            fields['year_recorded'] = year_recorded
+            
+        return fields
+
+
     def on_cover_clicked(self):
         """Handle cover thumbnail clicks and toggle selection outline"""
         clicked_widget = self.sender()
@@ -438,6 +505,9 @@ class MetadataEditDialog(QDialog):
 
     def populate_covers(self):
         """Load cover thumbnails from database and construct widgets"""
+        if self.is_bulk:
+            return
+            
         # Clear existing thumbnail widgets
         if hasattr(self, 'thumbnail_widgets') and self.thumbnail_widgets:
             for widget in self.thumbnail_widgets:
@@ -574,5 +644,6 @@ class MetadataEditDialog(QDialog):
 
     def accept(self):
         """Save selected cover and close the dialog"""
-        self.db.set_selected_audiobook_cover(self.audiobook_id, self.selected_cover_id)
+        if not self.is_bulk:
+            self.db.set_selected_audiobook_cover(self.audiobook_id, self.selected_cover_id)
         super().accept()

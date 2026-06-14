@@ -406,6 +406,27 @@ QComboBox QAbstractItemView {
     color: @text;
 }
 
+QComboBox:disabled {
+    background-color: @bg-disabled;
+    color: @text-disabled;
+    border-color: @bg-disabled;
+}
+
+QComboBox:disabled QLineEdit {
+    background-color: @bg-disabled;
+    color: @text-disabled;
+}
+
+QComboBox::drop-down:disabled {
+    border-left-color: transparent;
+    background-color: transparent;
+}
+
+QComboBox::down-arrow:disabled {
+    border-top-color: @text-disabled;
+}
+
+
 /* ============================================================
    INPUT FIELDS
    ============================================================ */
@@ -431,6 +452,13 @@ QLineEdit:hover {
 QLineEdit::placeholder {
     color: @text-disabled;
 }
+
+QLineEdit:disabled {
+    background-color: @bg-disabled;
+    color: @text-disabled;
+    border-color: @bg-disabled;
+}
+
 
 /* ============================================================
    CHECKBOXES

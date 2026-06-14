@@ -3471,17 +3471,38 @@ class LibraryWidget(QWidget):
 
     def open_metadata_editor(self, audiobook_id: int, path: str):
         """Open dialog to edit audiobook metadata (author, title, narrator, language, year_written, year_recorded)"""
-        dialog = MetadataEditDialog(self.db, audiobook_id, self)
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and path in selected_paths and len(selected_paths) > 1
+
+        if is_batch:
+            batch_books = []
+            for p in selected_paths:
+                info_b = self.db.get_audiobook_info(p)
+                if info_b:
+                    batch_books.append((info_b[0], p))
+            audiobook_ids = [b[0] for b in batch_books]
+            dialog = MetadataEditDialog(self.db, audiobook_ids, self)
+        else:
+            dialog = MetadataEditDialog(self.db, audiobook_id, self)
+
         self.apply_blur()
         if dialog.exec():
-            # Get updated data
-            author, title, narrator, language, year_written, year_recorded = dialog.get_data()
+            if is_batch:
+                fields = dialog.get_enabled_fields()
+                if fields:
+                    self.db.update_multiple_audiobooks_metadata_fields(audiobook_ids, fields)
+                    for bid, bp in batch_books:
+                        self.refresh_audiobook_item(bp)
+            else:
+                # Get updated data
+                author, title, narrator, language, year_written, year_recorded = dialog.get_data()
 
-            # Update database
-            self.db.update_audiobook_metadata(audiobook_id, author, title, narrator, language, year_written, year_recorded)
+                # Update database
+                self.db.update_audiobook_metadata(audiobook_id, author, title, narrator, language, year_written, year_recorded)
 
-            # Refresh UI item
-            self.refresh_audiobook_item(path)
+                # Refresh UI item
+                self.refresh_audiobook_item(path)
 
             # If currently filtered by text, re-apply filter in case metadata changed visibility
             if self.search_edit.text():

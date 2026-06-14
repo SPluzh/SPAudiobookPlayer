@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.4]
+- **Metadata**: Added support for bulk/mass editing of metadata for multiple selected audiobooks, complete with field-activation checkboxes and default preset states.
 - **Scanner**: Added support for extracting language, writing year, and recording year
 - **Scanner**: Added real-time scanning progress tracking with percentage and audiobook count in the progress bar and status label.
 
