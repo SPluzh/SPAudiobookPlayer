@@ -132,6 +132,18 @@ class LitresScraper:
             # Сортируем результаты: сначала аудиокниги, затем все остальное
             results.sort(key=lambda x: 0 if x.get("type") == "audiobook" else 1)
             
+            # Удаляем дубликаты обложек, сохраняя приоритет (аудиокниги будут первыми)
+            seen_covers = set()
+            deduplicated_results = []
+            for item in results:
+                cover_url = item.get("image")
+                if cover_url:
+                    if cover_url in seen_covers:
+                        continue
+                    seen_covers.add(cover_url)
+                deduplicated_results.append(item)
+            results = deduplicated_results
+            
             print(f"[LitresScraper] Search completed. Found {len(results)} items.")
             return results[:limit]
             
