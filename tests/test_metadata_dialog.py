@@ -376,4 +376,62 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
     assert (book_dir / "cover.jpg").exists()
     assert (book_dir / "cover_1.jpg").exists()
 
+def test_cover_search_dialog_rearrange_grid(temp_db, temp_dir, monkeypatch):
+    """Test that CoverSearchDialog dynamically rearranges results when viewport size changes."""
+    from PyQt6.QtWidgets import QApplication
+    from metadata_dialog import CoverSearchDialog, CoverSearchResultWidget
+    
+    app = QApplication.instance() or QApplication([])
+    
+    # Mock start_search so it doesn't run the actual network search on creation
+    monkeypatch.setattr(CoverSearchDialog, "start_search", lambda self: None)
+    
+    dialog = CoverSearchDialog("query", temp_dir)
+    
+    # Manually add some mock results to test rearrange_grid
+    results = [
+        {"image": "http://example.com/1.jpg", "width": 100, "height": 100},
+        {"image": "http://example.com/2.jpg", "width": 100, "height": 100},
+        {"image": "http://example.com/3.jpg", "width": 100, "height": 100},
+        {"image": "http://example.com/4.jpg", "width": 100, "height": 100},
+        {"image": "http://example.com/5.jpg", "width": 100, "height": 100},
+    ]
+    
+    for idx, res in enumerate(results):
+        w = CoverSearchResultWidget(idx, res, dialog)
+        dialog.result_widgets.append(w)
+        dialog.grid_layout.addWidget(w, idx // 3, idx % 3)
+        
+    # 1. Mock viewport width to be 400.
+    # N = (400 - 10) // 135 = 2.
+    monkeypatch.setattr(dialog.scroll_area.viewport(), "width", lambda: 400)
+    dialog.rearrange_grid()
+    
+    # Assert _current_cols is 2
+    assert dialog._current_cols == 2
+    # Verify the layout positions
+    assert dialog.grid_layout.getItemPosition(0) == (0, 0, 1, 1)
+    assert dialog.grid_layout.getItemPosition(1) == (0, 1, 1, 1)
+    assert dialog.grid_layout.getItemPosition(2) == (1, 0, 1, 1)
+    assert dialog.grid_layout.getItemPosition(3) == (1, 1, 1, 1)
+    assert dialog.grid_layout.getItemPosition(4) == (2, 0, 1, 1)
+    
+    # 2. Mock viewport width to be 550.
+    # N = (550 - 10) // 135 = 4.
+    monkeypatch.setattr(dialog.scroll_area.viewport(), "width", lambda: 550)
+    dialog.rearrange_grid()
+    
+    assert dialog._current_cols == 4
+    assert dialog.grid_layout.getItemPosition(0) == (0, 0, 1, 1)
+    assert dialog.grid_layout.getItemPosition(1) == (0, 1, 1, 1)
+    assert dialog.grid_layout.getItemPosition(2) == (0, 2, 1, 1)
+    assert dialog.grid_layout.getItemPosition(3) == (0, 3, 1, 1)
+    assert dialog.grid_layout.getItemPosition(4) == (1, 0, 1, 1)
+    
+    # 3. Test cleanup in clear_grid
+    dialog.clear_grid()
+    assert not hasattr(dialog, '_current_cols')
+    assert len(dialog.result_widgets) == 0
+    assert dialog.grid_layout.count() == 0
+
 

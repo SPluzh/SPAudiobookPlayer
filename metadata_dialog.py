@@ -774,18 +774,14 @@ class SearchWorker(QThread):
             except ImportError:
                 from duckduckgo_search import DDGS
             
-            # Detect region based on Cyrillic presence
             region = 'wt-wt'
-            if self.query and any(ord(c) in range(0x0400, 0x0500) for c in self.query):
-                region = 'ru-ru'
-                print(f"[SearchWorker] Cyrillic characters detected, setting region='{region}'")
                 
             results = []
             max_attempts = 3
             for attempt in range(max_attempts):
                 try:
                     with DDGS() as ddgs:
-                        results = list(ddgs.images(self.query, region=region, safesearch='off', max_results=60))
+                        results = list(ddgs.images(self.query, region=region, safesearch='on', max_results=60))
                     if len(results) > 1:
                         break
                     print(f"[SearchWorker] Attempt {attempt + 1} returned {len(results)} results. Retrying...")
@@ -1076,7 +1072,7 @@ class CoverSearchDialog(QDialog):
         self.initial_query = initial_query
         
         self.setWindowTitle(tr("metadata.cover_search_title", default="Search Covers Online"))
-        self.resize(450, 500)
+        self.resize(460, 500)
         self.setModal(True)
         
         self.results = []
@@ -1188,9 +1184,7 @@ class CoverSearchDialog(QDialog):
                 widget.clicked.connect(self.on_widget_clicked)
                 self.result_widgets.append(widget)
                 
-                row = idx // 3
-                col = idx % 3
-                self.grid_layout.addWidget(widget, row, col)
+            self.rearrange_grid()
                 
             urls = [res.get('image') for res in results]
             print(f"[CoverSearchDialog] Starting PreviewLoader for {len(urls)} previews")
@@ -1309,6 +1303,8 @@ class CoverSearchDialog(QDialog):
             widget.deleteLater()
         self.result_widgets = []
         self.results = []
+        if hasattr(self, '_current_cols'):
+            delattr(self, '_current_cols')
         
         while self.grid_layout.count():
             item = self.grid_layout.takeAt(0)
@@ -1325,4 +1321,38 @@ class CoverSearchDialog(QDialog):
         print("[CoverSearchDialog] reject triggered")
         self.stop_threads()
         super().reject()
+
+    def rearrange_grid(self):
+        """Rearrange the search results grid dynamically based on the current width of the scroll area."""
+        if not self.result_widgets:
+            return
+            
+        avail_width = self.scroll_area.viewport().width()
+        if avail_width <= 0:
+            avail_width = self.scroll_area.width()
+        if avail_width <= 0:
+            avail_width = self.width() - 30
+            
+        cols = max(1, (avail_width - 10) // 135)
+        
+        if hasattr(self, '_current_cols') and self._current_cols == cols:
+            return
+        self._current_cols = cols
+        
+        self.scroll_widget.setUpdatesEnabled(False)
+        try:
+            while self.grid_layout.count():
+                self.grid_layout.takeAt(0)
+                
+            for idx, widget in enumerate(self.result_widgets):
+                row = idx // cols
+                col = idx % cols
+                self.grid_layout.addWidget(widget, row, col)
+        finally:
+            self.scroll_widget.setUpdatesEnabled(True)
+
+    def resizeEvent(self, event):
+        """Handle resize events to dynamically update the columns in the search grid."""
+        super().resizeEvent(event)
+        self.rearrange_grid()
 
