@@ -116,10 +116,16 @@ class GoodreadsScraper:
                 import time
                 max_attempts = 3
                 raw_results = []
+                # Try different query formulations to bypass DuckDuckGo operator limitations and blocks
+                queries_to_try = [
+                    f"goodreads {query}",
+                    f"site:goodreads.com {query}",
+                    f"goodreads.com {query}"
+                ]
                 for attempt in range(max_attempts):
                     try:
                         with DDGS() as ddgs:
-                            ddg_query = f"site:goodreads.com {query}"
+                            ddg_query = queries_to_try[attempt % len(queries_to_try)]
                             print(f"[GoodreadsScraper] DDGS fallback attempt {attempt + 1}: querying '{ddg_query}'...")
                             raw_results = list(ddgs.images(ddg_query, safesearch='off', max_results=limit))
                         if len(raw_results) > 0:
@@ -130,16 +136,26 @@ class GoodreadsScraper:
                         time.sleep(1.0)
                     
                 for res in raw_results:
+                    page_url = res.get("url", "")
+                    image_url = res.get("image", "")
+                    
+                    # Ensure the page or the image is associated with Goodreads
+                    is_goodreads = ("goodreads.com" in page_url) or ("gr-assets.com" in image_url) or ("photo.goodreads.com" in image_url)
+                    if not is_goodreads:
+                        continue
+                        
+                    # Ensure the image URL contains /books/ to filter out user avatars, author photos, etc.
+                    if not image_url or "/books/" not in image_url:
+                        continue
+                        
                     title = res.get("title", "")
                     if title.endswith(" | Goodreads"):
                         title = title[:-12].strip()
                         
-                    image_url = res.get("image", "")
                     if image_url:
                         # Убедимся, что изображение в максимальном разрешении
                         image_url = re.sub(r'\._S[XY]\d+_\.', '.', image_url)
                         
-                    page_url = res.get("url", "")
                     book_id = ""
                     match = re.search(r'/book/show/(\d+)', page_url)
                     if match:

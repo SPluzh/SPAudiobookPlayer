@@ -59,6 +59,27 @@ def test_goodreads_scraper_ddg_fallback(monkeypatch):
             "url": "https://www.goodreads.com/book/show/61917439-harry-potter-and-the-deathly-hallows",
             "width": 100,
             "height": 150
+        },
+        {
+            "title": "User Avatar Profile | Goodreads",
+            "image": "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/users/12345.jpg",
+            "url": "https://www.goodreads.com/user/show/12345",
+            "width": 100,
+            "height": 100
+        },
+        {
+            "title": "Harry Potter Wallpaper",
+            "image": "https://wallpapers.com/images/hd/harry-potter.jpg",
+            "url": "https://wallpapers.com/wallpaper",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "title": "Harry Potter Book Cover on Blog | Goodreads",
+            "image": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1234567.jpg",
+            "url": "https://some-book-blog.com/review/harry-potter",
+            "width": 300,
+            "height": 450
         }
     ]
     
@@ -70,7 +91,7 @@ def test_goodreads_scraper_ddg_fallback(monkeypatch):
         def __exit__(self, exc_type, exc_val, exc_tb):
             pass
         def images(self, query, *args, **kwargs):
-            assert "site:goodreads.com" in query
+            assert query in ["goodreads Harry Potter", "site:goodreads.com Harry Potter", "goodreads.com Harry Potter"]
             return mock_ddg_results
             
     try:
@@ -83,7 +104,9 @@ def test_goodreads_scraper_ddg_fallback(monkeypatch):
     scraper = GoodreadsScraper()
     results = scraper.search("Harry Potter", limit=5)
     
-    assert len(results) == 1
+    assert len(results) == 2
+    
+    # First result: direct page link
     result = results[0]
     assert result["id"] == "61917439"
     # Suffix | Goodreads should be stripped
@@ -91,6 +114,13 @@ def test_goodreads_scraper_ddg_fallback(monkeypatch):
     assert result["url"] == "https://www.goodreads.com/book/show/61917439-harry-potter-and-the-deathly-hallows"
     # Suffix `_SY75_` should be stripped
     assert result["image"] == "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1660062770i/61917439.jpg"
+    
+    # Second result: blog page with Goodreads CDN cover
+    result2 = results[1]
+    assert result2["id"] == ""  # No show/book ID in third-party URL
+    assert result2["title"] == "[Goodreads] Harry Potter Book Cover on Blog"
+    assert result2["url"] == "https://some-book-blog.com/review/harry-potter"
+    assert result2["image"] == "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1234567.jpg"
 
 
 def test_goodreads_search_worker(monkeypatch):
