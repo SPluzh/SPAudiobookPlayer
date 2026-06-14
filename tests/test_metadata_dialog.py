@@ -270,9 +270,14 @@ def test_cover_search_features(temp_db, temp_dir, monkeypatch):
     class MockStorytelScraper:
         def search(self, query, limit=40):
             return []
+
+    class MockAudibleScraper:
+        def search(self, query, limit=40):
+            return []
             
     monkeypatch.setattr("goodreads_scraper.GoodreadsScraper", MockGoodreadsScraper)
     monkeypatch.setattr("storytel_scraper.StorytelScraper", MockStorytelScraper)
+    monkeypatch.setattr("audible_scraper.AudibleScraper", MockAudibleScraper)
     
     mock_results = [
         {"title": "Cover 1", "image": "http://example.com/cover1.jpg", "width": 100, "height": 100},

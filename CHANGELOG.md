@@ -3,7 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.6]
-- **Metadata**: Added native cover search scrapers (Litres, Storytel, and Goodreads) that display high-resolution covers instantly before falling back to general web search.
+- **Metadata**: Added platform source labels (Litres, Storytel, Goodreads, Audible, Web) to cover search results.
+- **Metadata**: Integrated Audible, Litres, Storytel, and Goodreads as native cover search scrapers.
 - **Metadata**: Added online cover search with hover previews to the metadata editor.
 
 ## [1.7.5]

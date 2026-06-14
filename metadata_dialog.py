@@ -792,6 +792,8 @@ class SearchWorker(QThread):
                     litres_results = scraper.search(self.query)
                     print(f"[SearchWorker] LitresScraper found {len(litres_results)} results")
                     if litres_results:
+                        for r in litres_results:
+                            r['source'] = 'Litres'
                         self.results_found.emit(litres_results)
                 except Exception as e:
                     print(f"[SearchWorker] LitresScraper failed: {e}")
@@ -803,6 +805,8 @@ class SearchWorker(QThread):
                 storytel_res = scraper.search(self.query)
                 print(f"[SearchWorker] StorytelScraper found {len(storytel_res)} results")
                 if storytel_res:
+                    for r in storytel_res:
+                        r['source'] = 'Storytel'
                     direct_results.extend(storytel_res)
                     self.results_found.emit(storytel_res)
             except Exception as e:
@@ -815,10 +819,27 @@ class SearchWorker(QThread):
                 goodreads_res = scraper.search(self.query)
                 print(f"[SearchWorker] GoodreadsScraper found {len(goodreads_res)} results")
                 if goodreads_res:
+                    for r in goodreads_res:
+                        r['source'] = 'Goodreads'
                     direct_results.extend(goodreads_res)
                     self.results_found.emit(goodreads_res)
             except Exception as e:
                 print(f"[SearchWorker] GoodreadsScraper failed: {e}")
+
+            try:
+                print(f"[SearchWorker] Querying AudibleScraper...")
+                from audible_scraper import AudibleScraper
+                scraper = AudibleScraper()
+                audible_res = scraper.search(self.query)
+                print(f"[SearchWorker] AudibleScraper found {len(audible_res)} results")
+                if audible_res:
+                    for r in audible_res:
+                        r['source'] = 'Audible'
+                    direct_results.extend(audible_res)
+                    self.results_found.emit(audible_res)
+            except Exception as e:
+                print(f"[SearchWorker] AudibleScraper failed: {e}")
+            
             
             # Now run general search via DDGS
             general_results = []
@@ -838,6 +859,9 @@ class SearchWorker(QThread):
                             raise e
                     if attempt < max_attempts - 1:
                         time.sleep(1.0)
+                
+                for r in general_results:
+                    r['source'] = 'Web'
             except Exception as e:
                 print(f"[SearchWorker] DDGS general search failed: {e}")
                 if not litres_results and not direct_results:
@@ -1036,18 +1060,28 @@ class CoverSearchResultWidget(QWidget):
         
         layout.addWidget(self.image_label)
         
-        from urllib.parse import urlparse
-        domain = urlparse(result_data.get('image', '')).netloc
-        if domain.startswith('www.'):
-            domain = domain[4:]
-        
+        source = result_data.get('source', '')
+        if not source:
+            from urllib.parse import urlparse
+            domain = urlparse(result_data.get('image', '')).netloc
+            if domain.startswith('www.'):
+                domain = domain[4:]
+            if len(domain) > 15:
+                domain = domain[:12] + "..."
+            source = domain
+        elif source == 'Web':
+            from urllib.parse import urlparse
+            domain = urlparse(result_data.get('image', '')).netloc
+            if domain.startswith('www.'):
+                domain = domain[4:]
+            if len(domain) > 12:
+                domain = domain[:9] + "..."
+            source = f"Web ({domain})"
+            
         width = result_data.get('width', '?')
         height = result_data.get('height', '?')
         
-        if len(domain) > 15:
-            domain = domain[:12] + "..."
-            
-        self.info_label = QLabel(f"{domain}\n{width}x{height}")
+        self.info_label = QLabel(f"<b>{source}</b><br>{width}x{height}")
         self.info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.info_label.setStyleSheet("color: #aaaaaa; font-size: 9px;")
         layout.addWidget(self.info_label)
