@@ -961,9 +961,39 @@ class AudiobookScanner:
         # Parse writing year and recording year from playlist name (no tag access)
         year_written, year_recorded = self._parse_years(name, None, None)
 
+        folder_of_m3u = m3u_path.parent
+        parent_cover_file = None
+        try:
+            if parent_path != '':
+                parent_folder = folder_of_m3u.parent
+                if parent_folder != folder_of_m3u:
+                    parent_cover_file = self._find_cover_file_only(parent_folder)
+        except Exception:
+            pass
+
         try:
             stat = m3u_path.stat()
-            state_str = f"{rel_m3u}|{stat.st_size}|{stat.st_mtime}"
+            state_info = [f"M3U|{rel_m3u}|{stat.st_size}|{stat.st_mtime}"]
+            
+            cover_files = []
+            if parent_cover_file:
+                cover_files.append(parent_cover_file)
+            
+            root_covers = self._find_all_root_cover_files(folder_of_m3u)
+            for rc in root_covers:
+                if rc not in cover_files:
+                    cover_files.append(rc)
+                    
+            for c_file in cover_files:
+                try:
+                    cover_path = Path(c_file)
+                    if cover_path.exists():
+                        c_stat = cover_path.stat()
+                        state_info.append(f"COVER|{cover_path.name}|{c_stat.st_size}|{c_stat.st_mtime}")
+                except Exception:
+                    pass
+                    
+            state_str = "\n".join(sorted(state_info))
             current_state_hash = hashlib.md5(state_str.encode()).hexdigest()
         except Exception:
             current_state_hash = ''
@@ -1090,8 +1120,7 @@ class AudiobookScanner:
         total_duration = sum(e['duration'] for e in entries)
         file_count = len(entries)
 
-        folder_of_m3u = m3u_path.parent
-        cover, cover_cached = self._find_cover(folder_of_m3u, book_path)
+        cover, cover_cached = self._find_cover(folder_of_m3u, book_path, parent_cover_file)
 
         if existing:
             book_id = existing[0]
@@ -1133,7 +1162,7 @@ class AudiobookScanner:
             c.execute("SELECT id FROM audiobooks WHERE path = ?", (book_path,))
             book_id = c.fetchone()[0]
 
-        self._scan_and_save_all_covers(conn, folder_of_m3u, book_path, book_id, cover_cached)
+        self._scan_and_save_all_covers(conn, folder_of_m3u, book_path, book_id, cover_cached, parent_cover_file)
 
         c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
         files_batch = []
@@ -1499,7 +1528,7 @@ class AudiobookScanner:
             pass
         return None
     
-    def _find_cover(self, directory, key):
+    def _find_cover(self, directory, key, parent_cover_file=None):
         """Find cover image (file or embedded) for the audiobook. Returns (original_path, cached_path)"""
         
         path_obj = Path(directory)
@@ -1565,6 +1594,16 @@ class AudiobookScanner:
         except (PermissionError, OSError):
             pass
         
+        # 2.5. Inherit cover from parent directory if provided
+        if parent_cover_file:
+            try:
+                p_path = Path(parent_cover_file)
+                if p_path.is_file():
+                    cached = cache_file(str(p_path))
+                    return str(p_path), cached
+            except Exception:
+                pass
+        
         # 3. Recursive search in subdirectories (priority names)
         for name in self.cover_names:
             try:
@@ -1624,7 +1663,7 @@ class AudiobookScanner:
             pass
         return None
 
-    def _scan_and_save_all_covers(self, conn, directory, key, audiobook_id, selected_cover_cached_path):
+    def _scan_and_save_all_covers(self, conn, directory, key, audiobook_id, selected_cover_cached_path, parent_cover_file=None):
         """
         Scan for all available covers, cache them, and save to audiobook_covers table.
         """
@@ -1680,6 +1719,15 @@ class AudiobookScanner:
                             file_covers.append(p)
             except Exception:
                 pass
+                
+            # If no covers found in the folder itself, but we have a parent cover file, include it!
+            if not file_covers and parent_cover_file:
+                try:
+                    p_path = Path(parent_cover_file)
+                    if p_path.is_file():
+                        file_covers.append(p_path)
+                except Exception:
+                    pass
                 
             # Deduplicate original paths
             unique_paths = []
@@ -1970,6 +2018,31 @@ class AudiobookScanner:
         # Sort for consistency
         state_str = "\n".join(sorted(state_info))
         return hashlib.md5(state_str.encode('utf-8')).hexdigest()
+
+    def _find_cover_file_only(self, directory):
+        """Find cover image file in the specified directory only (no recursion or embedding)"""
+        path_obj = Path(directory)
+        if not path_obj.exists() or path_obj.is_file():
+            return None
+            
+        # 1. Search in directory (priority names)
+        for name in self.cover_names:
+            p = path_obj / name
+            try:
+                if p.is_file():
+                    return str(p)
+            except (PermissionError, OSError):
+                continue
+                
+        # 2. Search in directory (any image)
+        try:
+            for f in sorted(path_obj.iterdir()):
+                if f.is_file() and f.suffix.lower() in {'.jpg', '.jpeg', '.png', '.bmp', '.webp'}:
+                    return str(f)
+        except (PermissionError, OSError):
+            pass
+            
+        return None
 
     def _find_all_root_cover_files(self, directory):
         """Find all cover image files in the root directory only (no rglob)
@@ -2539,8 +2612,17 @@ class AudiobookScanner:
                 extensions = [f.suffix.lstrip('.').lower() for f in files]
                 container = Counter(extensions).most_common(1)[0][0] if extensions else ''
                 
+                parent_cover_file = None
+                try:
+                    if str(parent) != '':
+                        parent_folder = root / parent
+                        if parent_folder != folder:
+                            parent_cover_file = self._find_cover_file_only(parent_folder)
+                except Exception:
+                    pass
+
                 # Search for cover image
-                cover, cover_cached = self._find_cover(folder, str(rel))
+                cover, cover_cached = self._find_cover(folder, str(rel), parent_cover_file)
 
                 # Check for .cue files in this folder
                 cue_files = list(folder.glob('*.cue'))
@@ -2749,7 +2831,7 @@ class AudiobookScanner:
                     book_id = c.fetchone()[0]
 
                 # Scan and cache all available covers, and save to audiobook_covers table
-                self._scan_and_save_all_covers(conn, folder, str(rel), book_id, cover_cached)
+                self._scan_and_save_all_covers(conn, folder, str(rel), book_id, cover_cached, parent_cover_file)
 
                 # Update files list: remove old and insert current files
                 c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))

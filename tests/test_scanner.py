@@ -518,3 +518,206 @@ class TestSubfolderScanning:
 
 
 
+class TestCoverInheritance:
+    """Tests for cover inheritance from parent folders"""
+
+    def test_inherit_parent_cover(self, mock_scanner, temp_dir):
+        # 1. Create a parent folder with a cover image
+        parent_dir = temp_dir / "Parent Book"
+        parent_dir.mkdir()
+        parent_cover = parent_dir / "cover.jpg"
+        parent_cover.write_bytes(b"parent cover image data")
+        
+        # 2. Create a subfolder with no cover image but containing an audio file
+        sub_dir = parent_dir / "CD 1"
+        sub_dir.mkdir()
+        mp3_file = sub_dir / "01.mp3"
+        mp3_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+        
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': 'CD 1', 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+        
+        # Set covers_dir
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+        
+        try:
+            # Run scanner on parent directory
+            mock_scanner.scan_directory(str(temp_dir))
+            
+            # Verify database records
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            
+            # Select path and covers of the scanned items
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0 ORDER BY path")
+            rows = c.fetchall()
+            
+            # We expect CD 1 to have cover_path pointing to parent_dir/cover.jpg
+            # since CD 1 doesn't have its own cover.
+            assert len(rows) == 1
+            path, cover_path, cached_path = rows[0]
+            
+            assert "CD 1" in path
+            assert cover_path == str(parent_cover)
+            assert cached_path is not None
+            
+            # Verify that the inherited cover was added to audiobook_covers as selected
+            c.execute("SELECT original_path, is_selected FROM audiobook_covers WHERE audiobook_id = 1")
+            covers = c.fetchall()
+            assert len(covers) == 1
+            assert covers[0][0] == str(parent_cover)
+            assert covers[0][1] == 1
+            
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+    def test_do_not_inherit_when_own_cover_exists(self, mock_scanner, temp_dir):
+        # 1. Create a parent folder with a cover image
+        parent_dir = temp_dir / "Parent Book"
+        parent_dir.mkdir()
+        parent_cover = parent_dir / "cover.jpg"
+        parent_cover.write_bytes(b"parent cover image data")
+        
+        # 2. Create a subfolder with its own cover image and containing an audio file
+        sub_dir = parent_dir / "CD 1"
+        sub_dir.mkdir()
+        sub_cover = sub_dir / "cover.jpg"
+        sub_cover.write_bytes(b"subfolder cover image data")
+        
+        mp3_file = sub_dir / "01.mp3"
+        mp3_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+        
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': 'CD 1', 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+        
+        # Set covers_dir
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+        
+        try:
+            # Run scanner on parent directory
+            mock_scanner.scan_directory(str(temp_dir))
+            
+            # Verify database records
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0 ORDER BY path")
+            rows = c.fetchall()
+            
+            # We expect CD 1 to have cover_path pointing to sub_cover, not parent_cover
+            assert len(rows) == 1
+            path, cover_path, cached_path = rows[0]
+            
+            assert "CD 1" in path
+            assert cover_path == str(sub_cover)
+            
+            # Verify covers in audiobook_covers
+            c.execute("SELECT original_path, is_selected FROM audiobook_covers WHERE audiobook_id = 1")
+            covers = c.fetchall()
+            # It might find sub_cover (and parent_cover could be found via recursion or not depending on directory scanning boundaries,
+            # but sub_cover must be the selected one)
+            selected_covers = [cov[0] for cov in covers if cov[1] == 1]
+            assert len(selected_covers) == 1
+            assert selected_covers[0] == str(sub_cover)
+            
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+
+class TestM3UCoverChange:
+    """Tests that M3U playlist scanner detects cover addition/removal on rescanning"""
+
+    def test_m3u_cover_addition_and_removal(self, mock_scanner, temp_dir):
+        # 1. Create playlist directory
+        book_dir = temp_dir / "M3U Book"
+        book_dir.mkdir()
+
+        # Create mock audio file
+        audio_file = book_dir / "track.mp3"
+        audio_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        # Create M3U playlist pointing to it
+        m3u_file = book_dir / "playlist.m3u"
+        m3u_file.write_text("track.mp3\n", encoding='utf-8')
+
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': 'M3U Book', 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+        
+        # Set covers_dir
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+
+        try:
+            # First Scan: No cover exists
+            mock_scanner.scan_directory(str(temp_dir))
+
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0")
+            row = c.fetchone()
+            assert row is not None
+            assert row[1] is None
+            assert row[2] is None
+
+            # 2. Add a cover file to the playlist directory
+            cover_file = book_dir / "cover.jpg"
+            cover_file.write_bytes(b"cover image data")
+
+            # Force state update for file-system (though on many systems mtime is automatic, writing to cover doesn't change m3u itself)
+            # Since we included cover files in state info list, even if m3u file has same mtime/size,
+            # the new cover file will add a new entry to the state list, causing hash to change.
+            mock_scanner.scan_directory(str(temp_dir))
+
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0")
+            row = c.fetchone()
+            assert row is not None
+            assert row[1] == str(cover_file)
+            assert row[2] is not None
+
+            # Verify covers table is populated
+            c.execute("SELECT COUNT(*) FROM audiobook_covers WHERE audiobook_id = 1")
+            assert c.fetchone()[0] == 1
+
+            # 3. Delete the cover file
+            cover_file.unlink()
+
+            # Rescan again
+            mock_scanner.scan_directory(str(temp_dir))
+
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0")
+            row = c.fetchone()
+            assert row is not None
+            assert row[1] is None
+            assert row[2] is None
+
+            # Verify covers table is cleared
+            c.execute("SELECT COUNT(*) FROM audiobook_covers WHERE audiobook_id = 1")
+            assert c.fetchone()[0] == 0
+
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
