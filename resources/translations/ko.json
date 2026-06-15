@@ -451,7 +451,8 @@
     "settings_btn": "라이브러리를 Opus로 변환",
     "settings_info": "파일 크기를 줄이기 위해 모든 오디오북을 Opus 형식으로 변환",
     "bitrate_tooltip": "권장 설정:\n- 16-20 kbps: 더 작은 파일 크기, 허용 가능한 음성 품질.\n- 24 kbps: 좋은 품질, 오디오북 표준.\n- 32 kbps: 거의 투명한 품질 (권장).\n- 48-64 kbps: 고충실도, 음악/효과가 있는 오디오북에 최적.",
-    "stereo_tooltip": "스테레오 처리:\n- 모노로 다운믹스: 음성 커버리지에 최적. 단일 채널에 모든 비트 사용.\n- 스테레오 유지: 스테레오 효과 보존. 동일한 품질을 위해 더 높은 비트레이트 필요."
+    "stereo_tooltip": "스테레오 처리:\n- 모노로 다운믹스: 음성 커버리지에 최적. 단일 채널에 모든 비트 사용.\n- 스테레오 유지: 스테레오 효과 보존. 동일한 품질을 위해 더 높은 비트레이트 필요.",
+    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
   },
   "updater": {
     "title": "애플리케이션 업데이트",

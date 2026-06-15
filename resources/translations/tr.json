@@ -451,7 +451,8 @@
     "settings_btn": "Kitaplığı Opus'a dönüştür",
     "settings_info": "Dosya boyutunu azaltmak için tüm sesli kitapları Opus formatına dönüştürün",
     "bitrate_tooltip": "Önerilen ayarlar:\n- 16-20 kbps: Daha küçük dosya boyutu, kabul edilebilir konuşma kalitesi.\n- 24 kbps: İyi kalite, sesli kitaplar için standart.\n- 32 kbps: Neredeyse şeffaf kalite (Önerilen).\n- 48-64 kbps: Yüksek sadakat, müzik/efekt içeren sesli kitaplar için en iyisi.",
-    "stereo_tooltip": "Stereo işleme:\n- Mono'ya İndir: Ses kapsamı için en iyisi. Tek kanal için tüm bitleri kullanır.\n- Stereo'yu Koru: Stereo efektini korur. Aynı kalite için daha yüksek bit hızı gerektirir."
+    "stereo_tooltip": "Stereo işleme:\n- Mono'ya İndir: Ses kapsamı için en iyisi. Tek kanal için tüm bitleri kullanır.\n- Stereo'yu Koru: Stereo efektini korur. Aynı kalite için daha yüksek bit hızı gerektirir.",
+    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
   },
   "updater": {
     "title": "Uygulama Güncellemesi",

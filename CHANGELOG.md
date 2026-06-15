@@ -3,7 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.7]
-- **Playback**: Automatically stop and unload the active audiobook when starting its conversion to Opus format, preventing file conflicts and conversion errors.
+- **Playback**: Automatically stops the playing audiobook when starting conversion to Opus to prevent file errors.
+- **Opus Converter**: Added a quick reference explaining the benefits of Opus, recommended bitrates, and stereo-to-mono settings.
 
 ## [1.7.6]
 - **Metadata**: Added platform source labels (Litres, Storytel, Goodreads, Audible, Web) to cover search results.

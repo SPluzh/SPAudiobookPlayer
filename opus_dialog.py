@@ -72,8 +72,13 @@ class OpusConversionDialog(QDialog):
         
         settings_row_layout.addStretch()
         
-        # Add simpler container or just layout
         layout.addLayout(settings_row_layout)
+        
+        # Description label
+        self.desc_label = QLabel(tr("opus_converter.description"))
+        self.desc_label.setWordWrap(True)
+        self.desc_label.setObjectName("infoLabelSmall")
+        layout.addWidget(self.desc_label)
         
         # File count info
         self.file_count_label = QLabel()

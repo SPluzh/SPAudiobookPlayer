@@ -451,7 +451,8 @@
     "settings_btn": "लाइब्रेरी को Opus में बदलें",
     "settings_info": "फ़ाइल का आकार कम करने के लिए सभी ऑडियोबुक्स को Opus प्रारूप में बदलें",
     "bitrate_tooltip": "अनुशंसित सेटिंग्स:\n- 16-20 kbps: छोटा फ़ाइल आकार, स्वीकार्य भाषण गुणवत्ता।\n- 24 kbps: अच्छी गुणवत्ता, ऑडियोबुक्स के लिए मानक।\n- 32 kbps: लगभग पारदर्शी गुणवत्ता (अनुशंसित)।\n- 48-64 kbps: उच्च निष्ठा, संगीत/प्रभावों वाली ऑडियोबुक्स के लिए सबसे अच्छा।",
-    "stereo_tooltip": "स्टीरियो हैंडलिंग:\n- मोनो में डाउनमिक्स: आवाज कवरेज के लिए सबसे अच्छा। एकल चैनल के लिए सभी बिट्स का उपयोग करता है।\n- स्टीरियो रखें: स्टीरियो प्रभाव को संरक्षित करता है। समान गुणवत्ता के लिए उच्च बिट्रेट की आवश्यकता होती है।"
+    "stereo_tooltip": "स्टीरियो हैंडलिंग:\n- मोनो में डाउनमिक्स: आवाज कवरेज के लिए सबसे अच्छा। एकल चैनल के लिए सभी बिट्स का उपयोग करता है।\n- स्टीरियो रखें: स्टीरियो प्रभाव को संरक्षित करता है। समान गुणवत्ता के लिए उच्च बिट्रेट की आवश्यकता होती है।",
+    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
   },
   "updater": {
     "title": "एप्लिकेशन अपडेट",

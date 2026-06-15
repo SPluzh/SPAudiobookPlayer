@@ -451,7 +451,8 @@
     "settings_btn": "Converter biblioteca para Opus",
     "settings_info": "Converter todos os audiolivros para o formato Opus para reduzir o tamanho do arquivo",
     "bitrate_tooltip": "Configurações recomendadas:\n- 16-20 kbps: Tamanho de arquivo menor, qualidade de voz aceitável.\n- 24 kbps: Boa qualidade, padrão para audiolivros.\n- 32 kbps: Qualidade quase transparente (Recomendado).\n- 48-64 kbps: Alta fidelidade, melhor para audiolivros com música/efeitos.",
-    "stereo_tooltip": "Manuseio de estéreo:\n- Misturar para Mono: Melhor para cobertura de voz. Usa todos os bits para o canal único.\n- Manter Estéreo: Preserva o efeito estéreo. Requer taxa de bits mais alta para a mesma qualidade."
+    "stereo_tooltip": "Manuseio de estéreo:\n- Misturar para Mono: Melhor para cobertura de voz. Usa todos os bits para o canal único.\n- Manter Estéreo: Preserva o efeito estéreo. Requer taxa de bits mais alta para a mesma qualidade.",
+    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
   },
   "updater": {
     "title": "Atualização do Aplicativo",

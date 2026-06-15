@@ -451,7 +451,8 @@
     "settings_btn": "Կոնվերտացնել գրադարանը Opus ձևաչափի",
     "settings_info": "Կոնվերտացնել բոլոր աուդիոգրքերը Opus ձևաչափի՝ ֆայլերի չափսը նվազեցնելու համար",
     "bitrate_tooltip": "Խորհուրդ տրվող կարգավորումներ՝\n- 16-20 կբ/վ՝ Ավելի փոքր չափս, ընդունելի խոսքի որակ:\n- 24 կբ/վ՝ Լավ որակ, ստանդարտ աուդիոգրքերի համար:\n- 32 կբ/վ՝ Գրեթե կատարյալ որակ (Խորհուրդ է տրվում):\n- 48-64 կբ/վ՝ Բարձր որակ, երաժշտությամբ կամ էֆեկտներով գրքերի համար:",
-    "stereo_tooltip": "Ստերեոյի ռեժիմ՝\n- Մոնոյի՝ Լավագույնը ձայնի համար: Բոլոր բիթերը գնում են մեկ ալիքի վրա:\n- Պահպանել ստերեոն՝ Պահպանում է ստերեոէֆեկտը: Նույն որակի համար պահանջում է ավելի բարձր բիթրեյթ:"
+    "stereo_tooltip": "Ստերեոյի ռեժիմ՝\n- Մոնոյի՝ Լավագույնը ձայնի համար: Բոլոր բիթերը գնում են մեկ ալիքի վրա:\n- Պահպանել ստերեոն՝ Պահպանում է ստերեոէֆեկտը: Նույն որակի համար պահանջում է ավելի բարձր բիթրեյթ:",
+    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
   },
   "updater": {
     "title": "Հավելվածի թարմացում",
