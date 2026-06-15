@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.8]
+- **Scanner**: Fixed an issue where some audiobooks were skipped during library rescans.
+- **Library**: Manually edited book languages are no longer overwritten during library updates.
+
 ## [1.7.7]
 - **Playback**: Automatically stops the playing audiobook when starting conversion to Opus to prevent file errors.
 - **Opus Converter**: Added a quick reference explaining the benefits of Opus, recommended bitrates, and stereo-to-mono settings.

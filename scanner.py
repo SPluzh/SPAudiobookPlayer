@@ -973,7 +973,7 @@ class AudiobookScanner:
 
         try:
             stat = m3u_path.stat()
-            state_info = [f"M3U|{rel_m3u}|{stat.st_size}|{stat.st_mtime}"]
+            state_info = [f"M3U|{rel_m3u}|{stat.st_size}|{stat.st_mtime}", f"LANG|{language}"]
             
             cover_files = []
             if parent_cover_file:
@@ -1127,7 +1127,7 @@ class AudiobookScanner:
             c.execute("""
                 UPDATE audiobooks
                 SET parent_path=?, name=?, author=?, title=?, narrator=?,
-                    language=?, year_written=?, year_recorded=?,
+                    language=COALESCE(language, ?), year_written=?, year_recorded=?,
                     file_count=?, duration=?, is_folder=0,
                     is_playlist=1, playlist_path=?,
                     cover_path=?, cached_cover_path=?,
@@ -1968,13 +1968,14 @@ class AudiobookScanner:
             # Table 'audiobooks' might not exist in some unit test mocks
             pass
 
-    def _calculate_state_hash(self, files, cover_file=None, description_file=None):
-        """Calculate hash based on audio files, cover image(s), and description file
+    def _calculate_state_hash(self, files, cover_file=None, description_file=None, language=None):
+        """Calculate hash based on audio files, cover image(s), description file, and language
         
         Args:
             files: List of audio file paths
             cover_file: Path or list/tuple of paths to cover image files (optional)
             description_file: Path to description text file (optional)
+            language: Detected language code, e.g. 'ru' (optional)
         
         Returns:
             MD5 hash string
@@ -2015,6 +2016,10 @@ class AudiobookScanner:
             except Exception:
                 pass
         
+        # Language tag
+        if language:
+            state_info.append(f"LANG|{language}")
+
         # Sort for consistency
         state_str = "\n".join(sorted(state_info))
         return hashlib.md5(state_str.encode('utf-8')).hexdigest()
@@ -2492,8 +2497,11 @@ class AudiobookScanner:
                     if description_file_path:
                         self._log_info(f"Description: {Path(description_file_path).name}", indent=2)
                 
+                # Detect language from folder name (fast, needed for hash)
+                language = self._detect_language(folder.name)
+
                 # Calculate current state hash (extremely fast!)
-                current_state_hash = self._calculate_state_hash(files, cover_files, description_file_path)
+                current_state_hash = self._calculate_state_hash(files, cover_files, description_file_path, language=language)
                 
                 # Skip if valid existing record found and codec is populated
                 if existing_row_data:
@@ -2529,9 +2537,6 @@ class AudiobookScanner:
                 author = f_author or t_author
                 title = f_title or t_title
                 narrator = f_narrator or t_narrator
-
-                # Detect language from folder name
-                language = self._detect_language(folder.name)
 
                 # t_year already extracted by _extract_metadata — reuse as rec_tag (no double read)
                 # Only fetch orig_year (TDOR/©opd/original_date) which _extract_metadata doesn't provide
@@ -2718,7 +2723,7 @@ class AudiobookScanner:
                             tag_title = ?,
                             tag_narrator = ?,
                             tag_year = ?,
-                            language = ?,
+                            language = COALESCE(language, ?),
                             year_written = ?,
                             year_recorded = ?,
                             cover_path = ?,
