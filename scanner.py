@@ -1880,10 +1880,29 @@ class AudiobookScanner:
                 audio_files = [path_obj]
             else:
                 try:
-                    audio_files = sorted(
-                        [f for f in path_obj.iterdir()
-                        if f.is_file() and f.suffix.lower() in self.audio_extensions]
-                    )
+                    # Check if audiobook is virtually merged or a playlist to scan subfolders recursively
+                    is_merged = False
+                    is_playlist = False
+                    try:
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT is_merged, is_playlist FROM audiobooks WHERE id = ?", (audiobook_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            is_merged = bool(row[0])
+                            is_playlist = bool(row[1])
+                    except Exception:
+                        pass
+
+                    if is_merged or is_playlist:
+                        audio_files = sorted(
+                            [f for f in path_obj.rglob('*')
+                             if f.is_file() and f.suffix.lower() in self.audio_extensions]
+                        )
+                    else:
+                        audio_files = sorted(
+                            [f for f in path_obj.iterdir()
+                             if f.is_file() and f.suffix.lower() in self.audio_extensions]
+                        )
                 except Exception:
                     pass
             

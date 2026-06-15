@@ -235,6 +235,146 @@ class TestScanAndSaveAllCovers:
         assert row[0] is None
         assert row[1] is None
 
+    def test_scan_and_save_covers_rescan_embedded_only(self, mock_scanner, conn, temp_dir):
+        # Create audiobooks table in connection to verify synchronization
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE audiobooks (
+                id INTEGER PRIMARY KEY,
+                path TEXT,
+                cover_path TEXT,
+                cached_cover_path TEXT
+            )
+        """)
+        
+        audiobook_id = 42
+        key = "test_key"
+        
+        # Mock covers_dir
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+        
+        import hashlib
+        safe_name = hashlib.md5(key.encode()).hexdigest()
+        old_cached_path = str(mock_scanner.covers_dir / f"{safe_name}.jpg")
+        with open(old_cached_path, 'wb') as f:
+            f.write(b"fake image data")
+            
+        # Put book in audiobooks table
+        c.execute("""
+            INSERT INTO audiobooks (id, path, cover_path, cached_cover_path)
+            VALUES (?, ?, ?, ?)
+        """, (audiobook_id, key, None, old_cached_path))
+        
+        # Put cover in audiobook_covers table
+        c.execute("""
+            INSERT INTO audiobook_covers (audiobook_id, original_path, cached_path, is_selected, source_type)
+            VALUES (?, ?, ?, ?, ?)
+        """, (audiobook_id, None, old_cached_path, 1, 'embedded'))
+        conn.commit()
+        
+        # Create empty book directory, but with one mp3 file
+        book_dir = temp_dir / "embedded_book"
+        book_dir.mkdir()
+        mp3_file = book_dir / "track.mp3"
+        mp3_file.write_bytes(b"some audio data")
+        
+        # Mock self._get_embedded_image_data to return the fake image bytes
+        mock_scanner._get_embedded_image_data = lambda f: b"fake image data"
+        
+        # Run scan and save all covers
+        mock_scanner._scan_and_save_all_covers(
+            conn=conn,
+            directory=str(book_dir),
+            key=key,
+            audiobook_id=audiobook_id,
+            selected_cover_cached_path=old_cached_path
+        )
+        
+        # Query covers
+        c.execute("SELECT original_path, cached_path, is_selected, source_type FROM audiobook_covers")
+        rows = c.fetchall()
+        
+        assert len(rows) == 1
+        assert rows[0][2] == 1  # is_selected should be 1!
+        
+        # Check audiobook
+        c.execute("SELECT cover_path, cached_cover_path FROM audiobooks WHERE id = ?", (audiobook_id,))
+        row = c.fetchone()
+        assert row[1] == old_cached_path
+
+    def test_scan_and_save_covers_merged_rescan_embedded_only(self, mock_scanner, conn, temp_dir):
+        # Create audiobooks table in connection to verify synchronization
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE audiobooks (
+                id INTEGER PRIMARY KEY,
+                path TEXT,
+                cover_path TEXT,
+                cached_cover_path TEXT,
+                is_merged INTEGER DEFAULT 0,
+                is_playlist INTEGER DEFAULT 0
+            )
+        """)
+        
+        audiobook_id = 42
+        key = "test_key"
+        
+        # Mock covers_dir
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+        
+        import hashlib
+        safe_name = hashlib.md5(key.encode()).hexdigest()
+        old_cached_path = str(mock_scanner.covers_dir / f"{safe_name}.jpg")
+        with open(old_cached_path, 'wb') as f:
+            f.write(b"fake image data")
+            
+        # Put book in audiobooks table (marked as merged!)
+        c.execute("""
+            INSERT INTO audiobooks (id, path, cover_path, cached_cover_path, is_merged)
+            VALUES (?, ?, ?, ?, 1)
+        """, (audiobook_id, key, None, old_cached_path))
+        
+        # Put cover in audiobook_covers table
+        c.execute("""
+            INSERT INTO audiobook_covers (audiobook_id, original_path, cached_path, is_selected, source_type)
+            VALUES (?, ?, ?, ?, ?)
+        """, (audiobook_id, None, old_cached_path, 1, 'embedded'))
+        conn.commit()
+        
+        # Create a merged directory structure: book_dir/CD1/track.mp3
+        book_dir = temp_dir / "merged_book"
+        book_dir.mkdir()
+        cd_dir = book_dir / "CD1"
+        cd_dir.mkdir()
+        mp3_file = cd_dir / "track.mp3"
+        mp3_file.write_bytes(b"some audio data")
+        
+        # Mock self._get_embedded_image_data to return the fake image bytes
+        mock_scanner._get_embedded_image_data = lambda f: b"fake image data"
+        
+        # Run scan and save all covers
+        mock_scanner._scan_and_save_all_covers(
+            conn=conn,
+            directory=str(book_dir),
+            key=key,
+            audiobook_id=audiobook_id,
+            selected_cover_cached_path=old_cached_path
+        )
+        
+        # Query covers
+        c.execute("SELECT original_path, cached_path, is_selected, source_type FROM audiobook_covers")
+        rows = c.fetchall()
+        
+        assert len(rows) == 1
+        assert rows[0][2] == 1  # is_selected should be 1!
+        
+        # Check audiobook
+        c.execute("SELECT cover_path, cached_cover_path FROM audiobooks WHERE id = ?", (audiobook_id,))
+        row = c.fetchone()
+        assert row[1] == old_cached_path
+
 
 class TestDetectLanguage:
     """Tests for _detect_language method"""
