@@ -2716,16 +2716,16 @@ class AudiobookScanner:
                         UPDATE audiobooks
                         SET parent_path = ?,
                             name = ?,
-                            author = ?,
-                            title = ?,
-                            narrator = ?,
+                            author = COALESCE(NULLIF(author, ''), ?),
+                            title = COALESCE(NULLIF(title, ''), ?),
+                            narrator = COALESCE(NULLIF(narrator, ''), ?),
                             tag_author = ?,
                             tag_title = ?,
                             tag_narrator = ?,
                             tag_year = ?,
                             language = COALESCE(language, ?),
-                            year_written = ?,
-                            year_recorded = ?,
+                            year_written = COALESCE(NULLIF(year_written, ''), ?),
+                            year_recorded = COALESCE(NULLIF(year_recorded, ''), ?),
                             cover_path = ?,
                             cached_cover_path = ?,
                             file_count = ?,
@@ -3116,9 +3116,9 @@ class AudiobookScanner:
                 UPDATE audiobooks
                 SET parent_path = ?,
                     name = ?,
-                    author = ?,
-                    title = ?,
-                    narrator = ?,
+                    author = COALESCE(NULLIF(author, ''), ?),
+                    title = COALESCE(NULLIF(title, ''), ?),
+                    narrator = COALESCE(NULLIF(narrator, ''), ?),
                     tag_author = ?,
                     tag_title = ?,
                     tag_narrator = ?,
@@ -3139,9 +3139,9 @@ class AudiobookScanner:
                     description = ?,
                     total_size = ?,
                     is_folder = 0,
-                    language = ?,
-                    year_written = ?,
-                    year_recorded = ?
+                    language = COALESCE(NULLIF(language, ''), ?),
+                    year_written = COALESCE(NULLIF(year_written, ''), ?),
+                    year_recorded = COALESCE(NULLIF(year_recorded, ''), ?)
                 WHERE path = ?
             """, (
                 str(parent),
