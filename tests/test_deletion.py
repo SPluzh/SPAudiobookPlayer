@@ -97,7 +97,7 @@ def test_on_delete_requested_sends_to_trash():
         mock_rmtree.assert_called_once_with(expected_path)
         
         # Verify player unloaded
-        window.player.unload.assert_called_once()
+        window.unload_active_book.assert_called_once_with(save_progress=False)
         # Verify db delete and ui remove
         window.db_manager.delete_audiobook.assert_called_once_with(42)
         window.library_widget.remove_audiobook_from_ui.assert_called_once_with("rel/path/to/book")

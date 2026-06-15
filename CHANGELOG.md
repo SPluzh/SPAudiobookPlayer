@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.7]
+- **Playback**: Automatically stop and unload the active audiobook when starting its conversion to Opus format, preventing file conflicts and conversion errors.
+
 ## [1.7.6]
 - **Metadata**: Added platform source labels (Litres, Storytel, Goodreads, Audible, Web) to cover search results.
 - **Metadata**: Integrated Audible, Litres, Storytel, and Goodreads as native cover search scrapers.

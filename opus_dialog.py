@@ -155,6 +155,33 @@ class OpusConversionDialog(QDialog):
         
         if reply != QMessageBox.StandardButton.Yes:
             return
+
+        # Check if active book is being converted and unload it to release file locks
+        from pathlib import Path
+        main_window = None
+        curr = self.parent()
+        while curr:
+            if hasattr(curr, "playback_controller") and hasattr(curr, "player"):
+                main_window = curr
+                break
+            curr = curr.parent()
+
+        if main_window:
+            current_rel = main_window.playback_controller.current_audiobook_path
+            if current_rel:
+                library_root = Path(main_window.default_path) if hasattr(main_window, "default_path") else Path()
+                current_abs = (Path(current_rel) if Path(current_rel).is_absolute() else library_root / current_rel).resolve()
+                
+                unload_needed = False
+                for path_str in self.library_paths:
+                    conv_abs = Path(path_str).resolve()
+                    if current_abs == conv_abs or conv_abs in current_abs.parents:
+                        unload_needed = True
+                        break
+                
+                if unload_needed:
+                    print(f"[DEBUG] Active book {current_rel} is being converted. Unloading it before conversion.")
+                    main_window.unload_active_book()
         
         # Start conversion
         self._is_converting = True

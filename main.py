@@ -1683,6 +1683,43 @@ class AudiobookPlayerWindow(QMainWindow):
         # Update bookmark markers on progress bar
         self.update_progress_bar_markers()
 
+    def unload_active_book(self, save_progress: bool = True):
+        """Stop playback, save current progress (optional), and completely unload the active audiobook"""
+        if self.playback_controller.current_audiobook_path:
+            if save_progress:
+                self.playback_controller.save_current_progress()
+                self.save_last_session()
+
+            # Stop active playback and unload file to release locks
+            self.player.unload()
+
+            # Clear the internal state of the playback controller
+            self.playback_controller.current_audiobook_id = None
+            self.playback_controller.current_audiobook_path = ""
+            self.playback_controller.files_list = []
+            self.playback_controller.saved_file_index = 0
+            self.playback_controller.saved_position = 0
+
+            # Synchronize UI components to the empty state
+            self.update_ui_for_audiobook()
+
+            # Reset player UI components specifically
+            self.player_widget.position_slider.setValue(0)
+            self.player_widget.total_progress_bar.setValue(0)
+            self.player_widget.time_current.setText("0:00")
+            self.player_widget.time_duration.setText("0:00")
+            self.player_widget.total_time_label.setText("0:00:00")
+            self.player_widget.total_duration_label.setText("0:00:00")
+            self.player_widget.total_percent_label.setText(
+                trf("formats.percent", value=0)
+            )
+            self.player_widget.time_left_label.setText(tr("player.time_left_unknown"))
+
+            if self.delegate:
+                self.delegate.playing_path = None  # Remove tree highlighting
+
+            self.library_widget.tree.viewport().update()
+
     def update_progress_bar_markers(self):
         """Update the bookmarks markers on the total progress bar"""
         percentages = self.playback_controller.get_bookmarks_percentages()
@@ -2201,18 +2238,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # 1. Terminate active playback if the target book is currently loaded
         if self.playback_controller.current_audiobook_id == audiobook_id:
-            self.player.unload()
-            # Clear internal playback state
-            self.playback_controller.current_audiobook_id = None
-            self.playback_controller.current_audiobook_path = ""
-            self.playback_controller.files_list = []
-            self.playback_controller.saved_file_index = 0
-            self.playback_controller.saved_position = 0
-
-            # Reset UI elements to their baseline state
-            self.update_ui_for_audiobook()
-            if self.delegate:
-                self.delegate.playing_path = None
+            self.unload_active_book(save_progress=False)
 
         # 2. Delete the files from the disk if requested
         if delete_from_disk and abs_path.exists():
@@ -2250,16 +2276,7 @@ class AudiobookPlayerWindow(QMainWindow):
         )
 
         if inside_folder:
-            self.player.unload()
-            self.playback_controller.current_audiobook_id = None
-            self.playback_controller.current_audiobook_path = ""
-            self.playback_controller.files_list = []
-            self.playback_controller.saved_file_index = 0
-            self.playback_controller.saved_position = 0
-
-            self.update_ui_for_audiobook()
-            if self.delegate:
-                self.delegate.playing_path = None
+            self.unload_active_book(save_progress=False)
 
         # 2. Database and UI synchronization
         try:
