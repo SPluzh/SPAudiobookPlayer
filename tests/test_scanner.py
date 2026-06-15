@@ -662,6 +662,9 @@ class TestCoverInheritance:
     """Tests for cover inheritance from parent folders"""
 
     def test_inherit_parent_cover(self, mock_scanner, temp_dir):
+        # Enable cover inheritance for this test
+        mock_scanner.inherit_parent_cover = True
+        
         # 1. Create a parent folder with a cover image
         parent_dir = temp_dir / "Parent Book"
         parent_dir.mkdir()
@@ -720,6 +723,9 @@ class TestCoverInheritance:
             mock_scanner._analyze_file_fast = original_analyze
 
     def test_do_not_inherit_when_own_cover_exists(self, mock_scanner, temp_dir):
+        # Enable cover inheritance for this test
+        mock_scanner.inherit_parent_cover = True
+        
         # 1. Create a parent folder with a cover image
         parent_dir = temp_dir / "Parent Book"
         parent_dir.mkdir()
@@ -773,6 +779,99 @@ class TestCoverInheritance:
             selected_covers = [cov[0] for cov in covers if cov[1] == 1]
             assert len(selected_covers) == 1
             assert selected_covers[0] == str(sub_cover)
+            
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+    def test_do_not_inherit_from_root(self, mock_scanner, temp_dir):
+        # 1. Create a cover image directly in the root library directory
+        root_cover = temp_dir / "cover.jpg"
+        root_cover.write_bytes(b"root cover image data")
+        
+        # 2. Create a book folder directly under root with no cover but with an audio file
+        book_dir = temp_dir / "Book directly in root"
+        book_dir.mkdir()
+        mp3_file = book_dir / "01.mp3"
+        mp3_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+        
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': 'Book directly in root', 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+        
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+        
+        try:
+            # Run scanner
+            mock_scanner.scan_directory(str(temp_dir))
+            
+            # Verify database records
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0")
+            rows = c.fetchall()
+            
+            # The book directly under root should NOT have inherited the root folder's cover.
+            assert len(rows) == 1
+            path, cover_path, cached_path = rows[0]
+            assert cover_path is None or cover_path == ""
+            assert cached_path is None or cached_path == ""
+            
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+    def test_do_not_inherit_when_inherit_parent_cover_disabled(self, mock_scanner, temp_dir):
+        # Disable parent cover inheritance
+        mock_scanner.inherit_parent_cover = False
+        
+        # 1. Create a parent folder with a cover image
+        parent_dir = temp_dir / "Parent Book"
+        parent_dir.mkdir()
+        parent_cover = parent_dir / "cover.jpg"
+        parent_cover.write_bytes(b"parent cover image data")
+        
+        # 2. Create a subfolder with no cover image but containing an audio file
+        sub_dir = parent_dir / "CD 1"
+        sub_dir.mkdir()
+        mp3_file = sub_dir / "01.mp3"
+        mp3_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+        
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': 'CD 1', 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+        
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+        
+        try:
+            # Run scanner
+            mock_scanner.scan_directory(str(temp_dir))
+            
+            # Verify database records
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0")
+            rows = c.fetchall()
+            
+            # We expect CD 1 to have NO cover_path since inheritance is disabled
+            assert len(rows) == 1
+            path, cover_path, cached_path = rows[0]
+            assert cover_path is None or cover_path == ""
+            assert cached_path is None or cached_path == ""
             
             conn.close()
         finally:

@@ -989,6 +989,12 @@ class AudiobookPlayerWindow(QMainWindow):
             "Paths", "folder_cover_file", fallback="resources/icons/folder_cover.png"
         )
 
+        if "Covers" not in config:
+            config["Covers"] = {}
+        self.inherit_parent_cover = config.getboolean(
+            "Covers", "inherit_parent_cover", fallback=False
+        )
+
         # Visual Style Metrics
         self.audiobook_icon_size = config.getint(
             "Audiobook_Style", "icon_size", fallback=100
@@ -1157,6 +1163,10 @@ class AudiobookPlayerWindow(QMainWindow):
             "default_cover_file": "resources/icons/default_cover.png",
             "folder_cover_file": "resources/icons/folder_cover.png",
         }
+        config["Covers"] = {
+            "names": "cover.jpg,cover.png,cover.jpeg,cover.webp,folder.jpg,folder.png,folder.webp",
+            "inherit_parent_cover": "False",
+        }
         config["Audio"] = {
             "extensions": ".mp3,.m4a,.m4b,.mp4,.ogg,.flac,.wav,.aac,.wma,.opus,.ape"
         }
@@ -1244,6 +1254,10 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Paths"]["default_path"] = self.default_path
         config["Paths"]["default_cover_file"] = self.default_cover_file
         config["Paths"]["folder_cover_file"] = self.folder_cover_file
+
+        if "Covers" not in config:
+            config["Covers"] = {}
+        config["Covers"]["inherit_parent_cover"] = str(self.inherit_parent_cover)
 
         # Serialized Layout State
         if "Layout" not in config:

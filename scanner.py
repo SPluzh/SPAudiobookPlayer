@@ -177,6 +177,11 @@ class AudiobookScanner:
             fallback='cover.jpg,cover.png,cover.jpeg,cover.webp,folder.jpg,folder.png,folder.webp'
         )
         self.cover_names = [c.strip() for c in covers.split(',') if c.strip()]
+        self.inherit_parent_cover = config.getboolean(
+            'Covers',
+            'inherit_parent_cover',
+            fallback=False
+        )
 
     def _print_settings_summary(self):
         """Print summary of loaded settings"""
@@ -964,9 +969,9 @@ class AudiobookScanner:
         folder_of_m3u = m3u_path.parent
         parent_cover_file = None
         try:
-            if parent_path != '':
+            if self.inherit_parent_cover and parent_path != '':
                 parent_folder = folder_of_m3u.parent
-                if parent_folder != folder_of_m3u:
+                if parent_folder != folder_of_m3u and parent_folder != root:
                     parent_cover_file = self._find_cover_file_only(parent_folder)
         except Exception:
             pass
@@ -2638,9 +2643,9 @@ class AudiobookScanner:
                 
                 parent_cover_file = None
                 try:
-                    if str(parent) != '':
+                    if self.inherit_parent_cover and str(parent) != '':
                         parent_folder = root / parent
-                        if parent_folder != folder:
+                        if parent_folder != folder and parent_folder != root:
                             parent_cover_file = self._find_cover_file_only(parent_folder)
                 except Exception:
                     pass
