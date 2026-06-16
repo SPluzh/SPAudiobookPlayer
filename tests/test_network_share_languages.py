@@ -170,17 +170,5 @@ def test_network_share_audiobooks_language():
         
     safe_print(f"\nTotal scanned: {len(results)} folders.")
     
-    # Save a detailed report to a markdown file in tests/
-    report_path = Path(__file__).parent / "network_share_languages_report.md"
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write("# Network Share Audiobook Language Detection Report\n\n")
-        f.write(f"Scanned path: `{SHARE_PATH}`\n\n")
-        f.write("| Folder Name | Audio Files | Detected (Folder Name) | Detection Rule | Explicit tag | Detected (Metadata) | Metadata Title/Artist |\n")
-        f.write("|---|---|---|---|---|---|---|\n")
-        for r in results:
-            meta_desc = f"{r['metadata'].get('author', '')} - {r['metadata'].get('title', '')}" if r['metadata'] else ""
-            meta_desc = meta_desc.replace('|', '\\|')
-            f.write(f"| {r['folder']} | {r['audio_count']} | `{r['det_folder']}` | `{r['rule']}` | {r['explicit_lang'] or 'None'} | `{r['det_metadata']}` | {meta_desc} |\n")
-            
-    safe_print(f"Detailed report saved to {report_path}")
+    # Report generation to markdown file disabled.
 

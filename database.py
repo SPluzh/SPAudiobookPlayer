@@ -474,6 +474,13 @@ class DatabaseManager:
             cursor.execute("PRAGMA foreign_keys = OFF")
             cursor.execute("DELETE FROM audiobook_files")
             cursor.execute("DELETE FROM audiobooks")
+            cursor.execute("DELETE FROM audiobook_covers")
+            cursor.execute("DELETE FROM bookmarks")
+            cursor.execute("DELETE FROM audiobook_tags")
+            cursor.execute("DELETE FROM tags")
+            cursor.execute("DELETE FROM listening_sessions")
+            cursor.execute("DELETE FROM daily_listening_stats")
+            cursor.execute("DELETE FROM file_metadata_cache")
             conn.commit()
         except sqlite3.Error as e:
             print(f"Error clearing database: {e}")

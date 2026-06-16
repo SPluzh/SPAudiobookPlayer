@@ -2197,6 +2197,10 @@ class AudiobookPlayerWindow(QMainWindow):
             # 1. Stop active playback and unload file to release locks
             self.player.unload()
 
+            # End active listening session if any
+            if hasattr(self, 'listening_tracker'):
+                self.listening_tracker.end_session()
+
             # 2. Reset the internal state of the playback controller
             self.playback_controller.current_audiobook_id = None
             self.playback_controller.current_audiobook_path = ""

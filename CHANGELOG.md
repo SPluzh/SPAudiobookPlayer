@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.9]
+- **Settings**: Clearing the database now also deletes listening statistics, session history, bookmarks, and tags.
+
 ## [1.7.8]
 - **Metadata**: Fixed manual cover scanning for playlist-based audiobooks in the edit dialog.
 - **Metadata**: Added support for parent folder cover inheritance when manually scanning for covers.
