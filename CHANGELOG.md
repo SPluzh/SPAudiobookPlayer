@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.8]
+- **Metadata**: Fixed manual cover scanning for playlist-based audiobooks in the edit dialog.
+- **Metadata**: Added support for parent folder cover inheritance when manually scanning for covers.
 - **Library**: Re-scanning an audiobook or manually refreshing its covers now updates and overwrites the cached cover images to reflect changes on disk.
 - **Library**: Existing values for title, author, narrator, writing/recording years, and language are no longer overwritten during library updates if they are already populated.
 - **Settings**: Added a "Force rescan" option to the library update section, allowing users to perform a clean library refresh and clear cached cover art.

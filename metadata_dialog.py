@@ -610,11 +610,11 @@ class MetadataEditDialog(QDialog):
             # Fetch the audiobook path and selected cover path from DB
             conn = sqlite3.connect(self.db.db_file)
             cursor = conn.cursor()
-            cursor.execute("SELECT path, cached_cover_path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+            cursor.execute("SELECT path, parent_path, cached_cover_path, is_playlist FROM audiobooks WHERE id = ?", (self.audiobook_id,))
             row = cursor.fetchone()
             
             if row:
-                relative_path, current_cached_cover = row[0], row[1]
+                relative_path, parent_path, current_cached_cover, is_playlist = row[0], row[1], row[2], row[3]
                 
                 # Reconstruct the absolute path of the audiobook
                 library_root = ""
@@ -635,12 +635,30 @@ class MetadataEditDialog(QDialog):
                     if absolute_path.exists():
                         # Instantiate AudiobookScanner and run rescanning of covers
                         scanner = AudiobookScanner()
+                        
+                        # For playlists, the scan directory is the parent folder containing the .m3u file
+                        is_playlist_book = bool(is_playlist)
+                        scan_directory = absolute_path.parent if is_playlist_book else absolute_path
+                        
+                        # Retrieve parent cover file if inheritance is enabled
+                        parent_cover_file = None
+                        try:
+                            if scanner.inherit_parent_cover and parent_path:
+                                parent_folder = Path(library_root) / parent_path
+                                if is_playlist_book:
+                                    parent_folder = scan_directory.parent
+                                if parent_folder.exists() and parent_folder != scan_directory and parent_folder != Path(library_root):
+                                    parent_cover_file = scanner._find_cover_file_only(parent_folder)
+                        except Exception:
+                            pass
+                            
                         scanner._scan_and_save_all_covers(
                             conn=conn,
-                            directory=absolute_path,
+                            directory=scan_directory,
                             key=relative_path,
                             audiobook_id=self.audiobook_id,
                             selected_cover_cached_path=current_cached_cover,
+                            parent_cover_file=parent_cover_file,
                             force_update=True
                         )
                         conn.commit()
@@ -660,12 +678,12 @@ class MetadataEditDialog(QDialog):
             import sqlite3
             conn = sqlite3.connect(self.db.db_file)
             cursor = conn.cursor()
-            cursor.execute("SELECT path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+            cursor.execute("SELECT path, is_playlist FROM audiobooks WHERE id = ?", (self.audiobook_id,))
             row = cursor.fetchone()
             conn.close()
             
             if row:
-                relative_path = row[0]
+                relative_path, is_playlist = row[0], row[1]
                 library_root = ""
                 if self.parent() and hasattr(self.parent(), 'config') and self.parent().config:
                     library_root = self.parent().config.get("default_path", "")
@@ -680,7 +698,10 @@ class MetadataEditDialog(QDialog):
                         library_root = config.get('Paths', 'library_path', fallback='')
                 
                 if library_root:
-                    return Path(library_root) / relative_path
+                    absolute_path = Path(library_root) / relative_path
+                    if is_playlist or absolute_path.is_file():
+                        return absolute_path.parent
+                    return absolute_path
         except Exception as e:
             print(f"Error getting audiobook directory: {e}")
         return None
