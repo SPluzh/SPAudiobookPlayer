@@ -213,6 +213,7 @@
     "browse": "Duyệt",
     "scan_group": "Cập nhật thư viện",
     "scan_button": "Quét thư viện",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "Việc quét sẽ cập nhật danh sách tất cả các sách nói trong thư mục đã chỉ định",
     "save": "Lưu",
     "choose_directory": "Chọn thư mục",

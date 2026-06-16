@@ -195,6 +195,7 @@
     "browse": "ब्राउज़ करें",
     "scan_group": "लाइब्रेरी अपडेट",
     "scan_button": "लाइब्रेरी स्कैन करें",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "स्कैनिंग निर्दिष्ट निर्देशिका में सभी ऑडियोबुक्स की सूची को अपडेट करेगा",
     "save": "सहेजें",
     "choose_directory": "निर्देशिका चुनें",

@@ -89,3 +89,38 @@ class TestFormatSize:
     def test_gb(self):
         assert format_size(1024 * 1024 * 1024) == "1.0 GB"
         assert format_size(int(10.25 * 1024 * 1024 * 1024)) == "10.2 GB"
+
+
+class TestLoadIconCache:
+    def test_load_icon_cache_clear(self, temp_dir):
+        from PyQt6.QtWidgets import QApplication
+        from PyQt6.QtGui import QImage
+        from utils import load_icon
+        
+        # Ensure QApplication exists
+        app = QApplication.instance() or QApplication([])
+        
+        # Create a dummy image
+        img_path = temp_dir / "cover.png"
+        img = QImage(10, 10, QImage.Format.Format_RGB32)
+        img.fill(0xFFFFFF)
+        img.save(str(img_path))
+        
+        # Clear cache before starting
+        load_icon.cache_clear()
+        
+        # Load icon first time
+        icon1 = load_icon(img_path, 10)
+        assert icon1 is not None
+        
+        # Load icon second time - should be cached
+        icon2 = load_icon(img_path, 10)
+        assert icon1 is icon2  # Same object due to cache
+        
+        # Clear cache
+        load_icon.cache_clear()
+        
+        # Load icon third time - should be a new object
+        icon3 = load_icon(img_path, 10)
+        assert icon3 is not None
+        assert icon1 is not icon3

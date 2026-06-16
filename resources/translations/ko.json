@@ -195,6 +195,7 @@
     "browse": "찾아보기",
     "scan_group": "라이브러리 업데이트",
     "scan_button": "라이브러리 스캔",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "스캔하면 지정된 디렉토리의 모든 오디오북 목록이 업데이트됩니다",
     "save": "저장",
     "choose_directory": "디렉토리 선택",

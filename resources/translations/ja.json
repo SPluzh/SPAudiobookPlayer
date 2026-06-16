@@ -195,6 +195,7 @@
     "browse": "参照",
     "scan_group": "ライブラリの更新",
     "scan_button": "ライブラリをスキャン",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "スキャンすると指定したディレクトリ内のすべての情報が更新されます",
     "save": "保存",
     "choose_directory": "ディレクトリを選択",

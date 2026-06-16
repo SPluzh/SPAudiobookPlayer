@@ -362,12 +362,13 @@ class ScannerThread(QThread):
     progress = pyqtSignal(str)  # Log message signal
     finished_scan = pyqtSignal(int)  # Number of audiobooks found signal
 
-    def __init__(self, root_path, ffprobe_path=None, subfolder_path=None):
+    def __init__(self, root_path, ffprobe_path=None, subfolder_path=None, force_rescan=False):
         """Initialize the scanner thread with target path and optional ffprobe path"""
         super().__init__()
         self.root_path = root_path
         self.ffprobe_path = ffprobe_path
         self.subfolder_path = subfolder_path
+        self.force_rescan = force_rescan
 
     def run(self):
         """Execute the scan process"""
@@ -406,7 +407,7 @@ class ScannerThread(QThread):
             scanner = AudiobookScanner(
                 "settings.ini"
             )  # AudiobookScanner handles resources/ internally
-            count = scanner.scan_directory(self.root_path, subfolder_path=self.subfolder_path)
+            count = scanner.scan_directory(self.root_path, subfolder_path=self.subfolder_path, force_rescan=self.force_rescan)
 
             # Restore stdout
             sys.stdout = old_stdout
@@ -526,9 +527,9 @@ class ScanProgressDialog(QDialog):
 
         self.thread = None
 
-    def start_scan(self, root_path, ffprobe_path=None, subfolder_path=None):
+    def start_scan(self, root_path, ffprobe_path=None, subfolder_path=None, force_rescan=False):
         """Start the background scanning thread"""
-        self.thread = ScannerThread(root_path, ffprobe_path, subfolder_path)
+        self.thread = ScannerThread(root_path, ffprobe_path, subfolder_path, force_rescan=force_rescan)
         self.thread.progress.connect(self.append_log)
         self.thread.finished_scan.connect(self.on_finished)
         self.thread.start()
@@ -2693,6 +2694,8 @@ class LibraryWidget(QWidget):
 
     def load_audiobooks(self, use_cache: bool = True):
         """Retrieve and display audiobooks from the database according to the active filter"""
+        if not use_cache:
+            load_icon.cache_clear()
         self.current_playing_item = None
         self._expanded_paths_cache = self.get_expanded_folder_paths()
         self.tree.clear()

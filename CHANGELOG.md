@@ -3,7 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.8]
+- **Library**: Re-scanning an audiobook or manually refreshing its covers now updates and overwrites the cached cover images to reflect changes on disk.
 - **Library**: Existing values for title, author, narrator, writing/recording years, and language are no longer overwritten during library updates if they are already populated.
+- **Settings**: Added a "Force rescan" option to the library update section, allowing users to perform a clean library refresh and clear cached cover art.
+- **Library**: Fixed an issue where updated or overwritten cover art images for audiobooks in the library did not refresh in the list after a scan unless the application was restarted.
 
 ## [1.7.7]
 - **Playback**: Automatically stops the playing audiobook when starting conversion to Opus to prevent file errors.

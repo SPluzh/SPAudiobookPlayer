@@ -213,6 +213,7 @@
     "browse": "Ընտրել...",
     "scan_group": "Գրադարանի թարմացում",
     "scan_button": "Սկանավորել գրադարանը",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "Սկանավորումը կթարմացնի նշված թղթապանակում առկա բոլոր աուդիոգրքերի ցանկը",
     "save": "Պահպանել",
     "choose_directory": "Ընտրել թղթապանակը",

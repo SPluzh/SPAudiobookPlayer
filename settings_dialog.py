@@ -109,7 +109,7 @@ class SettingsDialog(QDialog):
     
     # Signals
     path_saved = pyqtSignal(str)       # Library path was updated
-    scan_requested = pyqtSignal(str)   # Scan process triggered with specific path
+    scan_requested = pyqtSignal(str, bool)   # Scan process triggered with specific path and force_rescan flag
     data_reset_requested = pyqtSignal()# Request to wipe all local database and covers
     opus_convert_requested = pyqtSignal() # Request to open Opus conversion dialog
     auto_update_toggled = pyqtSignal(bool) # Auto-update check toggled
@@ -160,6 +160,11 @@ class SettingsDialog(QDialog):
         scan_group = QGroupBox(tr("settings.scan_group"))
         scan_layout = QVBoxLayout(scan_group)
         
+        # Checkbox for force rescan
+        self.force_rescan_checkbox = QCheckBox(tr("settings.force_rescan"))
+        self.force_rescan_checkbox.setObjectName("forceRescanCheckbox")
+        scan_layout.addWidget(self.force_rescan_checkbox)
+
         rescan_btn = QPushButton(tr("settings.scan_button"))
         rescan_btn.setObjectName("scanBtn")
         rescan_btn.setIcon(get_icon("scan"))
@@ -272,7 +277,7 @@ class SettingsDialog(QDialog):
         """Emit scan requested signal with the current path"""
         new_path = self.get_path()
         if new_path:
-            self.scan_requested.emit(new_path)
+            self.scan_requested.emit(new_path, self.force_rescan_checkbox.isChecked())
  
     def update_ffprobe_status(self):
         """Check for ffprobe presence and update the button label accordingly"""

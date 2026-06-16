@@ -960,3 +960,74 @@ class TestM3UCoverChange:
             mock_scanner._extract_metadata = original_extract
             mock_scanner._analyze_file_fast = original_analyze
 
+
+class TestCoverForcedUpdateOnRescan:
+    """Tests that cover files are updated/overwritten when a rescan is triggered"""
+
+    def test_cover_updated_on_rescan(self, mock_scanner, temp_dir):
+        # 1. Create book directory
+        book_dir = temp_dir / "Rescan Cover Book"
+        book_dir.mkdir()
+
+        # Create mock audio file
+        audio_file = book_dir / "track.mp3"
+        audio_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        # Create initial cover.jpg
+        cover_file = book_dir / "cover.jpg"
+        cover_file.write_bytes(b"initial cover content")
+
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': 'Rescan Cover Book', 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+        
+        # Set covers_dir
+        mock_scanner.covers_dir = temp_dir / "covers"
+        mock_scanner.covers_dir.mkdir()
+
+        try:
+            # First Scan: initial cover cached
+            mock_scanner.scan_directory(str(temp_dir))
+
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0")
+            row = c.fetchone()
+            assert row is not None
+            cached_path_1 = row[2]
+            assert cached_path_1 is not None
+            
+            # Read cached file to confirm initial content
+            with open(cached_path_1, 'rb') as f:
+                content_1 = f.read()
+            assert content_1 == b"initial cover content"
+
+            # 2. Modify cover.jpg to have different content
+            cover_file.write_bytes(b"updated cover content")
+
+            # Force state update: rescan should be triggered because state_hash changes due to cover.jpg change
+            mock_scanner.scan_directory(str(temp_dir))
+
+            c.execute("SELECT path, cover_path, cached_cover_path FROM audiobooks WHERE is_folder = 0")
+            row = c.fetchone()
+            assert row is not None
+            cached_path_2 = row[2]
+            
+            # Cached path should remain the same (we overwrite the existing file)
+            assert cached_path_2 == cached_path_1
+            
+            # Read cached file to confirm it has been updated/overwritten with the new content
+            with open(cached_path_2, 'rb') as f:
+                content_2 = f.read()
+            assert content_2 == b"updated cover content"
+
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+

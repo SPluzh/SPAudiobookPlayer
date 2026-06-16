@@ -640,7 +640,8 @@ class MetadataEditDialog(QDialog):
                             directory=absolute_path,
                             key=relative_path,
                             audiobook_id=self.audiobook_id,
-                            selected_cover_cached_path=current_cached_cover
+                            selected_cover_cached_path=current_cached_cover,
+                            force_update=True
                         )
                         conn.commit()
             conn.close()

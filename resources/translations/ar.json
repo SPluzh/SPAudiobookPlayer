@@ -195,6 +195,7 @@
     "browse": "تصفح",
     "scan_group": "تحديث المكتبة",
     "scan_button": "فحص المكتبة",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "سيؤدي الفحص إلى تحديث قائمة جميع الكتب الصوتية في الدليل المحدد",
     "save": "حفظ",
     "choose_directory": "اختر الدليل",

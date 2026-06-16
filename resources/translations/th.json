@@ -213,6 +213,7 @@
     "browse": "เลือก",
     "scan_group": "การอัปเดตคลัง",
     "scan_button": "สแกนคลัง",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "การสแกนจะอัปเดตรายชื่อหนังสือเสียงทั้งหมดในไดเรกทอรีที่ระบุ",
     "save": "บันทึก",
     "choose_directory": "เลือกไดเรกทอรี",

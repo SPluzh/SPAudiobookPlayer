@@ -2070,8 +2070,10 @@ class AudiobookPlayerWindow(QMainWindow):
         if not self.player.is_playing() and duration > 0 and pos >= chapter_end - 1.5:
             self.on_next_clicked()
 
-    def rescan_directory(self, target_path: str = ""):
+    def rescan_directory(self, target_path: str = "", force_rescan: bool = False):
         """Initiate a comprehensive scan of the configured media directory with progress feedback via a dialog"""
+        if isinstance(target_path, bool):
+            target_path = ""
         if not self.default_path:
             QMessageBox.warning(self, tr("settings.title"), tr("settings.specify_path"))
             return
@@ -2094,7 +2096,7 @@ class AudiobookPlayerWindow(QMainWindow):
             dialog.finished.connect(on_finished)
             dialog.show()
             subfolder_path = target_path if target_path else None
-            dialog.start_scan(self.default_path, self.ffprobe_path, subfolder_path=subfolder_path)
+            dialog.start_scan(self.default_path, self.ffprobe_path, subfolder_path=subfolder_path, force_rescan=force_rescan)
 
         start_scanning_process()
 
@@ -2146,7 +2148,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 print(f"DEBUG: Path saved in main.py. New path: {new_path}")
                 self.statusBar().showMessage(tr("status.path_saved"))
 
-        def on_scan_requested(new_path):
+        def on_scan_requested(new_path, force_rescan):
             """Apply the new path and immediately trigger a directory scan"""
             if new_path != self.default_path:
                 self.default_path = new_path
@@ -2158,8 +2160,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 if hasattr(self, "library_widget"):
                     self.library_widget.config["default_path"] = new_path
 
-            print(f"DEBUG: Scan requested. Updating library config path to: {new_path}")
-            self.rescan_directory()
+            print(f"DEBUG: Scan requested. Updating library config path to: {new_path}, force_rescan: {force_rescan}")
+            self.rescan_directory(force_rescan=force_rescan)
 
         conversion_performed = False
 

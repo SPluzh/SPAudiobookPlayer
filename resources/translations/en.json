@@ -213,6 +213,7 @@
     "browse": "Browse",
     "scan_group": "Library update",
     "scan_button": "Scan library",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "Scanning will update the list of all audiobooks in the specified directory",
     "save": "Save",
     "choose_directory": "Choose directory",

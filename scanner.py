@@ -946,7 +946,7 @@ class AudiobookScanner:
 
         return res
 
-    def _save_playlist_as_book(self, m3u_path, book_path, parent_path, name, root, conn, verbose=False):
+    def _save_playlist_as_book(self, m3u_path, book_path, parent_path, name, root, conn, verbose=False, force_rescan=False):
         """Save playlist as audiobook in the database"""
         c = conn.cursor()
         self._log("")
@@ -1005,7 +1005,7 @@ class AudiobookScanner:
 
         c.execute("SELECT id, state_hash FROM audiobooks WHERE path = ?", (book_path,))
         existing = c.fetchone()
-        if existing and existing[1] == current_state_hash:
+        if existing and existing[1] == current_state_hash and not force_rescan:
             c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing[0],))
             return
 
@@ -1125,7 +1125,8 @@ class AudiobookScanner:
         total_duration = sum(e['duration'] for e in entries)
         file_count = len(entries)
 
-        cover, cover_cached = self._find_cover(folder_of_m3u, book_path, parent_cover_file)
+        is_rescan = existing is not None
+        cover, cover_cached = self._find_cover(folder_of_m3u, book_path, parent_cover_file, force_update=is_rescan)
 
         if existing:
             book_id = existing[0]
@@ -1167,7 +1168,7 @@ class AudiobookScanner:
             c.execute("SELECT id FROM audiobooks WHERE path = ?", (book_path,))
             book_id = c.fetchone()[0]
 
-        self._scan_and_save_all_covers(conn, folder_of_m3u, book_path, book_id, cover_cached, parent_cover_file)
+        self._scan_and_save_all_covers(conn, folder_of_m3u, book_path, book_id, cover_cached, parent_cover_file, force_update=is_rescan)
 
         c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
         files_batch = []
@@ -1209,7 +1210,7 @@ class AudiobookScanner:
             year_recorded=year_recorded
         )
 
-    def _process_playlist_in_folder(self, folder, root, m3u_files, conn, save_folder_callback, verbose=False):
+    def _process_playlist_in_folder(self, folder, root, m3u_files, conn, save_folder_callback, verbose=False, force_rescan=False):
         """Process playlist files in a folder"""
         rel_folder = folder.relative_to(root)
 
@@ -1242,7 +1243,8 @@ class AudiobookScanner:
                 name=folder.name,
                 root=root,
                 conn=conn,
-                verbose=verbose
+                verbose=verbose,
+                force_rescan=force_rescan
             )
             if parent:
                 save_folder_callback(parent)
@@ -1256,7 +1258,8 @@ class AudiobookScanner:
                     name=m3u_file.stem,
                     root=root,
                     conn=conn,
-                    verbose=verbose
+                    verbose=verbose,
+                    force_rescan=force_rescan
                 )
             save_folder_callback(str(rel_folder))
 
@@ -1465,7 +1468,7 @@ class AudiobookScanner:
             
         return results
 
-    def _extract_cover_from_file(self, f, key):
+    def _extract_cover_from_file(self, f, key, force_update=False):
         """Extract embedded cover from a specific file"""
         try:
             from mutagen.id3 import ID3, APIC
@@ -1477,7 +1480,7 @@ class AudiobookScanner:
             cover_path = self.covers_dir / f"{safe_name}.jpg"
             
             # Check directly if file exists
-            if cover_path.exists():
+            if cover_path.exists() and not force_update:
                  return str(cover_path)
 
             img_data = None
@@ -1517,7 +1520,7 @@ class AudiobookScanner:
         
         return None
 
-    def _extract_embedded_cover(self, directory, key):
+    def _extract_embedded_cover(self, directory, key, force_update=False):
         """Extract embedded cover image from audio files"""
         try:
             audio_files = sorted(
@@ -1526,14 +1529,14 @@ class AudiobookScanner:
             )
             
             for f in audio_files[:3]:
-                result = self._extract_cover_from_file(f, key)
+                result = self._extract_cover_from_file(f, key, force_update=force_update)
                 if result:
                     return result
         except Exception:
             pass
         return None
     
-    def _find_cover(self, directory, key, parent_cover_file=None):
+    def _find_cover(self, directory, key, parent_cover_file=None, force_update=False):
         """Find cover image (file or embedded) for the audiobook. Returns (original_path, cached_path)"""
         
         path_obj = Path(directory)
@@ -1541,7 +1544,7 @@ class AudiobookScanner:
         # Case 0: Standalone file
         if path_obj.is_file():
              # Try embedded only
-             embedded = self._extract_cover_from_file(path_obj, key)
+             embedded = self._extract_cover_from_file(path_obj, key, force_update=force_update)
              return None, embedded
 
         # Helper to cache a file
@@ -1556,7 +1559,7 @@ class AudiobookScanner:
                 dest_path = self.covers_dir / f"{safe_name}{ext}"
                 
                 # Check directly if file exists to avoid unnecessary copy
-                if not dest_path.exists():
+                if not dest_path.exists() or force_update:
                     # Try to resize and save
                     image = QImage(str(src_path))
                     if not image.isNull():
@@ -1574,7 +1577,7 @@ class AudiobookScanner:
                     ext = Path(src_path).suffix.lower()
                     safe_name = hashlib.md5(key.encode()).hexdigest()
                     dest_path = self.covers_dir / f"{safe_name}{ext}"
-                    if not dest_path.exists():
+                    if not dest_path.exists() or force_update:
                         shutil.copy2(src_path, dest_path)
                     return str(dest_path)
                 except:
@@ -1631,7 +1634,7 @@ class AudiobookScanner:
         
         # 5. Fallback to embedded cover
         # Embedded cover extraction already handles caching/extraction to covers_dir
-        embedded_path = self._extract_embedded_cover(directory, key)
+        embedded_path = self._extract_embedded_cover(directory, key, force_update=force_update)
         if embedded_path:
              # For embedded covers, we don't have an "original" file path, so return None for original
              return None, embedded_path
@@ -1668,7 +1671,7 @@ class AudiobookScanner:
             pass
         return None
 
-    def _scan_and_save_all_covers(self, conn, directory, key, audiobook_id, selected_cover_cached_path, parent_cover_file=None):
+    def _scan_and_save_all_covers(self, conn, directory, key, audiobook_id, selected_cover_cached_path, parent_cover_file=None, force_update=False):
         """
         Scan for all available covers, cache them, and save to audiobook_covers table.
         """
@@ -1770,10 +1773,10 @@ class AudiobookScanner:
             file_covers.sort(key=lambda p: (get_path_priority(p), str(p)))
 
         # Define a helper function to scale and cache file-based images
-        def cache_original_file(src_path, dest_path):
+        def cache_original_file(src_path, dest_path, force_update=False):
             try:
                 dest_path_obj = Path(dest_path)
-                if not dest_path_obj.exists():
+                if force_update or not dest_path_obj.exists():
                     image = QImage(str(src_path))
                     if not image.isNull():
                         scaled = image.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
@@ -1785,17 +1788,17 @@ class AudiobookScanner:
                 self._log_error(f"Error caching all-cover file {src_path}: {e}")
                 try:
                     dest_path_obj = Path(dest_path)
-                    if not dest_path_obj.exists():
+                    if force_update or not dest_path_obj.exists():
                         shutil.copy2(src_path, dest_path)
                     return True
                 except:
                     return False
 
         # Define a helper to scale and cache embedded covers
-        def cache_embedded_data(img_data, dest_path):
+        def cache_embedded_data(img_data, dest_path, force_update=False):
             try:
                 dest_path_obj = Path(dest_path)
-                if not dest_path_obj.exists():
+                if force_update or not dest_path_obj.exists():
                     image = QImage.fromData(img_data)
                     if not image.isNull():
                         scaled = image.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
@@ -1847,11 +1850,11 @@ class AudiobookScanner:
             is_selected = 1 if idx == selected_file_idx else 0
             
             if is_selected:
-                if selected_cover_cached_path and Path(selected_cover_cached_path).exists():
+                if selected_cover_cached_path and Path(selected_cover_cached_path).exists() and not force_update:
                     cached_path_str = selected_cover_cached_path
                 else:
-                    dest_path = self.covers_dir / f"{safe_name}{ext}"
-                    success = cache_original_file(p, dest_path)
+                    dest_path = Path(selected_cover_cached_path) if selected_cover_cached_path else (self.covers_dir / f"{safe_name}{ext}")
+                    success = cache_original_file(p, dest_path, force_update=force_update)
                     if success:
                         cached_path_str = str(dest_path)
                     else:
@@ -1861,7 +1864,7 @@ class AudiobookScanner:
                 dest_path = self.covers_dir / f"{safe_name}_{image_hash}{ext}"
                 
                 # Cache the file
-                success = cache_original_file(p, dest_path)
+                success = cache_original_file(p, dest_path, force_update=force_update)
                 if success:
                     cached_path_str = str(dest_path)
                 else:
@@ -1941,14 +1944,14 @@ class AudiobookScanner:
                             is_selected = 1
                             
                         if is_selected:
-                            if selected_cover_cached_path and Path(selected_cover_cached_path).exists():
+                            if selected_cover_cached_path and Path(selected_cover_cached_path).exists() and not force_update:
                                 cached_path_str = selected_cover_cached_path
                             else:
-                                cached_path_str = str(self.covers_dir / f"{safe_name}.jpg")
+                                cached_path_str = selected_cover_cached_path if selected_cover_cached_path else str(self.covers_dir / f"{safe_name}.jpg")
                         else:
                             cached_path_str = str(self.covers_dir / f"{safe_name}_emb_{short_hash}.jpg")
                             
-                        success = cache_embedded_data(img_data, cached_path_str)
+                        success = cache_embedded_data(img_data, cached_path_str, force_update=force_update)
                         if success:
                             if cached_path_str not in seen_cached_paths:
                                 seen_cached_paths.add(cached_path_str)
@@ -2283,7 +2286,7 @@ class AudiobookScanner:
         if extras:
             self._log(f"    {' '.join(extras)}")
 
-    def scan_directory(self, root_path, subfolder_path=None, verbose=False):
+    def scan_directory(self, root_path, subfolder_path=None, verbose=False, force_rescan=False):
         """Perform recursive directory scanning for audiobooks"""
         start_time = time.time()
         self._log_header(self.tr("scanner.scan_start"))
@@ -2340,6 +2343,25 @@ class AudiobookScanner:
                  for mp in merged_paths_set:
                      self._log(f"    [MERGED] {mp}")
             
+            if force_rescan:
+                # 1. Clean covers folder
+                self._log_info("Cleaning covers directory...")
+                if self.covers_dir.exists():
+                    try:
+                        import shutil
+                        # Delete all items inside covers_dir
+                        for item in self.covers_dir.iterdir():
+                            if item.is_file() or item.is_symlink():
+                                item.unlink()
+                            elif item.is_dir():
+                                shutil.rmtree(item)
+                    except Exception as e:
+                        self._log_error(f"Error cleaning covers directory: {e}")
+                
+                # 2. Reset cached covers in SQLite tables
+                c.execute("UPDATE audiobooks SET cached_cover_path = NULL")
+                c.execute("DELETE FROM audiobook_covers")
+
             # Reset availability for all books before scanning
             if subfolder:
                 subfolder_rel = str(subfolder.relative_to(root))
@@ -2466,7 +2488,7 @@ class AudiobookScanner:
                 
                 m3u_files = self._find_playlist_files(folder)
                 if m3u_files:
-                    self._process_playlist_in_folder(folder, root, m3u_files, conn, save_folder, verbose)
+                    self._process_playlist_in_folder(folder, root, m3u_files, conn, save_folder, verbose, force_rescan=force_rescan)
                     continue
                 
                 # Get file list
@@ -2534,7 +2556,7 @@ class AudiobookScanner:
                     db_codec = existing_row_data[2]
                     db_total_size = existing_row_data[3]
                     
-                    if db_hash == current_state_hash and db_codec is not None:
+                    if not force_rescan and db_hash == current_state_hash and db_codec is not None:
                         if not db_total_size:
                             try:
                                 total_size = sum(f.stat().st_size for f in files)
@@ -2650,8 +2672,9 @@ class AudiobookScanner:
                 except Exception:
                     pass
 
+                is_rescan = existing_row_data is not None
                 # Search for cover image
-                cover, cover_cached = self._find_cover(folder, str(rel), parent_cover_file)
+                cover, cover_cached = self._find_cover(folder, str(rel), parent_cover_file, force_update=is_rescan)
 
                 # Check for .cue files in this folder
                 cue_files = list(folder.glob('*.cue'))
@@ -2860,7 +2883,7 @@ class AudiobookScanner:
                     book_id = c.fetchone()[0]
 
                 # Scan and cache all available covers, and save to audiobook_covers table
-                self._scan_and_save_all_covers(conn, folder, str(rel), book_id, cover_cached, parent_cover_file)
+                self._scan_and_save_all_covers(conn, folder, str(rel), book_id, cover_cached, parent_cover_file, force_update=is_rescan)
 
                 # Update files list: remove old and insert current files
                 c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
@@ -2957,7 +2980,7 @@ class AudiobookScanner:
                     progress_text = self.tr("scanner.processing_item", current=global_idx, total=total_items, name=f.name)
                     self._log(f"\r{percent}% | {progress_text}", end="")
                     
-                    self._process_standalone_file(f, root, conn, verbose=verbose)
+                    self._process_standalone_file(f, root, conn, verbose=verbose, force_rescan=force_rescan)
             else:
                 self._log_info(self.tr("scanner.standalone_found", count=0))
 
@@ -2978,7 +3001,8 @@ class AudiobookScanner:
                         name=m3u_file.stem,
                         root=root,
                         conn=conn,
-                        verbose=verbose
+                        verbose=verbose,
+                        force_rescan=force_rescan
                     )
 
             # Get total processed count from db
@@ -3007,7 +3031,7 @@ class AudiobookScanner:
         
         return total_processed
 
-    def _process_standalone_file(self, file_path: Path, root: Path, conn, verbose=False):
+    def _process_standalone_file(self, file_path: Path, root: Path, conn, verbose=False, force_rescan=False):
         """Process a single audio file as a book"""
         c = conn.cursor()
         
@@ -3030,7 +3054,7 @@ class AudiobookScanner:
             db_hash = existing_row_data[1]
             db_codec = existing_row_data[2]
             db_total_size = existing_row_data[5]
-            if db_hash == current_state_hash and db_codec is not None:
+            if not force_rescan and db_hash == current_state_hash and db_codec is not None:
                 if not db_total_size:
                     try:
                         total_size = file_path.stat().st_size
@@ -3084,8 +3108,9 @@ class AudiobookScanner:
         bitrate_mode = 'VBR' if info['is_vbr'] else 'CBR'
         container = file_path.suffix.lstrip('.').lower()
         
+        is_rescan = existing_row_data is not None
         # Cover
-        cover, cover_cached = self._find_cover(file_path, str(rel))
+        cover, cover_cached = self._find_cover(file_path, str(rel), force_update=is_rescan)
         
         if existing_row_data:
             _, _, _, existing_cover_path, existing_cached_cover_path = existing_row_data
@@ -3257,7 +3282,7 @@ class AudiobookScanner:
              book_id = c.fetchone()[0]
 
         # Scan and cache all available covers, and save to audiobook_covers table
-        self._scan_and_save_all_covers(conn, file_path, str(rel), book_id, cover_cached)
+        self._scan_and_save_all_covers(conn, file_path, str(rel), book_id, cover_cached, force_update=is_rescan)
 
         # Files (Chapters)
         c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))

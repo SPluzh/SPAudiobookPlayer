@@ -195,6 +195,7 @@
     "browse": "Procurar",
     "scan_group": "Atualização da biblioteca",
     "scan_button": "Escanear biblioteca",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "O escaneamento atualizará a lista de todos os audiolivros no diretório especificado",
     "save": "Salvar",
     "choose_directory": "Escolher diretório",

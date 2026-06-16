@@ -195,6 +195,7 @@
     "browse": "Durchsuchen",
     "scan_group": "Bibliotheksaktualisierung",
     "scan_button": "Bibliothek scannen",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "Das Scannen aktualisiert die Liste aller Hörbücher im angegebenen Verzeichnis",
     "save": "Speichern",
     "choose_directory": "Verzeichnis wählen",

@@ -195,6 +195,7 @@
     "browse": "Gözat",
     "scan_group": "Kütüphane güncellemesi",
     "scan_button": "Kütüphaneyi tara",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "Tarama, belirtilen dizindeki tüm sesli kitapların listesini güncelleyecektir",
     "save": "Kaydet",
     "choose_directory": "Dizin seçin",

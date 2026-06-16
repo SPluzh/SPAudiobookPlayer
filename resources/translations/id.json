@@ -213,6 +213,7 @@
     "browse": "Telusuri",
     "scan_group": "Pembaruan perpustakaan",
     "scan_button": "Pindai perpustakaan",
+    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
     "scan_info": "Pemindaian akan memperbarui daftar semua audiobook di direktori yang ditentukan",
     "save": "Simpan",
     "choose_directory": "Pilih direktori",
