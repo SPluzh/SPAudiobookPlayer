@@ -2,14 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.7.11]
+## [1.7.9]
 - **Library**: Added interactive tags that highlight and change the cursor on hover.
 - **Library**: Clicking a tag now automatically filters the library view to show only books with that tag.
-
-## [1.7.10]
 - **UI**: Added an Appearance Settings dialog to customize interface colors (accent, background, text, and borders) with live preview.
-
-## [1.7.9]
 - **Settings**: Clearing the database now also deletes listening statistics, session history, bookmarks, and tags.
 
 ## [1.7.8]
