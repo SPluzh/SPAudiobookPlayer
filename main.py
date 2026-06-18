@@ -571,7 +571,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Appearance Settings Action
         self.appearance_action = QAction(tr("appearance.title"), self)
-        self.appearance_action.setIcon(get_icon("settings"))
+        self.appearance_action.setIcon(get_icon("palette"))
         self.appearance_action.triggered.connect(self.show_appearance_settings)
         view_menu.addAction(self.appearance_action)
 
