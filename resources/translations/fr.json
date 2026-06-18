@@ -543,6 +543,19 @@
     "save_btn": "Enregistrer",
     "cancel_btn": "Annuler",
     "text_label": "Couleur de police:",
-    "border_label": "Couleur de bordure:"
+    "border_label": "Couleur de bordure:",
+    "info_section_title": "Éléments de la ligne d'info du livre",
+    "show_detailed_info": "Afficher les informations détaillées",
+    "info_progress": "Progression d'écoute",
+    "info_files": "Nombre de fichiers",
+    "info_duration": "Durée totale",
+    "info_size": "Taille du fichier",
+    "info_technical": "Détails techniques (débit/codec)",
+    "info_year_written": "Année d'écriture",
+    "info_year_recorded": "Année d'enregistrement",
+    "info_language": "Langue",
+    "tab_colors": "Paramètres de la fenêtre",
+    "tab_info": "Paramètres de la liste de la bibliothèque",
+    "tab_interface": "Paramètres du lecteur"
   }
 }

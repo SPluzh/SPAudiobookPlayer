@@ -543,6 +543,19 @@
     "save_btn": "सहेजें",
     "cancel_btn": "रद्द करें",
     "text_label": "फ़ॉन्ट का रंग:",
-    "border_label": "सीमा का रंग:"
+    "border_label": "सीमा का रंग:",
+    "info_section_title": "पुस्तक सूचना पंक्ति तत्व",
+    "show_detailed_info": "विस्तृत जानकारी दिखाएं",
+    "info_progress": "सुनने की प्रगति",
+    "info_files": "फ़ाइलों की संख्या",
+    "info_duration": "कुल अवधि",
+    "info_size": "फ़ाइल का आकार",
+    "info_technical": "तकनीकी विवरण (बिटरेट/कोडेक)",
+    "info_year_written": "लेखन वर्ष",
+    "info_year_recorded": "रिकॉर्डिंग वर्ष",
+    "info_language": "भाषा",
+    "tab_colors": "विंडो सेटिंग्स",
+    "tab_info": "लाइब्रेरी सूची सेटिंग्स",
+    "tab_interface": "प्लेयर सेटिंग्स"
   }
 }

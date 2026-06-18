@@ -543,6 +543,19 @@
     "save_btn": "บันทึก",
     "cancel_btn": "ยกเลิก",
     "text_label": "สีตัวอักษร:",
-    "border_label": "สีขอบ:"
+    "border_label": "สีขอบ:",
+    "info_section_title": "องค์ประกอบบรรทัดข้อมูลหนังสือ",
+    "show_detailed_info": "แสดงข้อมูลโดยละเอียด",
+    "info_progress": "ความคืบหน้าการฟัง",
+    "info_files": "จำนวนไฟล์",
+    "info_duration": "ความยาวทั้งหมด",
+    "info_size": "ขนาดไฟล์",
+    "info_technical": "รายละเอียดทางเทคนิค (บิตเรต/ตัวแปลงสัญญาณ)",
+    "info_year_written": "ปีที่เขียน",
+    "info_year_recorded": "ปีที่บันทึกเสียง",
+    "info_language": "ภาษา",
+    "tab_colors": "ตั้งค่าหน้าต่าง",
+    "tab_info": "ตั้งค่ารายการห้องสมุด",
+    "tab_interface": "ตั้งค่าเครื่องเล่น"
   }
 }

@@ -543,6 +543,19 @@
     "save_btn": "Salvar",
     "cancel_btn": "Cancelar",
     "text_label": "Cor da fonte:",
-    "border_label": "Cor da borda:"
+    "border_label": "Cor da borda:",
+    "info_section_title": "Elementos da linha de informações do livro",
+    "show_detailed_info": "Mostrar informações detalhadas",
+    "info_progress": "Progresso de escuta",
+    "info_files": "Número de arquivos",
+    "info_duration": "Duração total",
+    "info_size": "Tamanho do arquivo",
+    "info_technical": "Detalhes técnicos (bitrate/codec)",
+    "info_year_written": "Ano de escrita",
+    "info_year_recorded": "Ano de gravação",
+    "info_language": "Idioma",
+    "tab_colors": "Configurações da janela",
+    "tab_info": "Configurações da lista de biblioteca",
+    "tab_interface": "Configurações do reprodutor"
   }
 }

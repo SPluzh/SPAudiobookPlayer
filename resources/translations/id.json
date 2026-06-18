@@ -543,6 +543,19 @@
     "save_btn": "Simpan",
     "cancel_btn": "Batal",
     "text_label": "Warna Font:",
-    "border_label": "Warna Batas:"
+    "border_label": "Warna Batas:",
+    "info_section_title": "Elemen Baris Info Buku",
+    "show_detailed_info": "Tampilkan Info Detail",
+    "info_progress": "Kemajuan Mendengarkan",
+    "info_files": "Jumlah Berkas",
+    "info_duration": "Durasi Total",
+    "info_size": "Ukuran Berkas",
+    "info_technical": "Detail Teknis (bitrate/codec)",
+    "info_year_written": "Tahun Ditulis",
+    "info_year_recorded": "Tahun Direkam",
+    "info_language": "Bahasa",
+    "tab_colors": "Pengaturan Jendela",
+    "tab_info": "Pengaturan Daftar Perpustakaan",
+    "tab_interface": "Pengaturan Pemutar"
   }
 }

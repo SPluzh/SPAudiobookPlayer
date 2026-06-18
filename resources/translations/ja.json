@@ -543,6 +543,19 @@
     "save_btn": "保存",
     "cancel_btn": "キャンセル",
     "text_label": "フォントの色:",
-    "border_label": "境界線の色:"
+    "border_label": "境界線の色:",
+    "info_section_title": "本の情報行の要素",
+    "show_detailed_info": "詳細情報を表示",
+    "info_progress": "再生進捗",
+    "info_files": "ファイル数",
+    "info_duration": "総再生時間",
+    "info_size": "ファイルサイズ",
+    "info_technical": "技術情報 (ビットレート/コーデック)",
+    "info_year_written": "執筆年",
+    "info_year_recorded": "録音年",
+    "info_language": "言語",
+    "tab_colors": "ウィンドウ設定",
+    "tab_info": "ライブラリ一覧設定",
+    "tab_interface": "プレイヤー設定"
   }
 }

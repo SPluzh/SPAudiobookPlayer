@@ -543,6 +543,19 @@
     "save_btn": "Speichern",
     "cancel_btn": "Abbrechen",
     "text_label": "Schriftfarbe:",
-    "border_label": "Rahmenfarbe:"
+    "border_label": "Rahmenfarbe:",
+    "info_section_title": "Elemente der Buchinfo-Zeile",
+    "show_detailed_info": "Detaillierte Informationen anzeigen",
+    "info_progress": "Hörfortschritt",
+    "info_files": "Anzahl der Dateien",
+    "info_duration": "Gesamtdauer",
+    "info_size": "Dateigröße",
+    "info_technical": "Technische Details (Bitrate/Codec)",
+    "info_year_written": "Geschrieben im Jahr",
+    "info_year_recorded": "Aufnahmejahr",
+    "info_language": "Sprache",
+    "tab_colors": "Fenstereinstellungen",
+    "tab_info": "Bibliothekslisten-Einstellungen",
+    "tab_interface": "Player-Einstellungen"
   }
 }

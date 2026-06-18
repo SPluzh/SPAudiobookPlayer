@@ -543,6 +543,19 @@
     "save_btn": "Lưu",
     "cancel_btn": "Hủy",
     "text_label": "Màu phông chữ:",
-    "border_label": "Màu viền:"
+    "border_label": "Màu viền:",
+    "info_section_title": "Các yếu tố dòng thông tin sách",
+    "show_detailed_info": "Hiển thị thông tin chi tiết",
+    "info_progress": "Tiến trình nghe",
+    "info_files": "Số lượng tệp",
+    "info_duration": "Tổng thời lượng",
+    "info_size": "Dung lượng tệp",
+    "info_technical": "Thông số kỹ thuật (bitrate/codec)",
+    "info_year_written": "Năm viết",
+    "info_year_recorded": "Năm ghi âm",
+    "info_language": "Ngôn ngữ",
+    "tab_colors": "Cài đặt cửa sổ",
+    "tab_info": "Cài đặt danh sách thư viện",
+    "tab_interface": "Cài đặt trình phát"
   }
 }

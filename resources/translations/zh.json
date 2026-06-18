@@ -543,6 +543,19 @@
     "save_btn": "保存",
     "cancel_btn": "取消",
     "text_label": "字体颜色:",
-    "border_label": "边框颜色:"
+    "border_label": "边框颜色:",
+    "info_section_title": "图书信息栏元素",
+    "show_detailed_info": "显示详细信息",
+    "info_progress": "播放进度",
+    "info_files": "文件数量",
+    "info_duration": "总时长",
+    "info_size": "文件大小",
+    "info_technical": "技术细节 (比特率/编码)",
+    "info_year_written": "写作年份",
+    "info_year_recorded": "录音年份",
+    "info_language": "语言",
+    "tab_colors": "窗口设置",
+    "tab_info": "书库列表设置",
+    "tab_interface": "播放器设置"
   }
 }

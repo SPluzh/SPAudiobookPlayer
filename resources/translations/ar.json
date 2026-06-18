@@ -543,6 +543,19 @@
     "save_btn": "حفظ",
     "cancel_btn": "إلغاء",
     "text_label": "لون الخط:",
-    "border_label": "لون الحدود:"
+    "border_label": "لون الحدود:",
+    "info_section_title": "عناصر سطر معلومات الكتاب",
+    "show_detailed_info": "عرض معلومات مفصلة",
+    "info_progress": "تقدم الاستماع",
+    "info_files": "عدد الملفات",
+    "info_duration": "المدة الإجمالية",
+    "info_size": "حجم الملف",
+    "info_technical": "التفاصيل الفنية (معدل البت/الترميز)",
+    "info_year_written": "سنة الكتابة",
+    "info_year_recorded": "سنة التسجيل",
+    "info_language": "اللغة",
+    "tab_colors": "إعدادات النافذة",
+    "tab_info": "إعدادات قائمة المكتبة",
+    "tab_interface": "إعدادات المشغل"
   }
 }

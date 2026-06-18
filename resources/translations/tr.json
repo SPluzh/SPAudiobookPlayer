@@ -543,6 +543,19 @@
     "save_btn": "Kaydet",
     "cancel_btn": "İptal",
     "text_label": "Yazı Tipi Rengi:",
-    "border_label": "Kenarlık Rengi:"
+    "border_label": "Kenarlık Rengi:",
+    "info_section_title": "Kitap Bilgi Satırı Öğeleri",
+    "show_detailed_info": "Detaylı Bilgiyi Göster",
+    "info_progress": "Dinleme İlerlemesi",
+    "info_files": "Dosya Sayısı",
+    "info_duration": "Toplam Süre",
+    "info_size": "Dosya Boyutu",
+    "info_technical": "Teknik Detaylar (bit hızı/kod çözücü)",
+    "info_year_written": "Yazım Yılı",
+    "info_year_recorded": "Kayıt Yılı",
+    "info_language": "Dil",
+    "tab_colors": "Pencere Ayarları",
+    "tab_info": "Kütüphane Listesi Ayarları",
+    "tab_interface": "Oynatıcı Ayarları"
   }
 }
