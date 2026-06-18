@@ -1070,7 +1070,7 @@ QFrame#aboutContainer {
 }
 
 #aboutContainer QLabel {
-    color: @text-delegate;
+    color: @text;
     qproperty-alignment: 'AlignCenter';
 }
 
@@ -1161,7 +1161,7 @@ QFrame#aboutContainer {
 
 QLabel#aboutVersion {
     font-size: 14px;
-    color: @text-muted;
+    color: @text;
 }
 
 QFrame#aboutLine {
@@ -1175,7 +1175,7 @@ QLabel#aboutDesc {
 
 QPushButton#aboutCloseBtn {
     background-color: @bg-main;
-    color: @text-delegate;
+    color: @text;
     border: none;
     padding: 8px;
     border-radius: 3px;
@@ -1185,7 +1185,7 @@ QPushButton#aboutCloseBtn {
 }
 
 QLabel#aboutGithubLink {
-    color: @accent;
+    color: @text;
     font-weight: bold;
     font-size: 13px;
     text-decoration: none;
@@ -1206,21 +1206,21 @@ QPushButton#aboutCloseBtn:pressed {
 QLabel#aboutSectionTitle {
     font-size: 13px;
     font-weight: bold;
-    color: @text-delegate;
+    color: @text;
     margin-top: 10px;
     qproperty-alignment: 'AlignCenter';
 }
 
 QLabel#aboutSectionContent {
     font-size: 12px;
-    color: @text-delegate;
+    color: @text;
     qproperty-alignment: 'AlignCenter';
 }
 
 QLabel#aboutRightContent {
     font-family: 'Lucida Console', 'Courier New', monospace;
     font-size: 12px;
-    color: @text-delegate;
+    color: @text;
     qproperty-alignment: 'AlignLeft | AlignTop';
 }
 
@@ -1468,5 +1468,5 @@ QGroupBox::title {
     subcontrol-position: top left;
     left: 8px;
     padding: 0 4px;
-    color: @accent;
+    color: @text;
 }
