@@ -242,20 +242,20 @@
     "select_cover": "कवर चुनें:",
     "open_folder_tooltip": "इस पुस्तक वाले फ़ोल्डर को खोलें",
     "refresh_covers_tooltip": "नए कवर के लिए फ़ोल्डर स्कैन करें",
-    "language": "Book Language:",
-    "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:",
-    "search_cover": "Search Cover",
-    "search_cover_tooltip": "Search covers online",
-    "cover_search_title": "Search Covers Online",
-    "search_query_label": "Query:",
-    "search_btn": "Search",
-    "searching": "Searching...",
-    "no_covers_found": "No covers found",
-    "download_selected": "Download Selected",
-    "downloading": "Downloading...",
-    "download_success": "Downloaded {count} covers",
-    "download_error": "Download error: {error}"
+    "language": "पुस्तक की भाषा:",
+    "year_written": "लेखन का वर्ष:",
+    "year_recorded": "रिकॉर्डिंग का वर्ष:",
+    "search_cover": "कवर खोजें",
+    "search_cover_tooltip": "ऑनलाइन कवर खोजें",
+    "cover_search_title": "オンラインカバーを検索",
+    "search_query_label": "खोज शब्द:",
+    "search_btn": "खोजें",
+    "searching": "खोज की जा रही है...",
+    "no_covers_found": "कोई कवर नहीं मिला",
+    "download_selected": "चयनित डाउनलोड करें",
+    "downloading": "डाउनलोड किया जा रहा है...",
+    "download_success": "{count} कवर डाउनलोड किए गए",
+    "download_error": "डाउनलोड त्रुटि: {error}"
   },
   "tags": {
     "edit_title": "टैग संपादित करें",
@@ -453,7 +453,7 @@
     "settings_info": "फ़ाइल का आकार कम करने के लिए सभी ऑडियोबुक्स को Opus प्रारूप में बदलें",
     "bitrate_tooltip": "अनुशंसित सेटिंग्स:\n- 16-20 kbps: छोटा फ़ाइल आकार, स्वीकार्य भाषण गुणवत्ता।\n- 24 kbps: अच्छी गुणवत्ता, ऑडियोबुक्स के लिए मानक।\n- 32 kbps: लगभग पारदर्शी गुणवत्ता (अनुशंसित)।\n- 48-64 kbps: उच्च निष्ठा, संगीत/प्रभावों वाली ऑडियोबुक्स के लिए सबसे अच्छा।",
     "stereo_tooltip": "स्टीरियो हैंडलिंग:\n- मोनो में डाउनमिक्स: आवाज कवरेज के लिए सबसे अच्छा। एकल चैनल के लिए सभी बिट्स का उपयोग करता है।\n- स्टीरियो रखें: स्टीरियो प्रभाव को संरक्षित करता है। समान गुणवत्ता के लिए उच्च बिट्रेट की आवश्यकता होती है।",
-    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
+    "description": "ऑडियोबुक को ओपस (Opus) प्रारूप में बदलने से भाषण की गुणवत्ता में लगभग कोई नुकसान किए बिना फ़ाइल का आकार काफी कम (आमतौर पर 50-70%) हो जाता है।\nअनुशंसित बिटरेट: 24-32 kbps (मानक)। अधिकतम स्थान बचाने के लिए 16 kbps का उपयोग करें, और संगीत या ध्वनि प्रभावों वाली पुस्तकों के लिए 48-64 kbps का उपयोग करें।\nस्टीरियो को मोनो में डाउनमिक्स करने से सभी बिट्स को एक ही वॉयस चैनल पर आवंटित करके अतिरिक्त स्थान बचता है।"
   },
   "updater": {
     "title": "एप्लिकेशन अपडेट",
@@ -559,6 +559,9 @@
     "status_completed_label": "पूर्ण स्थिति का रंग:",
     "tab_colors": "विंडो सेटिंग्स",
     "tab_info": "लाइब्रेरी सूची सेटिंग्स",
-    "tab_interface": "प्लेयर सेटिंग्स"
+    "tab_interface": "प्लेयर सेटिंग्स",
+    "info_items_order": "तत्वों का क्रम:",
+    "move_up": "ऊपर ले जाएं",
+    "move_down": "नीचे ले जाएं"
   }
 }

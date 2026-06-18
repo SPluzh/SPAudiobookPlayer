@@ -1,4 +1,5 @@
 import pytest
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QColor
 from appearance_dialog import AppearanceDialog, ColorPickerDialog
@@ -260,6 +261,13 @@ def test_appearance_dialog_info_checkboxes():
         show_info_language=False
     )
 
+    def get_item(key):
+        for idx in range(dialog.info_list_widget.count()):
+            item = dialog.info_list_widget.item(idx)
+            if item.data(Qt.ItemDataRole.UserRole) == key:
+                return item
+        return None
+
     # 1. Verify initial checkbox states (widgets and internal properties)
     assert dialog.current_show_detailed_info is True
     assert dialog.current_show_info_progress is True
@@ -272,31 +280,29 @@ def test_appearance_dialog_info_checkboxes():
     assert dialog.current_show_info_language is False
 
     assert dialog.chk_show_detailed_info.isChecked() is True
-    assert dialog.chk_progress.isChecked() is True
-    assert dialog.chk_files.isChecked() is False
-    assert dialog.chk_duration.isChecked() is True
-    assert dialog.chk_size.isChecked() is False
-    assert dialog.chk_technical.isChecked() is True
-    assert dialog.chk_year_written.isChecked() is False
-    assert dialog.chk_year_recorded.isChecked() is True
-    assert dialog.chk_language.isChecked() is False
+    assert get_item("progress").checkState() == Qt.CheckState.Checked
+    assert get_item("file_count").checkState() == Qt.CheckState.Unchecked
+    assert get_item("duration").checkState() == Qt.CheckState.Checked
+    assert get_item("size").checkState() == Qt.CheckState.Unchecked
+    assert get_item("technical").checkState() == Qt.CheckState.Checked
+    assert get_item("year_written").checkState() == Qt.CheckState.Unchecked
+    assert get_item("year_recorded").checkState() == Qt.CheckState.Checked
+    assert get_item("language").checkState() == Qt.CheckState.Unchecked
 
-    # Child checkboxes should be enabled
-    assert dialog.chk_progress.isEnabled() is True
-    assert dialog.chk_files.isEnabled() is True
+    # Child widgets should be enabled
+    assert dialog.info_list_widget.isEnabled() is True
 
     # 2. Modify checkboxes and check updates
-    dialog.chk_progress.setChecked(False)
-    dialog.chk_files.setChecked(True)
+    get_item("progress").setCheckState(Qt.CheckState.Unchecked)
+    get_item("file_count").setCheckState(Qt.CheckState.Checked)
     
     assert dialog.current_show_info_progress is False
     assert dialog.current_show_info_file_count is True
 
-    # Toggle master checkbox off and verify child checkboxes become disabled
+    # Toggle master checkbox off and verify child widgets become disabled
     dialog.chk_show_detailed_info.setChecked(False)
     assert dialog.current_show_detailed_info is False
-    assert dialog.chk_progress.isEnabled() is False
-    assert dialog.chk_files.isEnabled() is False
+    assert dialog.info_list_widget.isEnabled() is False
 
     # 3. Test reset to default (should make all checkboxes True and enabled)
     dialog.reset_to_default()
@@ -304,10 +310,9 @@ def test_appearance_dialog_info_checkboxes():
     assert dialog.current_show_info_progress is True
     assert dialog.current_show_info_file_count is True
     assert dialog.chk_show_detailed_info.isChecked() is True
-    assert dialog.chk_progress.isChecked() is True
-    assert dialog.chk_files.isChecked() is True
-    assert dialog.chk_progress.isEnabled() is True
-    assert dialog.chk_files.isEnabled() is True
+    assert get_item("progress").checkState() == Qt.CheckState.Checked
+    assert get_item("file_count").checkState() == Qt.CheckState.Checked
+    assert dialog.info_list_widget.isEnabled() is True
 
     # 4. Test reject restores original constructor values
     dialog.reject()
@@ -321,7 +326,7 @@ def test_appearance_dialog_info_checkboxes():
     assert dialog.current_show_info_year_recorded is True
     assert dialog.current_show_info_language is False
     assert dialog.chk_show_detailed_info.isChecked() is True
-    assert dialog.chk_progress.isEnabled() is True
+    assert dialog.info_list_widget.isEnabled() is True
 
 
 def test_appearance_dialog_interface_checkboxes():
@@ -372,3 +377,38 @@ def test_appearance_dialog_interface_checkboxes():
     assert dialog.current_show_status_triangle is True
     assert dialog.current_show_statusbar is False
     assert dialog.current_remember_filter_folders is True
+
+
+def test_appearance_dialog_info_order():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        info_order="duration,progress,size"
+    )
+
+    # 1. Verify initial order in list widget
+    assert dialog.info_list_widget.count() == 8
+    
+    order = [dialog.info_list_widget.item(i).data(Qt.ItemDataRole.UserRole) for i in range(8)]
+    assert order[:3] == ["duration", "progress", "size"]
+
+    # 2. Select the second item ("progress" at index 1) and move it up
+    dialog.info_list_widget.setCurrentRow(1)
+    dialog.btn_up.click()
+    
+    order = [dialog.info_list_widget.item(i).data(Qt.ItemDataRole.UserRole) for i in range(8)]
+    assert order[:3] == ["progress", "duration", "size"]
+    assert dialog.get_info_settings()["info_order"].startswith("progress,duration,size")
+
+    # 3. Select the third item ("size" at index 2) and move it down
+    dialog.info_list_widget.setCurrentRow(2)
+    dialog.btn_down.click()
+    
+    order = [dialog.info_list_widget.item(i).data(Qt.ItemDataRole.UserRole) for i in range(8)]
+    assert order[:4] == ["progress", "duration", "file_count", "size"]
+    assert dialog.get_info_settings()["info_order"].startswith("progress,duration,file_count,size")
+
+    # 4. Reject reverts to original order
+    dialog.reject()
+    assert dialog.current_info_order == "duration,progress,size"

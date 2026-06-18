@@ -242,20 +242,20 @@
     "select_cover": "커버 선택:",
     "open_folder_tooltip": "이 책이 포함된 폴더 열기",
     "refresh_covers_tooltip": "새 커버를 위해 폴더 스캔",
-    "language": "Book Language:",
-    "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:",
-    "search_cover": "Search Cover",
-    "search_cover_tooltip": "Search covers online",
-    "cover_search_title": "Search Covers Online",
-    "search_query_label": "Query:",
-    "search_btn": "Search",
-    "searching": "Searching...",
-    "no_covers_found": "No covers found",
-    "download_selected": "Download Selected",
-    "downloading": "Downloading...",
-    "download_success": "Downloaded {count} covers",
-    "download_error": "Download error: {error}"
+    "language": "도서 언어:",
+    "year_written": "집필 연도:",
+    "year_recorded": "녹음 연도:",
+    "search_cover": "커버 검색",
+    "search_cover_tooltip": "온라인에서 커버 검색",
+    "cover_search_title": "온라인 커버 검색",
+    "search_query_label": "검색어:",
+    "search_btn": "검색",
+    "searching": "검색 중...",
+    "no_covers_found": "커버를 찾을 수 없습니다",
+    "download_selected": "선택 항목 다운로드",
+    "downloading": "다운로드 중...",
+    "download_success": "커버 {count}개 다운로드 완료",
+    "download_error": "다운로드 오류: {error}"
   },
   "tags": {
     "edit_title": "태그 편집",
@@ -453,7 +453,7 @@
     "settings_info": "파일 크기를 줄이기 위해 모든 오디오북을 Opus 형식으로 변환",
     "bitrate_tooltip": "권장 설정:\n- 16-20 kbps: 더 작은 파일 크기, 허용 가능한 음성 품질.\n- 24 kbps: 좋은 품질, 오디오북 표준.\n- 32 kbps: 거의 투명한 품질 (권장).\n- 48-64 kbps: 고충실도, 음악/효과가 있는 오디오북에 최적.",
     "stereo_tooltip": "스테레오 처리:\n- 모노로 다운믹스: 음성 커버리지에 최적. 단일 채널에 모든 비트 사용.\n- 스테레오 유지: 스테레오 효과 보존. 동일한 품질을 위해 더 높은 비트레이트 필요.",
-    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
+    "description": "오디오북을 Opus 형식으로 변환하면 음질 저하가 거의 없이 파일 크기를 크게 줄일 수 있습니다(일반적으로 50-70% 감소).\n권장 비트전송률: 24-32 kbps(표준). 공간을 최대한 절약하려면 16 kbps를 사용하고, 음악이나 음향 효과가 있는 도서의 경우 48-64 kbps를 사용하십시오.\n스테레오를 모노로 다운믹싱하면 모든 비트를 단일 음성 채널에 할당하여 추가 공간을 절약할 수 있습니다."
   },
   "updater": {
     "title": "애플리케이션 업데이트",
@@ -559,6 +559,9 @@
     "status_completed_label": "'완료됨' 상태 색상:",
     "tab_colors": "창 설정",
     "tab_info": "라이브러리 목록 설정",
-    "tab_interface": "플레이어 설정"
+    "tab_interface": "플레이어 설정",
+    "info_items_order": "항목 순서:",
+    "move_up": "위로 이동",
+    "move_down": "아래로 이동"
   }
 }

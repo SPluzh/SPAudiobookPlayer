@@ -242,20 +242,20 @@
     "select_cover": "选择封面:",
     "open_folder_tooltip": "打开包含此书的文件夹",
     "refresh_covers_tooltip": "扫描文件夹以获取新封面",
-    "language": "Book Language:",
-    "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:",
-    "search_cover": "Search Cover",
-    "search_cover_tooltip": "Search covers online",
-    "cover_search_title": "Search Covers Online",
-    "search_query_label": "Query:",
-    "search_btn": "Search",
-    "searching": "Searching...",
-    "no_covers_found": "No covers found",
-    "download_selected": "Download Selected",
-    "downloading": "Downloading...",
-    "download_success": "Downloaded {count} covers",
-    "download_error": "Download error: {error}"
+    "language": "图书语言:",
+    "year_written": "写作年份:",
+    "year_recorded": "录音年份:",
+    "search_cover": "搜索封面",
+    "search_cover_tooltip": "在线搜索封面",
+    "cover_search_title": "在线搜索封面",
+    "search_query_label": "查询:",
+    "search_btn": "搜索",
+    "searching": "正在搜索...",
+    "no_covers_found": "未找到封面",
+    "download_selected": "下载所选",
+    "downloading": "正在下载...",
+    "download_success": "已下载 {count} 张封面",
+    "download_error": "下载错误: {error}"
   },
   "tags": {
     "edit_title": "编辑标签",
@@ -453,7 +453,7 @@
     "settings_info": "将所有有声读物转换为 Opus 格式以减小文件大小",
     "bitrate_tooltip": "推荐设置：\n- 16-20 kbps：较小的文件大小，可接受的语音质量。\n- 24 kbps：良好的质量，有声读物的标准。\n- 32 kbps：近乎透明的质量（推荐）。\n- 48-64 kbps：高保真度，最适合带有音乐/效果的有声读物。",
     "stereo_tooltip": "立体声处理：\n- 混音为单声道：最适合语音覆盖。使用所有位用于单个声道。\n- 保持立体声：保留立体声效果。需要更高的比特率才能达到相同的质量。",
-    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
+    "description": "将有声书转换为 Opus 格式可显著减小文件大小（通常减少 50-70%），且几乎不会损失语音质量。\n推荐比特率：24-32 kbps（标准）。使用 16 kbps 可最大程度节省空间，而对于包含音乐或音效的书籍，建议使用 48-64 kbps。\n将双声道（立体声）混音为单声道可通过将所有比特分配给单个语音通道来节省额外空间。"
   },
   "updater": {
     "title": "应用程序更新",
@@ -559,6 +559,9 @@
     "status_completed_label": "“已完成”状态颜色:",
     "tab_colors": "窗口设置",
     "tab_info": "书库列表设置",
-    "tab_interface": "播放器设置"
+    "tab_interface": "播放器设置",
+    "info_items_order": "项目顺序:",
+    "move_up": "上移",
+    "move_down": "下移"
   }
 }

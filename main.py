@@ -159,6 +159,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_info_year_written = True
         self.show_info_year_recorded = True
         self.show_info_language = True
+        self.info_order = "progress,file_count,duration,size,technical,year_written,year_recorded,language"
         self.normal_geometry = None
         self.normal_splitter_state = None
         self.always_on_top = False
@@ -214,6 +215,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.delegate.show_info_year_written = self.show_info_year_written
             self.delegate.show_info_year_recorded = self.show_info_year_recorded
             self.delegate.show_info_language = self.show_info_language
+            self.delegate.info_order = self.info_order
         except Exception as e:
             print(f"Failed to create delegate: {e}")
 
@@ -1101,6 +1103,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_info_year_written = config.getboolean("Library", "show_info_year_written", fallback=True)
         self.show_info_year_recorded = config.getboolean("Library", "show_info_year_recorded", fallback=True)
         self.show_info_language = config.getboolean("Library", "show_info_language", fallback=True)
+        self.info_order = config.get("Library", "info_order", fallback="progress,file_count,duration,size,technical,year_written,year_recorded,language")
         self.library_filter_mode = config.get("Library", "filter_mode", fallback="all")
         self.library_favorites_active = config.getboolean(
             "Library", "favorites_active", fallback=False
@@ -1192,6 +1195,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "show_nesting_lines": "True",
             "show_detailed_info": "True",
             "show_status_triangle": "True",
+            "info_order": "progress,file_count,duration,size,technical,year_written,year_recorded,language",
             "sort_order_all": "asc",
             "sort_order_not_started": "desc",
             "sort_order_in_progress": "desc",
@@ -1359,6 +1363,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Library"]["show_info_year_written"] = str(self.show_info_year_written)
         config["Library"]["show_info_year_recorded"] = str(self.show_info_year_recorded)
         config["Library"]["show_info_language"] = str(self.show_info_language)
+        config["Library"]["info_order"] = self.info_order
         if hasattr(self, "library_widget"):
             config["Library"]["tag_filter_active"] = str(
                 self.library_widget.is_tag_filter_active
@@ -2228,7 +2233,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 show_nesting_lines=self.show_nesting_lines,
                 show_status_triangle=self.show_status_triangle,
                 show_statusbar=self.show_statusbar,
-                remember_filter_folders=self.remember_filter_folders
+                remember_filter_folders=self.remember_filter_folders,
+                info_order=self.info_order
             )
             
             self.appearance_dialog = dialog
@@ -2282,6 +2288,7 @@ class AudiobookPlayerWindow(QMainWindow):
                     self.delegate.show_info_year_written = settings["show_info_year_written"]
                     self.delegate.show_info_year_recorded = settings["show_info_year_recorded"]
                     self.delegate.show_info_language = settings["show_info_language"]
+                    self.delegate.info_order = settings.get("info_order", self.delegate.info_order)
                 
                 # Interface settings preview
                 interface_settings = self.appearance_dialog.get_interface_settings()
@@ -2349,6 +2356,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.show_info_year_written = settings["show_info_year_written"]
             self.show_info_year_recorded = settings["show_info_year_recorded"]
             self.show_info_language = settings["show_info_language"]
+            self.info_order = settings.get("info_order", self.info_order)
             
             self.save_setting("Library", "show_detailed_info", str(self.show_detailed_info))
             self.save_setting("Library", "show_info_progress", str(self.show_info_progress))
@@ -2359,6 +2367,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.save_setting("Library", "show_info_year_written", str(self.show_info_year_written))
             self.save_setting("Library", "show_info_year_recorded", str(self.show_info_year_recorded))
             self.save_setting("Library", "show_info_language", str(self.show_info_language))
+            self.save_setting("Library", "info_order", self.info_order)
             
             if self.delegate:
                 self.delegate.show_detailed_info = self.show_detailed_info
@@ -2370,6 +2379,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.delegate.show_info_year_written = self.show_info_year_written
                 self.delegate.show_info_year_recorded = self.show_info_year_recorded
                 self.delegate.show_info_language = self.show_info_language
+                self.delegate.info_order = self.info_order
                 
             interface_settings = self.appearance_dialog.get_interface_settings()
             

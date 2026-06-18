@@ -242,20 +242,20 @@
     "select_cover": "カバーを選択:",
     "open_folder_tooltip": "この本が含まれるフォルダーを開く",
     "refresh_covers_tooltip": "フォルダーをスキャンして新しいカバーを探す",
-    "language": "Book Language:",
-    "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:",
-    "search_cover": "Search Cover",
-    "search_cover_tooltip": "Search covers online",
-    "cover_search_title": "Search Covers Online",
-    "search_query_label": "Query:",
-    "search_btn": "Search",
-    "searching": "Searching...",
-    "no_covers_found": "No covers found",
-    "download_selected": "Download Selected",
-    "downloading": "Downloading...",
-    "download_success": "Downloaded {count} covers",
-    "download_error": "Download error: {error}"
+    "language": "本の言語:",
+    "year_written": "執筆年:",
+    "year_recorded": "録音年:",
+    "search_cover": "カバーを検索",
+    "search_cover_tooltip": "オンラインでカバーを検索",
+    "cover_search_title": "オンラインでカバーを検索",
+    "search_query_label": "検索クエリ:",
+    "search_btn": "検索",
+    "searching": "検索中...",
+    "no_covers_found": "カバーが見つかりません",
+    "download_selected": "選択したものをダウンロード",
+    "downloading": "ダウンロード中...",
+    "download_success": "{count} 枚のカバーをダウンロードしました",
+    "download_error": "ダウンロードエラー: {error}"
   },
   "tags": {
     "edit_title": "タグを編集",
@@ -453,7 +453,7 @@
     "settings_info": "すべてのオーディオブックをOpus形式に変換してファイルサイズを削減",
     "bitrate_tooltip": "推奨設定:\n- 16-20 kbps: ファイルサイズが小さく、許容できる音声品質。\n- 24 kbps: 高品質、オーディオブックの標準。\n- 32 kbps: ほぼ透明な品質 (推奨)。\n- 48-64 kbps: 高忠実度、音楽/効果音のあるオーディオブックに最適。",
     "stereo_tooltip": "ステレオ処理:\n- モノラルにダウンミックス: 音声のカバレッジに最適。シングルチャンネルにすべてのビットを使用。\n- ステレオを維持: ステレオ効果を保持。同じ品質のために高いビットレートが必要。",
-    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
+    "description": "オーディオブックをOpus形式に変換すると、音声品質をほとんど低下させることなく、ファイルサイズを大幅に削減（通常50〜70％）できます。\n推奨ビットレート：24〜32 kbps（標準）。最大限のスペース節約には16 kbpsを使用し、音楽や効果音のある本には48〜64 kbpsを使用します。\nステレオをモノラルにダウンミックスすると、すべてのビットが単一の音声チャンネルに割り当てられるため、さらにスペースを節約できます。\n"
   },
   "updater": {
     "title": "アプリケーションの更新",
@@ -559,6 +559,9 @@
     "status_completed_label": "「完了」ステータスの色:",
     "tab_colors": "ウィンドウ設定",
     "tab_info": "ライブラリ一覧設定",
-    "tab_interface": "プレイヤー設定"
+    "tab_interface": "プレイヤー設定",
+    "info_items_order": "項目の順序:",
+    "move_up": "上に移動",
+    "move_down": "下に移動"
   }
 }

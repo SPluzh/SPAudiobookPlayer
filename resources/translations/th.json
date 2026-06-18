@@ -260,20 +260,20 @@
     "select_cover": "เลือกปก:",
     "open_folder_tooltip": "เปิดโฟลเดอร์ที่มีหนังสือเล่มนี้",
     "refresh_covers_tooltip": "สแกนโฟลเดอร์สำหรับปกใหม่",
-    "language": "Book Language:",
-    "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:",
-    "search_cover": "Search Cover",
-    "search_cover_tooltip": "Search covers online",
-    "cover_search_title": "Search Covers Online",
-    "search_query_label": "Query:",
-    "search_btn": "Search",
-    "searching": "Searching...",
-    "no_covers_found": "No covers found",
-    "download_selected": "Download Selected",
-    "downloading": "Downloading...",
-    "download_success": "Downloaded {count} covers",
-    "download_error": "Download error: {error}"
+    "language": "ภาษาของหนังสือ:",
+    "year_written": "ปีที่เขียน:",
+    "year_recorded": "ปีที่บันทึกเสียง:",
+    "search_cover": "ค้นหาปก",
+    "search_cover_tooltip": "ค้นหาปกออนไลน์",
+    "cover_search_title": "ค้นหาปกออนไลน์",
+    "search_query_label": "คำค้นหา:",
+    "search_btn": "ค้นหา",
+    "searching": "กำลังค้นหา...",
+    "no_covers_found": "ไม่พบปกหนังสือ",
+    "download_selected": "ดาวน์โหลดที่เลือก",
+    "downloading": "กำลังดาวน์โหลด...",
+    "download_success": "ดาวน์โหลดปกหนังสือ {count} ปกเรียบร้อยแล้ว",
+    "download_error": "เกิดข้อผิดพลาดในการดาวน์โหลด: {error}"
   },
   "tags": {
     "edit_title": "แก้ไขแท็ก",
@@ -453,7 +453,7 @@
     "settings_info": "แปลงหนังสือเสียงทั้งหมดเป็นรูปแบบ Opus เพื่อลดขนาดไฟล์",
     "bitrate_tooltip": "การตั้งค่าที่แนะนำ:\n- 16-20 kbps: ขนาดไฟล์เล็กลง คุณภาพเสียงพูดที่ยอมรับได้\n- 24 kbps: คุณภาพดี มาตรฐานสำหรับหนังสือเสียง\n- 32 kbps: คุณภาพเกือบเหมือนต้นฉบับ (แนะนำ)\n- 48-64 kbps: ความคมชัดสูง ดีที่สุดสำหรับหนังสือเสียงที่มีดนตรี/เอฟเฟกต์",
     "stereo_tooltip": "การจัดการสเตอริโอ:\n- Downmix to Mono: ดีที่สุดสำหรับการครอบคลุมเสียงพูด ใช้บิตทั้งหมดสำหรับช่องสัญญาณเดียว\n- Keep Stereo: รักษาเอฟเฟกต์สเตอริโอ ต้องการบิตเรตที่สูงกว่าสำหรับคุณภาพที่เท่ากัน",
-    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
+    "description": "การแปลงหนังสือเสียงเป็นรูปแบบ Opus จะช่วยลดขนาดไฟล์ลงอย่างมาก (โดยปกติลดลง 50-70%) โดยที่คุณภาพเสียงพูดแทบจะไม่ลดลงเลย\nอัตราบิตที่แนะนำ: 24-32 kbps (มาตรฐาน) ใช้ 16 kbps เพื่อการประหยัดพื้นที่สูงสุด และ 48-64 kbps สำหรับหนังสือที่มีเพลงหรือเสียงประกอบ\nการมิกซ์เสียงสเตอริโอเป็นโมโนช่วยประหยัดพื้นที่เพิ่มเติมโดยจัดสรรบิตทั้งหมดให้กับช่องสัญญาณเสียงช่องเดียว"
   },
   "updater": {
     "title": "การอัปเดตแอปพลิเคชัน",
@@ -559,6 +559,9 @@
     "status_completed_label": "สีสถานะ 'ที่จบแล้ว':",
     "tab_colors": "ตั้งค่าหน้าต่าง",
     "tab_info": "ตั้งค่ารายการห้องสมุด",
-    "tab_interface": "ตั้งค่าเครื่องเล่น"
+    "tab_interface": "ตั้งค่าเครื่องเล่น",
+    "info_items_order": "ลำดับรายการ:",
+    "move_up": "เลื่อนขึ้น",
+    "move_down": "เลื่อนลง"
   }
 }

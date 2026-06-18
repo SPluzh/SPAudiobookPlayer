@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider, QLineEdit, QWidget, QGridLayout, QFrame, QCheckBox, QGroupBox, QScrollArea
-from PyQt6.QtCore import pyqtSignal, Qt, QPoint, QRegularExpression
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider, QLineEdit, QWidget, QGridLayout, QFrame, QCheckBox, QGroupBox, QScrollArea, QListWidget, QListWidgetItem, QAbstractItemView
+from PyQt6.QtCore import pyqtSignal, Qt, QPoint, QRegularExpression, QTimer
 from PyQt6.QtGui import QColor, QRegularExpressionValidator, QPainter, QImage, QMouseEvent, QPen
 from translations import tr
 from utils import get_icon
@@ -195,7 +195,9 @@ class AppearanceDialog(QDialog):
                  show_info_progress=True, show_info_file_count=True, show_info_duration=True, show_info_size=True,
                  show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=True,
                  show_visualizer=True, show_nesting_lines=True, show_status_triangle=True, show_statusbar=True,
-                 remember_filter_folders=True):
+                 remember_filter_folders=True,
+                 info_order="progress,file_count,duration,size,technical,year_written,year_recorded,language",
+                 default_info_order="progress,file_count,duration,size,technical,year_written,year_recorded,language"):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
@@ -261,6 +263,22 @@ class AppearanceDialog(QDialog):
         
         self.original_show_info_language = show_info_language
         self.current_show_info_language = show_info_language
+
+        self.original_info_order = info_order
+        self.default_info_order = default_info_order
+        self.current_info_order = info_order or default_info_order
+
+        self.info_keys = ["progress", "file_count", "duration", "size", "technical", "year_written", "year_recorded", "language"]
+        self.key_to_translation = {
+            "progress": "appearance.info_progress",
+            "file_count": "appearance.info_files",
+            "duration": "appearance.info_duration",
+            "size": "appearance.info_size",
+            "technical": "appearance.info_technical",
+            "year_written": "appearance.info_year_written",
+            "year_recorded": "appearance.info_year_recorded",
+            "language": "appearance.info_language",
+        }
 
         # Interface options states
         self.original_show_visualizer = show_visualizer
@@ -543,23 +561,36 @@ class AppearanceDialog(QDialog):
         checkbox_layout.setSpacing(6)
         checkbox_layout.setContentsMargins(15, 0, 0, 0)
         
-        self.chk_progress = QCheckBox(tr("appearance.info_progress"))
-        self.chk_files = QCheckBox(tr("appearance.info_files"))
-        self.chk_duration = QCheckBox(tr("appearance.info_duration"))
-        self.chk_size = QCheckBox(tr("appearance.info_size"))
-        self.chk_technical = QCheckBox(tr("appearance.info_technical"))
-        self.chk_year_written = QCheckBox(tr("appearance.info_year_written"))
-        self.chk_year_recorded = QCheckBox(tr("appearance.info_year_recorded"))
-        self.chk_language = QCheckBox(tr("appearance.info_language"))
+
+        self.info_list_widget = QListWidget()
+        self.info_list_widget.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.info_list_widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.info_list_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.info_list_widget.setObjectName("infoListWidget")
+        self.info_list_widget.setFixedHeight(200)
         
-        checkbox_layout.addWidget(self.chk_progress)
-        checkbox_layout.addWidget(self.chk_files)
-        checkbox_layout.addWidget(self.chk_duration)
-        checkbox_layout.addWidget(self.chk_size)
-        checkbox_layout.addWidget(self.chk_technical)
-        checkbox_layout.addWidget(self.chk_year_written)
-        checkbox_layout.addWidget(self.chk_year_recorded)
-        checkbox_layout.addWidget(self.chk_language)
+        self.btn_up = QPushButton("▲")
+        self.btn_up.setToolTip(tr("appearance.move_up", "Move Up"))
+        self.btn_up.setFixedSize(30, 30)
+        self.btn_up.clicked.connect(self.move_item_up)
+        
+        self.btn_down = QPushButton("▼")
+        self.btn_down.setToolTip(tr("appearance.move_down", "Move Down"))
+        self.btn_down.setFixedSize(30, 30)
+        self.btn_down.clicked.connect(self.move_item_down)
+        
+        list_btn_layout = QHBoxLayout()
+        list_btn_layout.setSpacing(8)
+        list_btn_layout.addWidget(self.info_list_widget, 1)
+        
+        btn_v_layout = QVBoxLayout()
+        btn_v_layout.setSpacing(4)
+        btn_v_layout.addWidget(self.btn_up)
+        btn_v_layout.addWidget(self.btn_down)
+        btn_v_layout.addStretch()
+        
+        list_btn_layout.addLayout(btn_v_layout)
+        checkbox_layout.addLayout(list_btn_layout)
         
         info_layout.addLayout(checkbox_layout)
 
@@ -571,14 +602,9 @@ class AppearanceDialog(QDialog):
         self.chk_remember_filter_folders.stateChanged.connect(self.on_interface_checkbox_changed)
         
         self.chk_show_detailed_info.stateChanged.connect(self.on_show_detailed_info_changed)
-        self.chk_progress.stateChanged.connect(self.on_checkbox_changed)
-        self.chk_files.stateChanged.connect(self.on_checkbox_changed)
-        self.chk_duration.stateChanged.connect(self.on_checkbox_changed)
-        self.chk_size.stateChanged.connect(self.on_checkbox_changed)
-        self.chk_technical.stateChanged.connect(self.on_checkbox_changed)
-        self.chk_year_written.stateChanged.connect(self.on_checkbox_changed)
-        self.chk_year_recorded.stateChanged.connect(self.on_checkbox_changed)
-        self.chk_language.stateChanged.connect(self.on_checkbox_changed)
+        
+        # Connect list widget signals
+        self.info_list_widget.itemChanged.connect(self.on_list_item_changed)
 
         right_layout.addWidget(group_info)
         right_layout.addStretch()
@@ -1257,6 +1283,7 @@ class AppearanceDialog(QDialog):
         self.current_show_info_year_written = self.original_show_info_year_written
         self.current_show_info_year_recorded = self.original_show_info_year_recorded
         self.current_show_info_language = self.original_show_info_language
+        self.current_info_order = self.original_info_order
         
         self.current_show_visualizer = self.original_show_visualizer
         self.current_show_nesting_lines = self.original_show_nesting_lines
@@ -1271,39 +1298,137 @@ class AppearanceDialog(QDialog):
         self.accent_preview.emit(self.original_accent)
         super().reject()
 
+    def populate_info_list(self, keys):
+        old_updating = self.updating_ui
+        self.updating_ui = True
+        try:
+            self.info_list_widget.clear()
+            
+            key_to_val = {
+                "progress": self.current_show_info_progress,
+                "file_count": self.current_show_info_file_count,
+                "duration": self.current_show_info_duration,
+                "size": self.current_show_info_size,
+                "technical": self.current_show_info_technical,
+                "year_written": self.current_show_info_year_written,
+                "year_recorded": self.current_show_info_year_recorded,
+                "language": self.current_show_info_language,
+            }
+            
+            for key in keys:
+                if key in self.key_to_translation:
+                    name = tr(self.key_to_translation[key])
+                    item = QListWidgetItem(name)
+                    item.setData(Qt.ItemDataRole.UserRole, key)
+                    item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+                    
+                    checked = key_to_val.get(key, True)
+                    item.setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
+                    self.info_list_widget.addItem(item)
+            self.adjust_list_widget_height()
+        finally:
+            self.updating_ui = old_updating
+
+    def adjust_list_widget_height(self):
+        h = 0
+        for i in range(self.info_list_widget.count()):
+            row_h = self.info_list_widget.sizeHintForRow(i)
+            if row_h <= 0:
+                row_h = 24
+            h += row_h
+        h += self.info_list_widget.frameWidth() * 2 + 4
+        self.info_list_widget.setFixedHeight(max(h, 200))
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.adjust_list_widget_height()
+
+    def update_info_order_from_list(self):
+        keys = []
+        for i in range(self.info_list_widget.count()):
+            item = self.info_list_widget.item(i)
+            key = item.data(Qt.ItemDataRole.UserRole)
+            keys.append(key)
+            checked = item.checkState() == Qt.CheckState.Checked
+            if key == "progress":
+                self.current_show_info_progress = checked
+            elif key == "file_count":
+                self.current_show_info_file_count = checked
+            elif key == "duration":
+                self.current_show_info_duration = checked
+            elif key == "size":
+                self.current_show_info_size = checked
+            elif key == "technical":
+                self.current_show_info_technical = checked
+            elif key == "year_written":
+                self.current_show_info_year_written = checked
+            elif key == "year_recorded":
+                self.current_show_info_year_recorded = checked
+            elif key == "language":
+                self.current_show_info_language = checked
+        self.current_info_order = ",".join(keys)
+
+    def on_list_item_changed(self, item):
+        if self.updating_ui:
+            return
+        self.update_info_order_from_list()
+        self.emit_preview()
+
+    def move_item_up(self):
+        curr_row = self.info_list_widget.currentRow()
+        if curr_row > 0:
+            self.info_list_widget.itemChanged.disconnect(self.on_list_item_changed)
+            try:
+                item = self.info_list_widget.takeItem(curr_row)
+                self.info_list_widget.insertItem(curr_row - 1, item)
+                self.info_list_widget.setCurrentRow(curr_row - 1)
+                self.update_info_order_from_list()
+                self.emit_preview()
+            finally:
+                self.info_list_widget.itemChanged.connect(self.on_list_item_changed)
+
+    def move_item_down(self):
+        curr_row = self.info_list_widget.currentRow()
+        if curr_row >= 0 and curr_row < self.info_list_widget.count() - 1:
+            self.info_list_widget.itemChanged.disconnect(self.on_list_item_changed)
+            try:
+                item = self.info_list_widget.takeItem(curr_row)
+                self.info_list_widget.insertItem(curr_row + 1, item)
+                self.info_list_widget.setCurrentRow(curr_row + 1)
+                self.update_info_order_from_list()
+                self.emit_preview()
+            finally:
+                self.info_list_widget.itemChanged.connect(self.on_list_item_changed)
+
     def update_checkboxes_ui(self):
         """Update checkboxes widgets state based on internal current values"""
+        old_updating = self.updating_ui
         self.updating_ui = True
-        self.chk_show_detailed_info.setChecked(self.current_show_detailed_info)
-        self.chk_progress.setChecked(self.current_show_info_progress)
-        self.chk_files.setChecked(self.current_show_info_file_count)
-        self.chk_duration.setChecked(self.current_show_info_duration)
-        self.chk_size.setChecked(self.current_show_info_size)
-        self.chk_technical.setChecked(self.current_show_info_technical)
-        self.chk_year_written.setChecked(self.current_show_info_year_written)
-        self.chk_year_recorded.setChecked(self.current_show_info_year_recorded)
-        self.chk_language.setChecked(self.current_show_info_language)
-        
-        self.chk_visualizer.setChecked(self.current_show_visualizer)
-        self.chk_nesting_lines.setChecked(self.current_show_nesting_lines)
-        self.chk_status_triangle.setChecked(self.current_show_status_triangle)
-        self.chk_statusbar.setChecked(self.current_show_statusbar)
-        self.chk_remember_filter_folders.setChecked(self.current_remember_filter_folders)
-        
-        # Update enabled state of child checkboxes
-        enabled = self.current_show_detailed_info
-        self.chk_progress.setEnabled(enabled)
-        self.chk_files.setEnabled(enabled)
-        self.chk_duration.setEnabled(enabled)
-        self.chk_size.setEnabled(enabled)
-        self.chk_technical.setEnabled(enabled)
-        self.chk_year_written.setEnabled(enabled)
-        self.chk_year_recorded.setEnabled(enabled)
-        self.chk_language.setEnabled(enabled)
-        
-        # Enable/disable status colors customization
-        self.status_colors_widget.setEnabled(self.current_show_status_triangle)
-        self.updating_ui = False
+        try:
+            self.chk_show_detailed_info.setChecked(self.current_show_detailed_info)
+            
+            order_keys = [k.strip() for k in self.current_info_order.split(",") if k.strip() in self.info_keys]
+            for k in self.info_keys:
+                if k not in order_keys:
+                    order_keys.append(k)
+            self.populate_info_list(order_keys)
+            
+            self.chk_visualizer.setChecked(self.current_show_visualizer)
+            self.chk_nesting_lines.setChecked(self.current_show_nesting_lines)
+            self.chk_status_triangle.setChecked(self.current_show_status_triangle)
+            self.chk_statusbar.setChecked(self.current_show_statusbar)
+            self.chk_remember_filter_folders.setChecked(self.current_remember_filter_folders)
+            
+            # Update enabled state of child widgets
+            enabled = self.current_show_detailed_info
+            self.info_list_widget.setEnabled(enabled)
+            self.btn_up.setEnabled(enabled)
+            self.btn_down.setEnabled(enabled)
+            
+            # Enable/disable status colors customization
+            self.status_colors_widget.setEnabled(self.current_show_status_triangle)
+        finally:
+            self.updating_ui = old_updating
 
     def on_show_detailed_info_changed(self):
         """Handle state change in the master show_detailed_info checkbox"""
@@ -1312,33 +1437,11 @@ class AppearanceDialog(QDialog):
             
         self.current_show_detailed_info = self.chk_show_detailed_info.isChecked()
         
-        # Update enabled state of child checkboxes
+        # Update enabled state of child widgets
         enabled = self.current_show_detailed_info
-        self.chk_progress.setEnabled(enabled)
-        self.chk_files.setEnabled(enabled)
-        self.chk_duration.setEnabled(enabled)
-        self.chk_size.setEnabled(enabled)
-        self.chk_technical.setEnabled(enabled)
-        self.chk_year_written.setEnabled(enabled)
-        self.chk_year_recorded.setEnabled(enabled)
-        self.chk_language.setEnabled(enabled)
-        
-        # Emit live preview to update the layout
-        self.emit_preview()
-
-    def on_checkbox_changed(self):
-        """Handle state change in checkboxes to update internal state and trigger live preview"""
-        if self.updating_ui:
-            return
-            
-        self.current_show_info_progress = self.chk_progress.isChecked()
-        self.current_show_info_file_count = self.chk_files.isChecked()
-        self.current_show_info_duration = self.chk_duration.isChecked()
-        self.current_show_info_size = self.chk_size.isChecked()
-        self.current_show_info_technical = self.chk_technical.isChecked()
-        self.current_show_info_year_written = self.chk_year_written.isChecked()
-        self.current_show_info_year_recorded = self.chk_year_recorded.isChecked()
-        self.current_show_info_language = self.chk_language.isChecked()
+        self.info_list_widget.setEnabled(enabled)
+        self.btn_up.setEnabled(enabled)
+        self.btn_down.setEnabled(enabled)
         
         # Emit live preview to update the layout
         self.emit_preview()
@@ -1371,7 +1474,8 @@ class AppearanceDialog(QDialog):
             "show_info_technical": self.current_show_info_technical,
             "show_info_year_written": self.current_show_info_year_written,
             "show_info_year_recorded": self.current_show_info_year_recorded,
-            "show_info_language": self.current_show_info_language
+            "show_info_language": self.current_show_info_language,
+            "info_order": self.current_info_order
         }
 
     def get_interface_settings(self) -> dict:

@@ -260,20 +260,20 @@
     "select_cover": "Chọn bìa:",
     "open_folder_tooltip": "Mở thư mục chứa sách này",
     "refresh_covers_tooltip": "Quét thư mục để tìm bìa mới",
-    "language": "Book Language:",
-    "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:",
-    "search_cover": "Search Cover",
-    "search_cover_tooltip": "Search covers online",
-    "cover_search_title": "Search Covers Online",
-    "search_query_label": "Query:",
-    "search_btn": "Search",
-    "searching": "Searching...",
-    "no_covers_found": "No covers found",
-    "download_selected": "Download Selected",
-    "downloading": "Downloading...",
-    "download_success": "Downloaded {count} covers",
-    "download_error": "Download error: {error}"
+    "language": "Ngôn ngữ sách:",
+    "year_written": "Năm viết sách:",
+    "year_recorded": "Năm ghi âm:",
+    "search_cover": "Tìm ảnh bìa",
+    "search_cover_tooltip": "Tìm ảnh bìa trực tuyến",
+    "cover_search_title": "Tìm ảnh bìa trực tuyến",
+    "search_query_label": "Truy vấn:",
+    "search_btn": "Tìm kiếm",
+    "searching": "Đang tìm kiếm...",
+    "no_covers_found": "Không tìm thấy ảnh bìa",
+    "download_selected": "Tải về mục đã chọn",
+    "downloading": "Đang tải về...",
+    "download_success": "Đã tải về {count} ảnh bìa",
+    "download_error": "Lỗi tải về: {error}"
   },
   "tags": {
     "edit_title": "Sửa thẻ",
@@ -453,7 +453,7 @@
     "settings_info": "Chuyển đổi tất cả sách nói sang định dạng Opus để giảm kích thước tệp",
     "bitrate_tooltip": "Cài đặt khuyên dùng:\n- 16-20 kbps: Kích thước nhỏ, chất lượng giọng nói chấp nhận được.\n- 24 kbps: Chất lượng tốt, tiêu chuẩn cho sách nói.\n- 32 kbps: Chất lượng gần như nguyên bản (Khuyên dùng).\n- 48-64 kbps: Độ trung thực cao, tốt nhất cho sách nói có nhạc/hiệu ứng.",
     "stereo_tooltip": "Xử lý âm thanh nổi:\n- Trộn xuống Mono: Tốt nhất cho giọng nói. Sử dụng tất cả các bit cho một kênh duy nhất.\n- Giữ nguyên Stereo: Bảo toàn hiệu ứng âm thanh nổi. Yêu cầu tốc độ bit cao hơn cho cùng một chất lượng.",
-    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
+    "description": "Chuyển đổi sách nói sang định dạng Opus giúp giảm đáng kể kích thước tệp (thường là 50-70%) mà hầu như không làm giảm chất lượng giọng nói.\nTốc độ bit khuyến nghị: 24-32 kbps (tiêu chuẩn). Sử dụng 16 kbps để tiết kiệm không gian tối đa và 48-64 kbps cho sách có nhạc hoặc hiệu ứng âm thanh.\nViệc trộn âm thanh nổi (stereo) thành đơn kênh (mono) giúp tiết kiệm thêm dung lượng bằng cách phân bổ tất cả các bit cho một kênh thoại duy nhất."
   },
   "updater": {
     "title": "Cập nhật ứng dụng",
@@ -559,6 +559,9 @@
     "status_completed_label": "Màu trạng thái 'Đã xong':",
     "tab_colors": "Cài đặt cửa sổ",
     "tab_info": "Cài đặt danh sách thư viện",
-    "tab_interface": "Cài đặt trình phát"
+    "tab_interface": "Cài đặt trình phát",
+    "info_items_order": "Thứ tự các mục:",
+    "move_up": "Di chuyển lên",
+    "move_down": "Di chuyển xuống"
   }
 }

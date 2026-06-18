@@ -559,6 +559,9 @@
     "status_completed_label": "Finished Status Color:",
     "tab_colors": "Window Settings",
     "tab_info": "Library List Settings",
-    "tab_interface": "Player Settings"
+    "tab_interface": "Player Settings",
+    "info_items_order": "Items order:",
+    "move_up": "Move Up",
+    "move_down": "Move Down"
   }
 }

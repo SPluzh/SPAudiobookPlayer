@@ -242,20 +242,20 @@
     "select_cover": "Selecionar capa:",
     "open_folder_tooltip": "Abrir pasta contendo este livro",
     "refresh_covers_tooltip": "Escanear pasta para novas capas",
-    "language": "Book Language:",
-    "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:",
-    "search_cover": "Search Cover",
-    "search_cover_tooltip": "Search covers online",
-    "cover_search_title": "Search Covers Online",
-    "search_query_label": "Query:",
-    "search_btn": "Search",
-    "searching": "Searching...",
-    "no_covers_found": "No covers found",
-    "download_selected": "Download Selected",
-    "downloading": "Downloading...",
-    "download_success": "Downloaded {count} covers",
-    "download_error": "Download error: {error}"
+    "language": "Idioma do livro:",
+    "year_written": "Ano de redação:",
+    "year_recorded": "Ano de gravação:",
+    "search_cover": "Buscar capa",
+    "search_cover_tooltip": "Buscar capas online",
+    "cover_search_title": "Buscar capas online",
+    "search_query_label": "Consulta:",
+    "search_btn": "Buscar",
+    "searching": "Buscando...",
+    "no_covers_found": "Nenhuma capa encontrada",
+    "download_selected": "Baixar selecionados",
+    "downloading": "Baixando...",
+    "download_success": "{count} capas baixadas",
+    "download_error": "Error ao baixar: {error}"
   },
   "tags": {
     "edit_title": "Editar Tag",
@@ -453,7 +453,7 @@
     "settings_info": "Converter todos os audiolivros para o formato Opus para reduzir o tamanho do arquivo",
     "bitrate_tooltip": "Configurações recomendadas:\n- 16-20 kbps: Tamanho de arquivo menor, qualidade de voz aceitável.\n- 24 kbps: Boa qualidade, padrão para audiolivros.\n- 32 kbps: Qualidade quase transparente (Recomendado).\n- 48-64 kbps: Alta fidelidade, melhor para audiolivros com música/efeitos.",
     "stereo_tooltip": "Manuseio de estéreo:\n- Misturar para Mono: Melhor para cobertura de voz. Usa todos os bits para o canal único.\n- Manter Estéreo: Preserva o efeito estéreo. Requer taxa de bits mais alta para a mesma qualidade.",
-    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
+    "description": "A conversão de audiolivros para o formato Opus reduz significativamente o tamanho do arquivo (geralmente em 50-70%) com praticamente nenhuma perda na qualidade da fala.\nTaxa de bits recomendada: 24-32 kbps (padrão). Use 16 kbps para economia máxima de espaço e 48-64 kbps para livros com música ou efeitos sonoros.\nA mixagem de estéreo para mono economiza espaço adicional ao alocar todos os bits para um único canal de voz."
   },
   "updater": {
     "title": "Atualização do Aplicativo",
@@ -559,6 +559,9 @@
     "status_completed_label": "Cor do status 'Concluído':",
     "tab_colors": "Configurações da janela",
     "tab_info": "Configurações da lista de biblioteca",
-    "tab_interface": "Configurações do reprodutor"
+    "tab_interface": "Configurações do reprodutor",
+    "info_items_order": "Ordem dos itens:",
+    "move_up": "Mover para cima",
+    "move_down": "Mover para baixo"
   }
 }

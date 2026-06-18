@@ -242,20 +242,20 @@
     "select_cover": "اختر الغلاف:",
     "open_folder_tooltip": "افتح المجلد الذي يحتوي على هذا الكتاب",
     "refresh_covers_tooltip": "مسح المجلد بحثًا عن أغلفة جديدة",
-    "language": "Book Language:",
-    "year_written": "Year Written:",
-    "year_recorded": "Year Recorded:",
-    "search_cover": "Search Cover",
-    "search_cover_tooltip": "Search covers online",
-    "cover_search_title": "Search Covers Online",
-    "search_query_label": "Query:",
-    "search_btn": "Search",
-    "searching": "Searching...",
-    "no_covers_found": "No covers found",
-    "download_selected": "Download Selected",
-    "downloading": "Downloading...",
-    "download_success": "Downloaded {count} covers",
-    "download_error": "Download error: {error}"
+    "language": "لغة الكتاب:",
+    "year_written": "سنة التأليف:",
+    "year_recorded": "سنة التسجيل:",
+    "search_cover": "البحث عن غلاف",
+    "search_cover_tooltip": "البحث عن أغلفة عبر الإنترنت",
+    "cover_search_title": "البحث عن أغلفة عبر الإنترنت",
+    "search_query_label": "الاستعلام:",
+    "search_btn": "بحث",
+    "searching": "جاري البحث...",
+    "no_covers_found": "لم يتم العثور على أغلفة",
+    "download_selected": "تنزيل المحدد",
+    "downloading": "جاري التنزيل...",
+    "download_success": "تم تنزيل {count} غلاف",
+    "download_error": "خطأ في التنزيل: {error}"
   },
   "tags": {
     "edit_title": "تعديل العلامة",
@@ -453,7 +453,7 @@
     "settings_info": "تحويل جميع الكتب الصوتية إلى تنسيق Opus لتقليل حجم الملف",
     "bitrate_tooltip": "الإعدادات الموصى بها:\n- 16-20 kbps: حجم ملف أصغر، جودة صوت مقبولة.\n- 24 kbps: جودة جيدة، قياسية للكتب الصوتية.\n- 32 kbps: جودة شبه شفافة (موصى به).\n- 48-64 kbps: دقة عالية، الأفضل للكتب الصوتية مع الموسيقى/التأثيرات.",
     "stereo_tooltip": "معالجة الستيريو:\n- دمج إلى أحادي: الأفضل لتغطية الصوت. يستخدم كل البتات للقناة الواحدة.\n- إبقاء الستيريو: يحافظ على تأثير الستيريو. يتطلب معدل بت أعلى لنفس الجودة.",
-    "description": "Converting audiobooks to Opus format significantly reduces file size (typically by 50-70%) with virtually no loss in speech quality.\nRecommended bitrate: 24-32 kbps (standard). Use 16 kbps for maximum space saving, and 48-64 kbps for books with music or sound effects.\nDownmixing stereo to mono saves additional space by allocating all bits to a single voice channel."
+    "description": "يؤدي تحويل الكتب الصوتية إلى تنسيق Opus إلى تقليل حجم الملف بشكل كبير (عادةً بنسبة 50-70٪) دون خسارة تذكر في جودة الكلام.\nمعدل البت الموصى به: 24-32 كيلوبايت في الثانية (قياسي). استخدم 16 كيلوبايت في الثانية لتوفير المساحة القصوى، و 48-64 كيلوبايت في الثانية للكتب التي تحتوي على موسيقى أو تأثيرات صوتية.\nيؤدي دمج الستيريو إلى أحادي إلى توفير مساحة إضافية عن طريق تخصيص كل البتات لقناة صوتية واحدة."
   },
   "updater": {
     "title": "تحديث التطبيق",
@@ -559,6 +559,9 @@
     "status_completed_label": "لون حالة مكتمل:",
     "tab_colors": "إعدادات النافذة",
     "tab_info": "إعدادات قائمة المكتبة",
-    "tab_interface": "إعدادات المشغل"
+    "tab_interface": "إعدادات المشغل",
+    "info_items_order": "ترتيب العناصر:",
+    "move_up": "تحريك لأعلى",
+    "move_down": "تحريك لأسفل"
   }
 }
