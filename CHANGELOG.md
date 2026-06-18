@@ -3,10 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.9]
+- **UI**: Added an Appearance Settings dialog with live preview to customize window colors, status bar, player visualizer, and detailed library list settings in a clean two-column layout.
+- **UI**: Moved interface checkboxes from the View menu (except Minimal Interface and Always on Top) into the new dialog, and removed the unused theme selection/reloading options.
 - **Library**: Added interactive tags that highlight and change the cursor on hover.
 - **Library**: Clicking a tag now automatically filters the library view to show only books with that tag.
-- **UI**: Added an Appearance Settings dialog to customize interface colors (accent, background, text, and borders) with live preview.
-- **UI**: Added options to choose which book details (such as duration, size, or language) are shown in the library list.
 - **Settings**: Clearing the database now also deletes listening statistics, session history, bookmarks, and tags.
 
 ## [1.7.8]

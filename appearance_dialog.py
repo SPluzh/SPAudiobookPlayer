@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider, QLineEdit, QWidget, QGridLayout, QFrame, QCheckBox
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider, QLineEdit, QWidget, QGridLayout, QFrame, QCheckBox, QGroupBox, QScrollArea
 from PyQt6.QtCore import pyqtSignal, Qt, QPoint, QRegularExpression
 from PyQt6.QtGui import QColor, QRegularExpressionValidator, QPainter, QImage, QMouseEvent, QPen
 from translations import tr
@@ -190,13 +190,15 @@ class AppearanceDialog(QDialog):
     appearance_saved = pyqtSignal(str, str, str, str, str)   # Emits (accent_color, window_color, bg_dark_color, text_color, border_color)
     
     def __init__(self, parent=None, current_accent="", default_accent="", current_window="", default_window="", current_bg_dark="", default_bg_dark="", current_text="", default_text="", current_border="", default_border="",
+                 show_detailed_info=True,
                  show_info_progress=True, show_info_file_count=True, show_info_duration=True, show_info_size=True,
-                 show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=True):
+                 show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=True,
+                 show_visualizer=True, show_nesting_lines=True, show_status_triangle=True, show_statusbar=True,
+                 remember_filter_folders=True):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
-        self.setMinimumSize(320, 420)  # Make size slightly taller to fit checkboxes
-        self.setMaximumWidth(360)
+        self.setMinimumSize(720, 520)
         
         # Keep track of original, current, and default values
         self.original_accent = current_accent
@@ -220,6 +222,9 @@ class AppearanceDialog(QDialog):
         self.current_border = current_border or default_border
 
         # Book info settings states
+        self.original_show_detailed_info = show_detailed_info
+        self.current_show_detailed_info = show_detailed_info
+
         self.original_show_info_progress = show_info_progress
         self.current_show_info_progress = show_info_progress
         
@@ -243,6 +248,24 @@ class AppearanceDialog(QDialog):
         
         self.original_show_info_language = show_info_language
         self.current_show_info_language = show_info_language
+
+        # Interface options states
+        self.original_show_visualizer = show_visualizer
+        self.current_show_visualizer = show_visualizer
+        
+        self.original_show_nesting_lines = show_nesting_lines
+        self.current_show_nesting_lines = show_nesting_lines
+        
+        self.original_show_status_triangle = show_status_triangle
+        self.current_show_status_triangle = show_status_triangle
+        
+        self.original_show_statusbar = show_statusbar
+        self.current_show_statusbar = show_statusbar
+        
+        self.original_remember_filter_folders = remember_filter_folders
+        self.current_remember_filter_folders = remember_filter_folders
+        
+
         
         self.updating_ui = False
         
@@ -253,6 +276,39 @@ class AppearanceDialog(QDialog):
         main_layout.setSpacing(10)
         main_layout.setContentsMargins(12, 12, 12, 12)
         
+        # Scroll area for settings contents
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setStyleSheet("QScrollArea { background: transparent; }")
+        main_layout.addWidget(scroll)
+
+        container = QWidget()
+        container.setStyleSheet("background: transparent;")
+        scroll.setWidget(container)
+        
+        cols_layout = QHBoxLayout(container)
+        cols_layout.setSpacing(16)
+        cols_layout.setContentsMargins(0, 0, 4, 0)
+        
+        left_layout = QVBoxLayout()
+        left_layout.setSpacing(12)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        
+        right_layout = QVBoxLayout()
+        right_layout.setSpacing(12)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        
+        cols_layout.addLayout(right_layout, 1)
+        cols_layout.addLayout(left_layout, 1)
+        
+        # ------------------ GROUP 1: WINDOW SETTINGS ------------------
+        group_colors = QGroupBox(tr("appearance.tab_colors", "Window Settings"))
+        colors_layout = QVBoxLayout(group_colors)
+        colors_layout.setSpacing(10)
+        colors_layout.setContentsMargins(8, 12, 8, 8)
+        
         # Helper regex validator for HEX colors
         hex_regex = QRegularExpression("^#[0-9A-Fa-f]{0,6}$")
         validator = QRegularExpressionValidator(hex_regex, self)
@@ -260,7 +316,7 @@ class AppearanceDialog(QDialog):
         # Dummy line edit just to sync field height across widgets
         dummy_line = QLineEdit()
         dummy_line.ensurePolished()
-        field_height = dummy_line.sizeHint().height()
+        field_height = 20
         
         # Grid layout for the color options to keep them perfectly aligned vertically
         grid_layout = QGridLayout()
@@ -283,6 +339,8 @@ class AppearanceDialog(QDialog):
         self.accent_hex_input.setObjectName("accentHexInput")
         self.accent_hex_input.setMaxLength(7)
         self.accent_hex_input.setFixedWidth(75)
+        self.accent_hex_input.setFixedHeight(field_height)
+        self.accent_hex_input.setStyleSheet("padding: 2px 4px;")
         self.accent_hex_input.setValidator(validator)
         self.accent_hex_input.textChanged.connect(self.on_accent_hex_changed)
         grid_layout.addWidget(self.accent_hex_input, 0, 2)
@@ -302,6 +360,8 @@ class AppearanceDialog(QDialog):
         self.window_hex_input.setObjectName("windowHexInput")
         self.window_hex_input.setMaxLength(7)
         self.window_hex_input.setFixedWidth(75)
+        self.window_hex_input.setFixedHeight(field_height)
+        self.window_hex_input.setStyleSheet("padding: 2px 4px;")
         self.window_hex_input.setValidator(validator)
         self.window_hex_input.textChanged.connect(self.on_window_hex_changed)
         grid_layout.addWidget(self.window_hex_input, 1, 2)
@@ -321,6 +381,8 @@ class AppearanceDialog(QDialog):
         self.bg_dark_hex_input.setObjectName("bgDarkHexInput")
         self.bg_dark_hex_input.setMaxLength(7)
         self.bg_dark_hex_input.setFixedWidth(75)
+        self.bg_dark_hex_input.setFixedHeight(field_height)
+        self.bg_dark_hex_input.setStyleSheet("padding: 2px 4px;")
         self.bg_dark_hex_input.setValidator(validator)
         self.bg_dark_hex_input.textChanged.connect(self.on_bg_dark_hex_changed)
         grid_layout.addWidget(self.bg_dark_hex_input, 2, 2)
@@ -340,6 +402,8 @@ class AppearanceDialog(QDialog):
         self.text_hex_input.setObjectName("textHexInput")
         self.text_hex_input.setMaxLength(7)
         self.text_hex_input.setFixedWidth(75)
+        self.text_hex_input.setFixedHeight(field_height)
+        self.text_hex_input.setStyleSheet("padding: 2px 4px;")
         self.text_hex_input.setValidator(validator)
         self.text_hex_input.textChanged.connect(self.on_text_hex_changed)
         grid_layout.addWidget(self.text_hex_input, 3, 2)
@@ -359,30 +423,54 @@ class AppearanceDialog(QDialog):
         self.border_hex_input.setObjectName("borderHexInput")
         self.border_hex_input.setMaxLength(7)
         self.border_hex_input.setFixedWidth(75)
+        self.border_hex_input.setFixedHeight(field_height)
+        self.border_hex_input.setStyleSheet("padding: 2px 4px;")
         self.border_hex_input.setValidator(validator)
         self.border_hex_input.textChanged.connect(self.on_border_hex_changed)
         grid_layout.addWidget(self.border_hex_input, 4, 2)
         
         # Let column 3 take any extra space to push controls left
         grid_layout.setColumnStretch(3, 1)
-        main_layout.addLayout(grid_layout)
+        colors_layout.addLayout(grid_layout)
         
-        # Visual Separator under colors
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setFrameShadow(QFrame.Shadow.Sunken)
-        separator.setObjectName("appearanceSeparator")
-        main_layout.addWidget(separator)
+        # Add window settings checkboxes (like Show Status Bar)
+        colors_layout.addSpacing(4)
+        self.chk_statusbar = QCheckBox(tr("menu.show_statusbar", "Show Status Bar"))
+        self.chk_statusbar.stateChanged.connect(self.on_interface_checkbox_changed)
+        colors_layout.addWidget(self.chk_statusbar)
         
+        left_layout.addWidget(group_colors)
+        
+        # ------------------ GROUP 2: LIBRARY LIST SETTINGS ------------------
+        group_info = QGroupBox(tr("appearance.tab_info", "Library List Settings"))
+        info_layout = QVBoxLayout(group_info)
+        info_layout.setSpacing(8)
+        info_layout.setContentsMargins(8, 12, 8, 8)
+        
+        # Library List View checkboxes (nesting lines, status triangle, remember filter folders)
+        self.chk_status_triangle = QCheckBox(tr("menu.show_status_triangle", "Show Status Triangle"))
+        self.chk_nesting_lines = QCheckBox(tr("menu.show_nesting_lines", "Show Nesting Lines"))
+        self.chk_remember_filter_folders = QCheckBox(tr("menu.remember_filter_folders", "Remember Folder View"))
+        
+        info_layout.addWidget(self.chk_status_triangle)
+        info_layout.addWidget(self.chk_nesting_lines)
+        info_layout.addWidget(self.chk_remember_filter_folders)
+        
+        # Separator line
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setFrameShadow(QFrame.Shadow.Sunken)
+        sep.setStyleSheet("background-color: #555555; max-height: 1px; margin: 4px 0px;")
+        info_layout.addWidget(sep)
+
         # Book Info Line Settings Section
-        info_title = QLabel(tr("appearance.info_section_title"))
-        info_title.setStyleSheet("font-weight: bold; margin-top: 4px; margin-bottom: 2px;")
-        main_layout.addWidget(info_title)
+        self.chk_show_detailed_info = QCheckBox(tr("appearance.show_detailed_info"))
+        self.chk_show_detailed_info.setStyleSheet("font-weight: bold; margin-bottom: 2px;")
+        info_layout.addWidget(self.chk_show_detailed_info)
         
-        checkbox_grid = QGridLayout()
-        checkbox_grid.setHorizontalSpacing(10)
-        checkbox_grid.setVerticalSpacing(6)
-        checkbox_grid.setContentsMargins(0, 0, 0, 0)
+        checkbox_layout = QVBoxLayout()
+        checkbox_layout.setSpacing(6)
+        checkbox_layout.setContentsMargins(15, 0, 0, 0)
         
         self.chk_progress = QCheckBox(tr("appearance.info_progress"))
         self.chk_files = QCheckBox(tr("appearance.info_files"))
@@ -393,17 +481,22 @@ class AppearanceDialog(QDialog):
         self.chk_year_recorded = QCheckBox(tr("appearance.info_year_recorded"))
         self.chk_language = QCheckBox(tr("appearance.info_language"))
         
-        checkbox_grid.addWidget(self.chk_progress, 0, 0)
-        checkbox_grid.addWidget(self.chk_files, 0, 1)
-        checkbox_grid.addWidget(self.chk_duration, 1, 0)
-        checkbox_grid.addWidget(self.chk_size, 1, 1)
-        checkbox_grid.addWidget(self.chk_technical, 2, 0)
-        checkbox_grid.addWidget(self.chk_year_written, 2, 1)
-        checkbox_grid.addWidget(self.chk_year_recorded, 3, 0)
-        checkbox_grid.addWidget(self.chk_language, 3, 1)
+        checkbox_layout.addWidget(self.chk_progress)
+        checkbox_layout.addWidget(self.chk_files)
+        checkbox_layout.addWidget(self.chk_duration)
+        checkbox_layout.addWidget(self.chk_size)
+        checkbox_layout.addWidget(self.chk_technical)
+        checkbox_layout.addWidget(self.chk_year_written)
+        checkbox_layout.addWidget(self.chk_year_recorded)
+        checkbox_layout.addWidget(self.chk_language)
         
-        main_layout.addLayout(checkbox_grid)
+        info_layout.addLayout(checkbox_layout)
         
+        self.chk_status_triangle.stateChanged.connect(self.on_interface_checkbox_changed)
+        self.chk_nesting_lines.stateChanged.connect(self.on_interface_checkbox_changed)
+        self.chk_remember_filter_folders.stateChanged.connect(self.on_interface_checkbox_changed)
+        
+        self.chk_show_detailed_info.stateChanged.connect(self.on_show_detailed_info_changed)
         self.chk_progress.stateChanged.connect(self.on_checkbox_changed)
         self.chk_files.stateChanged.connect(self.on_checkbox_changed)
         self.chk_duration.stateChanged.connect(self.on_checkbox_changed)
@@ -412,10 +505,29 @@ class AppearanceDialog(QDialog):
         self.chk_year_written.stateChanged.connect(self.on_checkbox_changed)
         self.chk_year_recorded.stateChanged.connect(self.on_checkbox_changed)
         self.chk_language.stateChanged.connect(self.on_checkbox_changed)
+
+        right_layout.addWidget(group_info)
+        right_layout.addStretch()
         
-        # 6. Action Buttons (Default / Cancel / Save)
+        # ------------------ GROUP 3: PLAYER SETTINGS ------------------
+        group_interface = QGroupBox(tr("appearance.tab_interface", "Player Settings"))
+        interface_layout = QVBoxLayout(group_interface)
+        interface_layout.setSpacing(8)
+        interface_layout.setContentsMargins(8, 12, 8, 8)
+
+        self.chk_visualizer = QCheckBox(tr("menu.visualizer", "Visualizer"))
+
+        interface_layout.addWidget(self.chk_visualizer)
+
+        self.chk_visualizer.stateChanged.connect(self.on_interface_checkbox_changed)
+
+        left_layout.addWidget(group_interface)
+        left_layout.addStretch()
+        
+        # Action Buttons (Default / Cancel / Save) at the bottom
         actions_layout = QHBoxLayout()
         actions_layout.setSpacing(8)
+        actions_layout.setContentsMargins(0, 4, 0, 0)
         
         self.default_btn = QPushButton(tr("appearance.default_btn"))
         self.default_btn.setObjectName("defaultColorBtn")
@@ -461,6 +573,9 @@ class AppearanceDialog(QDialog):
                     background-color: {color_hex};
                     border: 1px solid #555555;
                     border-radius: 4px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
                 }}
                 QPushButton:hover {{
                     border: 1px solid #ffffff;
@@ -479,6 +594,9 @@ class AppearanceDialog(QDialog):
                     background-color: {color_hex};
                     border: 1px solid #555555;
                     border-radius: 4px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
                 }}
                 QPushButton:hover {{
                     border: 1px solid #ffffff;
@@ -497,6 +615,9 @@ class AppearanceDialog(QDialog):
                     background-color: {color_hex};
                     border: 1px solid #555555;
                     border-radius: 4px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
                 }}
                 QPushButton:hover {{
                     border: 1px solid #ffffff;
@@ -515,6 +636,9 @@ class AppearanceDialog(QDialog):
                     background-color: {color_hex};
                     border: 1px solid #555555;
                     border-radius: 4px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
                 }}
                 QPushButton:hover {{
                     border: 1px solid #ffffff;
@@ -533,6 +657,9 @@ class AppearanceDialog(QDialog):
                     background-color: {color_hex};
                     border: 1px solid #555555;
                     border-radius: 4px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
                 }}
                 QPushButton:hover {{
                     border: 1px solid #ffffff;
@@ -759,6 +886,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_border(self.default_border)
         
         # Reset info line settings to True
+        self.current_show_detailed_info = True
         self.current_show_info_progress = True
         self.current_show_info_file_count = True
         self.current_show_info_duration = True
@@ -767,6 +895,14 @@ class AppearanceDialog(QDialog):
         self.current_show_info_year_written = True
         self.current_show_info_year_recorded = True
         self.current_show_info_language = True
+        
+        # Reset interface settings to default
+        self.current_show_visualizer = True
+        self.current_show_nesting_lines = True
+        self.current_show_status_triangle = True
+        self.current_show_statusbar = True
+        self.current_remember_filter_folders = True
+        
         self.update_checkboxes_ui()
         
         self.appearance_preview.emit(self.default_accent, self.default_window, self.default_bg_dark, self.default_text, self.default_border)
@@ -801,6 +937,7 @@ class AppearanceDialog(QDialog):
         
     def reject(self):
         """Revert preview changes and close the dialog"""
+        self.current_show_detailed_info = self.original_show_detailed_info
         self.current_show_info_progress = self.original_show_info_progress
         self.current_show_info_file_count = self.original_show_info_file_count
         self.current_show_info_duration = self.original_show_info_duration
@@ -809,6 +946,13 @@ class AppearanceDialog(QDialog):
         self.current_show_info_year_written = self.original_show_info_year_written
         self.current_show_info_year_recorded = self.original_show_info_year_recorded
         self.current_show_info_language = self.original_show_info_language
+        
+        self.current_show_visualizer = self.original_show_visualizer
+        self.current_show_nesting_lines = self.original_show_nesting_lines
+        self.current_show_status_triangle = self.original_show_status_triangle
+        self.current_show_statusbar = self.original_show_statusbar
+        self.current_remember_filter_folders = self.original_remember_filter_folders
+        
         self.update_checkboxes_ui()
 
         self.appearance_preview.emit(self.original_accent, self.original_window, self.original_bg_dark, self.original_text, self.original_border)
@@ -819,6 +963,7 @@ class AppearanceDialog(QDialog):
     def update_checkboxes_ui(self):
         """Update checkboxes widgets state based on internal current values"""
         self.updating_ui = True
+        self.chk_show_detailed_info.setChecked(self.current_show_detailed_info)
         self.chk_progress.setChecked(self.current_show_info_progress)
         self.chk_files.setChecked(self.current_show_info_file_count)
         self.chk_duration.setChecked(self.current_show_info_duration)
@@ -827,7 +972,45 @@ class AppearanceDialog(QDialog):
         self.chk_year_written.setChecked(self.current_show_info_year_written)
         self.chk_year_recorded.setChecked(self.current_show_info_year_recorded)
         self.chk_language.setChecked(self.current_show_info_language)
+        
+        self.chk_visualizer.setChecked(self.current_show_visualizer)
+        self.chk_nesting_lines.setChecked(self.current_show_nesting_lines)
+        self.chk_status_triangle.setChecked(self.current_show_status_triangle)
+        self.chk_statusbar.setChecked(self.current_show_statusbar)
+        self.chk_remember_filter_folders.setChecked(self.current_remember_filter_folders)
+        
+        # Update enabled state of child checkboxes
+        enabled = self.current_show_detailed_info
+        self.chk_progress.setEnabled(enabled)
+        self.chk_files.setEnabled(enabled)
+        self.chk_duration.setEnabled(enabled)
+        self.chk_size.setEnabled(enabled)
+        self.chk_technical.setEnabled(enabled)
+        self.chk_year_written.setEnabled(enabled)
+        self.chk_year_recorded.setEnabled(enabled)
+        self.chk_language.setEnabled(enabled)
         self.updating_ui = False
+
+    def on_show_detailed_info_changed(self):
+        """Handle state change in the master show_detailed_info checkbox"""
+        if self.updating_ui:
+            return
+            
+        self.current_show_detailed_info = self.chk_show_detailed_info.isChecked()
+        
+        # Update enabled state of child checkboxes
+        enabled = self.current_show_detailed_info
+        self.chk_progress.setEnabled(enabled)
+        self.chk_files.setEnabled(enabled)
+        self.chk_duration.setEnabled(enabled)
+        self.chk_size.setEnabled(enabled)
+        self.chk_technical.setEnabled(enabled)
+        self.chk_year_written.setEnabled(enabled)
+        self.chk_year_recorded.setEnabled(enabled)
+        self.chk_language.setEnabled(enabled)
+        
+        # Emit live preview to update the layout
+        self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
 
     def on_checkbox_changed(self):
         """Handle state change in checkboxes to update internal state and trigger live preview"""
@@ -846,9 +1029,24 @@ class AppearanceDialog(QDialog):
         # Emit live preview to update the layout
         self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
 
+    def on_interface_checkbox_changed(self):
+        """Handle state change in interface checkboxes to update internal state and trigger live preview"""
+        if self.updating_ui:
+            return
+            
+        self.current_show_visualizer = self.chk_visualizer.isChecked()
+        self.current_show_nesting_lines = self.chk_nesting_lines.isChecked()
+        self.current_show_status_triangle = self.chk_status_triangle.isChecked()
+        self.current_show_statusbar = self.chk_statusbar.isChecked()
+        self.current_remember_filter_folders = self.chk_remember_filter_folders.isChecked()
+        
+        # Emit live preview to update the layout
+        self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+
     def get_info_settings(self) -> dict:
         """Get the current settings of the info line checkboxes"""
         return {
+            "show_detailed_info": self.current_show_detailed_info,
             "show_info_progress": self.current_show_info_progress,
             "show_info_file_count": self.current_show_info_file_count,
             "show_info_duration": self.current_show_info_duration,
@@ -857,4 +1055,14 @@ class AppearanceDialog(QDialog):
             "show_info_year_written": self.current_show_info_year_written,
             "show_info_year_recorded": self.current_show_info_year_recorded,
             "show_info_language": self.current_show_info_language
+        }
+
+    def get_interface_settings(self) -> dict:
+        """Get the current settings of the interface checkboxes"""
+        return {
+            "show_visualizer": self.current_show_visualizer,
+            "show_nesting_lines": self.current_show_nesting_lines,
+            "show_status_triangle": self.current_show_status_triangle,
+            "show_statusbar": self.current_show_statusbar,
+            "remember_filter_folders": self.current_remember_filter_folders
         }

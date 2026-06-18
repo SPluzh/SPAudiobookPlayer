@@ -8,7 +8,6 @@ from PyQt6.QtCore import Qt
 # Theme paths
 STYLES_DIR = Path(__file__).parent / "resources" / "styles"
 DARK_QSS_PATH = STYLES_DIR / "dark.qss"
-MIKU_QSS_PATH = STYLES_DIR / "miku.qss"
 
 # Fallback styles
 try:
@@ -139,8 +138,6 @@ class StyleManager:
     @staticmethod
     def get_theme_path(theme_name: str) -> Path:
         """Get the file path for a given theme name"""
-        if theme_name == "miku":
-            return MIKU_QSS_PATH
         return DARK_QSS_PATH
 
     @staticmethod

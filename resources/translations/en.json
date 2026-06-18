@@ -545,6 +545,7 @@
     "text_label": "Font Color:",
     "border_label": "Border Color:",
     "info_section_title": "Book Info Line Elements",
+    "show_detailed_info": "Show Detailed Info",
     "info_progress": "Listening Progress",
     "info_files": "File Count",
     "info_duration": "Total Duration",
@@ -552,6 +553,9 @@
     "info_technical": "Technical Details (bitrate/codec)",
     "info_year_written": "Year Written",
     "info_year_recorded": "Year Recorded",
-    "info_language": "Language"
+    "info_language": "Language",
+    "tab_colors": "Window Settings",
+    "tab_info": "Library List Settings",
+    "tab_interface": "Player Settings"
   }
 }

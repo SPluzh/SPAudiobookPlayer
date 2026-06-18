@@ -523,48 +523,6 @@ class AudiobookPlayerWindow(QMainWindow):
 
         view_menu.addSeparator()
 
-        # Visualizer Toggle
-        self.visualizer_action = QAction(tr("menu.visualizer", "Visualizer"), self)
-        self.visualizer_action.setCheckable(True)
-        self.visualizer_action.setChecked(self.show_visualizer)
-        self.visualizer_action.triggered.connect(self.toggle_visualizer)
-        view_menu.addAction(self.visualizer_action)
-
-        # Show Nesting Lines Toggle
-        self.nesting_lines_action = QAction(tr("menu.show_nesting_lines"), self)
-        self.nesting_lines_action.setCheckable(True)
-        self.nesting_lines_action.setChecked(self.show_nesting_lines)
-        self.nesting_lines_action.triggered.connect(self.toggle_nesting_lines)
-        view_menu.addAction(self.nesting_lines_action)
-
-        # Show Detailed Info Toggle
-        self.detailed_info_action = QAction(tr("menu.show_detailed_info"), self)
-        self.detailed_info_action.setCheckable(True)
-        self.detailed_info_action.setChecked(self.show_detailed_info)
-        self.detailed_info_action.triggered.connect(self.toggle_detailed_info)
-        view_menu.addAction(self.detailed_info_action)
-
-        # Show Status Triangle Toggle
-        self.show_status_triangle_action = QAction(tr("menu.show_status_triangle"), self)
-        self.show_status_triangle_action.setCheckable(True)
-        self.show_status_triangle_action.setChecked(self.show_status_triangle)
-        self.show_status_triangle_action.triggered.connect(self.toggle_status_triangle)
-        view_menu.addAction(self.show_status_triangle_action)
-
-        # Show Status Bar Toggle
-        self.statusbar_action = QAction(tr("menu.show_statusbar"), self)
-        self.statusbar_action.setCheckable(True)
-        self.statusbar_action.setChecked(self.show_statusbar)
-        self.statusbar_action.triggered.connect(self.toggle_statusbar)
-        view_menu.addAction(self.statusbar_action)
-
-        # Remember Folder View per Filter Toggle
-        self.remember_filter_folders_action = QAction(tr("menu.remember_filter_folders"), self)
-        self.remember_filter_folders_action.setCheckable(True)
-        self.remember_filter_folders_action.setChecked(self.remember_filter_folders)
-        self.remember_filter_folders_action.triggered.connect(self.toggle_remember_filter_folders)
-        view_menu.addAction(self.remember_filter_folders_action)
-
         # Minimal Interface Toggle
         self.minimal_interface_action = QAction(tr("menu.minimal_interface"), self)
         self.minimal_interface_action.setCheckable(True)
@@ -583,27 +541,31 @@ class AudiobookPlayerWindow(QMainWindow):
         self.always_on_top_action.triggered.connect(self.toggle_always_on_top)
         view_menu.addAction(self.always_on_top_action)
 
-        # Theme Selection
-        theme_menu = view_menu.addMenu(tr("menu.theme"))
-        self.theme_actions = {}
-        for theme_id, theme_name in [("dark", "Dark Mint"), ("miku", "Dark Pink")]:
-            action = QAction(theme_name, self)
-            action.setCheckable(True)
-            action.setChecked(self.current_theme == theme_id)
-            action.triggered.connect(lambda checked, t=theme_id: self.change_theme(t))
-            theme_menu.addAction(action)
-            self.theme_actions[theme_id] = action
+        # Define actions for settings compatibility and tests (not added to View menu)
+        self.visualizer_action = QAction(tr("menu.visualizer", "Visualizer"), self)
+        self.visualizer_action.setCheckable(True)
+        self.visualizer_action.setChecked(self.show_visualizer)
+        self.visualizer_action.triggered.connect(self.toggle_visualizer)
 
-        theme_menu.addSeparator()
+        self.nesting_lines_action = QAction(tr("menu.show_nesting_lines"), self)
+        self.nesting_lines_action.setCheckable(True)
+        self.nesting_lines_action.setChecked(self.show_nesting_lines)
+        self.nesting_lines_action.triggered.connect(self.toggle_nesting_lines)
 
-        # CSS Refresh Action (Nested in Theme menu)
-        reload_styles_action = QAction(tr("menu.reload_styles"), self)
-        reload_styles_action.setIcon(get_icon("menu_reload"))
-        reload_styles_action.setShortcut("Ctrl+Q")
-        reload_styles_action.triggered.connect(self.reload_styles)
-        theme_menu.addAction(reload_styles_action)
+        self.show_status_triangle_action = QAction(tr("menu.show_status_triangle"), self)
+        self.show_status_triangle_action.setCheckable(True)
+        self.show_status_triangle_action.setChecked(self.show_status_triangle)
+        self.show_status_triangle_action.triggered.connect(self.toggle_status_triangle)
 
-        view_menu.addSeparator()
+        self.statusbar_action = QAction(tr("menu.show_statusbar"), self)
+        self.statusbar_action.setCheckable(True)
+        self.statusbar_action.setChecked(self.show_statusbar)
+        self.statusbar_action.triggered.connect(self.toggle_statusbar)
+
+        self.remember_filter_folders_action = QAction(tr("menu.remember_filter_folders"), self)
+        self.remember_filter_folders_action.setCheckable(True)
+        self.remember_filter_folders_action.setChecked(self.remember_filter_folders)
+        self.remember_filter_folders_action.triggered.connect(self.toggle_remember_filter_folders)
 
         # Appearance Settings Action
         self.appearance_action = QAction(tr("appearance.title"), self)
@@ -642,24 +604,11 @@ class AudiobookPlayerWindow(QMainWindow):
         # Propagate translation updates across the entire interface
         self.update_all_texts()
 
-    def change_theme(self, theme: str):
-        """Update the application's visual theme and immediately refresh all UI components"""
-        if self.current_theme == theme:
-            return
-
-        self.current_theme = theme
-        self.save_settings()
-
-        # Synchronize checkmarks in the theme menu
-        for t, action in self.theme_actions.items():
-            action.setChecked(t == theme)
-
-        # Apply the new theme
-        self.reload_styles()
-
     def toggle_visualizer(self, checked: bool):
         """Toggle the audio spectrum visualization on the play button"""
         self.show_visualizer = checked
+        if hasattr(self, "visualizer_action"):
+            self.visualizer_action.setChecked(checked)
         if hasattr(self, "player_widget"):
             self.player_widget.play_btn.visualizer_enabled = checked
             self.player_widget.play_btn.update()
@@ -668,24 +617,20 @@ class AudiobookPlayerWindow(QMainWindow):
     def toggle_nesting_lines(self, checked: bool):
         """Toggle the visibility of nesting lines in the library tree"""
         self.show_nesting_lines = checked
+        if hasattr(self, "nesting_lines_action"):
+            self.nesting_lines_action.setChecked(checked)
         if hasattr(self, "delegate") and self.delegate:
             self.delegate.show_nesting_lines = checked
             if hasattr(self, "library_widget"):
                 self.library_widget.tree.viewport().update()
         self.save_settings()
 
-    def toggle_detailed_info(self, checked: bool):
-        """Toggle the visibility of detailed info row in the library tree"""
-        self.show_detailed_info = checked
-        if hasattr(self, "delegate") and self.delegate:
-            self.delegate.show_detailed_info = checked
-            if hasattr(self, "library_widget"):
-                self.library_widget.tree.viewport().update()
-        self.save_settings()
 
     def toggle_status_triangle(self, checked: bool):
         """Toggle the visibility of the book status corner triangle in the library tree"""
         self.show_status_triangle = checked
+        if hasattr(self, "show_status_triangle_action"):
+            self.show_status_triangle_action.setChecked(checked)
         if hasattr(self, "delegate") and self.delegate:
             self.delegate.show_status_triangle = checked
             if hasattr(self, "library_widget"):
@@ -695,6 +640,8 @@ class AudiobookPlayerWindow(QMainWindow):
     def toggle_minimal_interface(self, enabled: bool):
         """Toggle visibility of library and playlist for a minimized interface, resizing window accordingly"""
         self.minimal_interface = enabled
+        if hasattr(self, "minimal_interface_action"):
+            self.minimal_interface_action.setChecked(enabled)
 
         if enabled:
             # Save current geometry and splitter state before minimizing
@@ -745,6 +692,8 @@ class AudiobookPlayerWindow(QMainWindow):
     def toggle_always_on_top(self, enabled: bool):
         """Toggle the 'Always on Top' window state using standard Qt methods"""
         self.always_on_top = enabled
+        if hasattr(self, "always_on_top_action"):
+            self.always_on_top_action.setChecked(enabled)
 
         # Changing window flags at runtime in Qt usually requires re-showing the window
         # to ensure the desktop environment/window manager applies the change.
@@ -2232,6 +2181,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 default_text=default_text,
                 current_border=getattr(self, "border_color", ""),
                 default_border=default_border,
+                show_detailed_info=self.show_detailed_info,
                 show_info_progress=self.show_info_progress,
                 show_info_file_count=self.show_info_file_count,
                 show_info_duration=self.show_info_duration,
@@ -2239,7 +2189,12 @@ class AudiobookPlayerWindow(QMainWindow):
                 show_info_technical=self.show_info_technical,
                 show_info_year_written=self.show_info_year_written,
                 show_info_year_recorded=self.show_info_year_recorded,
-                show_info_language=self.show_info_language
+                show_info_language=self.show_info_language,
+                show_visualizer=self.show_visualizer,
+                show_nesting_lines=self.show_nesting_lines,
+                show_status_triangle=self.show_status_triangle,
+                show_statusbar=self.show_statusbar,
+                remember_filter_folders=self.remember_filter_folders
             )
             
             self.appearance_dialog = dialog
@@ -2273,10 +2228,11 @@ class AudiobookPlayerWindow(QMainWindow):
                 overrides["border"] = border_hex
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
             
-            # Apply temporary info checkbox settings if previewing
+            # Apply temporary settings if previewing
             if hasattr(self, "appearance_dialog") and self.appearance_dialog:
                 settings = self.appearance_dialog.get_info_settings()
                 if self.delegate:
+                    self.delegate.show_detailed_info = settings["show_detailed_info"]
                     self.delegate.show_info_progress = settings["show_info_progress"]
                     self.delegate.show_info_file_count = settings["show_info_file_count"]
                     self.delegate.show_info_duration = settings["show_info_duration"]
@@ -2285,6 +2241,29 @@ class AudiobookPlayerWindow(QMainWindow):
                     self.delegate.show_info_year_written = settings["show_info_year_written"]
                     self.delegate.show_info_year_recorded = settings["show_info_year_recorded"]
                     self.delegate.show_info_language = settings["show_info_language"]
+                
+                # Interface settings preview
+                interface_settings = self.appearance_dialog.get_interface_settings()
+                
+                # Visualizer
+                if hasattr(self, "player_widget") and self.player_widget.play_btn.visualizer_enabled != interface_settings["show_visualizer"]:
+                    self.player_widget.play_btn.visualizer_enabled = interface_settings["show_visualizer"]
+                    self.player_widget.play_btn.update()
+                
+                # Nesting lines & status triangle
+                if self.delegate:
+                    self.delegate.show_nesting_lines = interface_settings["show_nesting_lines"]
+                    self.delegate.show_status_triangle = interface_settings["show_status_triangle"]
+                
+                # Status bar
+                if self.statusBar().isVisible() != interface_settings["show_statusbar"]:
+                    self.statusBar().setVisible(interface_settings["show_statusbar"])
+                
+                # Remember filter folders
+                if hasattr(self, "library_widget") and self.library_widget.remember_filter_folders != interface_settings["remember_filter_folders"]:
+                    self.library_widget.remember_filter_folders = interface_settings["remember_filter_folders"]
+                
+
 
             if self.delegate:
                 self.delegate.update_styles()
@@ -2313,6 +2292,7 @@ class AudiobookPlayerWindow(QMainWindow):
         
         if hasattr(self, "appearance_dialog") and self.appearance_dialog:
             settings = self.appearance_dialog.get_info_settings()
+            self.show_detailed_info = settings["show_detailed_info"]
             self.show_info_progress = settings["show_info_progress"]
             self.show_info_file_count = settings["show_info_file_count"]
             self.show_info_duration = settings["show_info_duration"]
@@ -2322,6 +2302,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.show_info_year_recorded = settings["show_info_year_recorded"]
             self.show_info_language = settings["show_info_language"]
             
+            self.save_setting("Library", "show_detailed_info", str(self.show_detailed_info))
             self.save_setting("Library", "show_info_progress", str(self.show_info_progress))
             self.save_setting("Library", "show_info_file_count", str(self.show_info_file_count))
             self.save_setting("Library", "show_info_duration", str(self.show_info_duration))
@@ -2332,6 +2313,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.save_setting("Library", "show_info_language", str(self.show_info_language))
             
             if self.delegate:
+                self.delegate.show_detailed_info = self.show_detailed_info
                 self.delegate.show_info_progress = self.show_info_progress
                 self.delegate.show_info_file_count = self.show_info_file_count
                 self.delegate.show_info_duration = self.show_info_duration
@@ -2340,6 +2322,35 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.delegate.show_info_year_written = self.show_info_year_written
                 self.delegate.show_info_year_recorded = self.show_info_year_recorded
                 self.delegate.show_info_language = self.show_info_language
+                
+            interface_settings = self.appearance_dialog.get_interface_settings()
+            
+
+                
+            if interface_settings["show_statusbar"] != self.show_statusbar:
+                self.toggle_statusbar(interface_settings["show_statusbar"])
+            else:
+                self.save_setting("Display", "show_statusbar", str(self.show_statusbar))
+                
+            if interface_settings["remember_filter_folders"] != self.remember_filter_folders:
+                self.toggle_remember_filter_folders(interface_settings["remember_filter_folders"])
+            else:
+                self.save_setting("Library", "remember_filter_folders", str(self.remember_filter_folders))
+
+            if interface_settings["show_nesting_lines"] != self.show_nesting_lines:
+                self.toggle_nesting_lines(interface_settings["show_nesting_lines"])
+            else:
+                self.save_setting("Library", "show_nesting_lines", str(self.show_nesting_lines))
+
+            if interface_settings["show_status_triangle"] != self.show_status_triangle:
+                self.toggle_status_triangle(interface_settings["show_status_triangle"])
+            else:
+                self.save_setting("Library", "show_status_triangle", str(self.show_status_triangle))
+
+            if interface_settings["show_visualizer"] != self.show_visualizer:
+                self.toggle_visualizer(interface_settings["show_visualizer"])
+            else:
+                self.save_setting("Player", "show_visualizer", str(self.show_visualizer))
                 
         self.reload_styles()
         if hasattr(self, "library_widget") and self.library_widget:

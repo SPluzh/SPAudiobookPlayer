@@ -545,6 +545,7 @@
     "text_label": "Цвет шрифта:",
     "border_label": "Цвет обводки кнопок:",
     "info_section_title": "Элементы строки инфо о книге",
+    "show_detailed_info": "Показывать строку сведений у книг",
     "info_progress": "Прогресс прослушивания",
     "info_files": "Количество файлов",
     "info_duration": "Общая длительность",
@@ -552,6 +553,9 @@
     "info_technical": "Технические данные (кодек/битрейт)",
     "info_year_written": "Год написания",
     "info_year_recorded": "Год записи",
-    "info_language": "Язык книги"
+    "info_language": "Язык книги",
+    "tab_colors": "Настройки окна",
+    "tab_info": "Настройки списка библиотеки",
+    "tab_interface": "Настройки плеера"
   }
 }

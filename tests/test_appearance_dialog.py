@@ -219,6 +219,7 @@ def test_appearance_dialog_info_checkboxes():
 
     dialog = AppearanceDialog(
         parent=None,
+        show_detailed_info=True,
         show_info_progress=True,
         show_info_file_count=False,
         show_info_duration=True,
@@ -230,6 +231,7 @@ def test_appearance_dialog_info_checkboxes():
     )
 
     # 1. Verify initial checkbox states (widgets and internal properties)
+    assert dialog.current_show_detailed_info is True
     assert dialog.current_show_info_progress is True
     assert dialog.current_show_info_file_count is False
     assert dialog.current_show_info_duration is True
@@ -239,6 +241,7 @@ def test_appearance_dialog_info_checkboxes():
     assert dialog.current_show_info_year_recorded is True
     assert dialog.current_show_info_language is False
 
+    assert dialog.chk_show_detailed_info.isChecked() is True
     assert dialog.chk_progress.isChecked() is True
     assert dialog.chk_files.isChecked() is False
     assert dialog.chk_duration.isChecked() is True
@@ -248,6 +251,10 @@ def test_appearance_dialog_info_checkboxes():
     assert dialog.chk_year_recorded.isChecked() is True
     assert dialog.chk_language.isChecked() is False
 
+    # Child checkboxes should be enabled
+    assert dialog.chk_progress.isEnabled() is True
+    assert dialog.chk_files.isEnabled() is True
+
     # 2. Modify checkboxes and check updates
     dialog.chk_progress.setChecked(False)
     dialog.chk_files.setChecked(True)
@@ -255,15 +262,26 @@ def test_appearance_dialog_info_checkboxes():
     assert dialog.current_show_info_progress is False
     assert dialog.current_show_info_file_count is True
 
-    # 3. Test reset to default (should make all checkboxes True)
+    # Toggle master checkbox off and verify child checkboxes become disabled
+    dialog.chk_show_detailed_info.setChecked(False)
+    assert dialog.current_show_detailed_info is False
+    assert dialog.chk_progress.isEnabled() is False
+    assert dialog.chk_files.isEnabled() is False
+
+    # 3. Test reset to default (should make all checkboxes True and enabled)
     dialog.reset_to_default()
+    assert dialog.current_show_detailed_info is True
     assert dialog.current_show_info_progress is True
     assert dialog.current_show_info_file_count is True
+    assert dialog.chk_show_detailed_info.isChecked() is True
     assert dialog.chk_progress.isChecked() is True
     assert dialog.chk_files.isChecked() is True
+    assert dialog.chk_progress.isEnabled() is True
+    assert dialog.chk_files.isEnabled() is True
 
     # 4. Test reject restores original constructor values
     dialog.reject()
+    assert dialog.current_show_detailed_info is True
     assert dialog.current_show_info_progress is True
     assert dialog.current_show_info_file_count is False
     assert dialog.current_show_info_duration is True
@@ -272,3 +290,55 @@ def test_appearance_dialog_info_checkboxes():
     assert dialog.current_show_info_year_written is False
     assert dialog.current_show_info_year_recorded is True
     assert dialog.current_show_info_language is False
+    assert dialog.chk_show_detailed_info.isChecked() is True
+    assert dialog.chk_progress.isEnabled() is True
+
+
+def test_appearance_dialog_interface_checkboxes():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        show_visualizer=True,
+        show_nesting_lines=False,
+        show_status_triangle=True,
+        show_statusbar=False,
+        remember_filter_folders=True
+    )
+
+    # 1. Verify initial checkbox states
+    assert dialog.current_show_visualizer is True
+    assert dialog.current_show_nesting_lines is False
+    assert dialog.current_show_status_triangle is True
+    assert dialog.current_show_statusbar is False
+    assert dialog.current_remember_filter_folders is True
+
+    assert dialog.chk_visualizer.isChecked() is True
+    assert dialog.chk_nesting_lines.isChecked() is False
+    assert dialog.chk_status_triangle.isChecked() is True
+    assert dialog.chk_statusbar.isChecked() is False
+    assert dialog.chk_remember_filter_folders.isChecked() is True
+
+    # 2. Modify checkboxes and check updates
+    dialog.chk_visualizer.setChecked(False)
+    dialog.chk_nesting_lines.setChecked(True)
+    
+    assert dialog.current_show_visualizer is False
+    assert dialog.current_show_nesting_lines is True
+
+    # 3. Test reset to default
+    dialog.reset_to_default()
+    assert dialog.current_show_visualizer is True
+    assert dialog.current_show_nesting_lines is True
+    assert dialog.current_show_status_triangle is True
+    assert dialog.current_show_statusbar is True
+    assert dialog.current_remember_filter_folders is True
+
+    # 4. Test reject restores original constructor values
+    dialog.chk_visualizer.setChecked(False)
+    dialog.reject()
+    assert dialog.current_show_visualizer is True
+    assert dialog.current_show_nesting_lines is False
+    assert dialog.current_show_status_triangle is True
+    assert dialog.current_show_statusbar is False
+    assert dialog.current_remember_filter_folders is True
