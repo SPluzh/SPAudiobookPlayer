@@ -528,5 +528,21 @@
     "dec_short": "दिस",
     "completed_on": "पूर्ण: {date}",
     "started_on": "शुरू: {date}"
+  },
+  "appearance": {
+    "title": "दिखावट सेटिंग्स",
+    "button_tooltip": "दिखावट सेटिंग्स",
+    "accent_group": "रंग",
+    "accent_label": "एक्सेन्ट रंग:",
+    "window_label": "विंडो का रंग:",
+    "bg_dark_label": "द्वितीयक पृष्ठभूमि:",
+    "custom_label": "कस्टम:",
+    "picker_title": "रंग चुनें",
+    "pick_color": "रंग चुनने के लिए क्लिक करें",
+    "default_btn": "डिफ़ॉल्ट",
+    "save_btn": "सहेजें",
+    "cancel_btn": "रद्द करें",
+    "text_label": "फ़ॉन्ट का रंग:",
+    "border_label": "सीमा का रंग:"
   }
 }

@@ -528,5 +528,21 @@
     "dec_short": "Th12",
     "completed_on": "Hoàn thành: {date}",
     "started_on": "Bắt đầu: {date}"
+  },
+  "appearance": {
+    "title": "Cài đặt Giao diện",
+    "button_tooltip": "Cài đặt Giao diện",
+    "accent_group": "Màu sắc",
+    "accent_label": "Màu Nhấn:",
+    "window_label": "Màu Cửa sổ:",
+    "bg_dark_label": "Nền Phụ:",
+    "custom_label": "Tùy chỉnh:",
+    "picker_title": "Chọn Màu",
+    "pick_color": "Nhấp để chọn màu",
+    "default_btn": "Mặc định",
+    "save_btn": "Lưu",
+    "cancel_btn": "Hủy",
+    "text_label": "Màu phông chữ:",
+    "border_label": "Màu viền:"
   }
 }

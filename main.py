@@ -585,6 +585,14 @@ class AudiobookPlayerWindow(QMainWindow):
         reload_styles_action.triggered.connect(self.reload_styles)
         theme_menu.addAction(reload_styles_action)
 
+        view_menu.addSeparator()
+
+        # Appearance Settings Action
+        self.appearance_action = QAction(tr("appearance.title"), self)
+        self.appearance_action.setIcon(get_icon("settings"))
+        self.appearance_action.triggered.connect(self.show_appearance_settings)
+        view_menu.addAction(self.appearance_action)
+
         help_menu = menubar.addMenu(tr("menu.help"))
 
         # Check for Updates
@@ -963,6 +971,11 @@ class AudiobookPlayerWindow(QMainWindow):
         self.minimal_width = config.getint("Display", "minimal_width", fallback=450)
         self.minimal_height = config.getint("Display", "minimal_height", fallback=270)
         self.current_theme = config.get("Display", "theme", fallback="dark")
+        self.accent_color = config.get("Appearance", "accent_color", fallback="")
+        self.window_color = config.get("Appearance", "window_color", fallback="")
+        self.bg_dark_color = config.get("Appearance", "bg_dark_color", fallback="")
+        self.text_color = config.get("Appearance", "text_color", fallback="")
+        self.border_color = config.get("Appearance", "border_color", fallback="")
 
         # Filesystem Path Configurations
         self.default_path = config.get("Paths", "default_path", fallback="")
@@ -1247,6 +1260,37 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Display"]["theme"] = self.current_theme
         config["Display"]["always_on_top"] = str(self.always_on_top)
         config["Display"]["show_statusbar"] = str(self.show_statusbar)
+
+        # Appearance Persistence
+        if "Appearance" not in config:
+            config["Appearance"] = {}
+        if getattr(self, "accent_color", ""):
+            config["Appearance"]["accent_color"] = self.accent_color
+        else:
+            if "Appearance" in config and "accent_color" in config["Appearance"]:
+                del config["Appearance"]["accent_color"]
+        if getattr(self, "window_color", ""):
+            config["Appearance"]["window_color"] = self.window_color
+        else:
+            if "Appearance" in config and "window_color" in config["Appearance"]:
+                del config["Appearance"]["window_color"]
+        if getattr(self, "bg_dark_color", ""):
+            config["Appearance"]["bg_dark_color"] = self.bg_dark_color
+        else:
+            if "Appearance" in config and "bg_dark_color" in config["Appearance"]:
+                del config["Appearance"]["bg_dark_color"]
+        if getattr(self, "text_color", ""):
+            config["Appearance"]["text_color"] = self.text_color
+        else:
+            if "Appearance" in config and "text_color" in config["Appearance"]:
+                del config["Appearance"]["text_color"]
+        if getattr(self, "border_color", ""):
+            config["Appearance"]["border_color"] = self.border_color
+        else:
+            if "Appearance" in config and "border_color" in config["Appearance"]:
+                del config["Appearance"]["border_color"]
+        if "Appearance" in config and not config["Appearance"]:
+            del config["Appearance"]
 
         # Filesystem Path Configs
         if "Paths" not in config:
@@ -2105,7 +2149,19 @@ class AudiobookPlayerWindow(QMainWindow):
         try:
             from styles import StyleManager
 
-            StyleManager.apply_style(QApplication.instance(), theme=self.current_theme)
+            overrides = {}
+            if getattr(self, "accent_color", ""):
+                overrides["accent"] = self.accent_color
+            if getattr(self, "window_color", ""):
+                overrides["bg-main"] = self.window_color
+            if getattr(self, "bg_dark_color", ""):
+                overrides["bg-dark"] = self.bg_dark_color
+            if getattr(self, "text_color", ""):
+                overrides["text"] = self.text_color
+            if getattr(self, "border_color", ""):
+                overrides["border"] = self.border_color
+
+            StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
 
             # Synchronize item rendering delegates
             if self.delegate:
@@ -2117,6 +2173,109 @@ class AudiobookPlayerWindow(QMainWindow):
             self.statusBar().showMessage(tr("status.styles_reloaded"))
         except Exception as e:
             self.statusBar().showMessage(trf("status.styles_error", error=str(e)))
+
+    def show_appearance_settings(self):
+        """Display the appearance settings dialog to configure accent color, window background color, and preview changes live"""
+        try:
+            from appearance_dialog import AppearanceDialog
+            from styles import StyleManager
+            
+            default_accent = StyleManager.get_default_vars(self.current_theme).get("accent", "#018574")
+            default_window = StyleManager.get_default_vars(self.current_theme).get("bg-main", "#444444")
+            default_bg_dark = StyleManager.get_default_vars(self.current_theme).get("bg-dark", "#373737")
+            default_text = StyleManager.get_default_vars(self.current_theme).get("text", "#eaeaea")
+            default_border = StyleManager.get_default_vars(self.current_theme).get("border", "#808080")
+            
+            dialog = AppearanceDialog(
+                self,
+                current_accent=getattr(self, "accent_color", ""),
+                default_accent=default_accent,
+                current_window=getattr(self, "window_color", ""),
+                default_window=default_window,
+                current_bg_dark=getattr(self, "bg_dark_color", ""),
+                default_bg_dark=default_bg_dark,
+                current_text=getattr(self, "text_color", ""),
+                default_text=default_text,
+                current_border=getattr(self, "border_color", ""),
+                default_border=default_border
+            )
+            
+            dialog.appearance_preview.connect(self.apply_appearance_preview)
+            dialog.appearance_saved.connect(self.save_appearance_colors)
+            
+            # Keep compatibility connects if dialog is ever opened elsewhere using old signals
+            dialog.accent_preview.connect(self.apply_accent_preview)
+            dialog.accent_saved.connect(self.save_accent_color)
+            
+            dialog.exec()
+        except Exception as e:
+            print(f"Error showing appearance settings: {e}")
+
+    def apply_appearance_preview(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = ""):
+        """Apply temporary accent, window background, secondary background, font, and border color overrides for live previewing"""
+        try:
+            from styles import StyleManager
+            overrides = {}
+            if accent_hex:
+                overrides["accent"] = accent_hex
+            if window_hex:
+                overrides["bg-main"] = window_hex
+            if bg_dark_hex:
+                overrides["bg-dark"] = bg_dark_hex
+            if text_hex:
+                overrides["text"] = text_hex
+            if border_hex:
+                overrides["border"] = border_hex
+            StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
+            
+            if self.delegate:
+                self.delegate.update_styles()
+                
+            StyleManager.refresh_cache()
+            self.update()
+        except Exception as e:
+            print(f"Error applying appearance preview: {e}")
+
+    def save_appearance_colors(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = ""):
+        """Save the chosen accent, window, secondary background, font, and border colors to settings.ini and apply them permanently"""
+        self.accent_color = accent_hex
+        self.window_color = window_hex
+        self.bg_dark_color = bg_dark_hex
+        self.text_color = text_hex
+        self.border_color = border_hex
+        self.save_setting("Appearance", "accent_color", accent_hex)
+        self.save_setting("Appearance", "window_color", window_hex)
+        self.save_setting("Appearance", "bg_dark_color", bg_dark_hex)
+        self.save_setting("Appearance", "text_color", text_hex)
+        self.save_setting("Appearance", "border_color", border_hex)
+        self.reload_styles()
+
+    def apply_accent_preview(self, color_hex: str):
+        """Apply a temporary accent color override for live previewing (backward compatibility)"""
+        try:
+            from styles import StyleManager
+            overrides = {}
+            if color_hex:
+                overrides["accent"] = color_hex
+            if getattr(self, "window_color", ""):
+                overrides["bg-main"] = self.window_color
+            if getattr(self, "bg_dark_color", ""):
+                overrides["bg-dark"] = self.bg_dark_color
+            StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
+            
+            if self.delegate:
+                self.delegate.update_styles()
+                
+            StyleManager.refresh_cache()
+            self.update()
+        except Exception as e:
+            print(f"Error applying accent preview: {e}")
+
+    def save_accent_color(self, color_hex: str):
+        """Save the chosen accent color to settings.ini and apply it permanently (backward compatibility)"""
+        self.accent_color = color_hex
+        self.save_setting("Appearance", "accent_color", color_hex)
+        self.reload_styles()
 
     def show_settings(self):
         """Display the configuration dialog for managing library paths, system binaries, and data preferences"""
@@ -2398,10 +2557,15 @@ class AudiobookPlayerWindow(QMainWindow):
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding="utf-8")
 
-        if section not in config:
-            config[section] = {}
-
-        config[section][key] = value
+        if not value:
+            if section in config and key in config[section]:
+                del config[section][key]
+                if not config[section]:
+                    del config[section]
+        else:
+            if section not in config:
+                config[section] = {}
+            config[section][key] = value
 
         with open(self.config_file, "w", encoding="utf-8") as f:
             config.write(f)
@@ -2513,12 +2677,33 @@ def main():
         config_dir = get_base_path() / "resources"
         config_file = config_dir / "settings.ini"
         current_theme = "dark"
+        accent_color = ""
+        window_color = ""
+        bg_dark_color = ""
+        text_color = ""
+        border_color = ""
         if config_file.exists():
             config.read(config_file, encoding="utf-8")
             current_theme = config.get("Display", "theme", fallback="dark")
+            accent_color = config.get("Appearance", "accent_color", fallback="")
+            window_color = config.get("Appearance", "window_color", fallback="")
+            bg_dark_color = config.get("Appearance", "bg_dark_color", fallback="")
+            text_color = config.get("Appearance", "text_color", fallback="")
+            border_color = config.get("Appearance", "border_color", fallback="")
 
         # Apply Stylesheet
-        StyleManager.apply_style(app, theme=current_theme)
+        overrides = {}
+        if accent_color:
+            overrides["accent"] = accent_color
+        if window_color:
+            overrides["bg-main"] = window_color
+        if bg_dark_color:
+            overrides["bg-dark"] = bg_dark_color
+        if text_color:
+            overrides["text"] = text_color
+        if border_color:
+            overrides["border"] = border_color
+        StyleManager.apply_style(app, theme=current_theme, overrides=overrides)
 
         print("Initializing Style Manager...")
         StyleManager.init(app)

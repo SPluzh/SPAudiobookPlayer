@@ -528,5 +528,21 @@
     "dec_short": "Дек",
     "completed_on": "Завершена: {date}",
     "started_on": "Начата: {date}"
+  },
+  "appearance": {
+    "title": "Настройки внешнего вида",
+    "button_tooltip": "Настройки вида",
+    "accent_group": "Цвета",
+    "accent_label": "Акцентный цвет:",
+    "window_label": "Цвет окна:",
+    "bg_dark_label": "Вторичный фон:",
+    "custom_label": "Свой:",
+    "picker_title": "Выбор цвета",
+    "pick_color": "Нажмите, чтобы выбрать цвет",
+    "default_btn": "По умолчанию",
+    "save_btn": "Сохранить",
+    "cancel_btn": "Отмена",
+    "text_label": "Цвет шрифта:",
+    "border_label": "Цвет обводки кнопок:"
   }
 }

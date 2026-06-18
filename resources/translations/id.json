@@ -528,5 +528,21 @@
     "dec_short": "Des",
     "completed_on": "Selesai: {date}",
     "started_on": "Mulai: {date}"
+  },
+  "appearance": {
+    "title": "Pengaturan Tampilan",
+    "button_tooltip": "Pengaturan Tampilan",
+    "accent_group": "Warna",
+    "accent_label": "Warna Aksen:",
+    "window_label": "Warna Jendela:",
+    "bg_dark_label": "Latar Belakang Sekunder:",
+    "custom_label": "Kustom:",
+    "picker_title": "Pilih Warna",
+    "pick_color": "Klik untuk memilih warna",
+    "default_btn": "Default",
+    "save_btn": "Simpan",
+    "cancel_btn": "Batal",
+    "text_label": "Warna Font:",
+    "border_label": "Warna Batas:"
   }
 }

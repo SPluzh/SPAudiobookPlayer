@@ -528,5 +528,21 @@
     "dec_short": "ธ.ค.",
     "completed_on": "เสร็จสิ้น: {date}",
     "started_on": "เริ่มต้น: {date}"
+  },
+  "appearance": {
+    "title": "การตั้งค่ารูปลักษณ์",
+    "button_tooltip": "การตั้งค่ารูปลักษณ์",
+    "accent_group": "สี",
+    "accent_label": "สีเน้น:",
+    "window_label": "สีหน้าต่าง:",
+    "bg_dark_label": "พื้นหลังรอง:",
+    "custom_label": "กำหนดเอง:",
+    "picker_title": "เลือกสี",
+    "pick_color": "คลิกเพื่อเลือกสี",
+    "default_btn": "ค่าเริ่มต้น",
+    "save_btn": "บันทึก",
+    "cancel_btn": "ยกเลิก",
+    "text_label": "สีตัวอักษร:",
+    "border_label": "สีขอบ:"
   }
 }

@@ -528,5 +528,21 @@
     "dec_short": "Dec",
     "completed_on": "Completed: {date}",
     "started_on": "Started: {date}"
+  },
+  "appearance": {
+    "title": "Appearance Settings",
+    "button_tooltip": "Appearance Settings",
+    "accent_group": "Colors",
+    "accent_label": "Accent Color:",
+    "window_label": "Window Color:",
+    "bg_dark_label": "Secondary BG:",
+    "custom_label": "Custom:",
+    "picker_title": "Pick Color",
+    "pick_color": "Click to pick a color",
+    "default_btn": "Default",
+    "save_btn": "Save",
+    "cancel_btn": "Cancel",
+    "text_label": "Font Color:",
+    "border_label": "Border Color:"
   }
 }

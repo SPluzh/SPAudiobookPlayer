@@ -528,5 +528,21 @@
     "dec_short": "Dic",
     "completed_on": "Completado: {date}",
     "started_on": "Iniciada: {date}"
+  },
+  "appearance": {
+    "title": "Ajustes de apariencia",
+    "button_tooltip": "Ajustes de apariencia",
+    "accent_group": "Colores",
+    "accent_label": "Color de acento:",
+    "window_label": "Color de ventana:",
+    "bg_dark_label": "Fondo secundario:",
+    "custom_label": "Personalizado:",
+    "picker_title": "Elegir color",
+    "pick_color": "Haga clic para elegir un color",
+    "default_btn": "Predeterminado",
+    "save_btn": "Guardar",
+    "cancel_btn": "Cancelar",
+    "text_label": "Color de fuente:",
+    "border_label": "Color de borde:"
   }
 }

@@ -528,5 +528,21 @@
     "dec_short": "ديس",
     "completed_on": "اكتمل: {date}",
     "started_on": "بدأت: {date}"
+  },
+  "appearance": {
+    "title": "إعدادات المظهر",
+    "button_tooltip": "إعدادات المظهر",
+    "accent_group": "الألوان",
+    "accent_label": "اللون المميز:",
+    "window_label": "لون النافذة:",
+    "bg_dark_label": "الخلفية الثانوية:",
+    "custom_label": "مخصص:",
+    "picker_title": "تحديد اللون",
+    "pick_color": "انقر لاختيار لون",
+    "default_btn": "الافتراضي",
+    "save_btn": "حفظ",
+    "cancel_btn": "إلغاء",
+    "text_label": "لون الخط:",
+    "border_label": "لون الحدود:"
   }
 }

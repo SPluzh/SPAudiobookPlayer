@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.10]
+- **UI**: Added an Appearance Settings dialog to customize interface colors (accent, background, text, and borders) with live preview.
+
 ## [1.7.9]
 - **Settings**: Clearing the database now also deletes listening statistics, session history, bookmarks, and tags.
 

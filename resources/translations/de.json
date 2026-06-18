@@ -528,5 +528,21 @@
     "dec_short": "Dez",
     "completed_on": "Abgeschlossen: {date}",
     "started_on": "Gestartet: {date}"
+  },
+  "appearance": {
+    "title": "Darstellungseinstellungen",
+    "button_tooltip": "Darstellungseinstellungen",
+    "accent_group": "Farben",
+    "accent_label": "Akzentfarbe:",
+    "window_label": "Fensterfarbe:",
+    "bg_dark_label": "Sekundärer Hintergrund:",
+    "custom_label": "Benutzerdefiniert:",
+    "picker_title": "Farbe wählen",
+    "pick_color": "Klicken, um eine Farbe auszuwählen",
+    "default_btn": "Standard",
+    "save_btn": "Speichern",
+    "cancel_btn": "Abbrechen",
+    "text_label": "Schriftfarbe:",
+    "border_label": "Rahmenfarbe:"
   }
 }

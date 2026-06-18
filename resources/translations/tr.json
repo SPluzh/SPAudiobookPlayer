@@ -528,5 +528,21 @@
     "dec_short": "Ara",
     "completed_on": "Tamamlandı: {date}",
     "started_on": "Başlandı: {date}"
+  },
+  "appearance": {
+    "title": "Görünüm Ayarları",
+    "button_tooltip": "Görünüm Ayarları",
+    "accent_group": "Renkler",
+    "accent_label": "Vurgu Rengi:",
+    "window_label": "Pencere Rengi:",
+    "bg_dark_label": "İkincil Arka Plan:",
+    "custom_label": "Özel:",
+    "picker_title": "Renk Seç",
+    "pick_color": "Bir renk seçmek için tıklayın",
+    "default_btn": "Varsayılan",
+    "save_btn": "Kaydet",
+    "cancel_btn": "İptal",
+    "text_label": "Yazı Tipi Rengi:",
+    "border_label": "Kenarlık Rengi:"
   }
 }

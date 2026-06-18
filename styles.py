@@ -33,7 +33,7 @@ class StyleManager:
     ]
 
     @staticmethod
-    def _process_qss(qss: str) -> str:
+    def _process_qss(qss: str, overrides: dict = None) -> str:
         """
         Process QSS variables defined at the top of the file.
         Syntax: /* @var_name: #value */
@@ -43,6 +43,64 @@ class StyleManager:
         var_pattern = re.compile(r'/\*\s*@([\w-]+):\s*([^;*]+?)\s*\*/')
         vars = dict(var_pattern.findall(qss))
         
+        if overrides:
+            # If overrides has "accent", let's automatically generate "accent-dark" and "accent-light"
+            # if they are not explicitly in overrides, based on the overridden "accent"
+            overrides = dict(overrides)
+            if "accent" in overrides and overrides["accent"]:
+                acc_color = QColor(overrides["accent"])
+                if acc_color.isValid():
+                    if "accent-dark" not in overrides:
+                        overrides["accent-dark"] = acc_color.darker(130).name()
+                    if "accent-light" not in overrides:
+                        overrides["accent-light"] = acc_color.lighter(130).name()
+            
+            # Dynamically compute harmonized background shades when bg-main is overridden
+            if "bg-main" in overrides and overrides["bg-main"]:
+                bg_color = QColor(overrides["bg-main"])
+                if bg_color.isValid():
+                    if "bg-dark" not in overrides or not overrides["bg-dark"]:
+                        overrides["bg-dark"] = bg_color.darker(120).name()
+                    if "bg-hover" not in overrides:
+                        overrides["bg-hover"] = bg_color.lighter(110).name()
+                    if "bg-focus" not in overrides:
+                        overrides["bg-focus"] = bg_color.darker(105).name()
+                    if "bg-disabled" not in overrides:
+                        overrides["bg-disabled"] = bg_color.darker(140).name()
+                    if "bg-tabbar" not in overrides:
+                        overrides["bg-tabbar"] = bg_color.darker(150).name()
+                    if "bg-black" not in overrides:
+                        overrides["bg-black"] = bg_color.darker(220).name()
+            
+            # Dynamically compute harmonized text shades when text is overridden
+            if "text" in overrides and overrides["text"]:
+                text_color = QColor(overrides["text"])
+                if text_color.isValid():
+                    bg_color_str = overrides.get("bg-main") or vars.get("bg-main") or "#444444"
+                    bg_color = QColor(bg_color_str)
+                    if bg_color.isValid():
+                        is_light = text_color.lightness() > bg_color.lightness()
+                        
+                        def lerp_color(c1: QColor, c2: QColor, t: float) -> QColor:
+                            r = int(c1.red() * (1 - t) + c2.red() * t)
+                            g = int(c1.green() * (1 - t) + c2.green() * t)
+                            b = int(c1.blue() * (1 - t) + c2.blue() * t)
+                            return QColor(r, g, b)
+                        
+                        if "text-bright" not in overrides:
+                            target = QColor("#ffffff") if is_light else QColor("#000000")
+                            overrides["text-bright"] = lerp_color(text_color, target, 0.5).name()
+                        if "text-dim" not in overrides:
+                            overrides["text-dim"] = lerp_color(text_color, bg_color, 0.45).name()
+                        if "text-muted" not in overrides:
+                            overrides["text-muted"] = lerp_color(text_color, bg_color, 0.6).name()
+                        if "text-disabled" not in overrides:
+                            overrides["text-disabled"] = lerp_color(text_color, bg_color, 0.75).name()
+                        if "text-delegate" not in overrides:
+                            overrides["text-delegate"] = lerp_color(text_color, bg_color, 0.15).name()
+            
+            vars.update(overrides)
+            
         if not vars:
             return qss
             
@@ -86,20 +144,30 @@ class StyleManager:
         return DARK_QSS_PATH
 
     @staticmethod
-    def get_style(path: Path) -> str:
+    def get_style(path: Path, overrides: dict = None) -> str:
         """Read stylesheet content from the specified file path and process variables"""
         if path.exists():
             content = path.read_text(encoding="utf-8")
-            return StyleManager._process_qss(content)
+            return StyleManager._process_qss(content, overrides)
         return ""
 
     @staticmethod
-    def apply_style(app, theme: str = "dark"):
+    def apply_style(app, theme: str = "dark", overrides: dict = None):
         """Apply the specified stylesheet to the entire application"""
         path = StyleManager.get_theme_path(theme)
-        qss = StyleManager.get_style(path)
+        qss = StyleManager.get_style(path, overrides)
         if qss:
             app.setStyleSheet(qss)
+
+    @staticmethod
+    def get_default_vars(theme: str = "dark") -> dict:
+        """Parse default variable values from QSS comments without applying style."""
+        path = StyleManager.get_theme_path(theme)
+        if not path.exists():
+            return {}
+        content = path.read_text(encoding="utf-8")
+        var_pattern = re.compile(r'/\*\s*@([\w-]+):\s*([^;*]+?)\s*\*/')
+        return {k: v.strip() for k, v in var_pattern.findall(content)}
 
     @staticmethod
     def get_theme_property(object_name: str) -> tuple[QFont, QColor]:

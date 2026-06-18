@@ -528,5 +528,21 @@
     "dec_short": "12月",
     "completed_on": "完了: {date}",
     "started_on": "開始: {date}"
+  },
+  "appearance": {
+    "title": "外観の設定",
+    "button_tooltip": "外観の設定",
+    "accent_group": "色",
+    "accent_label": "アクセントカラー:",
+    "window_label": "ウィンドウの色:",
+    "bg_dark_label": "サブ背景色:",
+    "custom_label": "カスタム:",
+    "picker_title": "色の選択",
+    "pick_color": "クリックして色を選択",
+    "default_btn": "デフォルト",
+    "save_btn": "保存",
+    "cancel_btn": "キャンセル",
+    "text_label": "フォントの色:",
+    "border_label": "境界線の色:"
   }
 }

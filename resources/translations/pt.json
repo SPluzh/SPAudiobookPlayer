@@ -528,5 +528,21 @@
     "dec_short": "Dez",
     "completed_on": "Concluído: {date}",
     "started_on": "Iniciada: {date}"
+  },
+  "appearance": {
+    "title": "Configurações de Aparência",
+    "button_tooltip": "Configurações de Aparência",
+    "accent_group": "Cores",
+    "accent_label": "Cor de Destaque:",
+    "window_label": "Cor da Janela:",
+    "bg_dark_label": "Fundo Secundário:",
+    "custom_label": "Personalizado:",
+    "picker_title": "Escolher Cor",
+    "pick_color": "Clique para escolher uma cor",
+    "default_btn": "Padrão",
+    "save_btn": "Salvar",
+    "cancel_btn": "Cancelar",
+    "text_label": "Cor da fonte:",
+    "border_label": "Cor da borda:"
   }
 }

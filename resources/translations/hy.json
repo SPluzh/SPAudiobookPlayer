@@ -528,5 +528,21 @@
     "dec_short": "Դեկ",
     "completed_on": "Ավարտված է՝ {date}",
     "started_on": "Սկսված է՝ {date}"
+  },
+  "appearance": {
+    "title": "Արտաքին տեսքի կարգավորումներ",
+    "button_tooltip": "Արտաքին տեսքի կարգավորումներ",
+    "accent_group": "Գույներ",
+    "accent_label": "Շեշտադրման գույն:",
+    "window_label": "Պատուհանի գույն:",
+    "bg_dark_label": "Երկրորդական ֆոն:",
+    "custom_label": "Անհատական:",
+    "picker_title": "Ընտրել գույնը",
+    "pick_color": "Սեղմեք գույն ընտրելու համար",
+    "default_btn": "Լռելյայն",
+    "save_btn": "Պահպանել",
+    "cancel_btn": "Չեղարկել",
+    "text_label": "Տառատեսակի գույն:",
+    "border_label": "Եզրագծի գույնը:"
   }
 }

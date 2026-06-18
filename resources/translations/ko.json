@@ -528,5 +528,21 @@
     "dec_short": "12월",
     "completed_on": "완료: {date}",
     "started_on": "시작: {date}"
+  },
+  "appearance": {
+    "title": "외관 설정",
+    "button_tooltip": "외관 설정",
+    "accent_group": "색상",
+    "accent_label": "강조 색상:",
+    "window_label": "창 색상:",
+    "bg_dark_label": "보조 배경색:",
+    "custom_label": "사용자 지정:",
+    "picker_title": "색상 선택",
+    "pick_color": "클릭하여 색상 선택",
+    "default_btn": "기본값",
+    "save_btn": "저장",
+    "cancel_btn": "취소",
+    "text_label": "글꼴 색상:",
+    "border_label": "테두리 색상:"
   }
 }
