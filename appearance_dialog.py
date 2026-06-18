@@ -186,10 +186,11 @@ class AppearanceDialog(QDialog):
     # Signals
     accent_preview = pyqtSignal(str)       # Keeping for backward compatibility
     accent_saved = pyqtSignal(str)         # Keeping for backward compatibility
-    appearance_preview = pyqtSignal(str, str, str, str, str) # Emits (accent_color, window_color, bg_dark_color, text_color, border_color)
-    appearance_saved = pyqtSignal(str, str, str, str, str)   # Emits (accent_color, window_color, bg_dark_color, text_color, border_color)
+    appearance_preview = pyqtSignal(str, str, str, str, str, str, str, str) # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed)
+    appearance_saved = pyqtSignal(str, str, str, str, str, str, str, str)   # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed)
     
     def __init__(self, parent=None, current_accent="", default_accent="", current_window="", default_window="", current_bg_dark="", default_bg_dark="", current_text="", default_text="", current_border="", default_border="",
+                 current_status_new="", default_status_new="", current_status_started="", default_status_started="", current_status_completed="", default_status_completed="",
                  show_detailed_info=True,
                  show_info_progress=True, show_info_file_count=True, show_info_duration=True, show_info_size=True,
                  show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=True,
@@ -220,6 +221,18 @@ class AppearanceDialog(QDialog):
         self.original_border = current_border
         self.default_border = default_border
         self.current_border = current_border or default_border
+
+        self.original_status_new = current_status_new
+        self.default_status_new = default_status_new
+        self.current_status_new = current_status_new or default_status_new
+
+        self.original_status_started = current_status_started
+        self.default_status_started = default_status_started
+        self.current_status_started = current_status_started or default_status_started
+
+        self.original_status_completed = current_status_completed
+        self.default_status_completed = default_status_completed
+        self.current_status_completed = current_status_completed or default_status_completed
 
         # Book info settings states
         self.original_show_detailed_info = show_detailed_info
@@ -453,19 +466,77 @@ class AppearanceDialog(QDialog):
         self.chk_remember_filter_folders = QCheckBox(tr("menu.remember_filter_folders", "Remember Folder View"))
         
         info_layout.addWidget(self.chk_status_triangle)
-        info_layout.addWidget(self.chk_nesting_lines)
-        info_layout.addWidget(self.chk_remember_filter_folders)
+
+        # Status Colors Grid (Indented under show_status_triangle checkbox)
+        self.status_colors_widget = QWidget()
+        status_colors_grid = QGridLayout(self.status_colors_widget)
+        status_colors_grid.setHorizontalSpacing(8)
+        status_colors_grid.setVerticalSpacing(8)
+        status_colors_grid.setContentsMargins(15, 0, 0, 4)
         
-        # Separator line
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setFrameShadow(QFrame.Shadow.Sunken)
-        sep.setStyleSheet("background-color: #555555; max-height: 1px; margin: 4px 0px;")
-        info_layout.addWidget(sep)
+        # New Status Row
+        status_new_label = QLabel(tr("appearance.status_new_label", "New Status Color:"))
+        status_colors_grid.addWidget(status_new_label, 0, 0)
+        
+        self.status_new_color_btn = QPushButton()
+        self.status_new_color_btn.setFixedSize(field_height, field_height)
+        self.status_new_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.status_new_color_btn.clicked.connect(self.choose_status_new_color)
+        status_colors_grid.addWidget(self.status_new_color_btn, 0, 1)
+        
+        self.status_new_hex_input = QLineEdit()
+        self.status_new_hex_input.setMaxLength(7)
+        self.status_new_hex_input.setFixedWidth(75)
+        self.status_new_hex_input.setFixedHeight(field_height)
+        self.status_new_hex_input.setStyleSheet("padding: 2px 4px;")
+        self.status_new_hex_input.setValidator(validator)
+        self.status_new_hex_input.textChanged.connect(self.on_status_new_hex_changed)
+        status_colors_grid.addWidget(self.status_new_hex_input, 0, 2)
+        
+        # Started Status Row
+        status_started_label = QLabel(tr("appearance.status_started_label", "Started Status Color:"))
+        status_colors_grid.addWidget(status_started_label, 1, 0)
+        
+        self.status_started_color_btn = QPushButton()
+        self.status_started_color_btn.setFixedSize(field_height, field_height)
+        self.status_started_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.status_started_color_btn.clicked.connect(self.choose_status_started_color)
+        status_colors_grid.addWidget(self.status_started_color_btn, 1, 1)
+        
+        self.status_started_hex_input = QLineEdit()
+        self.status_started_hex_input.setMaxLength(7)
+        self.status_started_hex_input.setFixedWidth(75)
+        self.status_started_hex_input.setFixedHeight(field_height)
+        self.status_started_hex_input.setStyleSheet("padding: 2px 4px;")
+        self.status_started_hex_input.setValidator(validator)
+        self.status_started_hex_input.textChanged.connect(self.on_status_started_hex_changed)
+        status_colors_grid.addWidget(self.status_started_hex_input, 1, 2)
+        
+        # Completed Status Row
+        status_completed_label = QLabel(tr("appearance.status_completed_label", "Finished Status Color:"))
+        status_colors_grid.addWidget(status_completed_label, 2, 0)
+        
+        self.status_completed_color_btn = QPushButton()
+        self.status_completed_color_btn.setFixedSize(field_height, field_height)
+        self.status_completed_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.status_completed_color_btn.clicked.connect(self.choose_status_completed_color)
+        status_colors_grid.addWidget(self.status_completed_color_btn, 2, 1)
+        
+        self.status_completed_hex_input = QLineEdit()
+        self.status_completed_hex_input.setMaxLength(7)
+        self.status_completed_hex_input.setFixedWidth(75)
+        self.status_completed_hex_input.setFixedHeight(field_height)
+        self.status_completed_hex_input.setStyleSheet("padding: 2px 4px;")
+        self.status_completed_hex_input.setValidator(validator)
+        self.status_completed_hex_input.textChanged.connect(self.on_status_completed_hex_changed)
+        status_colors_grid.addWidget(self.status_completed_hex_input, 2, 2)
+        
+        status_colors_grid.setColumnStretch(3, 1)
+        info_layout.addWidget(self.status_colors_widget)
 
         # Book Info Line Settings Section
         self.chk_show_detailed_info = QCheckBox(tr("appearance.show_detailed_info"))
-        self.chk_show_detailed_info.setStyleSheet("font-weight: bold; margin-bottom: 2px;")
+        self.chk_show_detailed_info.setStyleSheet("margin-bottom: 2px;")
         info_layout.addWidget(self.chk_show_detailed_info)
         
         checkbox_layout = QVBoxLayout()
@@ -491,6 +562,9 @@ class AppearanceDialog(QDialog):
         checkbox_layout.addWidget(self.chk_language)
         
         info_layout.addLayout(checkbox_layout)
+
+        info_layout.addWidget(self.chk_nesting_lines)
+        info_layout.addWidget(self.chk_remember_filter_folders)
         
         self.chk_status_triangle.stateChanged.connect(self.on_interface_checkbox_changed)
         self.chk_nesting_lines.stateChanged.connect(self.on_interface_checkbox_changed)
@@ -561,8 +635,87 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_bg_dark(self.current_bg_dark)
         self.update_ui_from_text(self.current_text)
         self.update_ui_from_border(self.current_border)
+        self.update_ui_from_status_new(self.current_status_new)
+        self.update_ui_from_status_started(self.current_status_started)
+        self.update_ui_from_status_completed(self.current_status_completed)
         self.update_checkboxes_ui()
         
+    def emit_preview(self):
+        """Emit current colors for live previewing"""
+        self.appearance_preview.emit(
+            self.current_accent,
+            self.current_window,
+            self.current_bg_dark,
+            self.current_text,
+            self.current_border,
+            self.current_status_new,
+            self.current_status_started,
+            self.current_status_completed
+        )
+
+    def update_ui_from_status_new(self, color_hex: str):
+        """Synchronize custom status new color button background and hex input"""
+        self.updating_ui = True
+        try:
+            self.status_new_hex_input.setText(color_hex.upper())
+            self.status_new_color_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {color_hex};
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
+                }}
+                QPushButton:hover {{
+                    border: 1px solid #ffffff;
+                }}
+            """)
+        finally:
+            self.updating_ui = False
+
+    def update_ui_from_status_started(self, color_hex: str):
+        """Synchronize custom status started color button background and hex input"""
+        self.updating_ui = True
+        try:
+            self.status_started_hex_input.setText(color_hex.upper())
+            self.status_started_color_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {color_hex};
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
+                }}
+                QPushButton:hover {{
+                    border: 1px solid #ffffff;
+                }}
+            """)
+        finally:
+            self.updating_ui = False
+
+    def update_ui_from_status_completed(self, color_hex: str):
+        """Synchronize custom status completed color button background and hex input"""
+        self.updating_ui = True
+        try:
+            self.status_completed_hex_input.setText(color_hex.upper())
+            self.status_completed_color_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {color_hex};
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
+                }}
+                QPushButton:hover {{
+                    border: 1px solid #ffffff;
+                }}
+            """)
+        finally:
+            self.updating_ui = False
+
     def update_ui_from_accent(self, color_hex: str):
         """Synchronize custom accent color button background and hex input"""
         self.updating_ui = True
@@ -779,7 +932,73 @@ class AppearanceDialog(QDialog):
         color_hex = color.name().upper()
         self.current_border = color_hex
         self.update_ui_from_border(color_hex)
-        self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, color_hex)
+        self.emit_preview()
+
+    def choose_status_new_color(self):
+        """Open custom compact color picker dialog for status new and preview changes live"""
+        color_before = self.current_status_new
+        dialog = ColorPickerDialog(self, QColor(self.current_status_new))
+        dialog.colorChanged.connect(self.select_status_new_color_preview)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.current_status_new = dialog.color.name().upper()
+            self.update_ui_from_status_new(self.current_status_new)
+            self.emit_preview()
+        else:
+            self.current_status_new = color_before
+            self.update_ui_from_status_new(self.current_status_new)
+            self.emit_preview()
+            
+    def select_status_new_color_preview(self, color: QColor):
+        """Update status new preview from dialog changes"""
+        color_hex = color.name().upper()
+        self.current_status_new = color_hex
+        self.update_ui_from_status_new(color_hex)
+        self.emit_preview()
+
+    def choose_status_started_color(self):
+        """Open custom compact color picker dialog for status started and preview changes live"""
+        color_before = self.current_status_started
+        dialog = ColorPickerDialog(self, QColor(self.current_status_started))
+        dialog.colorChanged.connect(self.select_status_started_color_preview)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.current_status_started = dialog.color.name().upper()
+            self.update_ui_from_status_started(self.current_status_started)
+            self.emit_preview()
+        else:
+            self.current_status_started = color_before
+            self.update_ui_from_status_started(self.current_status_started)
+            self.emit_preview()
+            
+    def select_status_started_color_preview(self, color: QColor):
+        """Update status started preview from dialog changes"""
+        color_hex = color.name().upper()
+        self.current_status_started = color_hex
+        self.update_ui_from_status_started(color_hex)
+        self.emit_preview()
+
+    def choose_status_completed_color(self):
+        """Open custom compact color picker dialog for status completed and preview changes live"""
+        color_before = self.current_status_completed
+        dialog = ColorPickerDialog(self, QColor(self.current_status_completed))
+        dialog.colorChanged.connect(self.select_status_completed_color_preview)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.current_status_completed = dialog.color.name().upper()
+            self.update_ui_from_status_completed(self.current_status_completed)
+            self.emit_preview()
+        else:
+            self.current_status_completed = color_before
+            self.update_ui_from_status_completed(self.current_status_completed)
+            self.emit_preview()
+            
+    def select_status_completed_color_preview(self, color: QColor):
+        """Update status completed preview from dialog changes"""
+        color_hex = color.name().upper()
+        self.current_status_completed = color_hex
+        self.update_ui_from_status_completed(color_hex)
+        self.emit_preview()
 
     def on_accent_hex_changed(self, text: str):
         """Update accent picker button and emit preview from Accent Hex input box"""
@@ -797,7 +1016,7 @@ class AppearanceDialog(QDialog):
             if color.isValid():
                 self.current_accent = text.upper()
                 self.update_ui_from_accent(self.current_accent)
-                self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+                self.emit_preview()
                 self.accent_preview.emit(self.current_accent)
 
     def on_window_hex_changed(self, text: str):
@@ -816,7 +1035,7 @@ class AppearanceDialog(QDialog):
             if color.isValid():
                 self.current_window = text.upper()
                 self.update_ui_from_window(self.current_window)
-                self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+                self.emit_preview()
 
     def on_bg_dark_hex_changed(self, text: str):
         """Update secondary bg picker button and emit preview from Secondary BG Hex input box"""
@@ -834,7 +1053,7 @@ class AppearanceDialog(QDialog):
             if color.isValid():
                 self.current_bg_dark = text.upper()
                 self.update_ui_from_bg_dark(self.current_bg_dark)
-                self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+                self.emit_preview()
 
     def on_text_hex_changed(self, text: str):
         """Update font color picker button and emit preview from Font Color Hex input box"""
@@ -852,7 +1071,7 @@ class AppearanceDialog(QDialog):
             if color.isValid():
                 self.current_text = text.upper()
                 self.update_ui_from_text(self.current_text)
-                self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+                self.emit_preview()
                 
     def on_border_hex_changed(self, text: str):
         """Update border color picker button and emit preview from Border Color Hex input box"""
@@ -870,7 +1089,61 @@ class AppearanceDialog(QDialog):
             if color.isValid():
                 self.current_border = text.upper()
                 self.update_ui_from_border(self.current_border)
-                self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+                self.emit_preview()
+
+    def on_status_new_hex_changed(self, text: str):
+        """Update status new picker button and emit preview from Hex input box"""
+        if self.updating_ui:
+            return
+            
+        if not text.startswith("#"):
+            self.updating_ui = True
+            text = "#" + text.replace("#", "")
+            self.status_new_hex_input.setText(text)
+            self.updating_ui = False
+            
+        if len(text) == 7:
+            color = QColor(text)
+            if color.isValid():
+                self.current_status_new = text.upper()
+                self.update_ui_from_status_new(self.current_status_new)
+                self.emit_preview()
+
+    def on_status_started_hex_changed(self, text: str):
+        """Update status started picker button and emit preview from Hex input box"""
+        if self.updating_ui:
+            return
+            
+        if not text.startswith("#"):
+            self.updating_ui = True
+            text = "#" + text.replace("#", "")
+            self.status_started_hex_input.setText(text)
+            self.updating_ui = False
+            
+        if len(text) == 7:
+            color = QColor(text)
+            if color.isValid():
+                self.current_status_started = text.upper()
+                self.update_ui_from_status_started(self.current_status_started)
+                self.emit_preview()
+
+    def on_status_completed_hex_changed(self, text: str):
+        """Update status completed picker button and emit preview from Hex input box"""
+        if self.updating_ui:
+            return
+            
+        if not text.startswith("#"):
+            self.updating_ui = True
+            text = "#" + text.replace("#", "")
+            self.status_completed_hex_input.setText(text)
+            self.updating_ui = False
+            
+        if len(text) == 7:
+            color = QColor(text)
+            if color.isValid():
+                self.current_status_completed = text.upper()
+                self.update_ui_from_status_completed(self.current_status_completed)
+                self.emit_preview()
                 
     def reset_to_default(self):
         """Reset current colors to theme default values"""
@@ -879,11 +1152,18 @@ class AppearanceDialog(QDialog):
         self.current_bg_dark = self.default_bg_dark
         self.current_text = self.default_text
         self.current_border = self.default_border
+        self.current_status_new = self.default_status_new
+        self.current_status_started = self.default_status_started
+        self.current_status_completed = self.default_status_completed
+        
         self.update_ui_from_accent(self.default_accent)
         self.update_ui_from_window(self.default_window)
         self.update_ui_from_bg_dark(self.default_bg_dark)
         self.update_ui_from_text(self.default_text)
         self.update_ui_from_border(self.default_border)
+        self.update_ui_from_status_new(self.default_status_new)
+        self.update_ui_from_status_started(self.default_status_started)
+        self.update_ui_from_status_completed(self.default_status_completed)
         
         # Reset info line settings to True
         self.current_show_detailed_info = True
@@ -905,7 +1185,7 @@ class AppearanceDialog(QDialog):
         
         self.update_checkboxes_ui()
         
-        self.appearance_preview.emit(self.default_accent, self.default_window, self.default_bg_dark, self.default_text, self.default_border)
+        self.emit_preview()
         self.accent_preview.emit(self.default_accent)
         
     def accept(self):
@@ -929,14 +1209,45 @@ class AppearanceDialog(QDialog):
         saved_border = self.current_border
         if saved_border.lower() == self.default_border.lower():
             saved_border = ""
+
+        saved_status_new = self.current_status_new
+        if saved_status_new.lower() == self.default_status_new.lower():
+            saved_status_new = ""
+
+        saved_status_started = self.current_status_started
+        if saved_status_started.lower() == self.default_status_started.lower():
+            saved_status_started = ""
+
+        saved_status_completed = self.current_status_completed
+        if saved_status_completed.lower() == self.default_status_completed.lower():
+            saved_status_completed = ""
             
-        self.appearance_saved.emit(saved_accent, saved_window, saved_bg_dark, saved_text, saved_border)
+        self.appearance_saved.emit(saved_accent, saved_window, saved_bg_dark, saved_text, saved_border,
+                                   saved_status_new, saved_status_started, saved_status_completed)
         # Also emit old compatibility signal
         self.accent_saved.emit(saved_accent)
         super().accept()
         
     def reject(self):
         """Revert preview changes and close the dialog"""
+        self.current_accent = self.original_accent
+        self.current_window = self.original_window
+        self.current_bg_dark = self.original_bg_dark
+        self.current_text = self.original_text
+        self.current_border = self.original_border
+        self.current_status_new = self.original_status_new
+        self.current_status_started = self.original_status_started
+        self.current_status_completed = self.original_status_completed
+
+        self.update_ui_from_accent(self.original_accent)
+        self.update_ui_from_window(self.original_window)
+        self.update_ui_from_bg_dark(self.original_bg_dark)
+        self.update_ui_from_text(self.original_text)
+        self.update_ui_from_border(self.original_border)
+        self.update_ui_from_status_new(self.original_status_new)
+        self.update_ui_from_status_started(self.original_status_started)
+        self.update_ui_from_status_completed(self.original_status_completed)
+
         self.current_show_detailed_info = self.original_show_detailed_info
         self.current_show_info_progress = self.original_show_info_progress
         self.current_show_info_file_count = self.original_show_info_file_count
@@ -955,7 +1266,7 @@ class AppearanceDialog(QDialog):
         
         self.update_checkboxes_ui()
 
-        self.appearance_preview.emit(self.original_accent, self.original_window, self.original_bg_dark, self.original_text, self.original_border)
+        self.emit_preview()
         # Also emit old compatibility signal
         self.accent_preview.emit(self.original_accent)
         super().reject()
@@ -989,6 +1300,9 @@ class AppearanceDialog(QDialog):
         self.chk_year_written.setEnabled(enabled)
         self.chk_year_recorded.setEnabled(enabled)
         self.chk_language.setEnabled(enabled)
+        
+        # Enable/disable status colors customization
+        self.status_colors_widget.setEnabled(self.current_show_status_triangle)
         self.updating_ui = False
 
     def on_show_detailed_info_changed(self):
@@ -1010,7 +1324,7 @@ class AppearanceDialog(QDialog):
         self.chk_language.setEnabled(enabled)
         
         # Emit live preview to update the layout
-        self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+        self.emit_preview()
 
     def on_checkbox_changed(self):
         """Handle state change in checkboxes to update internal state and trigger live preview"""
@@ -1027,7 +1341,7 @@ class AppearanceDialog(QDialog):
         self.current_show_info_language = self.chk_language.isChecked()
         
         # Emit live preview to update the layout
-        self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+        self.emit_preview()
 
     def on_interface_checkbox_changed(self):
         """Handle state change in interface checkboxes to update internal state and trigger live preview"""
@@ -1040,8 +1354,11 @@ class AppearanceDialog(QDialog):
         self.current_show_statusbar = self.chk_statusbar.isChecked()
         self.current_remember_filter_folders = self.chk_remember_filter_folders.isChecked()
         
+        # Enable/disable status colors customization dynamically
+        self.status_colors_widget.setEnabled(self.current_show_status_triangle)
+        
         # Emit live preview to update the layout
-        self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+        self.emit_preview()
 
     def get_info_settings(self) -> dict:
         """Get the current settings of the info line checkboxes"""

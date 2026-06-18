@@ -554,6 +554,9 @@
     "info_year_written": "Năm viết",
     "info_year_recorded": "Năm ghi âm",
     "info_language": "Ngôn ngữ",
+    "status_new_label": "Màu trạng thái 'Mới':",
+    "status_started_label": "Màu trạng thái 'Đang nghe':",
+    "status_completed_label": "Màu trạng thái 'Đã xong':",
     "tab_colors": "Cài đặt cửa sổ",
     "tab_info": "Cài đặt danh sách thư viện",
     "tab_interface": "Cài đặt trình phát"

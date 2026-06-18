@@ -554,6 +554,9 @@
     "info_year_written": "Год написания",
     "info_year_recorded": "Год записи",
     "info_language": "Язык книги",
+    "status_new_label": "Цвет нового статуса:",
+    "status_started_label": "Цвет начатого статуса:",
+    "status_completed_label": "Цвет завершённого статуса:",
     "tab_colors": "Настройки окна",
     "tab_info": "Настройки списка библиотеки",
     "tab_interface": "Настройки плеера"

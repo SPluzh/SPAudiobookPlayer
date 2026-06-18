@@ -554,6 +554,9 @@
     "info_year_written": "執筆年",
     "info_year_recorded": "録音年",
     "info_language": "言語",
+    "status_new_label": "「未再生」ステータスの色:",
+    "status_started_label": "「再生中」ステータスの色:",
+    "status_completed_label": "「完了」ステータスの色:",
     "tab_colors": "ウィンドウ設定",
     "tab_info": "ライブラリ一覧設定",
     "tab_interface": "プレイヤー設定"

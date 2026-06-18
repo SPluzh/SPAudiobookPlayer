@@ -554,6 +554,9 @@
     "info_year_written": "Ano de escrita",
     "info_year_recorded": "Ano de gravação",
     "info_language": "Idioma",
+    "status_new_label": "Cor do status 'Novo':",
+    "status_started_label": "Cor do status 'Iniciado':",
+    "status_completed_label": "Cor do status 'Concluído':",
     "tab_colors": "Configurações da janela",
     "tab_info": "Configurações da lista de biblioteca",
     "tab_interface": "Configurações do reprodutor"

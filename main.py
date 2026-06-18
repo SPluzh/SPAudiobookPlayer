@@ -943,6 +943,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.bg_dark_color = config.get("Appearance", "bg_dark_color", fallback="")
         self.text_color = config.get("Appearance", "text_color", fallback="")
         self.border_color = config.get("Appearance", "border_color", fallback="")
+        self.status_new_color = config.get("Appearance", "status_new_color", fallback="")
+        self.status_started_color = config.get("Appearance", "status_started_color", fallback="")
+        self.status_completed_color = config.get("Appearance", "status_completed_color", fallback="")
 
         # Filesystem Path Configurations
         self.default_path = config.get("Paths", "default_path", fallback="")
@@ -1264,6 +1267,22 @@ class AudiobookPlayerWindow(QMainWindow):
         else:
             if "Appearance" in config and "border_color" in config["Appearance"]:
                 del config["Appearance"]["border_color"]
+
+        if getattr(self, "status_new_color", ""):
+            config["Appearance"]["status_new_color"] = self.status_new_color
+        else:
+            if "Appearance" in config and "status_new_color" in config["Appearance"]:
+                del config["Appearance"]["status_new_color"]
+        if getattr(self, "status_started_color", ""):
+            config["Appearance"]["status_started_color"] = self.status_started_color
+        else:
+            if "Appearance" in config and "status_started_color" in config["Appearance"]:
+                del config["Appearance"]["status_started_color"]
+        if getattr(self, "status_completed_color", ""):
+            config["Appearance"]["status_completed_color"] = self.status_completed_color
+        else:
+            if "Appearance" in config and "status_completed_color" in config["Appearance"]:
+                del config["Appearance"]["status_completed_color"]
         if "Appearance" in config and not config["Appearance"]:
             del config["Appearance"]
 
@@ -2143,6 +2162,12 @@ class AudiobookPlayerWindow(QMainWindow):
                 overrides["text"] = self.text_color
             if getattr(self, "border_color", ""):
                 overrides["border"] = self.border_color
+            if getattr(self, "status_new_color", ""):
+                overrides["status-error"] = self.status_new_color
+            if getattr(self, "status_started_color", ""):
+                overrides["status-warning"] = self.status_started_color
+            if getattr(self, "status_completed_color", ""):
+                overrides["status-ok"] = self.status_completed_color
 
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
 
@@ -2168,6 +2193,9 @@ class AudiobookPlayerWindow(QMainWindow):
             default_bg_dark = StyleManager.get_default_vars(self.current_theme).get("bg-dark", "#373737")
             default_text = StyleManager.get_default_vars(self.current_theme).get("text", "#eaeaea")
             default_border = StyleManager.get_default_vars(self.current_theme).get("border", "#808080")
+            default_status_new = StyleManager.get_default_vars(self.current_theme).get("status-error", "#ff6b6b")
+            default_status_started = StyleManager.get_default_vars(self.current_theme).get("status-warning", "#f9ca24")
+            default_status_completed = StyleManager.get_default_vars(self.current_theme).get("status-ok", "#4ecca3")
             
             dialog = AppearanceDialog(
                 self,
@@ -2181,6 +2209,12 @@ class AudiobookPlayerWindow(QMainWindow):
                 default_text=default_text,
                 current_border=getattr(self, "border_color", ""),
                 default_border=default_border,
+                current_status_new=getattr(self, "status_new_color", ""),
+                default_status_new=default_status_new,
+                current_status_started=getattr(self, "status_started_color", ""),
+                default_status_started=default_status_started,
+                current_status_completed=getattr(self, "status_completed_color", ""),
+                default_status_completed=default_status_completed,
                 show_detailed_info=self.show_detailed_info,
                 show_info_progress=self.show_info_progress,
                 show_info_file_count=self.show_info_file_count,
@@ -2211,7 +2245,8 @@ class AudiobookPlayerWindow(QMainWindow):
         except Exception as e:
             print(f"Error showing appearance settings: {e}")
 
-    def apply_appearance_preview(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = ""):
+    def apply_appearance_preview(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = "",
+                                 status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = ""):
         """Apply temporary accent, window background, secondary background, font, and border color overrides for live previewing"""
         try:
             from styles import StyleManager
@@ -2226,6 +2261,12 @@ class AudiobookPlayerWindow(QMainWindow):
                 overrides["text"] = text_hex
             if border_hex:
                 overrides["border"] = border_hex
+            if status_new_hex:
+                overrides["status-error"] = status_new_hex
+            if status_started_hex:
+                overrides["status-warning"] = status_started_hex
+            if status_completed_hex:
+                overrides["status-ok"] = status_completed_hex
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
             
             # Apply temporary settings if previewing
@@ -2277,18 +2318,25 @@ class AudiobookPlayerWindow(QMainWindow):
         except Exception as e:
             print(f"Error applying appearance preview: {e}")
 
-    def save_appearance_colors(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = ""):
+    def save_appearance_colors(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = "",
+                               status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = ""):
         """Save the chosen accent, window, secondary background, font, and border colors to settings.ini and apply them permanently"""
         self.accent_color = accent_hex
         self.window_color = window_hex
         self.bg_dark_color = bg_dark_hex
         self.text_color = text_hex
         self.border_color = border_hex
+        self.status_new_color = status_new_hex
+        self.status_started_color = status_started_hex
+        self.status_completed_color = status_completed_hex
         self.save_setting("Appearance", "accent_color", accent_hex)
         self.save_setting("Appearance", "window_color", window_hex)
         self.save_setting("Appearance", "bg_dark_color", bg_dark_hex)
         self.save_setting("Appearance", "text_color", text_hex)
         self.save_setting("Appearance", "border_color", border_hex)
+        self.save_setting("Appearance", "status_new_color", status_new_hex)
+        self.save_setting("Appearance", "status_started_color", status_started_hex)
+        self.save_setting("Appearance", "status_completed_color", status_completed_hex)
         
         if hasattr(self, "appearance_dialog") and self.appearance_dialog:
             settings = self.appearance_dialog.get_info_settings()
@@ -2790,6 +2838,9 @@ def main():
         bg_dark_color = ""
         text_color = ""
         border_color = ""
+        status_new_color = ""
+        status_started_color = ""
+        status_completed_color = ""
         if config_file.exists():
             config.read(config_file, encoding="utf-8")
             current_theme = config.get("Display", "theme", fallback="dark")
@@ -2798,6 +2849,9 @@ def main():
             bg_dark_color = config.get("Appearance", "bg_dark_color", fallback="")
             text_color = config.get("Appearance", "text_color", fallback="")
             border_color = config.get("Appearance", "border_color", fallback="")
+            status_new_color = config.get("Appearance", "status_new_color", fallback="")
+            status_started_color = config.get("Appearance", "status_started_color", fallback="")
+            status_completed_color = config.get("Appearance", "status_completed_color", fallback="")
 
         # Apply Stylesheet
         overrides = {}
@@ -2811,6 +2865,12 @@ def main():
             overrides["text"] = text_color
         if border_color:
             overrides["border"] = border_color
+        if status_new_color:
+            overrides["status-error"] = status_new_color
+        if status_started_color:
+            overrides["status-warning"] = status_started_color
+        if status_completed_color:
+            overrides["status-ok"] = status_completed_color
         StyleManager.apply_style(app, theme=current_theme, overrides=overrides)
 
         print("Initializing Style Manager...")

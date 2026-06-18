@@ -554,6 +554,9 @@
     "info_year_written": "Año de escritura",
     "info_year_recorded": "Año de grabación",
     "info_language": "Idioma",
+    "status_new_label": "Color de estado 'Nuevo':",
+    "status_started_label": "Color de estado 'En progreso':",
+    "status_completed_label": "Color de estado 'Terminado':",
     "tab_colors": "Configuración de ventana",
     "tab_info": "Configuración de la lista de biblioteca",
     "tab_interface": "Configuración del reproductor"

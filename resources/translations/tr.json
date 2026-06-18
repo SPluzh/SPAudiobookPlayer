@@ -554,6 +554,9 @@
     "info_year_written": "Yazım Yılı",
     "info_year_recorded": "Kayıt Yılı",
     "info_language": "Dil",
+    "status_new_label": "Yeni Durum Rengi:",
+    "status_started_label": "Devam Eden Durum Rengi:",
+    "status_completed_label": "Tamamlanan Durum Rengi:",
     "tab_colors": "Pencere Ayarları",
     "tab_info": "Kütüphane Listesi Ayarları",
     "tab_interface": "Oynatıcı Ayarları"

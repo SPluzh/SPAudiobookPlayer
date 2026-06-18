@@ -554,6 +554,9 @@
     "info_year_written": "写作年份",
     "info_year_recorded": "录音年份",
     "info_language": "语言",
+    "status_new_label": "“新书”状态颜色:",
+    "status_started_label": "“进行中”状态颜色:",
+    "status_completed_label": "“已完成”状态颜色:",
     "tab_colors": "窗口设置",
     "tab_info": "书库列表设置",
     "tab_interface": "播放器设置"

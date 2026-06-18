@@ -554,6 +554,9 @@
     "info_year_written": "Year Written",
     "info_year_recorded": "Year Recorded",
     "info_language": "Language",
+    "status_new_label": "New Status Color:",
+    "status_started_label": "Started Status Color:",
+    "status_completed_label": "Finished Status Color:",
     "tab_colors": "Window Settings",
     "tab_info": "Library List Settings",
     "tab_interface": "Player Settings"

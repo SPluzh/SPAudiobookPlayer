@@ -554,6 +554,9 @@
     "info_year_written": "집필 연도",
     "info_year_recorded": "녹음 연도",
     "info_language": "언어",
+    "status_new_label": "'새 항목' 상태 색상:",
+    "status_started_label": "'재생 중' 상태 색상:",
+    "status_completed_label": "'완료됨' 상태 색상:",
     "tab_colors": "창 설정",
     "tab_info": "라이브러리 목록 설정",
     "tab_interface": "플레이어 설정"

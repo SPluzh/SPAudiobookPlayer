@@ -554,6 +554,9 @@
     "info_year_written": "Գրելու տարեթիվ",
     "info_year_recorded": "Ձայնագրման տարեթիվ",
     "info_language": "Լեզու",
+    "status_new_label": "«Նոր» կարգավիճակի գույն:",
+    "status_started_label": "«Սկսված» կարգավիճակի գույն:",
+    "status_completed_label": "«Ավարտված» կարգավիճակի գույն:",
     "tab_colors": "Պատուհանի կարգավորումներ",
     "tab_info": "Գրադարանի ցուցակի կարգավորումներ",
     "tab_interface": "Նվագարկչի կարգավորումներ"

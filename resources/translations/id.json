@@ -554,6 +554,9 @@
     "info_year_written": "Tahun Ditulis",
     "info_year_recorded": "Tahun Direkam",
     "info_language": "Bahasa",
+    "status_new_label": "Warna Status 'Baru':",
+    "status_started_label": "Warna Status 'Dimulai':",
+    "status_completed_label": "Warna Status 'Selesai':",
     "tab_colors": "Pengaturan Jendela",
     "tab_info": "Pengaturan Daftar Perpustakaan",
     "tab_interface": "Pengaturan Pemutar"

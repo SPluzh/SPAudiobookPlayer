@@ -554,6 +554,9 @@
     "info_year_written": "Geschrieben im Jahr",
     "info_year_recorded": "Aufnahmejahr",
     "info_language": "Sprache",
+    "status_new_label": "Statusfarbe 'Neu':",
+    "status_started_label": "Statusfarbe 'Begonnen':",
+    "status_completed_label": "Statusfarbe 'Abgeschlossen':",
     "tab_colors": "Fenstereinstellungen",
     "tab_info": "Bibliothekslisten-Einstellungen",
     "tab_interface": "Player-Einstellungen"

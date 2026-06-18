@@ -554,6 +554,9 @@
     "info_year_written": "ปีที่เขียน",
     "info_year_recorded": "ปีที่บันทึกเสียง",
     "info_language": "ภาษา",
+    "status_new_label": "สีสถานะ 'ใหม่':",
+    "status_started_label": "สีสถานะ 'ที่กำลังฟัง':",
+    "status_completed_label": "สีสถานะ 'ที่จบแล้ว':",
     "tab_colors": "ตั้งค่าหน้าต่าง",
     "tab_info": "ตั้งค่ารายการห้องสมุด",
     "tab_interface": "ตั้งค่าเครื่องเล่น"

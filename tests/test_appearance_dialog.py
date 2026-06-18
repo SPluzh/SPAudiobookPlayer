@@ -123,7 +123,13 @@ def test_appearance_dialog_window_color_ui_and_signals():
         current_text="#555555",
         default_text="#666666",
         current_border="#777777",
-        default_border="#888888"
+        default_border="#888888",
+        current_status_new="#AA0000",
+        default_status_new="#BB0000",
+        current_status_started="#CC0000",
+        default_status_started="#DD0000",
+        current_status_completed="#EE0000",
+        default_status_completed="#FF0000"
     )
 
     # 1. Verify initial states
@@ -155,9 +161,16 @@ def test_appearance_dialog_window_color_ui_and_signals():
     assert dialog.border_hex_input.text() == "#777777"
     assert dialog.border_color_btn is not None
 
+    assert dialog.original_status_new == "#AA0000"
+    assert dialog.current_status_new == "#AA0000"
+    assert dialog.default_status_new == "#BB0000"
+    assert dialog.status_new_hex_input is not None
+    assert dialog.status_new_hex_input.text() == "#AA0000"
+    assert dialog.status_new_color_btn is not None
+
     # 2. Check reset to default button behavior and signals
     preview_emitted = []
-    dialog.appearance_preview.connect(lambda acc, win, dark, txt, bord: preview_emitted.append((acc, win, dark, txt, bord)))
+    dialog.appearance_preview.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed: preview_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed)))
 
     dialog.default_btn.click()
     assert dialog.current_window == "#222222"
@@ -168,15 +181,21 @@ def test_appearance_dialog_window_color_ui_and_signals():
     assert dialog.text_hex_input.text() == "#666666"
     assert dialog.current_border == "#888888"
     assert dialog.border_hex_input.text() == "#888888"
-    assert preview_emitted == [("#00FF00", "#222222", "#444444", "#666666", "#888888")]
+    assert dialog.current_status_new == "#BB0000"
+    assert dialog.status_new_hex_input.text() == "#BB0000"
+    assert dialog.current_status_started == "#DD0000"
+    assert dialog.status_started_hex_input.text() == "#DD0000"
+    assert dialog.current_status_completed == "#FF0000"
+    assert dialog.status_completed_hex_input.text() == "#FF0000"
+    assert preview_emitted == [("#00FF00", "#222222", "#444444", "#666666", "#888888", "#BB0000", "#DD0000", "#FF0000")]
 
     # 3. Check save/accept behavior and appearance_saved signal
     saved_emitted = []
-    dialog.appearance_saved.connect(lambda acc, win, dark, txt, bord: saved_emitted.append((acc, win, dark, txt, bord)))
+    dialog.appearance_saved.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed: saved_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed)))
 
     # Since values equal their defaults, they should be cleared (empty strings saved)
     dialog.accept()
-    assert saved_emitted == [("", "", "", "", "")]
+    assert saved_emitted == [("", "", "", "", "", "", "", "")]
 
 
 def test_appearance_dialog_text_color_hex_input_and_reject():
@@ -193,25 +212,36 @@ def test_appearance_dialog_text_color_hex_input_and_reject():
         current_text="#555555",
         default_text="#666666",
         current_border="#777777",
-        default_border="#888888"
+        default_border="#888888",
+        current_status_new="#AA0000",
+        default_status_new="#BB0000",
+        current_status_started="#CC0000",
+        default_status_started="#DD0000",
+        current_status_completed="#EE0000",
+        default_status_completed="#FF0000"
     )
 
     preview_emitted = []
-    dialog.appearance_preview.connect(lambda acc, win, dark, txt, bord: preview_emitted.append((acc, win, dark, txt, bord)))
+    dialog.appearance_preview.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed: preview_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed)))
 
     # Change text input to a valid hex color
     dialog.text_hex_input.setText("#999999")
     assert dialog.current_text == "#999999"
-    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#777777")
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#777777", "#AA0000", "#CC0000", "#EE0000")
 
     # Change border input to a valid hex color
     dialog.border_hex_input.setText("#AAAAAA")
     assert dialog.current_border == "#AAAAAA"
-    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#AAAAAA")
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#AAAAAA", "#AA0000", "#CC0000", "#EE0000")
+
+    # Change status_new input to a valid hex color
+    dialog.status_new_hex_input.setText("#BBBBBB")
+    assert dialog.current_status_new == "#BBBBBB"
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#AAAAAA", "#BBBBBB", "#CC0000", "#EE0000")
 
     # Reject reverts the values
     dialog.reject()
-    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#555555", "#777777")
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#555555", "#777777", "#AA0000", "#CC0000", "#EE0000")
 
 
 def test_appearance_dialog_info_checkboxes():

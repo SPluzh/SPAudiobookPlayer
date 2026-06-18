@@ -554,6 +554,9 @@
     "info_year_written": "سنة الكتابة",
     "info_year_recorded": "سنة التسجيل",
     "info_language": "اللغة",
+    "status_new_label": "لون حالة جديد:",
+    "status_started_label": "لون حالة قيد التقدم:",
+    "status_completed_label": "لون حالة مكتمل:",
     "tab_colors": "إعدادات النافذة",
     "tab_info": "إعدادات قائمة المكتبة",
     "tab_interface": "إعدادات المشغل"

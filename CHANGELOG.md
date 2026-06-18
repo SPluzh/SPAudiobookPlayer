@@ -3,11 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.9]
-- **UI**: Added an Appearance Settings dialog with live preview to customize window colors, status bar, player visualizer, and detailed library list settings in a clean two-column layout.
-- **UI**: Moved interface checkboxes from the View menu (except Minimal Interface and Always on Top) into the new dialog, and removed the unused theme selection/reloading options.
-- **Library**: Added interactive tags that highlight and change the cursor on hover.
-- **Library**: Clicking a tag now automatically filters the library view to show only books with that tag.
-- **Settings**: Clearing the database now also deletes listening statistics, session history, bookmarks, and tags.
+- **UI**: Added a comprehensive Appearance Settings dialog to customize interface and book status colors (with live preview) and simplified the layout.
+- **Library**: Added interactive book tags with hover effects and quick filtering by clicking them.
+- **Settings**: Database clearing now fully deletes listening history, statistics, bookmarks, and tags.
 
 ## [1.7.8]
 - **Metadata**: Fixed manual cover scanning for playlist-based audiobooks in the edit dialog.

@@ -554,6 +554,9 @@
     "info_year_written": "लेखन वर्ष",
     "info_year_recorded": "रिकॉर्डिंग वर्ष",
     "info_language": "भाषा",
+    "status_new_label": "नई स्थिति का रंग:",
+    "status_started_label": "प्रगति में स्थिति का रंग:",
+    "status_completed_label": "पूर्ण स्थिति का रंग:",
     "tab_colors": "विंडो सेटिंग्स",
     "tab_info": "लाइब्रेरी सूची सेटिंग्स",
     "tab_interface": "प्लेयर सेटिंग्स"

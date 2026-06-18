@@ -554,6 +554,9 @@
     "info_year_written": "Année d'écriture",
     "info_year_recorded": "Année d'enregistrement",
     "info_language": "Langue",
+    "status_new_label": "Couleur du statut 'Nouveau':",
+    "status_started_label": "Couleur du statut 'En cours':",
+    "status_completed_label": "Couleur du statut 'Terminé':",
     "tab_colors": "Paramètres de la fenêtre",
     "tab_info": "Paramètres de la liste de la bibliothèque",
     "tab_interface": "Paramètres du lecteur"
