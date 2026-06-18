@@ -1493,3 +1493,43 @@ QGroupBox::title {
     padding: 0 4px;
     color: @text;
 }
+
+/* Color picker buttons in appearance dialog */
+QPushButton.color-btn {
+    border: 1px solid #555555;
+    border-radius: 4px;
+    padding: 0px;
+    min-height: 0px;
+    min-width: 0px;
+}
+
+QPushButton.color-btn:hover {
+    border: 1px solid #ffffff;
+}
+
+/* Color preview box in color picker dialog */
+QLabel.color-preview-box {
+    border: 1px solid #555555;
+    border-radius: 4px;
+}
+
+/* Hue slider in color picker dialog */
+QSlider.hue-slider::groove:horizontal {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF0000, stop:0.17 #FFFF00, stop:0.33 #00FF00, stop:0.5 #00FFFF, stop:0.67 #0000FF, stop:0.83 #FF00FF, stop:1 #FF0000);
+    height: 12px;
+    border-radius: 6px;
+}
+
+QSlider.hue-slider::handle:horizontal {
+    background: #ffffff;
+    border: 1px solid #555555;
+    width: 10px;
+    height: 16px;
+    margin-top: -2px;
+    margin-bottom: -2px;
+    border-radius: 4px;
+}
+
+QSlider.hue-slider::handle:horizontal:hover {
+    background: #eeeeee;
+}

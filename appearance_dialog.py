@@ -88,31 +88,7 @@ class HueSlider(QSlider):
         super().__init__(Qt.Orientation.Horizontal, parent)
         self.setRange(0, 359)
         self.setFixedHeight(12)
-        
-        hue_gradient = (
-            "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, "
-            "stop:0 #FF0000, stop:0.17 #FFFF00, stop:0.33 #00FF00, "
-            "stop:0.5 #00FFFF, stop:0.67 #0000FF, stop:0.83 #FF00FF, stop:1 #FF0000);"
-        )
-        self.setStyleSheet(f"""
-            QSlider::groove:horizontal {{
-                {hue_gradient}
-                height: 12px;
-                border-radius: 6px;
-            }}
-            QSlider::handle:horizontal {{
-                background: #ffffff;
-                border: 1px solid #555555;
-                width: 10px;
-                height: 16px;
-                margin-top: -2px;
-                margin-bottom: -2px;
-                border-radius: 4px;
-            }}
-            QSlider::handle:horizontal:hover {{
-                background: #eeeeee;
-            }}
-        """)
+        self.setProperty("class", "hue-slider")
 
 
 class ColorPickerDialog(QDialog):
@@ -144,6 +120,7 @@ class ColorPickerDialog(QDialog):
         
         # Swatch preview box
         self.preview_box = QLabel()
+        self.preview_box.setProperty("class", "color-preview-box")
         self.preview_box.setFixedSize(36, 22)
         btn_layout.addWidget(self.preview_box)
         
@@ -175,9 +152,7 @@ class ColorPickerDialog(QDialog):
         self.colorChanged.emit(self.color)
         
     def update_preview(self):
-        self.preview_box.setStyleSheet(
-            f"background-color: {self.color.name()}; border: 1px solid #555555; border-radius: 4px;"
-        )
+        self.preview_box.setStyleSheet(f"background-color: {self.color.name()};")
 
 
 class AppearanceDialog(QDialog):
@@ -201,7 +176,7 @@ class AppearanceDialog(QDialog):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
-        self.setMinimumSize(720, 520)
+        self.setMinimumSize(720, 580)
         
         # Keep track of original, current, and default values
         self.original_accent = current_accent
@@ -655,6 +630,14 @@ class AppearanceDialog(QDialog):
         self.hex_input = self.accent_hex_input
         self.custom_color_btn = self.accent_color_btn
         
+        # Set dynamic property for stylesheet styling of color buttons
+        for btn in [
+            self.accent_color_btn, self.window_color_btn, self.bg_dark_color_btn,
+            self.text_color_btn, self.border_color_btn, self.status_new_color_btn,
+            self.status_started_color_btn, self.status_completed_color_btn
+        ]:
+            btn.setProperty("class", "color-btn")
+            
         # Sync UI controls to starting colors and checkboxes
         self.update_ui_from_accent(self.current_accent)
         self.update_ui_from_window(self.current_window)
@@ -679,197 +662,71 @@ class AppearanceDialog(QDialog):
             self.current_status_completed
         )
 
-    def update_ui_from_status_new(self, color_hex: str):
-        """Synchronize custom status new color button background and hex input"""
+    def update_color_button(self, btn, hex_input, color_hex):
         self.updating_ui = True
         try:
-            self.status_new_hex_input.setText(color_hex.upper())
-            self.status_new_color_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color_hex};
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 0px;
-                    min-height: 0px;
-                    min-width: 0px;
-                }}
-                QPushButton:hover {{
-                    border: 1px solid #ffffff;
-                }}
-            """)
+            hex_input.setText(color_hex.upper())
+            btn.setStyleSheet(f"background-color: {color_hex};")
         finally:
             self.updating_ui = False
+
+    def update_ui_from_status_new(self, color_hex: str):
+        """Synchronize custom status new color button background and hex input"""
+        self.update_color_button(self.status_new_color_btn, self.status_new_hex_input, color_hex)
 
     def update_ui_from_status_started(self, color_hex: str):
         """Synchronize custom status started color button background and hex input"""
-        self.updating_ui = True
-        try:
-            self.status_started_hex_input.setText(color_hex.upper())
-            self.status_started_color_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color_hex};
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 0px;
-                    min-height: 0px;
-                    min-width: 0px;
-                }}
-                QPushButton:hover {{
-                    border: 1px solid #ffffff;
-                }}
-            """)
-        finally:
-            self.updating_ui = False
+        self.update_color_button(self.status_started_color_btn, self.status_started_hex_input, color_hex)
 
     def update_ui_from_status_completed(self, color_hex: str):
         """Synchronize custom status completed color button background and hex input"""
-        self.updating_ui = True
-        try:
-            self.status_completed_hex_input.setText(color_hex.upper())
-            self.status_completed_color_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color_hex};
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 0px;
-                    min-height: 0px;
-                    min-width: 0px;
-                }}
-                QPushButton:hover {{
-                    border: 1px solid #ffffff;
-                }}
-            """)
-        finally:
-            self.updating_ui = False
+        self.update_color_button(self.status_completed_color_btn, self.status_completed_hex_input, color_hex)
 
     def update_ui_from_accent(self, color_hex: str):
         """Synchronize custom accent color button background and hex input"""
-        self.updating_ui = True
-        try:
-            self.accent_hex_input.setText(color_hex.upper())
-            self.accent_color_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color_hex};
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 0px;
-                    min-height: 0px;
-                    min-width: 0px;
-                }}
-                QPushButton:hover {{
-                    border: 1px solid #ffffff;
-                }}
-            """)
-        finally:
-            self.updating_ui = False
+        self.update_color_button(self.accent_color_btn, self.accent_hex_input, color_hex)
 
     def update_ui_from_window(self, color_hex: str):
         """Synchronize custom window color button background and hex input"""
-        self.updating_ui = True
-        try:
-            self.window_hex_input.setText(color_hex.upper())
-            self.window_color_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color_hex};
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 0px;
-                    min-height: 0px;
-                    min-width: 0px;
-                }}
-                QPushButton:hover {{
-                    border: 1px solid #ffffff;
-                }}
-            """)
-        finally:
-            self.updating_ui = False
+        self.update_color_button(self.window_color_btn, self.window_hex_input, color_hex)
 
     def update_ui_from_bg_dark(self, color_hex: str):
         """Synchronize custom secondary bg color button background and hex input"""
-        self.updating_ui = True
-        try:
-            self.bg_dark_hex_input.setText(color_hex.upper())
-            self.bg_dark_color_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color_hex};
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 0px;
-                    min-height: 0px;
-                    min-width: 0px;
-                }}
-                QPushButton:hover {{
-                    border: 1px solid #ffffff;
-                }}
-            """)
-        finally:
-            self.updating_ui = False
+        self.update_color_button(self.bg_dark_color_btn, self.bg_dark_hex_input, color_hex)
             
     def update_ui_from_text(self, color_hex: str):
         """Synchronize custom font color button background and hex input"""
-        self.updating_ui = True
-        try:
-            self.text_hex_input.setText(color_hex.upper())
-            self.text_color_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color_hex};
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 0px;
-                    min-height: 0px;
-                    min-width: 0px;
-                }}
-                QPushButton:hover {{
-                    border: 1px solid #ffffff;
-                }}
-            """)
-        finally:
-            self.updating_ui = False
+        self.update_color_button(self.text_color_btn, self.text_hex_input, color_hex)
             
     def update_ui_from_border(self, color_hex: str):
         """Synchronize custom border color button background and hex input"""
-        self.updating_ui = True
-        try:
-            self.border_hex_input.setText(color_hex.upper())
-            self.border_color_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {color_hex};
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 0px;
-                    min-height: 0px;
-                    min-width: 0px;
-                }}
-                QPushButton:hover {{
-                    border: 1px solid #ffffff;
-                }}
-            """)
-        finally:
-            self.updating_ui = False
+        self.update_color_button(self.border_color_btn, self.border_hex_input, color_hex)
             
     def choose_accent_color(self):
         """Open custom compact color picker dialog for accent and preview changes live"""
         color_before = self.current_accent
         dialog = ColorPickerDialog(self, QColor(self.current_accent))
         dialog.colorChanged.connect(self.select_accent_color_preview)
-        
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        result = dialog.exec()
+        try:
+            dialog.colorChanged.disconnect(self.select_accent_color_preview)
+        except Exception:
+            pass
+
+        if result == QDialog.DialogCode.Accepted:
             self.current_accent = dialog.color.name().upper()
-            self.update_ui_from_accent(self.current_accent)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
-            self.accent_preview.emit(self.current_accent)
         else:
             self.current_accent = color_before
-            self.update_ui_from_accent(self.current_accent)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
-            self.accent_preview.emit(self.current_accent)
+        self.update_ui_from_accent(self.current_accent)
+        self.emit_preview()
+        self.accent_preview.emit(self.current_accent)
             
     def select_accent_color_preview(self, color: QColor):
         """Update accent preview from dialog changes"""
         color_hex = color.name().upper()
         self.current_accent = color_hex
         self.update_ui_from_accent(color_hex)
-        self.appearance_preview.emit(color_hex, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+        self.emit_preview()
         self.accent_preview.emit(color_hex)
         
     def choose_window_color(self):
@@ -877,81 +734,93 @@ class AppearanceDialog(QDialog):
         color_before = self.current_window
         dialog = ColorPickerDialog(self, QColor(self.current_window))
         dialog.colorChanged.connect(self.select_window_color_preview)
-        
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        result = dialog.exec()
+        try:
+            dialog.colorChanged.disconnect(self.select_window_color_preview)
+        except Exception:
+            pass
+
+        if result == QDialog.DialogCode.Accepted:
             self.current_window = dialog.color.name().upper()
-            self.update_ui_from_window(self.current_window)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
         else:
             self.current_window = color_before
-            self.update_ui_from_window(self.current_window)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+        self.update_ui_from_window(self.current_window)
+        self.emit_preview()
             
     def select_window_color_preview(self, color: QColor):
         """Update window preview from dialog changes"""
         color_hex = color.name().upper()
         self.current_window = color_hex
         self.update_ui_from_window(color_hex)
-        self.appearance_preview.emit(self.current_accent, color_hex, self.current_bg_dark, self.current_text, self.current_border)
+        self.emit_preview()
 
     def choose_bg_dark_color(self):
         """Open custom compact color picker dialog for secondary bg and preview changes live"""
         color_before = self.current_bg_dark
         dialog = ColorPickerDialog(self, QColor(self.current_bg_dark))
         dialog.colorChanged.connect(self.select_bg_dark_color_preview)
-        
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        result = dialog.exec()
+        try:
+            dialog.colorChanged.disconnect(self.select_bg_dark_color_preview)
+        except Exception:
+            pass
+
+        if result == QDialog.DialogCode.Accepted:
             self.current_bg_dark = dialog.color.name().upper()
-            self.update_ui_from_bg_dark(self.current_bg_dark)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
         else:
             self.current_bg_dark = color_before
-            self.update_ui_from_bg_dark(self.current_bg_dark)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+        self.update_ui_from_bg_dark(self.current_bg_dark)
+        self.emit_preview()
             
     def select_bg_dark_color_preview(self, color: QColor):
         """Update secondary bg preview from dialog changes"""
         color_hex = color.name().upper()
         self.current_bg_dark = color_hex
         self.update_ui_from_bg_dark(color_hex)
-        self.appearance_preview.emit(self.current_accent, self.current_window, color_hex, self.current_text, self.current_border)
+        self.emit_preview()
         
     def choose_text_color(self):
         """Open custom compact color picker dialog for font color and preview changes live"""
         color_before = self.current_text
         dialog = ColorPickerDialog(self, QColor(self.current_text))
         dialog.colorChanged.connect(self.select_text_color_preview)
-        
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        result = dialog.exec()
+        try:
+            dialog.colorChanged.disconnect(self.select_text_color_preview)
+        except Exception:
+            pass
+
+        if result == QDialog.DialogCode.Accepted:
             self.current_text = dialog.color.name().upper()
-            self.update_ui_from_text(self.current_text)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
         else:
             self.current_text = color_before
-            self.update_ui_from_text(self.current_text)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+        self.update_ui_from_text(self.current_text)
+        self.emit_preview()
             
     def select_text_color_preview(self, color: QColor):
         """Update font color preview from dialog changes"""
         color_hex = color.name().upper()
         self.current_text = color_hex
         self.update_ui_from_text(color_hex)
-        self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, color_hex, self.current_border)
+        self.emit_preview()
 
     def choose_border_color(self):
         """Open custom compact color picker dialog for border color and preview changes live"""
         color_before = self.current_border
         dialog = ColorPickerDialog(self, QColor(self.current_border))
         dialog.colorChanged.connect(self.select_border_color_preview)
-        
-        if dialog.exec() == QDialog.DialogCode.Accepted:
+        result = dialog.exec()
+        try:
+            dialog.colorChanged.disconnect(self.select_border_color_preview)
+        except Exception:
+            pass
+
+        if result == QDialog.DialogCode.Accepted:
             self.current_border = dialog.color.name().upper()
-            self.update_ui_from_border(self.current_border)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
         else:
             self.current_border = color_before
-            self.update_ui_from_border(self.current_border)
-            self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+        self.update_ui_from_border(self.current_border)
+        self.emit_preview()
             
     def select_border_color_preview(self, color: QColor):
         """Update border color preview from dialog changes"""
