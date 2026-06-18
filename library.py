@@ -1711,6 +1711,13 @@ class MultiLineDelegate(QStyledItemDelegate):
                 if tag_rect.right() > option.rect.right() - 10:
                     break
 
+                is_hovered_tag = (
+                    self.hovered_index == index
+                    and getattr(self, "hovered_field", None) == f"tag:{tag['id']}"
+                )
+                if is_hovered_tag:
+                    tag_color = tag_color.lighter(115)
+
                 path = QPainterPath()
                 path.addRoundedRect(tag_rect, 4, 4)
 
@@ -1823,6 +1830,175 @@ class MultiLineDelegate(QStyledItemDelegate):
 
         return QRect(text_x, text_y, icon_width + actual_width, narrator_height)
 
+    def get_tags_rects(self, option_rect: QRect, index: QModelIndex) -> list:
+        """Calculate the rects for each tag of the given audiobook index"""
+        item_type = index.data(Qt.ItemDataRole.UserRole + 1)
+        if item_type != "audiobook":
+            return []
+
+        tags = index.data(Qt.ItemDataRole.UserRole + 4)
+        if not tags:
+            return []
+
+        icon_rect = self.get_icon_rect(option_rect, index)
+        data = index.data(Qt.ItemDataRole.UserRole + 2)
+        if not data:
+            return []
+
+        (
+            author,
+            title,
+            narrator,
+            file_count,
+            duration,
+            listened_duration,
+            progress_percent,
+            codec,
+            b_min,
+            b_max,
+            b_mode,
+            container,
+        ) = data[:12]
+        description = data[12] if len(data) > 12 else ""
+        total_size = data[13] if len(data) > 13 else 0
+        language = data[14] if len(data) > 14 else None
+        year_written = data[15] if len(data) > 15 else None
+        year_recorded = data[16] if len(data) > 16 else None
+
+        tree = getattr(self, "tree", None) or self.parent()
+        mass_mode = getattr(tree, "mass_selection_mode", False)
+        if mass_mode:
+            text_x = icon_rect.right() + 43
+        else:
+            text_x = icon_rect.right() + 15
+        text_y = option_rect.top() + self.vertical_padding
+        available_width = option_rect.right() - text_x - self.horizontal_padding
+
+        # Title
+        font_title, _ = self._get_style("delegate_title")
+        title_height = QFontMetrics(font_title).height()
+        text_y += title_height + self.line_spacing
+
+        # Author
+        if author:
+            font_author, _ = self._get_style("delegate_author")
+            author_height = QFontMetrics(font_author).height()
+            text_y += author_height + self.line_spacing
+
+        # Narrator
+        if narrator:
+            font_narrator, _ = self._get_style("delegate_narrator")
+            narrator_height = QFontMetrics(font_narrator).height()
+            text_y += narrator_height + self.line_spacing
+
+        # Status info line (Files, Duration, Progress)
+        info_parts = []
+        status_data = index.data(Qt.ItemDataRole.UserRole + 3)
+        is_started = False
+        if status_data and len(status_data) >= 3:
+            is_started = bool(status_data[0])
+        # Listening progress percentage
+        progress_text = trf("delegate.progress", percent=int(progress_percent))
+        font_prog, color_prog = self._get_style("delegate_progress")
+        info_parts.append((None, progress_text, font_prog, color_prog))
+
+        # File list count
+        if file_count:
+            font_fc, color_fc = self._get_style("delegate_file_count")
+            info_parts.append((self.info_file_count_icon, str(file_count), font_fc, color_fc))
+
+        # Overall duration
+        if duration:
+            font_dur, color_dur = self._get_style("delegate_duration")
+            duration_text = format_duration(duration)
+            info_parts.append((self.info_duration_icon, duration_text, font_dur, color_dur))
+
+        # Total size metadata
+        if total_size:
+            font_sz, color_sz = self._get_style("delegate_file_count")
+            size_text = format_size(total_size)
+            info_parts.append((self.info_size_icon, size_text, font_sz, color_sz))
+
+        # Technical Metadata
+        if b_min or codec or container:
+            tech_line = []
+            if b_min:
+                calc_min = b_min // 1000 if b_min > 5000 else b_min
+                calc_max = b_max // 1000 if b_max > 5000 else b_max
+                if calc_min == calc_max:
+                    br_str = f"{calc_min}"
+                else:
+                    br_str = f"{calc_min}-{calc_max}"
+                tech_line.append(f"{br_str} {tr('units.kbps', default='kbps')}")
+            if b_mode:
+                tech_line.append(b_mode)
+            codec_info = []
+            if codec:
+                codec_info.append(codec.lower())
+            if container and container.lower() != codec.lower():
+                codec_info.append(container.lower())
+            if codec_info:
+                tech_line.append("/".join(codec_info))
+            if tech_line:
+                full_tech_text = ' '.join(tech_line)
+                font_tech, color_tech = self._get_style("delegate_file_count")
+                info_parts.append((self.info_bitrate_icon, full_tech_text, font_tech, color_tech))
+
+        # Writing Year metadata
+        if year_written and str(year_written).strip():
+            font_yw, color_yw = self._get_style("delegate_file_count")
+            if self.author_icon and not self.author_icon.isNull():
+                info_parts.append((self.author_icon, str(year_written), font_yw, color_yw))
+            else:
+                yw_prefix = tr("delegate.year_written_prefix", default="✍️")
+                info_parts.append((None, f"{yw_prefix} {year_written}", font_yw, color_yw))
+
+        # Recording Year metadata
+        if year_recorded and str(year_recorded).strip():
+            font_yr, color_yr = self._get_style("delegate_file_count")
+            if self.narrator_icon and not self.narrator_icon.isNull():
+                info_parts.append((self.narrator_icon, str(year_recorded), font_yr, color_yr))
+            else:
+                yr_prefix = tr("delegate.year_recorded_prefix", default="💿")
+                info_parts.append((None, f"{yr_prefix} {year_recorded}", font_yr, color_yr))
+
+        # Language metadata
+        if language and str(language).strip():
+            font_lang, color_lang = self._get_style("delegate_file_count")
+            if self.info_language_icon and not self.info_language_icon.isNull():
+                info_parts.append((self.info_language_icon, language, font_lang, color_lang))
+            else:
+                lang_prefix = tr("delegate.language_prefix", default="🌐")
+                info_parts.append((None, f"{lang_prefix} {language}", font_lang, color_lang))
+
+        if info_parts and getattr(self, "show_detailed_info", True):
+            font_inf, _ = self._get_style("delegate_file_count")
+            line_height = QFontMetrics(font_inf).height()
+            text_y += line_height + self.line_spacing
+
+        # Compute tag rects
+        tag_rects = []
+        tag_x = text_x
+        font_tag, _ = self._get_style("delegate_info_font")
+        fm = QFontMetrics(font_tag)
+        t_h = fm.height() + 4
+
+        for tag in tags:
+            tag_name = tag["name"]
+            t_w = fm.horizontalAdvance(tag_name)
+            tag_rect = QRectF(
+                float(tag_x), float(text_y), float(t_w + 12), float(t_h)
+            )
+
+            # Check for overflow
+            if tag_rect.right() > option_rect.right() - 10:
+                break
+
+            tag_rects.append((tag, tag_rect))
+            tag_x += tag_rect.width() + 6
+
+        return tag_rects
+
 
 class LibraryTree(QTreeWidget):
     """Customized tree widget that handles hover detection and direct interaction with audiobook 'Play' buttons"""
@@ -1834,6 +2010,7 @@ class LibraryTree(QTreeWidget):
     description_requested = pyqtSignal(str)  # Emits path when info icon is clicked
     settings_requested = pyqtSignal()  # Emits when placeholder settings icon is clicked
     search_requested = pyqtSignal(str)  # Emits search string when author or narrator clicked
+    tag_clicked = pyqtSignal(dict)  # Emits tag dict when tag is clicked
 
     def __init__(self, parent=None):
         """Enable mouse tracking for fine-grained hover effects on custom-painted items"""
@@ -1989,6 +2166,16 @@ class LibraryTree(QTreeWidget):
                         self.viewport().update()
                         return
 
+                    # Check tags hover
+                    if hasattr(delegate, "get_tags_rects"):
+                        tags_rects = delegate.get_tags_rects(rect, index)
+                        for tag, tag_rect in tags_rects:
+                            if tag_rect.contains(QPointF(event.pos())):
+                                delegate.hovered_field = f"tag:{tag['id']}"
+                                self.setCursor(Qt.CursorShape.PointingHandCursor)
+                                self.viewport().update()
+                                return
+
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.viewport().update()
 
@@ -2086,6 +2273,14 @@ class LibraryTree(QTreeWidget):
                             if narrator:
                                 self.search_requested.emit(narrator)
                                 return
+
+                        # Check tag click
+                        if hasattr(delegate, "get_tags_rects"):
+                            tags_rects = delegate.get_tags_rects(rect, index)
+                            for tag, tag_rect in tags_rects:
+                                if tag_rect.contains(QPointF(event.pos())):
+                                    self.tag_clicked.emit(tag)
+                                    return
         super().mousePressEvent(event)
 
     def _emit_favorite_clicked(self, path):
@@ -2452,6 +2647,7 @@ class LibraryWidget(QWidget):
         self.tree.customContextMenuRequested.connect(self.show_context_menu)
         self.tree.settings_requested.connect(self.settings_requested.emit)
         self.tree.search_requested.connect(self.search_edit.setText)
+        self.tree.tag_clicked.connect(self.on_tree_tag_clicked)
 
         if self.delegate:
             self.delegate.tree = self.tree
@@ -2566,6 +2762,18 @@ class LibraryWidget(QWidget):
 
         if self.is_tag_filter_active:
             self.load_audiobooks(use_cache=False)
+
+    def on_tree_tag_clicked(self, tag: dict):
+        """Handle clicking a tag in the tree: enable filtering by this tag"""
+        tag_id = tag.get("id")
+        if tag_id is None:
+            return
+
+        self.tag_filter_ids = {tag_id}
+        self.is_tag_filter_active = True
+        if hasattr(self, "btn_tags") and self.btn_tags:
+            self.btn_tags.setChecked(True)
+        self.load_audiobooks(use_cache=False)
 
     def on_tree_favorite_clicked(self, path: str):
         """Handle click on the favorite heart icon in the tree"""
