@@ -543,6 +543,15 @@
     "save_btn": "Сохранить",
     "cancel_btn": "Отмена",
     "text_label": "Цвет шрифта:",
-    "border_label": "Цвет обводки кнопок:"
+    "border_label": "Цвет обводки кнопок:",
+    "info_section_title": "Элементы строки инфо о книге",
+    "info_progress": "Прогресс прослушивания",
+    "info_files": "Количество файлов",
+    "info_duration": "Общая длительность",
+    "info_size": "Размер файлов",
+    "info_technical": "Технические данные (кодек/битрейт)",
+    "info_year_written": "Год написания",
+    "info_year_recorded": "Год записи",
+    "info_language": "Язык книги"
   }
 }

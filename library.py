@@ -628,6 +628,16 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.show_nesting_lines = True
         self.show_detailed_info = True
         self.show_status_triangle = True
+        
+        # Book info elements visibility flags
+        self.show_info_progress = True
+        self.show_info_file_count = True
+        self.show_info_duration = True
+        self.show_info_size = True
+        self.show_info_technical = True
+        self.show_info_year_written = True
+        self.show_info_year_recorded = True
+        self.show_info_language = True
 
         # UI state for interaction
         self.hovered_index = None
@@ -1547,29 +1557,30 @@ class MultiLineDelegate(QStyledItemDelegate):
         info_parts = []
 
         # Listening progress percentage
-        font_prog, color_prog = self._get_style("delegate_progress")
-        progress_text = trf("delegate.progress", percent=int(progress_percent))
-        info_parts.append((None, progress_text, font_prog, color_prog))
+        if getattr(self, "show_info_progress", True):
+            font_prog, color_prog = self._get_style("delegate_progress")
+            progress_text = trf("delegate.progress", percent=int(progress_percent))
+            info_parts.append((None, progress_text, font_prog, color_prog))
 
         # File list count
-        if file_count:
+        if file_count and getattr(self, "show_info_file_count", True):
             font_fc, color_fc = self._get_style("delegate_file_count")
             info_parts.append((self.info_file_count_icon, str(file_count), font_fc, color_fc))
 
         # Overall duration
-        if duration:
+        if duration and getattr(self, "show_info_duration", True):
             font_dur, color_dur = self._get_style("delegate_duration")
             duration_text = format_duration(duration)
             info_parts.append((self.info_duration_icon, duration_text, font_dur, color_dur))
 
         # Total size metadata
-        if total_size:
+        if total_size and getattr(self, "show_info_size", True):
             font_sz, color_sz = self._get_style("delegate_file_count")
             size_text = format_size(total_size)
             info_parts.append((self.info_size_icon, size_text, font_sz, color_sz))
 
         # Technical Metadata (Bitrate, Mode, Codec/Container)
-        if b_min or codec or container:
+        if (b_min or codec or container) and getattr(self, "show_info_technical", True):
             # Format: [icon] [bitrate] [units] [mode] [codec]/[container]
             tech_line = []
 
@@ -1607,7 +1618,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 info_parts.append((self.info_bitrate_icon, full_tech_text, font_tech, color_tech))
 
         # Writing Year metadata
-        if year_written and str(year_written).strip():
+        if year_written and str(year_written).strip() and getattr(self, "show_info_year_written", True):
             font_yw, color_yw = self._get_style("delegate_file_count")
             if self.author_icon and not self.author_icon.isNull():
                 info_parts.append((self.author_icon, str(year_written), font_yw, color_yw))
@@ -1616,7 +1627,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 info_parts.append((None, f"{yw_prefix} {year_written}", font_yw, color_yw))
 
         # Recording Year metadata
-        if year_recorded and str(year_recorded).strip():
+        if year_recorded and str(year_recorded).strip() and getattr(self, "show_info_year_recorded", True):
             font_yr, color_yr = self._get_style("delegate_file_count")
             if self.narrator_icon and not self.narrator_icon.isNull():
                 info_parts.append((self.narrator_icon, str(year_recorded), font_yr, color_yr))
@@ -1625,7 +1636,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 info_parts.append((None, f"{yr_prefix} {year_recorded}", font_yr, color_yr))
 
         # Language metadata
-        if language and str(language).strip():
+        if language and str(language).strip() and getattr(self, "show_info_language", True):
             font_lang, color_lang = self._get_style("delegate_file_count")
             if self.info_language_icon and not self.info_language_icon.isNull():
                 info_parts.append((self.info_language_icon, language, font_lang, color_lang))
@@ -1898,29 +1909,30 @@ class MultiLineDelegate(QStyledItemDelegate):
         if status_data and len(status_data) >= 3:
             is_started = bool(status_data[0])
         # Listening progress percentage
-        progress_text = trf("delegate.progress", percent=int(progress_percent))
-        font_prog, color_prog = self._get_style("delegate_progress")
-        info_parts.append((None, progress_text, font_prog, color_prog))
+        if getattr(self, "show_info_progress", True):
+            progress_text = trf("delegate.progress", percent=int(progress_percent))
+            font_prog, color_prog = self._get_style("delegate_progress")
+            info_parts.append((None, progress_text, font_prog, color_prog))
 
         # File list count
-        if file_count:
+        if file_count and getattr(self, "show_info_file_count", True):
             font_fc, color_fc = self._get_style("delegate_file_count")
             info_parts.append((self.info_file_count_icon, str(file_count), font_fc, color_fc))
 
         # Overall duration
-        if duration:
+        if duration and getattr(self, "show_info_duration", True):
             font_dur, color_dur = self._get_style("delegate_duration")
             duration_text = format_duration(duration)
             info_parts.append((self.info_duration_icon, duration_text, font_dur, color_dur))
 
         # Total size metadata
-        if total_size:
+        if total_size and getattr(self, "show_info_size", True):
             font_sz, color_sz = self._get_style("delegate_file_count")
             size_text = format_size(total_size)
             info_parts.append((self.info_size_icon, size_text, font_sz, color_sz))
 
         # Technical Metadata
-        if b_min or codec or container:
+        if (b_min or codec or container) and getattr(self, "show_info_technical", True):
             tech_line = []
             if b_min:
                 calc_min = b_min // 1000 if b_min > 5000 else b_min
@@ -1945,7 +1957,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 info_parts.append((self.info_bitrate_icon, full_tech_text, font_tech, color_tech))
 
         # Writing Year metadata
-        if year_written and str(year_written).strip():
+        if year_written and str(year_written).strip() and getattr(self, "show_info_year_written", True):
             font_yw, color_yw = self._get_style("delegate_file_count")
             if self.author_icon and not self.author_icon.isNull():
                 info_parts.append((self.author_icon, str(year_written), font_yw, color_yw))
@@ -1954,7 +1966,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 info_parts.append((None, f"{yw_prefix} {year_written}", font_yw, color_yw))
 
         # Recording Year metadata
-        if year_recorded and str(year_recorded).strip():
+        if year_recorded and str(year_recorded).strip() and getattr(self, "show_info_year_recorded", True):
             font_yr, color_yr = self._get_style("delegate_file_count")
             if self.narrator_icon and not self.narrator_icon.isNull():
                 info_parts.append((self.narrator_icon, str(year_recorded), font_yr, color_yr))
@@ -1963,7 +1975,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 info_parts.append((None, f"{yr_prefix} {year_recorded}", font_yr, color_yr))
 
         # Language metadata
-        if language and str(language).strip():
+        if language and str(language).strip() and getattr(self, "show_info_language", True):
             font_lang, color_lang = self._get_style("delegate_file_count")
             if self.info_language_icon and not self.info_language_icon.isNull():
                 info_parts.append((self.info_language_icon, language, font_lang, color_lang))

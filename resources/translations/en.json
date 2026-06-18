@@ -543,6 +543,15 @@
     "save_btn": "Save",
     "cancel_btn": "Cancel",
     "text_label": "Font Color:",
-    "border_label": "Border Color:"
+    "border_label": "Border Color:",
+    "info_section_title": "Book Info Line Elements",
+    "info_progress": "Listening Progress",
+    "info_files": "File Count",
+    "info_duration": "Total Duration",
+    "info_size": "File Size",
+    "info_technical": "Technical Details (bitrate/codec)",
+    "info_year_written": "Year Written",
+    "info_year_recorded": "Year Recorded",
+    "info_language": "Language"
   }
 }

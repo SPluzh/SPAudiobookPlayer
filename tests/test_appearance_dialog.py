@@ -212,3 +212,63 @@ def test_appearance_dialog_text_color_hex_input_and_reject():
     # Reject reverts the values
     dialog.reject()
     assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#555555", "#777777")
+
+
+def test_appearance_dialog_info_checkboxes():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        show_info_progress=True,
+        show_info_file_count=False,
+        show_info_duration=True,
+        show_info_size=False,
+        show_info_technical=True,
+        show_info_year_written=False,
+        show_info_year_recorded=True,
+        show_info_language=False
+    )
+
+    # 1. Verify initial checkbox states (widgets and internal properties)
+    assert dialog.current_show_info_progress is True
+    assert dialog.current_show_info_file_count is False
+    assert dialog.current_show_info_duration is True
+    assert dialog.current_show_info_size is False
+    assert dialog.current_show_info_technical is True
+    assert dialog.current_show_info_year_written is False
+    assert dialog.current_show_info_year_recorded is True
+    assert dialog.current_show_info_language is False
+
+    assert dialog.chk_progress.isChecked() is True
+    assert dialog.chk_files.isChecked() is False
+    assert dialog.chk_duration.isChecked() is True
+    assert dialog.chk_size.isChecked() is False
+    assert dialog.chk_technical.isChecked() is True
+    assert dialog.chk_year_written.isChecked() is False
+    assert dialog.chk_year_recorded.isChecked() is True
+    assert dialog.chk_language.isChecked() is False
+
+    # 2. Modify checkboxes and check updates
+    dialog.chk_progress.setChecked(False)
+    dialog.chk_files.setChecked(True)
+    
+    assert dialog.current_show_info_progress is False
+    assert dialog.current_show_info_file_count is True
+
+    # 3. Test reset to default (should make all checkboxes True)
+    dialog.reset_to_default()
+    assert dialog.current_show_info_progress is True
+    assert dialog.current_show_info_file_count is True
+    assert dialog.chk_progress.isChecked() is True
+    assert dialog.chk_files.isChecked() is True
+
+    # 4. Test reject restores original constructor values
+    dialog.reject()
+    assert dialog.current_show_info_progress is True
+    assert dialog.current_show_info_file_count is False
+    assert dialog.current_show_info_duration is True
+    assert dialog.current_show_info_size is False
+    assert dialog.current_show_info_technical is True
+    assert dialog.current_show_info_year_written is False
+    assert dialog.current_show_info_year_recorded is True
+    assert dialog.current_show_info_language is False

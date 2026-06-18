@@ -149,6 +149,16 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_detailed_info = True
         self.show_status_triangle = True
         self.show_statusbar = True
+        
+        # Book info settings
+        self.show_info_progress = True
+        self.show_info_file_count = True
+        self.show_info_duration = True
+        self.show_info_size = True
+        self.show_info_technical = True
+        self.show_info_year_written = True
+        self.show_info_year_recorded = True
+        self.show_info_language = True
         self.normal_geometry = None
         self.normal_splitter_state = None
         self.always_on_top = False
@@ -196,6 +206,14 @@ class AudiobookPlayerWindow(QMainWindow):
             self.delegate.show_nesting_lines = self.show_nesting_lines
             self.delegate.show_detailed_info = self.show_detailed_info
             self.delegate.show_status_triangle = self.show_status_triangle
+            self.delegate.show_info_progress = self.show_info_progress
+            self.delegate.show_info_file_count = self.show_info_file_count
+            self.delegate.show_info_duration = self.show_info_duration
+            self.delegate.show_info_size = self.show_info_size
+            self.delegate.show_info_technical = self.show_info_technical
+            self.delegate.show_info_year_written = self.show_info_year_written
+            self.delegate.show_info_year_recorded = self.show_info_year_recorded
+            self.delegate.show_info_language = self.show_info_language
         except Exception as e:
             print(f"Failed to create delegate: {e}")
 
@@ -1123,6 +1141,14 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_status_triangle = config.getboolean(
             "Library", "show_status_triangle", fallback=True
         )
+        self.show_info_progress = config.getboolean("Library", "show_info_progress", fallback=True)
+        self.show_info_file_count = config.getboolean("Library", "show_info_file_count", fallback=True)
+        self.show_info_duration = config.getboolean("Library", "show_info_duration", fallback=True)
+        self.show_info_size = config.getboolean("Library", "show_info_size", fallback=True)
+        self.show_info_technical = config.getboolean("Library", "show_info_technical", fallback=True)
+        self.show_info_year_written = config.getboolean("Library", "show_info_year_written", fallback=True)
+        self.show_info_year_recorded = config.getboolean("Library", "show_info_year_recorded", fallback=True)
+        self.show_info_language = config.getboolean("Library", "show_info_language", fallback=True)
         self.library_filter_mode = config.get("Library", "filter_mode", fallback="all")
         self.library_favorites_active = config.getboolean(
             "Library", "favorites_active", fallback=False
@@ -1357,6 +1383,14 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Library"]["show_nesting_lines"] = str(self.show_nesting_lines)
         config["Library"]["show_detailed_info"] = str(self.show_detailed_info)
         config["Library"]["show_status_triangle"] = str(self.show_status_triangle)
+        config["Library"]["show_info_progress"] = str(self.show_info_progress)
+        config["Library"]["show_info_file_count"] = str(self.show_info_file_count)
+        config["Library"]["show_info_duration"] = str(self.show_info_duration)
+        config["Library"]["show_info_size"] = str(self.show_info_size)
+        config["Library"]["show_info_technical"] = str(self.show_info_technical)
+        config["Library"]["show_info_year_written"] = str(self.show_info_year_written)
+        config["Library"]["show_info_year_recorded"] = str(self.show_info_year_recorded)
+        config["Library"]["show_info_language"] = str(self.show_info_language)
         if hasattr(self, "library_widget"):
             config["Library"]["tag_filter_active"] = str(
                 self.library_widget.is_tag_filter_active
@@ -2197,8 +2231,18 @@ class AudiobookPlayerWindow(QMainWindow):
                 current_text=getattr(self, "text_color", ""),
                 default_text=default_text,
                 current_border=getattr(self, "border_color", ""),
-                default_border=default_border
+                default_border=default_border,
+                show_info_progress=self.show_info_progress,
+                show_info_file_count=self.show_info_file_count,
+                show_info_duration=self.show_info_duration,
+                show_info_size=self.show_info_size,
+                show_info_technical=self.show_info_technical,
+                show_info_year_written=self.show_info_year_written,
+                show_info_year_recorded=self.show_info_year_recorded,
+                show_info_language=self.show_info_language
             )
+            
+            self.appearance_dialog = dialog
             
             dialog.appearance_preview.connect(self.apply_appearance_preview)
             dialog.appearance_saved.connect(self.save_appearance_colors)
@@ -2208,6 +2252,7 @@ class AudiobookPlayerWindow(QMainWindow):
             dialog.accent_saved.connect(self.save_accent_color)
             
             dialog.exec()
+            self.appearance_dialog = None
         except Exception as e:
             print(f"Error showing appearance settings: {e}")
 
@@ -2228,11 +2273,28 @@ class AudiobookPlayerWindow(QMainWindow):
                 overrides["border"] = border_hex
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
             
+            # Apply temporary info checkbox settings if previewing
+            if hasattr(self, "appearance_dialog") and self.appearance_dialog:
+                settings = self.appearance_dialog.get_info_settings()
+                if self.delegate:
+                    self.delegate.show_info_progress = settings["show_info_progress"]
+                    self.delegate.show_info_file_count = settings["show_info_file_count"]
+                    self.delegate.show_info_duration = settings["show_info_duration"]
+                    self.delegate.show_info_size = settings["show_info_size"]
+                    self.delegate.show_info_technical = settings["show_info_technical"]
+                    self.delegate.show_info_year_written = settings["show_info_year_written"]
+                    self.delegate.show_info_year_recorded = settings["show_info_year_recorded"]
+                    self.delegate.show_info_language = settings["show_info_language"]
+
             if self.delegate:
                 self.delegate.update_styles()
                 
             StyleManager.refresh_cache()
             self.update()
+            if hasattr(self, "library_widget") and self.library_widget:
+                if hasattr(self.library_widget, "tree"):
+                    self.library_widget.tree.doItemsLayout()
+                    self.library_widget.tree.viewport().update()
         except Exception as e:
             print(f"Error applying appearance preview: {e}")
 
@@ -2248,7 +2310,42 @@ class AudiobookPlayerWindow(QMainWindow):
         self.save_setting("Appearance", "bg_dark_color", bg_dark_hex)
         self.save_setting("Appearance", "text_color", text_hex)
         self.save_setting("Appearance", "border_color", border_hex)
+        
+        if hasattr(self, "appearance_dialog") and self.appearance_dialog:
+            settings = self.appearance_dialog.get_info_settings()
+            self.show_info_progress = settings["show_info_progress"]
+            self.show_info_file_count = settings["show_info_file_count"]
+            self.show_info_duration = settings["show_info_duration"]
+            self.show_info_size = settings["show_info_size"]
+            self.show_info_technical = settings["show_info_technical"]
+            self.show_info_year_written = settings["show_info_year_written"]
+            self.show_info_year_recorded = settings["show_info_year_recorded"]
+            self.show_info_language = settings["show_info_language"]
+            
+            self.save_setting("Library", "show_info_progress", str(self.show_info_progress))
+            self.save_setting("Library", "show_info_file_count", str(self.show_info_file_count))
+            self.save_setting("Library", "show_info_duration", str(self.show_info_duration))
+            self.save_setting("Library", "show_info_size", str(self.show_info_size))
+            self.save_setting("Library", "show_info_technical", str(self.show_info_technical))
+            self.save_setting("Library", "show_info_year_written", str(self.show_info_year_written))
+            self.save_setting("Library", "show_info_year_recorded", str(self.show_info_year_recorded))
+            self.save_setting("Library", "show_info_language", str(self.show_info_language))
+            
+            if self.delegate:
+                self.delegate.show_info_progress = self.show_info_progress
+                self.delegate.show_info_file_count = self.show_info_file_count
+                self.delegate.show_info_duration = self.show_info_duration
+                self.delegate.show_info_size = self.show_info_size
+                self.delegate.show_info_technical = self.show_info_technical
+                self.delegate.show_info_year_written = self.show_info_year_written
+                self.delegate.show_info_year_recorded = self.show_info_year_recorded
+                self.delegate.show_info_language = self.show_info_language
+                
         self.reload_styles()
+        if hasattr(self, "library_widget") and self.library_widget:
+            if hasattr(self.library_widget, "tree"):
+                self.library_widget.tree.doItemsLayout()
+                self.library_widget.tree.viewport().update()
 
     def apply_accent_preview(self, color_hex: str):
         """Apply a temporary accent color override for live previewing (backward compatibility)"""

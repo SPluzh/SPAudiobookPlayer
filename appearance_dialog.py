@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider, QLineEdit, QWidget, QGridLayout
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider, QLineEdit, QWidget, QGridLayout, QFrame, QCheckBox
 from PyQt6.QtCore import pyqtSignal, Qt, QPoint, QRegularExpression
 from PyQt6.QtGui import QColor, QRegularExpressionValidator, QPainter, QImage, QMouseEvent, QPen
 from translations import tr
@@ -189,11 +189,13 @@ class AppearanceDialog(QDialog):
     appearance_preview = pyqtSignal(str, str, str, str, str) # Emits (accent_color, window_color, bg_dark_color, text_color, border_color)
     appearance_saved = pyqtSignal(str, str, str, str, str)   # Emits (accent_color, window_color, bg_dark_color, text_color, border_color)
     
-    def __init__(self, parent=None, current_accent="", default_accent="", current_window="", default_window="", current_bg_dark="", default_bg_dark="", current_text="", default_text="", current_border="", default_border=""):
+    def __init__(self, parent=None, current_accent="", default_accent="", current_window="", default_window="", current_bg_dark="", default_bg_dark="", current_text="", default_text="", current_border="", default_border="",
+                 show_info_progress=True, show_info_file_count=True, show_info_duration=True, show_info_size=True,
+                 show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=True):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
-        self.setMinimumSize(320, 240)
+        self.setMinimumSize(320, 420)  # Make size slightly taller to fit checkboxes
         self.setMaximumWidth(360)
         
         # Keep track of original, current, and default values
@@ -216,6 +218,31 @@ class AppearanceDialog(QDialog):
         self.original_border = current_border
         self.default_border = default_border
         self.current_border = current_border or default_border
+
+        # Book info settings states
+        self.original_show_info_progress = show_info_progress
+        self.current_show_info_progress = show_info_progress
+        
+        self.original_show_info_file_count = show_info_file_count
+        self.current_show_info_file_count = show_info_file_count
+        
+        self.original_show_info_duration = show_info_duration
+        self.current_show_info_duration = show_info_duration
+        
+        self.original_show_info_size = show_info_size
+        self.current_show_info_size = show_info_size
+        
+        self.original_show_info_technical = show_info_technical
+        self.current_show_info_technical = show_info_technical
+        
+        self.original_show_info_year_written = show_info_year_written
+        self.current_show_info_year_written = show_info_year_written
+        
+        self.original_show_info_year_recorded = show_info_year_recorded
+        self.current_show_info_year_recorded = show_info_year_recorded
+        
+        self.original_show_info_language = show_info_language
+        self.current_show_info_language = show_info_language
         
         self.updating_ui = False
         
@@ -340,6 +367,52 @@ class AppearanceDialog(QDialog):
         grid_layout.setColumnStretch(3, 1)
         main_layout.addLayout(grid_layout)
         
+        # Visual Separator under colors
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setFrameShadow(QFrame.Shadow.Sunken)
+        separator.setObjectName("appearanceSeparator")
+        main_layout.addWidget(separator)
+        
+        # Book Info Line Settings Section
+        info_title = QLabel(tr("appearance.info_section_title"))
+        info_title.setStyleSheet("font-weight: bold; margin-top: 4px; margin-bottom: 2px;")
+        main_layout.addWidget(info_title)
+        
+        checkbox_grid = QGridLayout()
+        checkbox_grid.setHorizontalSpacing(10)
+        checkbox_grid.setVerticalSpacing(6)
+        checkbox_grid.setContentsMargins(0, 0, 0, 0)
+        
+        self.chk_progress = QCheckBox(tr("appearance.info_progress"))
+        self.chk_files = QCheckBox(tr("appearance.info_files"))
+        self.chk_duration = QCheckBox(tr("appearance.info_duration"))
+        self.chk_size = QCheckBox(tr("appearance.info_size"))
+        self.chk_technical = QCheckBox(tr("appearance.info_technical"))
+        self.chk_year_written = QCheckBox(tr("appearance.info_year_written"))
+        self.chk_year_recorded = QCheckBox(tr("appearance.info_year_recorded"))
+        self.chk_language = QCheckBox(tr("appearance.info_language"))
+        
+        checkbox_grid.addWidget(self.chk_progress, 0, 0)
+        checkbox_grid.addWidget(self.chk_files, 0, 1)
+        checkbox_grid.addWidget(self.chk_duration, 1, 0)
+        checkbox_grid.addWidget(self.chk_size, 1, 1)
+        checkbox_grid.addWidget(self.chk_technical, 2, 0)
+        checkbox_grid.addWidget(self.chk_year_written, 2, 1)
+        checkbox_grid.addWidget(self.chk_year_recorded, 3, 0)
+        checkbox_grid.addWidget(self.chk_language, 3, 1)
+        
+        main_layout.addLayout(checkbox_grid)
+        
+        self.chk_progress.stateChanged.connect(self.on_checkbox_changed)
+        self.chk_files.stateChanged.connect(self.on_checkbox_changed)
+        self.chk_duration.stateChanged.connect(self.on_checkbox_changed)
+        self.chk_size.stateChanged.connect(self.on_checkbox_changed)
+        self.chk_technical.stateChanged.connect(self.on_checkbox_changed)
+        self.chk_year_written.stateChanged.connect(self.on_checkbox_changed)
+        self.chk_year_recorded.stateChanged.connect(self.on_checkbox_changed)
+        self.chk_language.stateChanged.connect(self.on_checkbox_changed)
+        
         # 6. Action Buttons (Default / Cancel / Save)
         actions_layout = QHBoxLayout()
         actions_layout.setSpacing(8)
@@ -370,12 +443,13 @@ class AppearanceDialog(QDialog):
         self.hex_input = self.accent_hex_input
         self.custom_color_btn = self.accent_color_btn
         
-        # Sync UI controls to starting colors
+        # Sync UI controls to starting colors and checkboxes
         self.update_ui_from_accent(self.current_accent)
         self.update_ui_from_window(self.current_window)
         self.update_ui_from_bg_dark(self.current_bg_dark)
         self.update_ui_from_text(self.current_text)
         self.update_ui_from_border(self.current_border)
+        self.update_checkboxes_ui()
         
     def update_ui_from_accent(self, color_hex: str):
         """Synchronize custom accent color button background and hex input"""
@@ -683,6 +757,18 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_bg_dark(self.default_bg_dark)
         self.update_ui_from_text(self.default_text)
         self.update_ui_from_border(self.default_border)
+        
+        # Reset info line settings to True
+        self.current_show_info_progress = True
+        self.current_show_info_file_count = True
+        self.current_show_info_duration = True
+        self.current_show_info_size = True
+        self.current_show_info_technical = True
+        self.current_show_info_year_written = True
+        self.current_show_info_year_recorded = True
+        self.current_show_info_language = True
+        self.update_checkboxes_ui()
+        
         self.appearance_preview.emit(self.default_accent, self.default_window, self.default_bg_dark, self.default_text, self.default_border)
         self.accent_preview.emit(self.default_accent)
         
@@ -715,7 +801,60 @@ class AppearanceDialog(QDialog):
         
     def reject(self):
         """Revert preview changes and close the dialog"""
+        self.current_show_info_progress = self.original_show_info_progress
+        self.current_show_info_file_count = self.original_show_info_file_count
+        self.current_show_info_duration = self.original_show_info_duration
+        self.current_show_info_size = self.original_show_info_size
+        self.current_show_info_technical = self.original_show_info_technical
+        self.current_show_info_year_written = self.original_show_info_year_written
+        self.current_show_info_year_recorded = self.original_show_info_year_recorded
+        self.current_show_info_language = self.original_show_info_language
+        self.update_checkboxes_ui()
+
         self.appearance_preview.emit(self.original_accent, self.original_window, self.original_bg_dark, self.original_text, self.original_border)
         # Also emit old compatibility signal
         self.accent_preview.emit(self.original_accent)
         super().reject()
+
+    def update_checkboxes_ui(self):
+        """Update checkboxes widgets state based on internal current values"""
+        self.updating_ui = True
+        self.chk_progress.setChecked(self.current_show_info_progress)
+        self.chk_files.setChecked(self.current_show_info_file_count)
+        self.chk_duration.setChecked(self.current_show_info_duration)
+        self.chk_size.setChecked(self.current_show_info_size)
+        self.chk_technical.setChecked(self.current_show_info_technical)
+        self.chk_year_written.setChecked(self.current_show_info_year_written)
+        self.chk_year_recorded.setChecked(self.current_show_info_year_recorded)
+        self.chk_language.setChecked(self.current_show_info_language)
+        self.updating_ui = False
+
+    def on_checkbox_changed(self):
+        """Handle state change in checkboxes to update internal state and trigger live preview"""
+        if self.updating_ui:
+            return
+            
+        self.current_show_info_progress = self.chk_progress.isChecked()
+        self.current_show_info_file_count = self.chk_files.isChecked()
+        self.current_show_info_duration = self.chk_duration.isChecked()
+        self.current_show_info_size = self.chk_size.isChecked()
+        self.current_show_info_technical = self.chk_technical.isChecked()
+        self.current_show_info_year_written = self.chk_year_written.isChecked()
+        self.current_show_info_year_recorded = self.chk_year_recorded.isChecked()
+        self.current_show_info_language = self.chk_language.isChecked()
+        
+        # Emit live preview to update the layout
+        self.appearance_preview.emit(self.current_accent, self.current_window, self.current_bg_dark, self.current_text, self.current_border)
+
+    def get_info_settings(self) -> dict:
+        """Get the current settings of the info line checkboxes"""
+        return {
+            "show_info_progress": self.current_show_info_progress,
+            "show_info_file_count": self.current_show_info_file_count,
+            "show_info_duration": self.current_show_info_duration,
+            "show_info_size": self.current_show_info_size,
+            "show_info_technical": self.current_show_info_technical,
+            "show_info_year_written": self.current_show_info_year_written,
+            "show_info_year_recorded": self.current_show_info_year_recorded,
+            "show_info_language": self.current_show_info_language
+        }
