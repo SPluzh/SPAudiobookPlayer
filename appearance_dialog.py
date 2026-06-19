@@ -628,7 +628,7 @@ class AppearanceDialog(QDialog):
         interface_layout.setSpacing(8)
         interface_layout.setContentsMargins(8, 12, 8, 8)
 
-        self.chk_visualizer = QCheckBox(tr("menu.visualizer", "Visualizer"))
+        self.chk_visualizer = QCheckBox(tr("menu.show_visualizer", "Show Visualizer"))
         self.chk_visualizer.setToolTip(tr("appearance.visualizer_tooltip"))
 
         interface_layout.addWidget(self.chk_visualizer)
