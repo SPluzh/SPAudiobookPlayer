@@ -418,5 +418,5 @@ Audiobooks/
 ---
 
 <div align="center">
-Made for audiobook lovers
+Made with ❤️ for audiobook lovers
 </div>
