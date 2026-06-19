@@ -21,52 +21,35 @@ Offline audiobook player for Windows. It provides library scanning, playback pro
 
 ## Features
 
-### Playback
-- **Multi-format support**: MP3, M4A, M4B, OGG, FLAC, WAV, WMA, AAC, OPUS, APE, M3U, M3U8, CUE
-- **High-quality audio**: Powered by BASS audio library
-- **Playback speed control**: Adjust from 0.5× to 3.0×
-- **Quick navigation**: Skip tracks, rewind/forward 10 or 60 seconds
-- **Windows taskbar integration**: Playback controls directly from the taskbar
-- **Visualizer**: Real-time audio spectrum visualization on the play button
+### Playback & Audio
+- **Multi-format support**: Plays MP3, M4A, M4B, OGG, FLAC, WAV, OPUS, APE, and CUE playlists.
+- **Audio Engine**: Powered by BASS library for high-quality audio and independent pitch control (±12 semitones).
+- **Speed Control**: Adjust playback speed from 0.5× to 3.0×.
+- **Navigation**: Quick track skip, rewind/forward (10s/60s), and Windows taskbar controls.
+- **Visualizer**: Real-time spectrum visualization directly on the play button.
 
 ### Library Management
-- **Automatic scanning**: Recursively scans directories for audiobooks
-- **Smart organization**: Automatically groups files into audiobooks by folder
-- **Tag support**: Reads author, title, narrator from ID3 tags (MP3) and other metadata
-- **Cover art extraction**: Automatically extracts and displays embedded album art
-- **Search functionality**: Find audiobooks by title, author, or narrator
-- **Library filters**: Quick access to recently added, started, and finished books
-- **Favorites**: Mark books for quick access
-- **Metadata Editor**: Edit book info directly in the app
-- **Tag System**: Organize library with custom tags
-- **Folder Merging**: Merge multiple folders into a single audiobook
-- **Drag & Drop**: Easily add books by dragging them into the library
-- **Mass Selection & Batch Operations**: Select multiple books/folders to batch assign tags, toggle favorite, mark as read/unread, edit metadata, or convert to Opus
+- **Smart Scanning**: Automatically indexes directories and groups files into books by folder.
+- **Metadata & Tags**: Reads and edits tags (author, narrator, custom tags) and extracts cover art.
+- **Search & Filters**: Quick search and filtering by status (Started, Finished, Recently Added, Favorites).
+- **Batch Operations**: Edit tags, assign metadata, toggle favorite, or convert to Opus for multiple books at once.
+- **Easy Importing**: Supports drag-and-drop file adding and merging multiple folders into a single book.
 
-### Progress Tracking
-- **Per-book progress**: Automatically saves playback position for each audiobook
-- **Visual indicators**: Progress bars on cover thumbnails
-- **Status filtering**: Filter by status (Not Started, In Progress, Completed)
-- **Session restoration**: Resumes the last played audiobook on startup
-- **Bookmarks**: Create and manage bookmarks with visual markers on the progress bar
-- **Folder expansion state**: Remembers which folders were expanded in the library
+### Progress & Bookmarks
+- **Auto-Save**: Saves playback position per book and restores the last active session on startup.
+- **Visual Progress**: Progress bars on cover thumbnails and memory of expanded folders.
+- **Bookmarks**: Custom bookmarks with visual indicators on the main progress bar.
+- **Smart Auto-Rewind**: Rewinds slightly after a pause to help you regain context.
+
+### Voice & Audio Enhancement
+- **Voice Clean-Up**: Built-in De-Esser (reduces sibilance), Noise Suppression, and Dynamic Compressor.
+- **Volume Boost**: Amplifies quiet recordings up to 400%.
+- **Mono Downmix**: Merges stereo channels into mono for single-earbud listening.
 
 ### User Interface
-- **Customizable aesthetics**: Choose from built-in themes (e.g. Dark Mint, Dark Pink, Miku) and customize icon colors and line thickness with instant live preview
-- **Dual-pane layout**: Library browser on the left, player controls on the right
-- **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
-- **Multilingual support**: Full interface localization (16 languages: AR, DE, EN, ES, FR, HI, HY, ID, JA, KO, PT, RU, TH, TR, VI, ZH)
-
-
-### Smart Audio Processing
-- **Smart Auto-Rewind**: Automatically rewinds after a pause to help you regain context (starts at 5s, adds 2s per minute of pause, up to 30s max).
-- **Voice Enhancement**: 
-  - **De-Esser**: Reduces harsh sibilance (s/sh sounds) with Light/Medium/Strong presets.
-  - **Compressor**: Balances dynamic range for consistent volume levels.
-  - **Noise Suppression**: Removes background noise for clearer speech.
-- **Pitch Control**: Adjust playback pitch without changing speed (+/- 12 semitones).
-- **Volume Boost (VB)**: Amplifies volume up to 400% with adjustable levels (200%, 300%, 400%) for quiet recordings.
-- **Mono Downmix**: Mixes stereo channels into mono, perfect for single-earbud listening or unbalanced recordings.
+- **Customizable Themes**: Multiple themes (Dark Mint, Dark Pink, Miku) with custom icon colors and line thickness.
+- **Dual-Pane Layout**: Library browser on the left, player controls and settings on the right.
+- **Multilingual**: Interface localized into 16 languages.
 
 ### Keyboard Shortcuts
 | Action | Key |
@@ -242,53 +225,35 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 
 ## Возможности
 
-### Воспроизведение
-- **Поддержка форматов**: MP3, M4A, M4B, OGG, FLAC, WAV, WMA, AAC, OPUS, APE, M3U, M3U8, CUE
-- **Высокое качество звука**: На базе аудиобиблиотеки BASS
-- **Управление скоростью**: Регулировка от 0,5× до 3,0×
-- **Быстрая навигация**: Переключение треков, перемотка на 10 или 60 секунд
-- **Интеграция с Windows**: Кнопки управления прямо на панели задач
-- **Визуализатор**: Визуализация спектра аудио в реальном времени на кнопке воспроизведения
+### Воспроизведение и звук
+- **Поддержка форматов**: Воспроизведение MP3, M4A, M4B, OGG, FLAC, WAV, OPUS, APE и плейлистов CUE.
+- **Аудиодвижок**: Высокое качество звука на базе BASS и независимое изменение тона (±12 полутонов).
+- **Регулировка скорости**: Изменение темпа воспроизведения от 0.5× до 3.0×.
+- **Навигация**: Быстрый переход по трекам, шаг 10/60 секунд и управление из панели задач Windows.
+- **Визуализатор**: Спектр звука в реальном времени прямо на кнопке воспроизведения.
 
 ### Управление библиотекой
-- **Автоматическое сканирование**: Рекурсивный поиск аудиокниг в папках
-- **Умная организация**: Автоматическая группировка файлов в аудиокниги по папкам
-- **Поддержка тегов**: Чтение автора, названия, чтеца из ID3-тегов и других метаданных
-- **Исправление кодировки**: Работа с различными кодировками тегов, включая кириллицу
-- **Извлечение обложек**: Автоматическое извлечение и отображение встроенных обложек
-- **Функция поиска**: Поиск аудиокниг по названию, автору или чтецу
-- **Фильтры библиотеки**: Быстрый доступ к недавно добавленным, начатым и завершённым книгам
-- **Избранное**: Возможность отмечать книги для быстрого доступа
-- **Редактор метаданных**: Редактирование информации о книгах прямо в приложении
-- **Система тегов**: Организация библиотеки с помощью пользовательских тегов
-- **Объединение папок**: Возможность объединять несколько папок в одну аудиокнигу
-- **Drag & Drop**: Добавление книг простым перетаскиванием в окно плеера
-- **Массовый выбор и пакетные операции**: Возможность отмечать избранным, назначать теги, редактировать метаданные, изменять статус прослушивания или конвертировать в Opus для нескольких книг одновременно
+- **Умное сканирование**: Автоматический поиск папок и группировка файлов в книги.
+- **Метаданные и теги**: Чтение и редактирование тегов (автор, чтец, свои теги), извлечение обложек.
+- **Поиск и фильтры**: Быстрый поиск и фильтрация (недавно добавленные, в процессе, прочитанные, избранные).
+- **Пакетные операции**: Редактирование тегов, смена статуса или конвертация в Opus для нескольких книг за раз.
+- **Простой импорт**: Поддержка Drag & Drop и объединения папок в одну аудиокнигу.
 
-### Отслеживание прогресса
-- **Прогресс для каждой книги**: Автоматическое сохранение позиции воспроизведения
-- **Визуальные индикаторы**: Полосы прогресса на миниатюрах обложек
-- **Фильтрация по статусу**: Фильтр по статусу (Не начато, В процессе, Завершено)
-- **Восстановление сессии**: Возобновление последней прослушанной книги при запуске
-- **Закладки**: Создание и управление закладками с визуальными метками на шкале прогресса
-- **Состояние раскрытия папок**: Запоминает, какие папки были раскрыты в библиотеке
+### Прогресс и закладки
+- **Автосохранение**: Запоминание позиции для каждой книги и восстановление сессии при запуске.
+- **Визуальный прогресс**: Индикаторы прослушивания на обложках и запоминание раскрытых папок.
+- **Закладки**: Создание закладок с отметками на шкале воспроизведения.
+- **Умная перемотка**: Автоматический откат назад после паузы для восстановления контекста.
 
-### Интерфейс
-- **Кастомизация оформления**: Выбор из встроенных тем (Dark Mint, Dark Pink, Miku) и настройка цвета иконок и толщины линий интерфейса с мгновенным предпросмотром
-- **Двухпанельная компоновка**: Браузер библиотеки слева, управление плеером справа
-- **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
-- **Многоязычность**: Полная локализация интерфейса (16 языков: AR, DE, EN, ES, FR, HI, HY, ID, JA, KO, PT, RU, TH, TR, VI, ZH)
+### Улучшение голоса и аудио
+- **Очистка речи**: Встроенный De-Esser (борьба со свистом), шумоподавление и компрессор динамического диапазона.
+- **Усиление звука**: Увеличение громкости тихих записей до 400%.
+- **Моно-сведение**: Сведение стереоканалов в моно для удобного прослушивания с одним наушником.
 
-
-### Умная обработка звука
-- **Smart Auto-Rewind**: Автоматическая перемотка назад после паузы для восстановления контекста (Базово 5с + 2с за минуту паузы, макс. 30с).
-- **Улучшение голоса**:
-  - **De-Esser**: Уменьшает резкие свистящие звуки (с/ш) с пресетами (Лёгкий/Средний/Сильный).
-  - **Компрессор**: Выравнивает динамический диапазон для равномерной громкости.
-  - **Шумоподавление**: Удаляет фоновый шум для чёткости речи.
-- **Управление высотой тона**: Изменение тона без изменения скорости (+/- 12 полутонов).
-- **Усиление громкости (VB)**: Усиление звука до 400% с настраиваемыми уровнями (200%, 300%, 400%) для тихих записей.
-- **Моно-сведение**: Сведение стереоканалов в моно, что удобно при прослушивании в одном наушнике или при несбалансированных каналах.
+### Интерфейс пользователя
+- **Кастомизация оформления**: Встроенные темы (Dark Mint, Dark Pink, Miku), настройка цветов иконок и толщины линий.
+- **Двухпанельный вид**: Дерево библиотеки слева, управление воспроизведением справа.
+- **Локализация**: Полная поддержка 16 языков интерфейса.
 
 ### Горячие клавиши
 | Действие | Клавиша |
