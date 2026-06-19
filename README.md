@@ -2,8 +2,7 @@
 
 # SP Audiobook Player
 
-> Windows audiobook player for offline listening.
-> Audio book player with progress tracking, bookmarks and resume playback
+Offline audiobook player for Windows. It provides library scanning, playback progress tracking, bookmarks, resume playback, and support for multiple audio formats and interface languages.
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyQt6](https://img.shields.io/badge/PyQt6-6.6.0+-green.svg)](https://pypi.org/project/PyQt6/)
@@ -16,12 +15,6 @@
 **English** | [Русский](#sp-audiobook-player-ru)
 
 ---
-
-## About
-
-**SP Audiobook Player** is a modern and elegant audiobook player for Windows designed for a seamless listening experience. Built with PyQt6 and BASS audio library, it offers automatic library scanning, smart progress tracking per book, and a refined user interface that handles various audio formats and tag encodings effortlessly.
-
-Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with an intuitive interface and robust functionality.
 
 ![](attachments/SP_Audiobook_Player_lpfBcdlMAz.gif)
 
@@ -99,10 +92,6 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 
 
 ## Installation
-
-### Requirements
-- Windows 10/11 (64-bit)
-- Python 3.8+ (for source installation)
 
 ### Option 1: Download Executable (Recommended)
 You can download the latest version from the [Releases](../../releases) page in one of the following formats:
@@ -247,11 +236,7 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 
 ---
 
-## О программе
-
-**SP Audiobook Player** — это современный и элегантный плеер аудиокниг для Windows, созданный для комфортного прослушивания. Построенный на базе PyQt6 и аудиобиблиотеки BASS, он предлагает автоматическое сканирование библиотеки, умное сохранение прогресса для каждой книги и продуманный интерфейс, который корректно работает с различными аудиоформатами и кодировками тегов.
-
-Идеальное решение для любителей аудиокниг, которым нужен функциональный плеер с интуитивным интерфейсом и широкими возможностями.
+Оффлайн-плеер аудиокниг для Windows. Поддерживает автоматическое сканирование библиотеки, отслеживание прогресса воспроизведения для каждой книги, закладки, возобновление прослушивания, а также работу с различными аудиоформатами и языками интерфейса.
 
 ![](attachments/SP_Audiobook_Player_lpfBcdlMAz.gif)
 
@@ -329,10 +314,6 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 
 
 ## Установка
-
-### Требования
-- Windows 10/11 (64-bit)
-- Python 3.8+ (для запуска из исходников)
 
 ### Вариант 1: Скачать исполняемый файл (рекомендуется)
 На странице [Releases](../../releases) доступны два варианта сборки:
