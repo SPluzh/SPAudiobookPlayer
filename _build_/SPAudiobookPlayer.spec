@@ -17,6 +17,7 @@ a = Analysis(
         # --- icons ---
         ('../resources/icons/*.png', 'resources/icons'),
         ('../resources/icons/*.ico', 'resources/icons'),
+        ('../resources/icons/*.svg', 'resources/icons'),
     ],
     hiddenimports=[
         'scanner',
