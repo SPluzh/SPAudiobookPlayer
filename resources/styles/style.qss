@@ -1099,7 +1099,7 @@ QToolTip {
     color: @text;
     border: 1px solid @accent;
     padding: 4px;
-    border-radius: 3px;
+    border-radius: 1px;
 }
 
 /* ============================================================
