@@ -587,10 +587,10 @@
     "info_year_written_tooltip": "Mostre o ano em que o livro foi escrito",
     "info_year_recorded_tooltip": "Mostrar o ano em que o audiolivro foi gravado",
     "info_language_tooltip": "Mostrar o idioma do audiolivro",
-    "icon_label": "Icon Color",
-    "icon_tooltip": "Choose a custom color for all application icons",
-    "icon_thickness_label": "Icon Line Thickness:",
-    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)",
+    "icon_label": "Cor do ícone",
+    "icon_tooltip": "Escolha uma cor personalizada para todos os ícones do aplicativo",
+    "icon_thickness_label": "Espessura da linha do ícone:",
+    "icon_thickness_tooltip": "Ajuste a espessura do traço de todos os ícones da interface (1,0 a 3,0 pixels)",
     "cover_progress_label": "Cor da barra de progresso da capa:",
     "cover_progress_tooltip": "Cor da barra de progresso exibida nas capas dos livros"
   }

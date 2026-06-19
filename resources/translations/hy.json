@@ -587,10 +587,10 @@
     "info_year_written_tooltip": "Ցույց տվեք գրքի գրման տարին",
     "info_year_recorded_tooltip": "Ցույց տվեք աուդիոգրքի ձայնագրման տարին",
     "info_language_tooltip": "Ցույց տալ աուդիոգրքի լեզուն",
-    "icon_label": "Icon Color",
-    "icon_tooltip": "Choose a custom color for all application icons",
-    "icon_thickness_label": "Icon Line Thickness:",
-    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)",
+    "icon_label": "Պատկերակի գույնը",
+    "icon_tooltip": "Ընտրեք հատուկ գույն բոլոր հավելվածների պատկերակների համար",
+    "icon_thickness_label": "Պատկերակի գծի հաստությունը:",
+    "icon_thickness_tooltip": "Կարգավորեք ինտերֆեյսի բոլոր պատկերակների գծի հաստությունը (1.0-ից 3.0 պիքսել)",
     "cover_progress_label": "Կազմի առաջընթացի գույնը.",
     "cover_progress_tooltip": "Գրքի կազմի վրա ցուցադրվող առաջընթացի նշագծի գույնը"
   }

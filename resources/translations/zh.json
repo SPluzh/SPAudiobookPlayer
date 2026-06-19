@@ -587,10 +587,10 @@
     "info_year_written_tooltip": "显示图书的创作年份",
     "info_year_recorded_tooltip": "显示有声书的录制年份",
     "info_language_tooltip": "显示有声书的语言",
-    "icon_label": "Icon Color",
-    "icon_tooltip": "Choose a custom color for all application icons",
-    "icon_thickness_label": "Icon Line Thickness:",
-    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)",
+    "icon_label": "图标颜色",
+    "icon_tooltip": "为所有应用程序图标选择自定义颜色",
+    "icon_thickness_label": "图标线条粗细：",
+    "icon_thickness_tooltip": "调整所有界面图标的描边粗细（1.0 到 3.0 像素）",
     "cover_progress_label": "封面进度条颜色:",
     "cover_progress_tooltip": "书封上显示的进度条颜色"
   }

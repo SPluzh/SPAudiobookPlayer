@@ -587,10 +587,10 @@
     "info_year_written_tooltip": "वह वर्ष दिखाएँ जब पुस्तक लिखी गई थी",
     "info_year_recorded_tooltip": "वह वर्ष दिखाएँ जब ऑडियोबुक रिकॉर्ड किया गया था",
     "info_language_tooltip": "ऑडियोबुक की भाषा दिखाएँ",
-    "icon_label": "Icon Color",
-    "icon_tooltip": "Choose a custom color for all application icons",
-    "icon_thickness_label": "Icon Line Thickness:",
-    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)",
+    "icon_label": "आइकन का रंग",
+    "icon_tooltip": "सभी एप्लिकेशन आइकन के लिए एक कस्टम रंग चुनें",
+    "icon_thickness_label": "आइकन लाइन की मोटाई:",
+    "icon_thickness_tooltip": "सभी इंटरफ़ेस आइकन की स्ट्रोक मोटाई को समायोजित करें (1.0 से 3.0 पिक्सेल)",
     "cover_progress_label": "कवर प्रगति पट्टी का रंग:",
     "cover_progress_tooltip": "पुस्तक के कवर पर दिखाई जाने वाली प्रगति पट्टी का रंग"
   }

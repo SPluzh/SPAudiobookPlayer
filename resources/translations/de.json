@@ -587,10 +587,10 @@
     "info_year_written_tooltip": "Geben Sie das Jahr an, in dem das Buch geschrieben wurde",
     "info_year_recorded_tooltip": "Zeigen Sie das Jahr an, in dem das Hörbuch aufgenommen wurde",
     "info_language_tooltip": "Zeigt die Sprache des Hörbuchs an",
-    "icon_label": "Icon Color",
-    "icon_tooltip": "Choose a custom color for all application icons",
-    "icon_thickness_label": "Icon Line Thickness:",
-    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)",
+    "icon_label": "Symbolfarbe",
+    "icon_tooltip": "Wählen Sie eine benutzerdefinierte Farbe für alle Anwendungssymbole",
+    "icon_thickness_label": "Symbol-Linienstärke:",
+    "icon_thickness_tooltip": "Passen Sie die Strichstärke aller Interface-Symbole an (1,0 bis 3,0 Pixel)",
     "cover_progress_label": "Farbe des Cover-Fortschrittsbalkens:",
     "cover_progress_tooltip": "Farbe des Fortschrittsbalkens auf den Buchcovern"
   }
