@@ -266,10 +266,22 @@ def print_report(results: Dict[str, Dict[str, TooltipAnalyzer]]):
         print(f"\nFound {errors} issue(s) that need attention.")
     
     print("=" * 70)
+    return errors, warnings
+
+
+def test_tooltips_integrity():
+    """Automated pytest execution for tooltip coverage check."""
+    current_dir = Path(__file__).resolve().parent
+    project_root = current_dir.parent
+    results = scan_project(project_root)
+    assert results, "No tooltip classes found to analyze"
+    errors, warnings = print_report(results)
+    assert errors == 0, f"Found {errors} tooltip integrity issues!"
 
 
 def main():
     """Main entry point."""
+    import sys
     # Detect project root by looking for .git or common project files
     current_dir = Path(__file__).resolve().parent
     project_root = current_dir.parent
@@ -287,9 +299,11 @@ def main():
     
     if not results:
         print("\n⚠️  No classes with tooltips found!")
-        return
+        sys.exit(0)
     
-    print_report(results)
+    errors, warnings = print_report(results)
+    if errors > 0:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

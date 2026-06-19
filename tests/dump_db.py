@@ -5,7 +5,7 @@ from pathlib import Path
 # Reconfigure stdout to use utf-8 encoding
 sys.stdout.reconfigure(encoding='utf-8')
 
-db_path = Path(r"c:\Users\user\Desktop\python\SPAudiobookPlayer\data\audiobooks.db")
+db_path = Path(__file__).resolve().parent.parent / "data" / "audiobooks.db"
 
 if not db_path.exists():
     print(f"Database not found at {db_path}")

@@ -472,6 +472,8 @@ class MetadataEditDialog(QDialog):
             self.refresh_btn.setToolTip(tr("metadata.refresh_covers_tooltip", default="Scan folder for new covers"))
         if hasattr(self, 'open_folder_btn') and self.open_folder_btn:
             self.open_folder_btn.setToolTip(tr("metadata.open_folder_tooltip", default="Open folder containing this book"))
+        if hasattr(self, 'search_cover_btn') and self.search_cover_btn:
+            self.search_cover_btn.setToolTip(tr("metadata.search_cover_tooltip", default="Search covers online"))
 
     def get_data(self):
         """Return the entered metadata as a tuple"""

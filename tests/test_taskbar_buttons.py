@@ -8,7 +8,7 @@ from PyQt6.QtCore import QTimer
 
 from taskbar_progress import TaskbarProgress, TaskbarThumbnailButtons, COMTYPES_AVAILABLE
 
-class TestWindow(QMainWindow):
+class TaskbarPreviewWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Тест кнопок таскбара")
@@ -57,6 +57,6 @@ class TestWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = TestWindow()
+    window = TaskbarPreviewWindow()
     window.show()
     sys.exit(app.exec())

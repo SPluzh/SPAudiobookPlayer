@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import sys
 from pathlib import Path
 
 def get_translation_keys_from_code(project_root):
@@ -58,12 +59,12 @@ def flatten_dict(d, parent_key='', sep='.'):
             items.append((new_key, v))
     return dict(items)
 
-def main():
-    script_path = Path(__file__).resolve()
-    # Adjust depending on where the script is located relative to project root
-    # Expected: SPAudiobookPlayer/tests/check_translations.py -> project_root = SPAudiobookPlayer
-    project_root = script_path.parent.parent 
-    translations_dir = project_root / 'resources' / 'translations'
+def check_all_translations(project_root):
+    """
+    Performs full integrity check on translation files.
+    Returns the total number of missing keys across all languages.
+    """
+    translations_dir = Path(project_root) / 'resources' / 'translations'
     
     print(f"Project root: {project_root}")
     print(f"Translations dir: {translations_dir}")
@@ -79,7 +80,7 @@ def main():
     translation_files = list(translations_dir.glob("*.json"))
     if not translation_files:
         print("No translation files found!")
-        return
+        return 0
 
     # Load English as reference if available
     en_file = translations_dir / "en.json"
@@ -140,6 +141,15 @@ def main():
         print("\n[SUCCESS] All languages are valid and complete!")
     else:
         print(f"\n[WARNING] Found {total_missing} missing translations in total.")
+        
+    return total_missing
+
+def main():
+    script_path = Path(__file__).resolve()
+    project_root = script_path.parent.parent 
+    total_missing = check_all_translations(project_root)
+    if total_missing > 0:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

@@ -9,7 +9,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 sys.path.append(str(Path(__file__).parent.parent))
 from database import DatabaseManager
 
-db_path = Path(r"c:\Users\user\Desktop\python\SPAudiobookPlayer\data\audiobooks.db")
+db_path = Path(__file__).resolve().parent.parent / "data" / "audiobooks.db"
 db = DatabaseManager(db_path)
 
 # Let's mock the sorting key and sort behavior from library.py

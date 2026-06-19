@@ -1535,6 +1535,8 @@ class PlayerWidget(QWidget):
         
         self.bookmarks_btn.setText(tr("bookmarks.button_label"))
         self.bookmarks_btn.setToolTip(tr("bookmarks.list_title"))
+        if hasattr(self, 'add_bookmark_btn') and self.add_bookmark_btn:
+            self.add_bookmark_btn.setToolTip(tr("bookmarks.add"))
         
         self.auto_rewind_btn.setText(tr("player.btn_autorewind"))
         self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
