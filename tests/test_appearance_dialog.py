@@ -615,3 +615,78 @@ def test_appearance_dialog_save_cancel_buttons_update_icons(monkeypatch):
 
     assert "cancel" in reloaded_icons or "close" in reloaded_icons
     assert "save" in reloaded_icons
+
+
+def test_appearance_dialog_cover_progress_color():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        current_cover_progress="#112233",
+        default_cover_progress="#445566"
+    )
+
+    # 1. Verify initial states
+    assert dialog.original_cover_progress == "#112233"
+    assert dialog.current_cover_progress == "#112233"
+    assert dialog.default_cover_progress == "#445566"
+    assert dialog.cover_progress_hex_input is not None
+    assert dialog.cover_progress_hex_input.text() == "#112233"
+    assert dialog.cover_progress_color_btn is not None
+
+    # 2. Check value changes
+    preview_emitted = []
+    dialog.appearance_preview.connect(lambda *args: preview_emitted.append(args))
+
+    dialog.cover_progress_hex_input.setText("#AABBCC")
+    assert dialog.current_cover_progress == "#AABBCC"
+    assert len(preview_emitted) > 0
+    # Cover progress is the 10th argument (index 9)
+    assert preview_emitted[-1][9] == "#AABBCC"
+
+    # 3. Check reset to default
+    dialog.default_btn.click()
+    assert dialog.current_cover_progress == "#445566"
+    assert dialog.cover_progress_hex_input.text() == "#445566"
+
+    # 4. Check save / accept
+    saved_emitted = []
+    dialog.appearance_saved.connect(lambda *args: saved_emitted.append(args))
+    dialog.accept()
+    assert len(saved_emitted) == 1
+    # Since current_cover_progress matches default_cover_progress, it gets stored as empty string
+    assert saved_emitted[0][9] == ""
+
+
+def test_appearance_dialog_color_hex_inputs_width_and_style():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(parent=None)
+
+    inputs = [
+        ("accentHexInput", dialog.accent_hex_input),
+        ("windowHexInput", dialog.window_hex_input),
+        ("bgDarkHexInput", dialog.bg_dark_hex_input),
+        ("textHexInput", dialog.text_hex_input),
+        ("borderHexInput", dialog.border_hex_input),
+        ("iconHexInput", dialog.icon_hex_input),
+        ("coverProgressHexInput", dialog.cover_progress_hex_input),
+        ("statusNewHexInput", dialog.status_new_hex_input),
+        ("statusStartedHexInput", dialog.status_started_hex_input),
+        ("statusCompletedHexInput", dialog.status_completed_hex_input),
+    ]
+
+    # 1. Assert width is at least 80
+    for name, inp in inputs:
+        assert inp.maximumWidth() >= 80, f"{name} width is too small: {inp.maximumWidth()}"
+
+    # 2. Check style.qss contains all object names so they get compact padding
+    import os
+    qss_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources", "styles", "style.qss")
+    if os.path.exists(qss_path):
+        with open(qss_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        for name, _ in inputs:
+            assert f"#{name}" in content, f"style.qss is missing selector for #{name}"
+
+

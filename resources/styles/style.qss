@@ -24,6 +24,7 @@
 /* @status-warning: #f9ca24 */
 /* @overlay-bg: rgba(0, 0, 0, 100) */
 /* @overlay-progress-bg: rgba(0, 0, 0, 150) */
+/* @theme-primary: #2ecc71 */
 
 QMainWindow {
     background-color: @bg-main;
@@ -979,6 +980,7 @@ QLineEdit#bgDarkHexInput,
 QLineEdit#textHexInput,
 QLineEdit#borderHexInput,
 QLineEdit#iconHexInput,
+QLineEdit#coverProgressHexInput,
 QLineEdit#statusNewHexInput,
 QLineEdit#statusStartedHexInput,
 QLineEdit#statusCompletedHexInput {
@@ -1133,7 +1135,7 @@ QFrame#aboutContainer {
 }
 
 #theme_primary {
-    color: #2ecc71;
+    color: @theme-primary;
 }
 
 #overlay_background {

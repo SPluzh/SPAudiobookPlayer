@@ -161,13 +161,14 @@ class AppearanceDialog(QDialog):
     # Signals
     accent_preview = pyqtSignal(str)       # Keeping for backward compatibility
     accent_saved = pyqtSignal(str)         # Keeping for backward compatibility
-    appearance_preview = pyqtSignal(str, str, str, str, str, str, str, str, str, float) # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed, icon_color, icon_thickness)
-    appearance_saved = pyqtSignal(str, str, str, str, str, str, str, str, str, float)   # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed, icon_color, icon_thickness)
+    appearance_preview = pyqtSignal(str, str, str, str, str, str, str, str, str, str, float) # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed, icon_color, cover_progress, icon_thickness)
+    appearance_saved = pyqtSignal(str, str, str, str, str, str, str, str, str, str, float)   # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed, icon_color, cover_progress, icon_thickness)
     
     def __init__(self, parent=None, current_accent="", default_accent="", current_window="", default_window="", current_bg_dark="", default_bg_dark="", current_text="", default_text="", current_border="", default_border="",
                  current_status_new="", default_status_new="", current_status_started="", default_status_started="", current_status_completed="", default_status_completed="",
                  current_icon_color="", default_icon_color="#cccccc",
                  current_icon_thickness=2.0, default_icon_thickness=2.0,
+                 current_cover_progress="", default_cover_progress="",
                  show_detailed_info=True,
                  show_info_progress=True, show_info_file_count=True, show_info_duration=True, show_info_size=True,
                  show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=True,
@@ -178,7 +179,7 @@ class AppearanceDialog(QDialog):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
-        self.setMinimumSize(760, 580)
+        self.setMinimumSize(760, 600)
         
         # Keep track of original, current, and default values
         self.original_accent = current_accent
@@ -220,6 +221,10 @@ class AppearanceDialog(QDialog):
         self.original_icon_thickness = current_icon_thickness
         self.default_icon_thickness = default_icon_thickness
         self.current_icon_thickness = current_icon_thickness
+
+        self.original_cover_progress = current_cover_progress
+        self.default_cover_progress = default_cover_progress
+        self.current_cover_progress = current_cover_progress or default_cover_progress
 
         # Book info settings states
         self.original_show_detailed_info = show_detailed_info
@@ -357,7 +362,7 @@ class AppearanceDialog(QDialog):
         self.accent_hex_input = QLineEdit()
         self.accent_hex_input.setObjectName("accentHexInput")
         self.accent_hex_input.setMaxLength(7)
-        self.accent_hex_input.setFixedWidth(75)
+        self.accent_hex_input.setFixedWidth(80)
         self.accent_hex_input.setFixedHeight(field_height)
 
         self.accent_hex_input.setValidator(validator)
@@ -382,7 +387,7 @@ class AppearanceDialog(QDialog):
         self.window_hex_input = QLineEdit()
         self.window_hex_input.setObjectName("windowHexInput")
         self.window_hex_input.setMaxLength(7)
-        self.window_hex_input.setFixedWidth(75)
+        self.window_hex_input.setFixedWidth(80)
         self.window_hex_input.setFixedHeight(field_height)
 
         self.window_hex_input.setValidator(validator)
@@ -407,7 +412,7 @@ class AppearanceDialog(QDialog):
         self.bg_dark_hex_input = QLineEdit()
         self.bg_dark_hex_input.setObjectName("bgDarkHexInput")
         self.bg_dark_hex_input.setMaxLength(7)
-        self.bg_dark_hex_input.setFixedWidth(75)
+        self.bg_dark_hex_input.setFixedWidth(80)
         self.bg_dark_hex_input.setFixedHeight(field_height)
 
         self.bg_dark_hex_input.setValidator(validator)
@@ -432,7 +437,7 @@ class AppearanceDialog(QDialog):
         self.text_hex_input = QLineEdit()
         self.text_hex_input.setObjectName("textHexInput")
         self.text_hex_input.setMaxLength(7)
-        self.text_hex_input.setFixedWidth(75)
+        self.text_hex_input.setFixedWidth(80)
         self.text_hex_input.setFixedHeight(field_height)
 
         self.text_hex_input.setValidator(validator)
@@ -457,7 +462,7 @@ class AppearanceDialog(QDialog):
         self.border_hex_input = QLineEdit()
         self.border_hex_input.setObjectName("borderHexInput")
         self.border_hex_input.setMaxLength(7)
-        self.border_hex_input.setFixedWidth(75)
+        self.border_hex_input.setFixedWidth(80)
         self.border_hex_input.setFixedHeight(field_height)
 
         self.border_hex_input.setValidator(validator)
@@ -482,7 +487,7 @@ class AppearanceDialog(QDialog):
         self.icon_hex_input = QLineEdit()
         self.icon_hex_input.setObjectName("iconHexInput")
         self.icon_hex_input.setMaxLength(7)
-        self.icon_hex_input.setFixedWidth(75)
+        self.icon_hex_input.setFixedWidth(80)
         self.icon_hex_input.setFixedHeight(field_height)
 
         self.icon_hex_input.setValidator(validator)
@@ -562,7 +567,7 @@ class AppearanceDialog(QDialog):
         self.status_new_hex_input = QLineEdit()
         self.status_new_hex_input.setObjectName("statusNewHexInput")
         self.status_new_hex_input.setMaxLength(7)
-        self.status_new_hex_input.setFixedWidth(75)
+        self.status_new_hex_input.setFixedWidth(80)
         self.status_new_hex_input.setFixedHeight(field_height)
         self.status_new_hex_input.setValidator(validator)
         self.status_new_hex_input.setToolTip(status_new_tooltip)
@@ -585,7 +590,7 @@ class AppearanceDialog(QDialog):
         self.status_started_hex_input = QLineEdit()
         self.status_started_hex_input.setObjectName("statusStartedHexInput")
         self.status_started_hex_input.setMaxLength(7)
-        self.status_started_hex_input.setFixedWidth(75)
+        self.status_started_hex_input.setFixedWidth(80)
         self.status_started_hex_input.setFixedHeight(field_height)
         self.status_started_hex_input.setValidator(validator)
         self.status_started_hex_input.setToolTip(status_started_tooltip)
@@ -608,7 +613,7 @@ class AppearanceDialog(QDialog):
         self.status_completed_hex_input = QLineEdit()
         self.status_completed_hex_input.setObjectName("statusCompletedHexInput")
         self.status_completed_hex_input.setMaxLength(7)
-        self.status_completed_hex_input.setFixedWidth(75)
+        self.status_completed_hex_input.setFixedWidth(80)
         self.status_completed_hex_input.setFixedHeight(field_height)
         self.status_completed_hex_input.setValidator(validator)
         self.status_completed_hex_input.setToolTip(status_completed_tooltip)
@@ -618,6 +623,40 @@ class AppearanceDialog(QDialog):
         status_colors_grid.addItem(QSpacerItem(1, 1, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum), 0, 3)
         status_colors_grid.setColumnStretch(3, 1)
         info_layout.addWidget(self.status_colors_widget)
+
+        # Cover Progress Color Row (below status triangle settings)
+        self.cover_progress_widget = QWidget()
+        cover_progress_grid = QGridLayout(self.cover_progress_widget)
+        cover_progress_grid.setHorizontalSpacing(8)
+        cover_progress_grid.setVerticalSpacing(8)
+        cover_progress_grid.setContentsMargins(0, 0, 0, 4)
+        
+        cover_progress_label = QLabel(tr("appearance.cover_progress_label", "Cover Progress Color:"))
+        cover_progress_tooltip = tr("appearance.cover_progress_tooltip", "Color of the progress bar shown on book covers")
+        cover_progress_label.setToolTip(cover_progress_tooltip)
+        cover_progress_grid.addWidget(cover_progress_label, 0, 0)
+        
+        self.cover_progress_color_btn = QPushButton()
+        self.cover_progress_color_btn.setObjectName("coverProgressColorBtn")
+        self.cover_progress_color_btn.setFixedSize(field_height, field_height)
+        self.cover_progress_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.cover_progress_color_btn.setToolTip(cover_progress_tooltip)
+        self.cover_progress_color_btn.clicked.connect(self.choose_cover_progress_color)
+        cover_progress_grid.addWidget(self.cover_progress_color_btn, 0, 1)
+        
+        self.cover_progress_hex_input = QLineEdit()
+        self.cover_progress_hex_input.setObjectName("coverProgressHexInput")
+        self.cover_progress_hex_input.setMaxLength(7)
+        self.cover_progress_hex_input.setFixedWidth(80)
+        self.cover_progress_hex_input.setFixedHeight(field_height)
+        self.cover_progress_hex_input.setValidator(validator)
+        self.cover_progress_hex_input.setToolTip(cover_progress_tooltip)
+        self.cover_progress_hex_input.textChanged.connect(self.on_cover_progress_color_hex_changed)
+        cover_progress_grid.addWidget(self.cover_progress_hex_input, 0, 2)
+        
+        cover_progress_grid.addItem(QSpacerItem(1, 1, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum), 0, 3)
+        cover_progress_grid.setColumnStretch(3, 1)
+        info_layout.addWidget(self.cover_progress_widget)
 
         # Book Info Line Settings Section
         self.chk_show_detailed_info = QCheckBox(tr("appearance.show_detailed_info"))
@@ -729,7 +768,8 @@ class AppearanceDialog(QDialog):
         for btn in [
             self.accent_color_btn, self.window_color_btn, self.bg_dark_color_btn,
             self.text_color_btn, self.border_color_btn, self.icon_color_btn,
-            self.status_new_color_btn, self.status_started_color_btn, self.status_completed_color_btn
+            self.status_new_color_btn, self.status_started_color_btn, self.status_completed_color_btn,
+            self.cover_progress_color_btn
         ]:
             btn.setProperty("class", "color-btn")
             
@@ -740,6 +780,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_text(self.current_text)
         self.update_ui_from_border(self.current_border)
         self.update_ui_from_icon_color(self.current_icon_color)
+        self.update_ui_from_cover_progress(self.current_cover_progress)
         self.update_ui_from_status_new(self.current_status_new)
         self.update_ui_from_status_started(self.current_status_started)
         self.update_ui_from_status_completed(self.current_status_completed)
@@ -772,6 +813,7 @@ class AppearanceDialog(QDialog):
             self.current_status_started,
             self.current_status_completed,
             self.current_icon_color,
+            self.current_cover_progress,
             self.current_icon_thickness
         )
         self.reload_icons()
@@ -801,6 +843,7 @@ class AppearanceDialog(QDialog):
             ("text_color_btn", self.current_text),
             ("border_color_btn", self.current_border),
             ("icon_color_btn", self.current_icon_color),
+            ("cover_progress_color_btn", self.current_cover_progress),
             ("status_new_color_btn", self.current_status_new),
             ("status_started_color_btn", self.current_status_started),
             ("status_completed_color_btn", self.current_status_completed),
@@ -830,6 +873,8 @@ class AppearanceDialog(QDialog):
             self.current_border = color_hex
         elif btn == getattr(self, "icon_color_btn", None):
             self.current_icon_color = color_hex
+        elif btn == getattr(self, "cover_progress_color_btn", None):
+            self.current_cover_progress = color_hex
         elif btn == getattr(self, "status_new_color_btn", None):
             self.current_status_new = color_hex
         elif btn == getattr(self, "status_started_color_btn", None):
@@ -842,6 +887,10 @@ class AppearanceDialog(QDialog):
     def update_ui_from_icon_color(self, color_hex: str):
         """Synchronize custom icon color button background and hex input"""
         self.update_color_button(self.icon_color_btn, self.icon_hex_input, color_hex)
+
+    def update_ui_from_cover_progress(self, color_hex: str):
+        """Synchronize custom cover progress color button background and hex input"""
+        self.update_color_button(self.cover_progress_color_btn, self.cover_progress_hex_input, color_hex)
 
     def update_ui_from_status_new(self, color_hex: str):
         """Synchronize custom status new color button background and hex input"""
@@ -1027,6 +1076,31 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_icon_color(color_hex)
         self.emit_preview()
 
+    def choose_cover_progress_color(self):
+        """Open custom compact color picker dialog for cover progress color and preview changes live"""
+        color_before = self.current_cover_progress
+        dialog = ColorPickerDialog(self, QColor(self.current_cover_progress))
+        dialog.colorChanged.connect(self.select_cover_progress_color_preview)
+        result = dialog.exec()
+        try:
+            dialog.colorChanged.disconnect(self.select_cover_progress_color_preview)
+        except Exception:
+            pass
+
+        if result == QDialog.DialogCode.Accepted:
+            self.current_cover_progress = dialog.color.name().upper()
+        else:
+            self.current_cover_progress = color_before
+        self.update_ui_from_cover_progress(self.current_cover_progress)
+        self.emit_preview()
+            
+    def select_cover_progress_color_preview(self, color: QColor):
+        """Update cover progress color preview from dialog changes"""
+        color_hex = color.name().upper()
+        self.current_cover_progress = color_hex
+        self.update_ui_from_cover_progress(color_hex)
+        self.emit_preview()
+
     def choose_status_new_color(self):
         """Open custom compact color picker dialog for status new and preview changes live"""
         color_before = self.current_status_new
@@ -1202,6 +1276,24 @@ class AppearanceDialog(QDialog):
                 self.update_ui_from_icon_color(self.current_icon_color)
                 self.emit_preview()
 
+    def on_cover_progress_color_hex_changed(self, text: str):
+        """Update cover progress color picker button and emit preview from Cover Progress Color Hex input box"""
+        if self.updating_ui:
+            return
+            
+        if not text.startswith("#"):
+            self.updating_ui = True
+            text = "#" + text.replace("#", "")
+            self.cover_progress_hex_input.setText(text)
+            self.updating_ui = False
+            
+        if len(text) == 7:
+            color = QColor(text)
+            if color.isValid():
+                self.current_cover_progress = text.upper()
+                self.update_ui_from_cover_progress(self.current_cover_progress)
+                self.emit_preview()
+
     def on_status_new_hex_changed(self, text: str):
         """Update status new picker button and emit preview from Hex input box"""
         if self.updating_ui:
@@ -1268,6 +1360,7 @@ class AppearanceDialog(QDialog):
         self.current_status_started = self.default_status_started
         self.current_status_completed = self.default_status_completed
         self.current_icon_thickness = self.default_icon_thickness
+        self.current_cover_progress = self.default_cover_progress
         
         self.update_ui_from_accent(self.default_accent)
         self.update_ui_from_window(self.default_window)
@@ -1275,6 +1368,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_text(self.default_text)
         self.update_ui_from_border(self.default_border)
         self.update_ui_from_icon_color(self.default_icon_color)
+        self.update_ui_from_cover_progress(self.default_cover_progress)
         self.update_ui_from_status_new(self.default_status_new)
         self.update_ui_from_status_started(self.default_status_started)
         self.update_ui_from_status_completed(self.default_status_completed)
@@ -1329,6 +1423,10 @@ class AppearanceDialog(QDialog):
         if saved_icon_color.lower() == self.default_icon_color.lower():
             saved_icon_color = ""
 
+        saved_cover_progress = self.current_cover_progress
+        if saved_cover_progress.lower() == self.default_cover_progress.lower():
+            saved_cover_progress = ""
+
         saved_status_new = self.current_status_new
         if saved_status_new.lower() == self.default_status_new.lower():
             saved_status_new = ""
@@ -1343,7 +1441,7 @@ class AppearanceDialog(QDialog):
             
         self.appearance_saved.emit(saved_accent, saved_window, saved_bg_dark, saved_text, saved_border,
                                    saved_status_new, saved_status_started, saved_status_completed,
-                                   saved_icon_color, self.current_icon_thickness)
+                                   saved_icon_color, saved_cover_progress, self.current_icon_thickness)
         # Also emit old compatibility signal
         self.accent_saved.emit(saved_accent)
         super().accept()
@@ -1360,6 +1458,7 @@ class AppearanceDialog(QDialog):
         self.current_status_started = self.original_status_started
         self.current_status_completed = self.original_status_completed
         self.current_icon_thickness = self.original_icon_thickness
+        self.current_cover_progress = self.original_cover_progress
  
         self.update_ui_from_accent(self.original_accent)
         self.update_ui_from_window(self.original_window)
@@ -1367,6 +1466,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_text(self.original_text)
         self.update_ui_from_border(self.original_border)
         self.update_ui_from_icon_color(self.original_icon_color)
+        self.update_ui_from_cover_progress(self.original_cover_progress)
         self.update_ui_from_status_new(self.original_status_new)
         self.update_ui_from_status_started(self.original_status_started)
         self.update_ui_from_status_completed(self.original_status_completed)

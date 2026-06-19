@@ -981,6 +981,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.status_new_color = config.get("Appearance", "status_new_color", fallback="")
         self.status_started_color = config.get("Appearance", "status_started_color", fallback="")
         self.status_completed_color = config.get("Appearance", "status_completed_color", fallback="")
+        self.cover_progress_color = config.get("Appearance", "cover_progress_color", fallback="")
         self.icon_color = config.get("Appearance", "icon_color", fallback="")
         self.icon_thickness = config.getfloat("Appearance", "icon_thickness", fallback=2.0)
         set_icon_color(self.icon_color or "#cccccc")
@@ -1324,6 +1325,11 @@ class AudiobookPlayerWindow(QMainWindow):
         else:
             if "Appearance" in config and "status_completed_color" in config["Appearance"]:
                 del config["Appearance"]["status_completed_color"]
+        if getattr(self, "cover_progress_color", ""):
+            config["Appearance"]["cover_progress_color"] = self.cover_progress_color
+        else:
+            if "Appearance" in config and "cover_progress_color" in config["Appearance"]:
+                del config["Appearance"]["cover_progress_color"]
         if getattr(self, "icon_color", ""):
             config["Appearance"]["icon_color"] = self.icon_color
         else:
@@ -2216,6 +2222,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 overrides["status-warning"] = self.status_started_color
             if getattr(self, "status_completed_color", ""):
                 overrides["status-ok"] = self.status_completed_color
+            if getattr(self, "cover_progress_color", ""):
+                overrides["theme-primary"] = self.cover_progress_color
 
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
 
@@ -2244,6 +2252,7 @@ class AudiobookPlayerWindow(QMainWindow):
             default_status_new = StyleManager.get_default_vars(self.current_theme).get("status-error", "#ff6b6b")
             default_status_started = StyleManager.get_default_vars(self.current_theme).get("status-warning", "#f9ca24")
             default_status_completed = StyleManager.get_default_vars(self.current_theme).get("status-ok", "#4ecca3")
+            default_cover_progress = StyleManager.get_default_vars(self.current_theme).get("theme-primary", "#2ecc71")
             
             dialog = AppearanceDialog(
                 self,
@@ -2267,6 +2276,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 default_icon_color="#cccccc",
                 current_icon_thickness=getattr(self, "icon_thickness", 2.0),
                 default_icon_thickness=2.0,
+                current_cover_progress=getattr(self, "cover_progress_color", ""),
+                default_cover_progress=default_cover_progress,
                 show_detailed_info=self.show_detailed_info,
                 show_info_progress=self.show_info_progress,
                 show_info_file_count=self.show_info_file_count,
@@ -2299,8 +2310,9 @@ class AudiobookPlayerWindow(QMainWindow):
             print(f"Error showing appearance settings: {e}")
 
     def apply_appearance_preview(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = "",
-                                 status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = "", icon_hex: str = "", icon_thickness: float = 2.0):
-        """Apply temporary accent, window background, secondary background, font, border, and icon color overrides for live previewing"""
+                                 status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = "", icon_hex: str = "",
+                                 cover_progress_hex: str = "", icon_thickness: float = 2.0):
+        """Apply temporary accent, window background, secondary background, font, border, icon color, and cover progress color overrides for live previewing"""
         try:
             set_icon_color(icon_hex or "#cccccc")
             set_icon_stroke_width(icon_thickness)
@@ -2324,6 +2336,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 overrides["status-warning"] = status_started_hex
             if status_completed_hex:
                 overrides["status-ok"] = status_completed_hex
+            if cover_progress_hex:
+                overrides["theme-primary"] = cover_progress_hex
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
             
             # Apply temporary settings if previewing
@@ -2377,8 +2391,9 @@ class AudiobookPlayerWindow(QMainWindow):
             print(f"Error applying appearance preview: {e}")
 
     def save_appearance_colors(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = "",
-                               status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = "", icon_hex: str = "", icon_thickness: float = 2.0):
-        """Save the chosen accent, window, secondary background, font, border, and icon colors to settings.ini and apply them permanently"""
+                               status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = "", icon_hex: str = "",
+                               cover_progress_hex: str = "", icon_thickness: float = 2.0):
+        """Save the chosen accent, window, secondary background, font, border, icon, and cover progress colors to settings.ini and apply them permanently"""
         self.accent_color = accent_hex
         self.window_color = window_hex
         self.bg_dark_color = bg_dark_hex
@@ -2389,6 +2404,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.status_completed_color = status_completed_hex
         self.icon_color = icon_hex
         self.icon_thickness = icon_thickness
+        self.cover_progress_color = cover_progress_hex
         self.save_setting("Appearance", "accent_color", accent_hex)
         self.save_setting("Appearance", "window_color", window_hex)
         self.save_setting("Appearance", "bg_dark_color", bg_dark_hex)
@@ -2397,6 +2413,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.save_setting("Appearance", "status_new_color", status_new_hex)
         self.save_setting("Appearance", "status_started_color", status_started_hex)
         self.save_setting("Appearance", "status_completed_color", status_completed_hex)
+        self.save_setting("Appearance", "cover_progress_color", cover_progress_hex)
         self.save_setting("Appearance", "icon_color", icon_hex)
         self.save_setting("Appearance", "icon_thickness", str(icon_thickness))
         
@@ -2910,6 +2927,7 @@ def main():
         status_new_color = ""
         status_started_color = ""
         status_completed_color = ""
+        cover_progress_color = ""
         if config_file.exists():
             config.read(config_file, encoding="utf-8")
             current_theme = config.get("Display", "theme", fallback="dark")
@@ -2921,6 +2939,7 @@ def main():
             status_new_color = config.get("Appearance", "status_new_color", fallback="")
             status_started_color = config.get("Appearance", "status_started_color", fallback="")
             status_completed_color = config.get("Appearance", "status_completed_color", fallback="")
+            cover_progress_color = config.get("Appearance", "cover_progress_color", fallback="")
 
         # Apply Stylesheet
         overrides = {}
@@ -2940,6 +2959,8 @@ def main():
             overrides["status-warning"] = status_started_color
         if status_completed_color:
             overrides["status-ok"] = status_completed_color
+        if cover_progress_color:
+            overrides["theme-primary"] = cover_progress_color
         StyleManager.apply_style(app, theme=current_theme, overrides=overrides)
 
         print("Initializing Style Manager...")
