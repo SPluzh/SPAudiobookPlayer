@@ -590,3 +590,28 @@ def test_library_widget_load_icons_updates_icons(monkeypatch):
     assert "context_tags" in loaded_icons
 
 
+def test_appearance_dialog_save_cancel_buttons_update_icons(monkeypatch):
+    import utils
+    app = QApplication.instance() or QApplication([])
+
+    # Keep track of icons reloaded during reload_icons
+    reloaded_icons = []
+    original_get_icon = utils.get_icon
+    def mock_get_icon(name, *args, **kwargs):
+        reloaded_icons.append(name)
+        return original_get_icon(name, *args, **kwargs)
+    monkeypatch.setattr(utils, "get_icon", mock_get_icon)
+    import appearance_dialog
+    monkeypatch.setattr(appearance_dialog, "get_icon", mock_get_icon)
+
+    dialog = AppearanceDialog(
+        parent=None,
+        current_icon_color="#ff0000",
+        current_icon_thickness=2.0
+    )
+
+    reloaded_icons.clear()
+    dialog.thickness_slider.setValue(30) # triggers on_thickness_slider_changed -> emit_preview -> reload_icons
+
+    assert "cancel" in reloaded_icons or "close" in reloaded_icons
+    assert "save" in reloaded_icons

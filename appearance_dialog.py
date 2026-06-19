@@ -705,19 +705,19 @@ class AppearanceDialog(QDialog):
         self.default_btn.clicked.connect(self.reset_to_default)
         actions_layout.addWidget(self.default_btn, 1)
         
-        cancel_button = QPushButton(tr("appearance.cancel_btn"))
-        cancel_button.setObjectName("cancelBtn")
-        cancel_button.setIcon(get_icon("cancel") or get_icon("close"))
-        cancel_button.setFixedHeight(28)
-        cancel_button.clicked.connect(self.reject)
-        actions_layout.addWidget(cancel_button, 1)
+        self.cancel_button = QPushButton(tr("appearance.cancel_btn"))
+        self.cancel_button.setObjectName("cancelBtn")
+        self.cancel_button.setIcon(get_icon("cancel") or get_icon("close"))
+        self.cancel_button.setFixedHeight(28)
+        self.cancel_button.clicked.connect(self.reject)
+        actions_layout.addWidget(self.cancel_button, 1)
         
-        save_button = QPushButton(tr("appearance.save_btn"))
-        save_button.setObjectName("saveBtn")
-        save_button.setIcon(get_icon("save"))
-        save_button.setFixedHeight(28)
-        save_button.clicked.connect(self.accept)
-        actions_layout.addWidget(save_button, 1)
+        self.save_button = QPushButton(tr("appearance.save_btn"))
+        self.save_button.setObjectName("saveBtn")
+        self.save_button.setIcon(get_icon("save"))
+        self.save_button.setFixedHeight(28)
+        self.save_button.clicked.connect(self.accept)
+        actions_layout.addWidget(self.save_button, 1)
         
         main_layout.addLayout(actions_layout)
         
@@ -774,6 +774,17 @@ class AppearanceDialog(QDialog):
             self.current_icon_color,
             self.current_icon_thickness
         )
+        self.reload_icons()
+
+    def reload_icons(self):
+        """Update SVG icons in the dialog when icon color or thickness changes"""
+        from utils import set_icon_color, set_icon_stroke_width
+        set_icon_color(self.current_icon_color or "#cccccc")
+        set_icon_stroke_width(self.current_icon_thickness)
+        if hasattr(self, "cancel_button") and self.cancel_button:
+            self.cancel_button.setIcon(get_icon("cancel") or get_icon("close"))
+        if hasattr(self, "save_button") and self.save_button:
+            self.save_button.setIcon(get_icon("save"))
 
     def get_tooltip_qss(self):
         bg = self.current_bg_dark if self.current_bg_dark else "#373737"
