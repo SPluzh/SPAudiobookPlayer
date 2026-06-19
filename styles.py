@@ -7,13 +7,17 @@ from PyQt6.QtCore import Qt
 
 # Theme paths
 STYLES_DIR = Path(__file__).parent / "resources" / "styles"
-DARK_QSS_PATH = STYLES_DIR / "dark.qss"
+STYLE_QSS_PATH = STYLES_DIR / "style.qss"
 
 # Fallback styles
 try:
-    DARK_STYLE = DARK_QSS_PATH.read_text(encoding="utf-8")
+    STYLE_CONTENT = STYLE_QSS_PATH.read_text(encoding="utf-8")
 except Exception:
-    DARK_STYLE = ""
+    STYLE_CONTENT = ""
+
+# Backwards compatibility aliases
+DARK_QSS_PATH = STYLE_QSS_PATH
+DARK_STYLE = STYLE_CONTENT
 
 class StyleManager:
     """Manager for application-wide visual styles and themes"""
@@ -138,7 +142,7 @@ class StyleManager:
     @staticmethod
     def get_theme_path(theme_name: str) -> Path:
         """Get the file path for a given theme name"""
-        return DARK_QSS_PATH
+        return STYLE_QSS_PATH
 
     @staticmethod
     def get_style(path: Path, overrides: dict = None) -> str:

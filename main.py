@@ -68,7 +68,7 @@ from PyQt6.QtGui import (
 )
 from bass_player import BassPlayer
 from database import DatabaseManager
-from styles import DARK_STYLE, DARK_QSS_PATH, StyleManager
+from styles import StyleManager
 from taskbar_progress import TaskbarProgress, TaskbarThumbnailButtons
 import ctypes
 from ctypes import wintypes

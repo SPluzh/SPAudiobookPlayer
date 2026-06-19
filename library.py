@@ -241,7 +241,7 @@ class TagFilterPopup(QWidget):
 
         # Enforce consistent style (border, rounded corners) regardless of focus state
         # Border handled by container frame, list is transparent/seamless
-        # Styles moved to dark.qss (#TagPopupFrame, #popupTagList, #popupSeparator)
+        # Styles moved to style.qss (#TagPopupFrame, #popupTagList, #popupSeparator)
 
         # Populate list
         if not all_tags:
