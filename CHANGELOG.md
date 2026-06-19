@@ -5,8 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [1.7.9]
 - **UI**: Added an Appearance Settings dialog to customize interface colors and book status colors with live preview.
 - **UI**: Added support for reordering, sorting, and toggling fields in the library's audiobook details line.
+- **UI**: Standardized global tooltip styling with a distinct dark background for clear contrast.
 - **Library**: Added interactive book tags with hover effects and quick filtering by clicking them.
 - **Settings**: Database clearing now fully deletes listening history, statistics, bookmarks, and tags.
+- **Translations**: Localized all newly added appearance and player tooltip descriptions across all 15 non-English supported languages.
 
 ## [1.7.8]
 - **Metadata**: Fixed manual cover scanning for playlist-based audiobooks in the edit dialog.

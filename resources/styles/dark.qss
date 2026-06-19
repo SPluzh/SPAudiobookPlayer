@@ -1069,14 +1069,16 @@ QLabel#delegate_file_count {
     color: @text-delegate;
 }
 
+
 /* ============================================================
    TOOLTIP
    ============================================================ */
 
 QToolTip {
-    color: @text;              /* text color */
-    border: 1px solid @accent;  /* border */
-    padding: 3px;
+    background-color: @bg-dark;
+    color: @text;
+    border: 1px solid @accent;
+    padding: 4px;
     border-radius: 3px;
 }
 

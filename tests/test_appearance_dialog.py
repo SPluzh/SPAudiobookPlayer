@@ -412,3 +412,53 @@ def test_appearance_dialog_info_order():
     # 4. Reject reverts to original order
     dialog.reject()
     assert dialog.current_info_order == "duration,progress,size"
+
+
+def test_appearance_dialog_tooltips():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        current_accent="#FF0000",
+        default_accent="#00FF00"
+    )
+
+    # Verify tooltips are set on color inputs, buttons and checkboxes
+    assert dialog.accent_color_btn.toolTip() != ""
+    assert dialog.accent_hex_input.toolTip() != ""
+    
+    assert dialog.window_color_btn.toolTip() != ""
+    assert dialog.window_hex_input.toolTip() != ""
+
+    assert dialog.bg_dark_color_btn.toolTip() != ""
+    assert dialog.bg_dark_hex_input.toolTip() != ""
+
+    assert dialog.text_color_btn.toolTip() != ""
+    assert dialog.text_hex_input.toolTip() != ""
+
+    assert dialog.border_color_btn.toolTip() != ""
+    assert dialog.border_hex_input.toolTip() != ""
+
+    assert dialog.chk_statusbar.toolTip() != ""
+    assert dialog.chk_status_triangle.toolTip() != ""
+
+    assert dialog.status_new_color_btn.toolTip() != ""
+    assert dialog.status_new_hex_input.toolTip() != ""
+    assert dialog.status_started_color_btn.toolTip() != ""
+    assert dialog.status_started_hex_input.toolTip() != ""
+    assert dialog.status_completed_color_btn.toolTip() != ""
+    assert dialog.status_completed_hex_input.toolTip() != ""
+
+    assert dialog.chk_show_detailed_info.toolTip() != ""
+    assert dialog.info_list_widget.toolTip() != ""
+    
+    assert dialog.chk_nesting_lines.toolTip() != ""
+    assert dialog.chk_remember_filter_folders.toolTip() != ""
+    assert dialog.chk_visualizer.toolTip() != ""
+
+    # Verify tooltips are set on list widget items
+    assert dialog.info_list_widget.count() > 0
+    for idx in range(dialog.info_list_widget.count()):
+        item = dialog.info_list_widget.item(idx)
+        assert item.toolTip() != ""
+

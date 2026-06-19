@@ -332,12 +332,15 @@ class AppearanceDialog(QDialog):
         
         # 1. Accent Color Row
         accent_label = QLabel(tr("appearance.accent_label"))
+        accent_tooltip = tr("appearance.accent_tooltip")
+        accent_label.setToolTip(accent_tooltip)
         grid_layout.addWidget(accent_label, 0, 0)
         
         self.accent_color_btn = QPushButton()
         self.accent_color_btn.setObjectName("accentColorBtn")
         self.accent_color_btn.setFixedSize(field_height, field_height)
         self.accent_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.accent_color_btn.setToolTip(accent_tooltip)
         self.accent_color_btn.clicked.connect(self.choose_accent_color)
         grid_layout.addWidget(self.accent_color_btn, 0, 1)
         
@@ -348,17 +351,21 @@ class AppearanceDialog(QDialog):
         self.accent_hex_input.setFixedHeight(field_height)
         self.accent_hex_input.setStyleSheet("padding: 2px 4px;")
         self.accent_hex_input.setValidator(validator)
+        self.accent_hex_input.setToolTip(accent_tooltip)
         self.accent_hex_input.textChanged.connect(self.on_accent_hex_changed)
         grid_layout.addWidget(self.accent_hex_input, 0, 2)
         
         # 2. Window Color Row
         window_label = QLabel(tr("appearance.window_label"))
+        window_tooltip = tr("appearance.window_tooltip")
+        window_label.setToolTip(window_tooltip)
         grid_layout.addWidget(window_label, 1, 0)
         
         self.window_color_btn = QPushButton()
         self.window_color_btn.setObjectName("windowColorBtn")
         self.window_color_btn.setFixedSize(field_height, field_height)
         self.window_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.window_color_btn.setToolTip(window_tooltip)
         self.window_color_btn.clicked.connect(self.choose_window_color)
         grid_layout.addWidget(self.window_color_btn, 1, 1)
         
@@ -369,17 +376,21 @@ class AppearanceDialog(QDialog):
         self.window_hex_input.setFixedHeight(field_height)
         self.window_hex_input.setStyleSheet("padding: 2px 4px;")
         self.window_hex_input.setValidator(validator)
+        self.window_hex_input.setToolTip(window_tooltip)
         self.window_hex_input.textChanged.connect(self.on_window_hex_changed)
         grid_layout.addWidget(self.window_hex_input, 1, 2)
 
         # 3. Secondary BG Color Row
         bg_dark_label = QLabel(tr("appearance.bg_dark_label"))
+        bg_dark_tooltip = tr("appearance.bg_dark_tooltip")
+        bg_dark_label.setToolTip(bg_dark_tooltip)
         grid_layout.addWidget(bg_dark_label, 2, 0)
         
         self.bg_dark_color_btn = QPushButton()
         self.bg_dark_color_btn.setObjectName("bgDarkColorBtn")
         self.bg_dark_color_btn.setFixedSize(field_height, field_height)
         self.bg_dark_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.bg_dark_color_btn.setToolTip(bg_dark_tooltip)
         self.bg_dark_color_btn.clicked.connect(self.choose_bg_dark_color)
         grid_layout.addWidget(self.bg_dark_color_btn, 2, 1)
         
@@ -390,17 +401,21 @@ class AppearanceDialog(QDialog):
         self.bg_dark_hex_input.setFixedHeight(field_height)
         self.bg_dark_hex_input.setStyleSheet("padding: 2px 4px;")
         self.bg_dark_hex_input.setValidator(validator)
+        self.bg_dark_hex_input.setToolTip(bg_dark_tooltip)
         self.bg_dark_hex_input.textChanged.connect(self.on_bg_dark_hex_changed)
         grid_layout.addWidget(self.bg_dark_hex_input, 2, 2)
         
         # 4. Font Color Row
         text_label = QLabel(tr("appearance.text_label"))
+        text_tooltip = tr("appearance.text_tooltip")
+        text_label.setToolTip(text_tooltip)
         grid_layout.addWidget(text_label, 3, 0)
         
         self.text_color_btn = QPushButton()
         self.text_color_btn.setObjectName("textColorBtn")
         self.text_color_btn.setFixedSize(field_height, field_height)
         self.text_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.text_color_btn.setToolTip(text_tooltip)
         self.text_color_btn.clicked.connect(self.choose_text_color)
         grid_layout.addWidget(self.text_color_btn, 3, 1)
         
@@ -411,17 +426,21 @@ class AppearanceDialog(QDialog):
         self.text_hex_input.setFixedHeight(field_height)
         self.text_hex_input.setStyleSheet("padding: 2px 4px;")
         self.text_hex_input.setValidator(validator)
+        self.text_hex_input.setToolTip(text_tooltip)
         self.text_hex_input.textChanged.connect(self.on_text_hex_changed)
         grid_layout.addWidget(self.text_hex_input, 3, 2)
         
         # 5. Border Color Row
         border_label = QLabel(tr("appearance.border_label"))
+        border_tooltip = tr("appearance.border_tooltip")
+        border_label.setToolTip(border_tooltip)
         grid_layout.addWidget(border_label, 4, 0)
         
         self.border_color_btn = QPushButton()
         self.border_color_btn.setObjectName("borderColorBtn")
         self.border_color_btn.setFixedSize(field_height, field_height)
         self.border_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.border_color_btn.setToolTip(border_tooltip)
         self.border_color_btn.clicked.connect(self.choose_border_color)
         grid_layout.addWidget(self.border_color_btn, 4, 1)
         
@@ -432,6 +451,7 @@ class AppearanceDialog(QDialog):
         self.border_hex_input.setFixedHeight(field_height)
         self.border_hex_input.setStyleSheet("padding: 2px 4px;")
         self.border_hex_input.setValidator(validator)
+        self.border_hex_input.setToolTip(border_tooltip)
         self.border_hex_input.textChanged.connect(self.on_border_hex_changed)
         grid_layout.addWidget(self.border_hex_input, 4, 2)
         
@@ -442,6 +462,7 @@ class AppearanceDialog(QDialog):
         # Add window settings checkboxes (like Show Status Bar)
         colors_layout.addSpacing(4)
         self.chk_statusbar = QCheckBox(tr("menu.show_statusbar", "Show Status Bar"))
+        self.chk_statusbar.setToolTip(tr("appearance.statusbar_tooltip"))
         self.chk_statusbar.stateChanged.connect(self.on_interface_checkbox_changed)
         colors_layout.addWidget(self.chk_statusbar)
         
@@ -455,8 +476,11 @@ class AppearanceDialog(QDialog):
         
         # Library List View checkboxes (nesting lines, status triangle, remember filter folders)
         self.chk_status_triangle = QCheckBox(tr("menu.show_status_triangle", "Show Status Triangle"))
+        self.chk_status_triangle.setToolTip(tr("appearance.status_triangle_tooltip"))
         self.chk_nesting_lines = QCheckBox(tr("menu.show_nesting_lines", "Show Nesting Lines"))
+        self.chk_nesting_lines.setToolTip(tr("appearance.nesting_lines_tooltip"))
         self.chk_remember_filter_folders = QCheckBox(tr("menu.remember_filter_folders", "Remember Folder View"))
+        self.chk_remember_filter_folders.setToolTip(tr("appearance.remember_filter_folders_tooltip"))
         
         info_layout.addWidget(self.chk_status_triangle)
 
@@ -469,11 +493,14 @@ class AppearanceDialog(QDialog):
         
         # New Status Row
         status_new_label = QLabel(tr("appearance.status_new_label", "New Status Color:"))
+        status_new_tooltip = tr("appearance.status_new_tooltip")
+        status_new_label.setToolTip(status_new_tooltip)
         status_colors_grid.addWidget(status_new_label, 0, 0)
         
         self.status_new_color_btn = QPushButton()
         self.status_new_color_btn.setFixedSize(field_height, field_height)
         self.status_new_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.status_new_color_btn.setToolTip(status_new_tooltip)
         self.status_new_color_btn.clicked.connect(self.choose_status_new_color)
         status_colors_grid.addWidget(self.status_new_color_btn, 0, 1)
         
@@ -483,16 +510,20 @@ class AppearanceDialog(QDialog):
         self.status_new_hex_input.setFixedHeight(field_height)
         self.status_new_hex_input.setStyleSheet("padding: 2px 4px;")
         self.status_new_hex_input.setValidator(validator)
+        self.status_new_hex_input.setToolTip(status_new_tooltip)
         self.status_new_hex_input.textChanged.connect(self.on_status_new_hex_changed)
         status_colors_grid.addWidget(self.status_new_hex_input, 0, 2)
         
         # Started Status Row
         status_started_label = QLabel(tr("appearance.status_started_label", "Started Status Color:"))
+        status_started_tooltip = tr("appearance.status_started_tooltip")
+        status_started_label.setToolTip(status_started_tooltip)
         status_colors_grid.addWidget(status_started_label, 1, 0)
         
         self.status_started_color_btn = QPushButton()
         self.status_started_color_btn.setFixedSize(field_height, field_height)
         self.status_started_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.status_started_color_btn.setToolTip(status_started_tooltip)
         self.status_started_color_btn.clicked.connect(self.choose_status_started_color)
         status_colors_grid.addWidget(self.status_started_color_btn, 1, 1)
         
@@ -502,16 +533,20 @@ class AppearanceDialog(QDialog):
         self.status_started_hex_input.setFixedHeight(field_height)
         self.status_started_hex_input.setStyleSheet("padding: 2px 4px;")
         self.status_started_hex_input.setValidator(validator)
+        self.status_started_hex_input.setToolTip(status_started_tooltip)
         self.status_started_hex_input.textChanged.connect(self.on_status_started_hex_changed)
         status_colors_grid.addWidget(self.status_started_hex_input, 1, 2)
         
         # Completed Status Row
         status_completed_label = QLabel(tr("appearance.status_completed_label", "Finished Status Color:"))
+        status_completed_tooltip = tr("appearance.status_completed_tooltip")
+        status_completed_label.setToolTip(status_completed_tooltip)
         status_colors_grid.addWidget(status_completed_label, 2, 0)
         
         self.status_completed_color_btn = QPushButton()
         self.status_completed_color_btn.setFixedSize(field_height, field_height)
         self.status_completed_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.status_completed_color_btn.setToolTip(status_completed_tooltip)
         self.status_completed_color_btn.clicked.connect(self.choose_status_completed_color)
         status_colors_grid.addWidget(self.status_completed_color_btn, 2, 1)
         
@@ -521,6 +556,7 @@ class AppearanceDialog(QDialog):
         self.status_completed_hex_input.setFixedHeight(field_height)
         self.status_completed_hex_input.setStyleSheet("padding: 2px 4px;")
         self.status_completed_hex_input.setValidator(validator)
+        self.status_completed_hex_input.setToolTip(status_completed_tooltip)
         self.status_completed_hex_input.textChanged.connect(self.on_status_completed_hex_changed)
         status_colors_grid.addWidget(self.status_completed_hex_input, 2, 2)
         
@@ -529,6 +565,7 @@ class AppearanceDialog(QDialog):
 
         # Book Info Line Settings Section
         self.chk_show_detailed_info = QCheckBox(tr("appearance.show_detailed_info"))
+        self.chk_show_detailed_info.setToolTip(tr("appearance.show_detailed_info_tooltip"))
         self.chk_show_detailed_info.setStyleSheet("margin-bottom: 2px;")
         info_layout.addWidget(self.chk_show_detailed_info)
         
@@ -542,6 +579,7 @@ class AppearanceDialog(QDialog):
         self.info_list_widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.info_list_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.info_list_widget.setObjectName("infoListWidget")
+        self.info_list_widget.setToolTip(tr("appearance.info_items_tooltip"))
         self.info_list_widget.setFixedHeight(200)
         
         self.btn_up = QPushButton("▲")
@@ -591,6 +629,7 @@ class AppearanceDialog(QDialog):
         interface_layout.setContentsMargins(8, 12, 8, 8)
 
         self.chk_visualizer = QCheckBox(tr("menu.visualizer", "Visualizer"))
+        self.chk_visualizer.setToolTip(tr("appearance.visualizer_tooltip"))
 
         interface_layout.addWidget(self.chk_visualizer)
 
@@ -666,7 +705,7 @@ class AppearanceDialog(QDialog):
         self.updating_ui = True
         try:
             hex_input.setText(color_hex.upper())
-            btn.setStyleSheet(f"background-color: {color_hex};")
+            btn.setStyleSheet(f"QPushButton {{ background-color: {color_hex}; }}")
         finally:
             self.updating_ui = False
 
@@ -1190,6 +1229,11 @@ class AppearanceDialog(QDialog):
                     item = QListWidgetItem(name)
                     item.setData(Qt.ItemDataRole.UserRole, key)
                     item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+                    
+                    tooltip_key = f"appearance.info_{key}_tooltip"
+                    if key == "file_count":
+                        tooltip_key = "appearance.info_files_tooltip"
+                    item.setToolTip(tr(tooltip_key))
                     
                     checked = key_to_val.get(key, True)
                     item.setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
