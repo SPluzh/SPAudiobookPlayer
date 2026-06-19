@@ -284,14 +284,14 @@ class AppearanceDialog(QDialog):
         
         # Scroll area for settings contents
         scroll = QScrollArea()
+        scroll.setObjectName("appearanceScroll")
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("QScrollArea { background: transparent; }")
         main_layout.addWidget(scroll)
 
         container = QWidget()
-        container.setStyleSheet("background: transparent;")
+        container.setObjectName("appearanceContainer")
         scroll.setWidget(container)
         
         cols_layout = QHBoxLayout(container)
@@ -349,7 +349,7 @@ class AppearanceDialog(QDialog):
         self.accent_hex_input.setMaxLength(7)
         self.accent_hex_input.setFixedWidth(75)
         self.accent_hex_input.setFixedHeight(field_height)
-        self.accent_hex_input.setStyleSheet("padding: 2px 4px;")
+
         self.accent_hex_input.setValidator(validator)
         self.accent_hex_input.setToolTip(accent_tooltip)
         self.accent_hex_input.textChanged.connect(self.on_accent_hex_changed)
@@ -374,7 +374,7 @@ class AppearanceDialog(QDialog):
         self.window_hex_input.setMaxLength(7)
         self.window_hex_input.setFixedWidth(75)
         self.window_hex_input.setFixedHeight(field_height)
-        self.window_hex_input.setStyleSheet("padding: 2px 4px;")
+
         self.window_hex_input.setValidator(validator)
         self.window_hex_input.setToolTip(window_tooltip)
         self.window_hex_input.textChanged.connect(self.on_window_hex_changed)
@@ -399,7 +399,7 @@ class AppearanceDialog(QDialog):
         self.bg_dark_hex_input.setMaxLength(7)
         self.bg_dark_hex_input.setFixedWidth(75)
         self.bg_dark_hex_input.setFixedHeight(field_height)
-        self.bg_dark_hex_input.setStyleSheet("padding: 2px 4px;")
+
         self.bg_dark_hex_input.setValidator(validator)
         self.bg_dark_hex_input.setToolTip(bg_dark_tooltip)
         self.bg_dark_hex_input.textChanged.connect(self.on_bg_dark_hex_changed)
@@ -424,7 +424,7 @@ class AppearanceDialog(QDialog):
         self.text_hex_input.setMaxLength(7)
         self.text_hex_input.setFixedWidth(75)
         self.text_hex_input.setFixedHeight(field_height)
-        self.text_hex_input.setStyleSheet("padding: 2px 4px;")
+
         self.text_hex_input.setValidator(validator)
         self.text_hex_input.setToolTip(text_tooltip)
         self.text_hex_input.textChanged.connect(self.on_text_hex_changed)
@@ -449,7 +449,7 @@ class AppearanceDialog(QDialog):
         self.border_hex_input.setMaxLength(7)
         self.border_hex_input.setFixedWidth(75)
         self.border_hex_input.setFixedHeight(field_height)
-        self.border_hex_input.setStyleSheet("padding: 2px 4px;")
+
         self.border_hex_input.setValidator(validator)
         self.border_hex_input.setToolTip(border_tooltip)
         self.border_hex_input.textChanged.connect(self.on_border_hex_changed)
@@ -505,10 +505,10 @@ class AppearanceDialog(QDialog):
         status_colors_grid.addWidget(self.status_new_color_btn, 0, 1)
         
         self.status_new_hex_input = QLineEdit()
+        self.status_new_hex_input.setObjectName("statusNewHexInput")
         self.status_new_hex_input.setMaxLength(7)
         self.status_new_hex_input.setFixedWidth(75)
         self.status_new_hex_input.setFixedHeight(field_height)
-        self.status_new_hex_input.setStyleSheet("padding: 2px 4px;")
         self.status_new_hex_input.setValidator(validator)
         self.status_new_hex_input.setToolTip(status_new_tooltip)
         self.status_new_hex_input.textChanged.connect(self.on_status_new_hex_changed)
@@ -528,10 +528,10 @@ class AppearanceDialog(QDialog):
         status_colors_grid.addWidget(self.status_started_color_btn, 1, 1)
         
         self.status_started_hex_input = QLineEdit()
+        self.status_started_hex_input.setObjectName("statusStartedHexInput")
         self.status_started_hex_input.setMaxLength(7)
         self.status_started_hex_input.setFixedWidth(75)
         self.status_started_hex_input.setFixedHeight(field_height)
-        self.status_started_hex_input.setStyleSheet("padding: 2px 4px;")
         self.status_started_hex_input.setValidator(validator)
         self.status_started_hex_input.setToolTip(status_started_tooltip)
         self.status_started_hex_input.textChanged.connect(self.on_status_started_hex_changed)
@@ -551,10 +551,10 @@ class AppearanceDialog(QDialog):
         status_colors_grid.addWidget(self.status_completed_color_btn, 2, 1)
         
         self.status_completed_hex_input = QLineEdit()
+        self.status_completed_hex_input.setObjectName("statusCompletedHexInput")
         self.status_completed_hex_input.setMaxLength(7)
         self.status_completed_hex_input.setFixedWidth(75)
         self.status_completed_hex_input.setFixedHeight(field_height)
-        self.status_completed_hex_input.setStyleSheet("padding: 2px 4px;")
         self.status_completed_hex_input.setValidator(validator)
         self.status_completed_hex_input.setToolTip(status_completed_tooltip)
         self.status_completed_hex_input.textChanged.connect(self.on_status_completed_hex_changed)
@@ -701,13 +701,55 @@ class AppearanceDialog(QDialog):
             self.current_status_completed
         )
 
+    def get_tooltip_qss(self):
+        bg = self.current_bg_dark if self.current_bg_dark else "#373737"
+        text = self.current_text if self.current_text else "#eaeaea"
+        accent = self.current_accent if self.current_accent else "#018574"
+        return f"QToolTip {{ background-color: {bg}; color: {text}; border: 1px solid {accent}; padding: 4px; border-radius: 3px; }}"
+
+    def update_color_button_stylesheets(self):
+        tooltip_qss = self.get_tooltip_qss()
+        buttons = [
+            ("accent_color_btn", self.current_accent),
+            ("window_color_btn", self.current_window),
+            ("bg_dark_color_btn", self.current_bg_dark),
+            ("text_color_btn", self.current_text),
+            ("border_color_btn", self.current_border),
+            ("status_new_color_btn", self.current_status_new),
+            ("status_started_color_btn", self.current_status_started),
+            ("status_completed_color_btn", self.current_status_completed),
+        ]
+        for attr, color_hex in buttons:
+            btn = getattr(self, attr, None)
+            if btn and color_hex:
+                btn.setStyleSheet(f"QPushButton {{ background-color: {color_hex}; }} {tooltip_qss}")
+
     def update_color_button(self, btn, hex_input, color_hex):
         self.updating_ui = True
         try:
             hex_input.setText(color_hex.upper())
-            btn.setStyleSheet(f"QPushButton {{ background-color: {color_hex}; }}")
         finally:
             self.updating_ui = False
+        
+        # Sync values in class attributes as they might have been called before updating_ui check
+        if btn == getattr(self, "accent_color_btn", None):
+            self.current_accent = color_hex
+        elif btn == getattr(self, "window_color_btn", None):
+            self.current_window = color_hex
+        elif btn == getattr(self, "bg_dark_color_btn", None):
+            self.current_bg_dark = color_hex
+        elif btn == getattr(self, "text_color_btn", None):
+            self.current_text = color_hex
+        elif btn == getattr(self, "border_color_btn", None):
+            self.current_border = color_hex
+        elif btn == getattr(self, "status_new_color_btn", None):
+            self.current_status_new = color_hex
+        elif btn == getattr(self, "status_started_color_btn", None):
+            self.current_status_started = color_hex
+        elif btn == getattr(self, "status_completed_color_btn", None):
+            self.current_status_completed = color_hex
+
+        self.update_color_button_stylesheets()
 
     def update_ui_from_status_new(self, color_hex: str):
         """Synchronize custom status new color button background and hex input"""

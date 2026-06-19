@@ -973,6 +973,26 @@ QDialog {
     border-radius: 3px;
 }
 
+/* Appearance dialog hex color inputs */
+QLineEdit#accentHexInput,
+QLineEdit#windowHexInput,
+QLineEdit#bgDarkHexInput,
+QLineEdit#textHexInput,
+QLineEdit#borderHexInput,
+QLineEdit#statusNewHexInput,
+QLineEdit#statusStartedHexInput,
+QLineEdit#statusCompletedHexInput {
+    padding: 2px 4px;
+}
+
+/* Scroll area and container in appearance dialog */
+QScrollArea#appearanceScroll,
+QWidget#appearanceContainer {
+    background: transparent;
+    background-color: transparent;
+}
+
+
 /* Background of entire tab widget */
 QTabWidget {
     background-color: @bg-dark; /* tab content background */
