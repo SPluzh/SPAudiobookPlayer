@@ -47,9 +47,9 @@ Offline audiobook player for Windows. It provides library scanning, playback pro
 - **Mono Downmix**: Merges stereo channels into mono for single-earbud listening.
 
 ### User Interface
-- **Customizable Themes**: Multiple themes (Dark Mint, Dark Pink, Miku) with custom icon colors and line thickness.
+- **Aesthetic Customization**: Fully customizable color palette (accent, background, text, borders) and adjustable icon thickness with real-time live preview.
 - **Dual-Pane Layout**: Library browser on the left, player controls and settings on the right.
-- **Multilingual**: Interface localized into 16 languages.
+- **Multilingual**: Fully localized into 16 languages (Arabic, Armenian, Chinese, English, French, German, Hindi, Indonesian, Japanese, Korean, Portuguese, Russian, Spanish, Thai, Turkish, and Vietnamese).
 
 ### Keyboard Shortcuts
 | Action | Key |
@@ -251,9 +251,9 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - **Моно-сведение**: Сведение стереоканалов в моно для удобного прослушивания с одним наушником.
 
 ### Интерфейс пользователя
-- **Кастомизация оформления**: Встроенные темы (Dark Mint, Dark Pink, Miku), настройка цветов иконок и толщины линий.
+- **Кастомизация оформления**: Полная настройка цветовой палитры (акцент, фон, текст, границы) и толщины линий с мгновенным предпросмотром.
 - **Двухпанельный вид**: Дерево библиотеки слева, управление воспроизведением справа.
-- **Локализация**: Полная поддержка 16 языков интерфейса.
+- **Локализация**: Полная поддержка 16 языков интерфейса (английский, арабский, армянский, вьетнамский, испанский, индонезийский, китайский, корейский, немецкий, португальский, русский, тайский, турецкий, французский, хинди и японский).
 
 ### Горячие клавиши
 | Действие | Клавиша |
