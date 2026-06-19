@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider, QLineEdit, QWidget, QGridLayout, QFrame, QCheckBox, QGroupBox, QScrollArea, QListWidget, QListWidgetItem, QAbstractItemView
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider, QLineEdit, QWidget, QGridLayout, QFrame, QCheckBox, QGroupBox, QScrollArea, QListWidget, QListWidgetItem, QAbstractItemView, QSpacerItem, QSizePolicy
 from PyQt6.QtCore import pyqtSignal, Qt, QPoint, QRegularExpression, QTimer
 from PyQt6.QtGui import QColor, QRegularExpressionValidator, QPainter, QImage, QMouseEvent, QPen
 from translations import tr
@@ -178,7 +178,7 @@ class AppearanceDialog(QDialog):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
-        self.setMinimumSize(720, 580)
+        self.setMinimumSize(760, 580)
         
         # Keep track of original, current, and default values
         self.original_accent = current_accent
@@ -499,18 +499,19 @@ class AppearanceDialog(QDialog):
         self.thickness_slider = QSlider(Qt.Orientation.Horizontal)
         self.thickness_slider.setObjectName("iconThicknessSlider")
         self.thickness_slider.setRange(10, 40)
+        self.thickness_slider.setMinimumWidth(50)
         self.thickness_slider.setToolTip(thickness_tooltip)
         self.thickness_slider.valueChanged.connect(self.on_thickness_slider_changed)
-        grid_layout.addWidget(self.thickness_slider, 6, 1, 1, 2)
+        grid_layout.addWidget(self.thickness_slider, 6, 1, 1, 3)
         
         self.thickness_value_label = QLabel()
         self.thickness_value_label.setObjectName("iconThicknessValueLabel")
         self.thickness_value_label.setFixedWidth(50)
         self.thickness_value_label.setToolTip(thickness_tooltip)
-        grid_layout.addWidget(self.thickness_value_label, 6, 3)
+        grid_layout.addWidget(self.thickness_value_label, 6, 4)
         
-        # Let column 4 take any extra space to push controls left
-        grid_layout.setColumnStretch(4, 1)
+        # Let column 3 take any extra space to push controls left and stretch the slider
+        grid_layout.setColumnStretch(3, 1)
         colors_layout.addLayout(grid_layout)
         
         # Add window settings checkboxes (like Show Status Bar)
@@ -614,6 +615,7 @@ class AppearanceDialog(QDialog):
         self.status_completed_hex_input.textChanged.connect(self.on_status_completed_hex_changed)
         status_colors_grid.addWidget(self.status_completed_hex_input, 2, 2)
         
+        status_colors_grid.addItem(QSpacerItem(1, 1, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum), 0, 3)
         status_colors_grid.setColumnStretch(3, 1)
         info_layout.addWidget(self.status_colors_widget)
 

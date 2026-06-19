@@ -978,6 +978,7 @@ QLineEdit#windowHexInput,
 QLineEdit#bgDarkHexInput,
 QLineEdit#textHexInput,
 QLineEdit#borderHexInput,
+QLineEdit#iconHexInput,
 QLineEdit#statusNewHexInput,
 QLineEdit#statusStartedHexInput,
 QLineEdit#statusCompletedHexInput {
@@ -1520,8 +1521,10 @@ QPushButton.color-btn {
     border: 1px solid #555555;
     border-radius: 4px;
     padding: 0px;
-    min-height: 0px;
-    min-width: 0px;
+    min-width: 20px;
+    max-width: 20px;
+    min-height: 20px;
+    max-height: 20px;
 }
 
 QPushButton.color-btn:hover {
