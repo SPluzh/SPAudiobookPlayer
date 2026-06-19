@@ -24,7 +24,6 @@
 /* @status-warning: #f9ca24 */
 /* @overlay-bg: rgba(0, 0, 0, 100) */
 /* @overlay-progress-bg: rgba(0, 0, 0, 150) */
-/* @separator-dot: #646464 */
 
 QMainWindow {
     background-color: @bg-main;
@@ -1157,7 +1156,7 @@ QFrame#aboutContainer {
 }
 
 #separator_dot {
-    color: @separator-dot;
+    color: @text;
 }
 
 #delegate_info_font {
@@ -1237,7 +1236,7 @@ QLabel#aboutGithubLink {
 }
 
 QLabel#aboutGithubLink:hover {
-    color: white;
+    color: @text-bright;
 }
 
 QPushButton#aboutCloseBtn:hover {
@@ -1279,7 +1278,7 @@ QLabel#aboutRightContent {
 #tagsList::item:selected,
 #tagsList::item:selected:active {
     background-color: @border;
-    color: white;
+    color: @text-bright;
 }
 
 /* ============================================================
