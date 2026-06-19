@@ -1,4 +1,4 @@
-<img width="1522" height="1151" alt="image" src="https://github.com/user-attachments/assets/a86c41ee-424d-4743-9d34-a8974b59a593" />
+<img width="802" height="491" alt="vmplayer_iQCphJnwdk" src="https://github.com/user-attachments/assets/ab63c81c-cd2b-487d-93c8-47cc360565c4" />
 
 # SP Audiobook Player
 
