@@ -151,6 +151,7 @@ _RU_TRANSLIT_RE = re.compile(
 
 _EN_PATTERNS: list[str] = [
     r"\b(the|and|of|in|a|an|to|is|it|at|by|for|on|or|with|from)\b",
+    r"\b(this|that|these|those|his|her|their|your|its|who|which|whose|whom|what|where|when|why|how|we|they|our|us|him|them|me|was|were|been|have|has|had|does|did|will|would|should|could|can|about|after|before|into|over|under|out|collection|fiction|science|various|mystery|history|short|story|stories|book|books|volume|vol|part|selected|collected|works|librivox|volunteers|volunteer|audiobook|audiobooks|narrated|read|reading|reader|new|great|little|world|life|woman|time|years|house|home|love|night|tales|black|white|blue|green|dark|light|good|bad|best)\b",
 ]
 
 

@@ -267,6 +267,8 @@ class TestEnglish:
         "J.R.R. Tolkien - The Hobbit [Rob Inglis, 1991, 96kbps, MP3]",
         "Jane Austen - Pride and Prejudice [Rosamund Pike, 2015, 128kbps, MP3]",
         "F. Scott Fitzgerald - The Great Gatsby [Jake Gyllenhaal, 2013, 128kbps, MP3]",
+        "Margery Allingham - Mystery Mile [LibriVox Volunteers]",
+        "Various - Short Science Fiction Collection 106 [LibriVox Volunteers]",
     ])
     def test_english_books(self, folder):
         assert d(folder) == "en"
