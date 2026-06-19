@@ -94,6 +94,8 @@ from utils import (
     format_time_short,
     format_size,
     OutputCapture,
+    set_icon_color,
+    set_icon_stroke_width,
 )
 from player import PlaybackController, PlayerWidget
 from listening_tracker import ListeningTracker
@@ -455,40 +457,40 @@ class AudiobookPlayerWindow(QMainWindow):
         library_menu = menubar.addMenu(tr("menu.library"))
 
         # Global Settings Context
-        settings_action = QAction(tr("menu.settings"), self)
-        settings_action.setIcon(get_icon("menu_settings"))
-        settings_action.setShortcut("Ctrl+,")
-        settings_action.triggered.connect(self.show_settings)
-        library_menu.addAction(settings_action)
+        self.settings_action = QAction(tr("menu.settings"), self)
+        self.settings_action.setIcon(get_icon("menu_settings"))
+        self.settings_action.setShortcut("Ctrl+,")
+        self.settings_action.triggered.connect(self.show_settings)
+        library_menu.addAction(self.settings_action)
 
         library_menu.addSeparator()
 
         # Directory Synchronization
-        scan_action = QAction(tr("menu.scan"), self)
-        scan_action.setIcon(get_icon("menu_scan"))
-        scan_action.setShortcut("Ctrl+R")
-        scan_action.triggered.connect(self.rescan_directory)
-        library_menu.addAction(scan_action)
+        self.scan_action = QAction(tr("menu.scan"), self)
+        self.scan_action.setIcon(get_icon("menu_scan"))
+        self.scan_action.setShortcut("Ctrl+R")
+        self.scan_action.triggered.connect(self.rescan_directory)
+        library_menu.addAction(self.scan_action)
 
         library_menu.addSeparator()
 
         # Listening Statistics
-        statistics_action = QAction(tr("menu.statistics"), self)
-        statistics_action.setIcon(get_icon("statistics"))
-        statistics_action.setShortcut("Ctrl+T")
-        statistics_action.triggered.connect(self.show_statistics)
-        library_menu.addAction(statistics_action)
+        self.statistics_action = QAction(tr("menu.statistics"), self)
+        self.statistics_action.setIcon(get_icon("statistics"))
+        self.statistics_action.setShortcut("Ctrl+T")
+        self.statistics_action.triggered.connect(self.show_statistics)
+        library_menu.addAction(self.statistics_action)
 
         # Open Library Folder
-        open_folder_action = QAction(tr("menu.open_library_folder"), self)
-        open_folder_action.setIcon(get_icon("context_open_folder"))
-        open_folder_action.triggered.connect(self.open_library_folder)
+        self.open_folder_action = QAction(tr("menu.open_library_folder"), self)
+        self.open_folder_action.setIcon(get_icon("context_open_folder"))
+        self.open_folder_action.triggered.connect(self.open_library_folder)
 
         view_menu = menubar.addMenu(tr("menu.view"))
 
         # Language Selection Nested Menu
-        language_menu = view_menu.addMenu(tr("menu.language"))
-        language_menu.setIcon(get_icon("languages"))
+        self.language_menu = view_menu.addMenu(tr("menu.language"))
+        self.language_menu.setIcon(get_icon("languages"))
 
         available_langs = get_available_languages()
         self.language_actions = {}
@@ -499,29 +501,29 @@ class AudiobookPlayerWindow(QMainWindow):
             action.setChecked(get_language() == code)
             # Use default argument to capture current loop variable
             action.triggered.connect(lambda checked, c=code: self.change_language(c))
-            language_menu.addAction(action)
+            self.language_menu.addAction(action)
             self.language_actions[code] = action
 
         view_menu.addSeparator()
 
         # Library Visibility & Navigation
-        reveal_action = QAction(tr("menu.reveal_current"), self)
-        reveal_action.setIcon(get_icon("locate"))
-        reveal_action.setShortcut("L")
-        reveal_action.triggered.connect(self.reveal_current_audiobook)
-        view_menu.addAction(reveal_action)
+        self.reveal_action = QAction(tr("menu.reveal_current"), self)
+        self.reveal_action.setIcon(get_icon("locate"))
+        self.reveal_action.setShortcut("L")
+        self.reveal_action.triggered.connect(self.reveal_current_audiobook)
+        view_menu.addAction(self.reveal_action)
 
-        expand_action = QAction(tr("menu.expand_all"), self)
-        expand_action.setIcon(get_icon("expand"))
-        expand_action.setShortcut("E")
-        expand_action.triggered.connect(self.library_widget.expand_all_folders)
-        view_menu.addAction(expand_action)
+        self.expand_action = QAction(tr("menu.expand_all"), self)
+        self.expand_action.setIcon(get_icon("expand"))
+        self.expand_action.setShortcut("E")
+        self.expand_action.triggered.connect(self.library_widget.expand_all_folders)
+        view_menu.addAction(self.expand_action)
 
-        collapse_action = QAction(tr("menu.collapse_all"), self)
-        collapse_action.setIcon(get_icon("collapse"))
-        collapse_action.setShortcut("W")
-        collapse_action.triggered.connect(self.library_widget.collapse_all_folders)
-        view_menu.addAction(collapse_action)
+        self.collapse_action = QAction(tr("menu.collapse_all"), self)
+        self.collapse_action.setIcon(get_icon("collapse"))
+        self.collapse_action.setShortcut("W")
+        self.collapse_action.triggered.connect(self.library_widget.collapse_all_folders)
+        view_menu.addAction(self.collapse_action)
 
         view_menu.addSeparator()
 
@@ -578,18 +580,49 @@ class AudiobookPlayerWindow(QMainWindow):
         help_menu = menubar.addMenu(tr("menu.help"))
 
         # Check for Updates
-        check_update_action = QAction(tr("menu.check_updates"), self)
-        check_update_action.setIcon(get_icon("update"))
-        check_update_action.triggered.connect(self.check_for_updates_manual)
-        help_menu.addAction(check_update_action)
+        self.check_update_action = QAction(tr("menu.check_updates"), self)
+        self.check_update_action.setIcon(get_icon("update"))
+        self.check_update_action.triggered.connect(self.check_for_updates_manual)
+        help_menu.addAction(self.check_update_action)
 
         help_menu.addSeparator()
 
         # About Dialog Trigger
-        about_action = QAction(tr("menu.about"), self)
-        about_action.setIcon(get_icon("menu_about"))
-        about_action.triggered.connect(self.show_about)
-        help_menu.addAction(about_action)
+        self.about_action = QAction(tr("menu.about"), self)
+        self.about_action.setIcon(get_icon("menu_about"))
+        self.about_action.triggered.connect(self.show_about)
+        help_menu.addAction(self.about_action)
+
+    def reload_icons(self):
+        """Reload all SVG-based application icons to apply the new icon color"""
+        self.setWindowIcon(get_icon("app_icon", self.icons_dir))
+        if hasattr(self, "settings_action"):
+            self.settings_action.setIcon(get_icon("menu_settings"))
+        if hasattr(self, "scan_action"):
+            self.scan_action.setIcon(get_icon("menu_scan"))
+        if hasattr(self, "statistics_action"):
+            self.statistics_action.setIcon(get_icon("statistics"))
+        if hasattr(self, "open_folder_action"):
+            self.open_folder_action.setIcon(get_icon("context_open_folder"))
+        if hasattr(self, "language_menu"):
+            self.language_menu.setIcon(get_icon("languages"))
+        if hasattr(self, "reveal_action"):
+            self.reveal_action.setIcon(get_icon("locate"))
+        if hasattr(self, "expand_action"):
+            self.expand_action.setIcon(get_icon("expand"))
+        if hasattr(self, "collapse_action"):
+            self.collapse_action.setIcon(get_icon("collapse"))
+        if hasattr(self, "appearance_action"):
+            self.appearance_action.setIcon(get_icon("palette"))
+        if hasattr(self, "check_update_action"):
+            self.check_update_action.setIcon(get_icon("update"))
+        if hasattr(self, "about_action"):
+            self.about_action.setIcon(get_icon("menu_about"))
+
+        if hasattr(self, "player_widget") and self.player_widget:
+            self.player_widget.load_icons()
+        if hasattr(self, "library_widget") and self.library_widget:
+            self.library_widget.load_icons()
 
     def change_language(self, language: str):
         """Update the application's language preference and immediately refresh all UI components without requiring a restart"""
@@ -948,6 +981,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.status_new_color = config.get("Appearance", "status_new_color", fallback="")
         self.status_started_color = config.get("Appearance", "status_started_color", fallback="")
         self.status_completed_color = config.get("Appearance", "status_completed_color", fallback="")
+        self.icon_color = config.get("Appearance", "icon_color", fallback="")
+        self.icon_thickness = config.getfloat("Appearance", "icon_thickness", fallback=2.0)
+        set_icon_color(self.icon_color or "#cccccc")
+        set_icon_stroke_width(self.icon_thickness)
 
         # Filesystem Path Configurations
         self.default_path = config.get("Paths", "default_path", fallback="")
@@ -1287,6 +1324,12 @@ class AudiobookPlayerWindow(QMainWindow):
         else:
             if "Appearance" in config and "status_completed_color" in config["Appearance"]:
                 del config["Appearance"]["status_completed_color"]
+        if getattr(self, "icon_color", ""):
+            config["Appearance"]["icon_color"] = self.icon_color
+        else:
+            if "Appearance" in config and "icon_color" in config["Appearance"]:
+                del config["Appearance"]["icon_color"]
+        config["Appearance"]["icon_thickness"] = str(getattr(self, "icon_thickness", 2.0))
         if "Appearance" in config and not config["Appearance"]:
             del config["Appearance"]
 
@@ -2220,6 +2263,10 @@ class AudiobookPlayerWindow(QMainWindow):
                 default_status_started=default_status_started,
                 current_status_completed=getattr(self, "status_completed_color", ""),
                 default_status_completed=default_status_completed,
+                current_icon_color=getattr(self, "icon_color", ""),
+                default_icon_color="#cccccc",
+                current_icon_thickness=getattr(self, "icon_thickness", 2.0),
+                default_icon_thickness=2.0,
                 show_detailed_info=self.show_detailed_info,
                 show_info_progress=self.show_info_progress,
                 show_info_file_count=self.show_info_file_count,
@@ -2252,9 +2299,13 @@ class AudiobookPlayerWindow(QMainWindow):
             print(f"Error showing appearance settings: {e}")
 
     def apply_appearance_preview(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = "",
-                                 status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = ""):
-        """Apply temporary accent, window background, secondary background, font, and border color overrides for live previewing"""
+                                 status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = "", icon_hex: str = "", icon_thickness: float = 2.0):
+        """Apply temporary accent, window background, secondary background, font, border, and icon color overrides for live previewing"""
         try:
+            set_icon_color(icon_hex or "#cccccc")
+            set_icon_stroke_width(icon_thickness)
+            self.reload_icons()
+            
             from styles import StyleManager
             overrides = {}
             if accent_hex:
@@ -2326,8 +2377,8 @@ class AudiobookPlayerWindow(QMainWindow):
             print(f"Error applying appearance preview: {e}")
 
     def save_appearance_colors(self, accent_hex: str, window_hex: str, bg_dark_hex: str, text_hex: str = "", border_hex: str = "",
-                               status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = ""):
-        """Save the chosen accent, window, secondary background, font, and border colors to settings.ini and apply them permanently"""
+                               status_new_hex: str = "", status_started_hex: str = "", status_completed_hex: str = "", icon_hex: str = "", icon_thickness: float = 2.0):
+        """Save the chosen accent, window, secondary background, font, border, and icon colors to settings.ini and apply them permanently"""
         self.accent_color = accent_hex
         self.window_color = window_hex
         self.bg_dark_color = bg_dark_hex
@@ -2336,6 +2387,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.status_new_color = status_new_hex
         self.status_started_color = status_started_hex
         self.status_completed_color = status_completed_hex
+        self.icon_color = icon_hex
+        self.icon_thickness = icon_thickness
         self.save_setting("Appearance", "accent_color", accent_hex)
         self.save_setting("Appearance", "window_color", window_hex)
         self.save_setting("Appearance", "bg_dark_color", bg_dark_hex)
@@ -2344,6 +2397,12 @@ class AudiobookPlayerWindow(QMainWindow):
         self.save_setting("Appearance", "status_new_color", status_new_hex)
         self.save_setting("Appearance", "status_started_color", status_started_hex)
         self.save_setting("Appearance", "status_completed_color", status_completed_hex)
+        self.save_setting("Appearance", "icon_color", icon_hex)
+        self.save_setting("Appearance", "icon_thickness", str(icon_thickness))
+        
+        set_icon_color(icon_hex or "#cccccc")
+        set_icon_stroke_width(icon_thickness)
+        self.reload_icons()
         
         if hasattr(self, "appearance_dialog") and self.appearance_dialog:
             settings = self.appearance_dialog.get_info_settings()

@@ -586,6 +586,10 @@
     "info_technical_tooltip": "Afficher le codec audio et le débit moyen",
     "info_year_written_tooltip": "Montrer l'année où le livre a été écrit",
     "info_year_recorded_tooltip": "Afficher l'année où le livre audio a été enregistré",
-    "info_language_tooltip": "Afficher la langue du livre audio"
+    "info_language_tooltip": "Afficher la langue du livre audio",
+    "icon_label": "Icon Color",
+    "icon_tooltip": "Choose a custom color for all application icons",
+    "icon_thickness_label": "Icon Line Thickness:",
+    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)"
   }
 }

@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.9]
-- **UI**: Added an Appearance Settings dialog to customize interface colors and book status colors with live preview.
+- **UI**: Added the ability to customize interface icon colors and line thickness in the Appearance settings with instant live preview.
 - **UI**: Added support for reordering, sorting, and toggling fields in the library's audiobook details line.
 - **Library**: Added interactive book tags with hover effects and quick filtering by clicking them.
 - **Settings**: Database clearing now fully deletes listening history, statistics, bookmarks, and tags.

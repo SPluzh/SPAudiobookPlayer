@@ -586,6 +586,10 @@
     "info_technical_tooltip": "ऑडियो कोडेक और औसत बिटरेट दिखाएं",
     "info_year_written_tooltip": "वह वर्ष दिखाएँ जब पुस्तक लिखी गई थी",
     "info_year_recorded_tooltip": "वह वर्ष दिखाएँ जब ऑडियोबुक रिकॉर्ड किया गया था",
-    "info_language_tooltip": "ऑडियोबुक की भाषा दिखाएँ"
+    "info_language_tooltip": "ऑडियोबुक की भाषा दिखाएँ",
+    "icon_label": "Icon Color",
+    "icon_tooltip": "Choose a custom color for all application icons",
+    "icon_thickness_label": "Icon Line Thickness:",
+    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)"
   }
 }

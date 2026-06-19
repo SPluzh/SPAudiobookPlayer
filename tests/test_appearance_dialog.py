@@ -130,7 +130,9 @@ def test_appearance_dialog_window_color_ui_and_signals():
         current_status_started="#CC0000",
         default_status_started="#DD0000",
         current_status_completed="#EE0000",
-        default_status_completed="#FF0000"
+        default_status_completed="#FF0000",
+        current_icon_color="#CCCCCC",
+        default_icon_color="#DDDDDD"
     )
 
     # 1. Verify initial states
@@ -162,6 +164,13 @@ def test_appearance_dialog_window_color_ui_and_signals():
     assert dialog.border_hex_input.text() == "#777777"
     assert dialog.border_color_btn is not None
 
+    assert dialog.original_icon_color == "#CCCCCC"
+    assert dialog.current_icon_color == "#CCCCCC"
+    assert dialog.default_icon_color == "#DDDDDD"
+    assert dialog.icon_hex_input is not None
+    assert dialog.icon_hex_input.text() == "#CCCCCC"
+    assert dialog.icon_color_btn is not None
+
     assert dialog.original_status_new == "#AA0000"
     assert dialog.current_status_new == "#AA0000"
     assert dialog.default_status_new == "#BB0000"
@@ -171,7 +180,7 @@ def test_appearance_dialog_window_color_ui_and_signals():
 
     # 2. Check reset to default button behavior and signals
     preview_emitted = []
-    dialog.appearance_preview.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed: preview_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed)))
+    dialog.appearance_preview.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed, icon: preview_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed, icon)))
 
     dialog.default_btn.click()
     assert dialog.current_window == "#222222"
@@ -182,21 +191,23 @@ def test_appearance_dialog_window_color_ui_and_signals():
     assert dialog.text_hex_input.text() == "#666666"
     assert dialog.current_border == "#888888"
     assert dialog.border_hex_input.text() == "#888888"
+    assert dialog.current_icon_color == "#DDDDDD"
+    assert dialog.icon_hex_input.text() == "#DDDDDD"
     assert dialog.current_status_new == "#BB0000"
     assert dialog.status_new_hex_input.text() == "#BB0000"
     assert dialog.current_status_started == "#DD0000"
     assert dialog.status_started_hex_input.text() == "#DD0000"
     assert dialog.current_status_completed == "#FF0000"
     assert dialog.status_completed_hex_input.text() == "#FF0000"
-    assert preview_emitted == [("#00FF00", "#222222", "#444444", "#666666", "#888888", "#BB0000", "#DD0000", "#FF0000")]
+    assert preview_emitted == [("#00FF00", "#222222", "#444444", "#666666", "#888888", "#BB0000", "#DD0000", "#FF0000", "#DDDDDD")]
 
     # 3. Check save/accept behavior and appearance_saved signal
     saved_emitted = []
-    dialog.appearance_saved.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed: saved_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed)))
+    dialog.appearance_saved.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed, icon: saved_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed, icon)))
 
     # Since values equal their defaults, they should be cleared (empty strings saved)
     dialog.accept()
-    assert saved_emitted == [("", "", "", "", "", "", "", "")]
+    assert saved_emitted == [("", "", "", "", "", "", "", "", "")]
 
 
 def test_appearance_dialog_text_color_hex_input_and_reject():
@@ -219,30 +230,37 @@ def test_appearance_dialog_text_color_hex_input_and_reject():
         current_status_started="#CC0000",
         default_status_started="#DD0000",
         current_status_completed="#EE0000",
-        default_status_completed="#FF0000"
+        default_status_completed="#FF0000",
+        current_icon_color="#CCCCCC",
+        default_icon_color="#DDDDDD"
     )
 
     preview_emitted = []
-    dialog.appearance_preview.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed: preview_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed)))
+    dialog.appearance_preview.connect(lambda acc, win, dark, txt, bord, s_new, s_started, s_completed, icon: preview_emitted.append((acc, win, dark, txt, bord, s_new, s_started, s_completed, icon)))
 
     # Change text input to a valid hex color
     dialog.text_hex_input.setText("#999999")
     assert dialog.current_text == "#999999"
-    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#777777", "#AA0000", "#CC0000", "#EE0000")
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#777777", "#AA0000", "#CC0000", "#EE0000", "#CCCCCC")
 
     # Change border input to a valid hex color
     dialog.border_hex_input.setText("#AAAAAA")
     assert dialog.current_border == "#AAAAAA"
-    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#AAAAAA", "#AA0000", "#CC0000", "#EE0000")
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#AAAAAA", "#AA0000", "#CC0000", "#EE0000", "#CCCCCC")
+
+    # Change icon input to a valid hex color
+    dialog.icon_hex_input.setText("#123456")
+    assert dialog.current_icon_color == "#123456"
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#AAAAAA", "#AA0000", "#CC0000", "#EE0000", "#123456")
 
     # Change status_new input to a valid hex color
     dialog.status_new_hex_input.setText("#BBBBBB")
     assert dialog.current_status_new == "#BBBBBB"
-    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#AAAAAA", "#BBBBBB", "#CC0000", "#EE0000")
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#999999", "#AAAAAA", "#BBBBBB", "#CC0000", "#EE0000", "#123456")
 
     # Reject reverts the values
     dialog.reject()
-    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#555555", "#777777", "#AA0000", "#CC0000", "#EE0000")
+    assert preview_emitted[-1] == ("#FF0000", "#111111", "#333333", "#555555", "#777777", "#AA0000", "#CC0000", "#EE0000", "#CCCCCC")
 
 
 def test_appearance_dialog_info_checkboxes():
@@ -461,4 +479,114 @@ def test_appearance_dialog_tooltips():
     for idx in range(dialog.info_list_widget.count()):
         item = dialog.info_list_widget.item(idx)
         assert item.toolTip() != ""
+
+
+def test_appearance_dialog_icon_thickness():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        current_icon_thickness=2.5,
+        default_icon_thickness=2.0
+    )
+
+    # 1. Verify initial states
+    assert dialog.original_icon_thickness == 2.5
+    assert dialog.current_icon_thickness == 2.5
+    assert dialog.default_icon_thickness == 2.0
+    assert dialog.thickness_slider.value() == 25
+    assert "2.5 px" in dialog.thickness_value_label.text()
+
+    # 2. Check value changes
+    preview_emitted = []
+    dialog.appearance_preview.connect(lambda *args: preview_emitted.append(args))
+    
+    dialog.thickness_slider.setValue(35)
+    assert dialog.current_icon_thickness == 3.5
+    assert "3.5 px" in dialog.thickness_value_label.text()
+    assert len(preview_emitted) > 0
+    assert preview_emitted[-1][-1] == 3.5  # Last argument is icon thickness
+
+    # 3. Check reset to default
+    dialog.default_btn.click()
+    assert dialog.current_icon_thickness == 2.0
+    assert dialog.thickness_slider.value() == 20
+    assert "2.0 px" in dialog.thickness_value_label.text()
+
+    # 4. Check save / accept
+    saved_emitted = []
+    dialog.appearance_saved.connect(lambda *args: saved_emitted.append(args))
+    dialog.accept()
+    assert len(saved_emitted) == 1
+    assert saved_emitted[0][-1] == 2.0  # Saved thickness should be 2.0
+
+    # 5. Check reject reverts changes
+    dialog2 = AppearanceDialog(
+        parent=None,
+        current_icon_thickness=2.5,
+        default_icon_thickness=2.0
+    )
+    dialog2.thickness_slider.setValue(15)
+    assert dialog2.current_icon_thickness == 1.5
+    dialog2.reject()
+    # It should revert to original (2.5)
+    assert dialog2.current_icon_thickness == 2.5
+
+
+def test_library_widget_load_icons_updates_icons(monkeypatch):
+    from library import LibraryWidget, MultiLineDelegate
+    import utils
+
+    app = QApplication.instance() or QApplication([])
+
+    # Mock DB manager
+    class DummyDB:
+        def get_all_tags(self):
+            return {}
+        def load_audiobooks_from_db(self, *args, **kwargs):
+            return {}
+        def get_audiobook_count(self):
+            return 0
+        def get_all_audiobook_tags(self):
+            return {}
+
+    # Track icons loaded
+    loaded_icons = []
+    original_get_icon = utils.get_icon
+    def mock_get_icon(name, *args, **kwargs):
+        loaded_icons.append(name)
+        return original_get_icon(name, *args, **kwargs)
+    monkeypatch.setattr(utils, "get_icon", mock_get_icon)
+    import library
+    monkeypatch.setattr(library, "get_icon", mock_get_icon)
+
+    config = {
+        "audiobook_icon_size": 100,
+        "folder_icon_size": 35,
+        "sort_orders": {"all": "asc"},
+        "sort_fields": {"all": "name"}
+    }
+
+    delegate = MultiLineDelegate()
+    widget = LibraryWidget(db_manager=DummyDB(), config=config, delegate=delegate)
+
+    # Clear loaded_icons list to only record what is loaded in the reload call
+    loaded_icons.clear()
+
+    # Call reload
+    widget.load_icons()
+
+    # Verify that get_icon was called for buttons and for the delegate icons
+    assert "narrator" in loaded_icons
+    assert "author" in loaded_icons
+    assert "info_bitrate" in loaded_icons
+    assert "info_file_count" in loaded_icons
+    assert "info_duration" in loaded_icons
+    assert "info_size" in loaded_icons
+    assert "languages" in loaded_icons
+    assert "square-check" in loaded_icons
+    assert "chevron-down" in loaded_icons
+    assert "favorites" in loaded_icons
+    assert "context_tags" in loaded_icons
+
 

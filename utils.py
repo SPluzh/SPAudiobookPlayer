@@ -18,6 +18,54 @@ def get_base_path():
     # Dev mode
     return Path(__file__).parent
 
+ICON_COLOR = "#cccccc"
+ICON_STROKE_WIDTH = 2.0
+
+def set_icon_color(color_hex: str):
+    """Set the global icon color and clear cache if needed"""
+    global ICON_COLOR
+    ICON_COLOR = color_hex
+    get_colored_svg_icon.cache_clear()
+
+def set_icon_stroke_width(width: float):
+    """Set the global icon stroke width and clear cache if needed"""
+    global ICON_STROKE_WIDTH
+    ICON_STROKE_WIDTH = width
+    get_colored_svg_icon.cache_clear()
+
+@lru_cache(maxsize=512)
+def get_colored_svg_icon(path_str: str, color_hex: str, stroke_width: float) -> QIcon:
+    """Load, recolor and render SVG icon using QSvgRenderer at 64x64 for high quality scaling"""
+    import re
+    from PyQt6.QtSvg import QSvgRenderer
+    try:
+        path = Path(path_str)
+        svg_content = path.read_text(encoding="utf-8")
+        
+        def replace_color(match):
+            attr = match.group(1)
+            val = match.group(2)
+            if val.lower() == 'none':
+                return f'{attr}="none"'
+            return f'{attr}="{color_hex}"'
+        
+        colored_svg = re.sub(r'(stroke|fill)="([^"]+)"', replace_color, svg_content)
+        colored_svg = re.sub(r'stroke-width="([^"]+)"', f'stroke-width="{stroke_width}"', colored_svg)
+        
+        renderer = QSvgRenderer(colored_svg.encode("utf-8"))
+        # Render at 64x64 for high-DPI and crisp scaling
+        pixmap = QPixmap(64, 64)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
+        
+        return QIcon(pixmap)
+    except Exception as e:
+        print(f"Error rendering SVG icon {path_str}: {e}")
+        return QIcon(path_str)
+
 def get_icon(name: str, icons_dir: Path = None) -> QIcon:
     """
     Load an icon by name from the specified or default icons directory
@@ -32,8 +80,13 @@ def get_icon(name: str, icons_dir: Path = None) -> QIcon:
     if icons_dir is None:
         icons_dir = get_base_path() / "resources" / "icons"
     
-    # Try different formats
-    for ext in ['.png', '.svg', '.ico']:
+    # SVG has priority
+    svg_path = icons_dir / f"{name}.svg"
+    if svg_path.exists():
+        return get_colored_svg_icon(str(svg_path), ICON_COLOR, ICON_STROKE_WIDTH)
+        
+    # Fallback to other formats
+    for ext in ['.png', '.ico']:
         path = icons_dir / f"{name}{ext}"
         if path.exists():
             return QIcon(str(path))

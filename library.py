@@ -765,6 +765,16 @@ class MultiLineDelegate(QStyledItemDelegate):
         self._get_style.cache_clear()
         # Proxy widgets in StyleManager handle themselves when ensurePolished is called
 
+    def load_icons(self):
+        """Reload all SVGs to apply the new color/thickness"""
+        self.narrator_icon = get_icon("narrator")
+        self.author_icon = get_icon("author")
+        self.info_bitrate_icon = get_icon("info_bitrate")
+        self.info_file_count_icon = get_icon("info_file_count")
+        self.info_duration_icon = get_icon("info_duration")
+        self.info_size_icon = get_icon("info_size")
+        self.info_language_icon = get_icon("languages")
+
     def _get_nesting_chain(self, index):
         """
         Get chain of parent paths for consistent color hashing and last-child info.
@@ -2645,6 +2655,11 @@ class LibraryWidget(QWidget):
 
     def load_icons(self):
         """Load and scale standard icons for folders and audiobook covers from resources"""
+        # Save scroll bar position
+        scroll_val = None
+        if hasattr(self, "tree") and self.tree:
+            scroll_val = self.tree.verticalScrollBar().value()
+
         # Determine the default cover icon
         default_cover = self.config.get(
             "default_cover_file", "resources/icons/default_cover.png"
@@ -2671,6 +2686,70 @@ class LibraryWidget(QWidget):
                 self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon),
                 self.config.get("folder_icon_size", 35),
             )
+
+        # Reload delegate icons
+        if hasattr(self, "delegate") and self.delegate:
+            self.delegate.load_icons()
+
+        # Reload filter panel button icons
+        if hasattr(self, "btn_mass_select") and self.btn_mass_select:
+            self.btn_mass_select.setIcon(get_icon("square-check"))
+        if hasattr(self, "btn_mass_select_arrow") and self.btn_mass_select_arrow:
+            self.btn_mass_select_arrow.setIcon(get_icon("chevron-down"))
+        if hasattr(self, "btn_favorites") and self.btn_favorites:
+            self.btn_favorites.setIcon(get_icon("favorites"))
+        if hasattr(self, "btn_tags") and self.btn_tags:
+            self.btn_tags.setIcon(get_icon("context_tags"))
+
+        if hasattr(self, "filter_buttons") and self.filter_buttons:
+            for filter_id, btn in self.filter_buttons.items():
+                if filter_id in self.FILTER_CONFIG:
+                    config = self.FILTER_CONFIG[filter_id]
+                    if "icon" in config:
+                        btn.setIcon(get_icon(config["icon"]))
+
+        if hasattr(self, "btn_show_folders") and self.btn_show_folders:
+            self.btn_show_folders.setIcon(get_icon("folder_cover"))
+        if hasattr(self, "btn_sort") and self.btn_sort:
+            self.btn_sort.setIcon(
+                get_icon("arrow-up-narrow-wide")
+                if self.sort_order == "asc"
+                else get_icon("arrow-down-wide-narrow")
+            )
+        if hasattr(self, "btn_sort_field") and self.btn_sort_field:
+            self.btn_sort_field.setIcon(get_icon("chevron-down"))
+
+        # Rebuild tree using existing cache so we re-render items with the new icons
+        if hasattr(self, "tree") and self.tree and self.tree.topLevelItemCount() > 0:
+            # Save selected path
+            selected_path = None
+            selected_items = self.tree.selectedItems()
+            if selected_items:
+                selected_path = selected_items[0].data(0, Qt.ItemDataRole.UserRole)
+
+            # Rebuild tree using cache
+            self.load_audiobooks(use_cache=True)
+
+            # Restore selected item
+            if selected_path:
+                def select_item(item):
+                    if item.data(0, Qt.ItemDataRole.UserRole) == selected_path:
+                        self.tree.setCurrentItem(item)
+                        return True
+                    for i in range(item.childCount()):
+                        if select_item(item.child(i)):
+                            return True
+                    return False
+
+                root = self.tree.invisibleRootItem()
+                if root:
+                    for i in range(root.childCount()):
+                        if select_item(root.child(i)):
+                            break
+
+            # Restore scroll position
+            if scroll_val is not None:
+                self.tree.verticalScrollBar().setValue(scroll_val)
 
     def on_tag_filter_toggled(self, checked):
         """Toggle tag filtering on/off"""

@@ -586,6 +586,10 @@
     "info_technical_tooltip": "오디오 코덱 및 평균 비트 전송률 표시",
     "info_year_written_tooltip": "책이 쓰여진 연도를 표시하세요.",
     "info_year_recorded_tooltip": "오디오북이 녹음된 연도 표시",
-    "info_language_tooltip": "오디오북의 언어 표시"
+    "info_language_tooltip": "오디오북의 언어 표시",
+    "icon_label": "Icon Color",
+    "icon_tooltip": "Choose a custom color for all application icons",
+    "icon_thickness_label": "Icon Line Thickness:",
+    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)"
   }
 }

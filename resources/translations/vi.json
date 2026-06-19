@@ -586,6 +586,10 @@
     "info_technical_tooltip": "Hiển thị codec âm thanh và tốc độ bit trung bình",
     "info_year_written_tooltip": "Cho biết năm cuốn sách được viết",
     "info_year_recorded_tooltip": "Hiển thị năm ghi âm của sách nói",
-    "info_language_tooltip": "Hiển thị ngôn ngữ của sách nói"
+    "info_language_tooltip": "Hiển thị ngôn ngữ của sách nói",
+    "icon_label": "Icon Color",
+    "icon_tooltip": "Choose a custom color for all application icons",
+    "icon_thickness_label": "Icon Line Thickness:",
+    "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)"
   }
 }

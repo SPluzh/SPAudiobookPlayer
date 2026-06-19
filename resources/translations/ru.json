@@ -586,6 +586,10 @@
     "info_technical_tooltip": "Показывать аудиокодек и средний битрейт",
     "info_year_written_tooltip": "Показывать год написания книги",
     "info_year_recorded_tooltip": "Показывать год записи/озвучивания аудиокниги",
-    "info_language_tooltip": "Показывать язык аудиокниги"
+    "info_language_tooltip": "Показывать язык аудиокниги",
+    "icon_label": "Цвет значков",
+    "icon_tooltip": "Выберите цвет для значков интерфейса",
+    "icon_thickness_label": "Толщина линий значков:",
+    "icon_thickness_tooltip": "Настройте толщину линий для всех значков интерфейса (от 1.0 до 3.0 пикселей)"
   }
 }

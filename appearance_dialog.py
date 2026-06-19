@@ -161,11 +161,13 @@ class AppearanceDialog(QDialog):
     # Signals
     accent_preview = pyqtSignal(str)       # Keeping for backward compatibility
     accent_saved = pyqtSignal(str)         # Keeping for backward compatibility
-    appearance_preview = pyqtSignal(str, str, str, str, str, str, str, str) # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed)
-    appearance_saved = pyqtSignal(str, str, str, str, str, str, str, str)   # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed)
+    appearance_preview = pyqtSignal(str, str, str, str, str, str, str, str, str, float) # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed, icon_color, icon_thickness)
+    appearance_saved = pyqtSignal(str, str, str, str, str, str, str, str, str, float)   # Emits (accent, window, bg_dark, text, border, status_new, status_started, status_completed, icon_color, icon_thickness)
     
     def __init__(self, parent=None, current_accent="", default_accent="", current_window="", default_window="", current_bg_dark="", default_bg_dark="", current_text="", default_text="", current_border="", default_border="",
                  current_status_new="", default_status_new="", current_status_started="", default_status_started="", current_status_completed="", default_status_completed="",
+                 current_icon_color="", default_icon_color="#cccccc",
+                 current_icon_thickness=2.0, default_icon_thickness=2.0,
                  show_detailed_info=True,
                  show_info_progress=True, show_info_file_count=True, show_info_duration=True, show_info_size=True,
                  show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=True,
@@ -210,6 +212,14 @@ class AppearanceDialog(QDialog):
         self.original_status_completed = current_status_completed
         self.default_status_completed = default_status_completed
         self.current_status_completed = current_status_completed or default_status_completed
+
+        self.original_icon_color = current_icon_color
+        self.default_icon_color = default_icon_color
+        self.current_icon_color = current_icon_color or default_icon_color
+
+        self.original_icon_thickness = current_icon_thickness
+        self.default_icon_thickness = default_icon_thickness
+        self.current_icon_thickness = current_icon_thickness
 
         # Book info settings states
         self.original_show_detailed_info = show_detailed_info
@@ -455,8 +465,52 @@ class AppearanceDialog(QDialog):
         self.border_hex_input.textChanged.connect(self.on_border_hex_changed)
         grid_layout.addWidget(self.border_hex_input, 4, 2)
         
-        # Let column 3 take any extra space to push controls left
-        grid_layout.setColumnStretch(3, 1)
+        # 6. Icon Color Row
+        icon_label = QLabel(tr("appearance.icon_label", "Icon Color:"))
+        icon_tooltip = tr("appearance.icon_tooltip", "Color for application SVG icons")
+        icon_label.setToolTip(icon_tooltip)
+        grid_layout.addWidget(icon_label, 5, 0)
+        
+        self.icon_color_btn = QPushButton()
+        self.icon_color_btn.setObjectName("iconColorBtn")
+        self.icon_color_btn.setFixedSize(field_height, field_height)
+        self.icon_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.icon_color_btn.setToolTip(icon_tooltip)
+        self.icon_color_btn.clicked.connect(self.choose_icon_color)
+        grid_layout.addWidget(self.icon_color_btn, 5, 1)
+        
+        self.icon_hex_input = QLineEdit()
+        self.icon_hex_input.setObjectName("iconHexInput")
+        self.icon_hex_input.setMaxLength(7)
+        self.icon_hex_input.setFixedWidth(75)
+        self.icon_hex_input.setFixedHeight(field_height)
+
+        self.icon_hex_input.setValidator(validator)
+        self.icon_hex_input.setToolTip(icon_tooltip)
+        self.icon_hex_input.textChanged.connect(self.on_icon_color_hex_changed)
+        grid_layout.addWidget(self.icon_hex_input, 5, 2)
+        
+        # 7. Icon Line Thickness Row
+        thickness_label = QLabel(tr("appearance.icon_thickness_label", "Icon Line Thickness:"))
+        thickness_tooltip = tr("appearance.icon_thickness_tooltip", "Stroke width for application SVG icons (1.0 - 4.0)")
+        thickness_label.setToolTip(thickness_tooltip)
+        grid_layout.addWidget(thickness_label, 6, 0)
+        
+        self.thickness_slider = QSlider(Qt.Orientation.Horizontal)
+        self.thickness_slider.setObjectName("iconThicknessSlider")
+        self.thickness_slider.setRange(10, 40)
+        self.thickness_slider.setToolTip(thickness_tooltip)
+        self.thickness_slider.valueChanged.connect(self.on_thickness_slider_changed)
+        grid_layout.addWidget(self.thickness_slider, 6, 1, 1, 2)
+        
+        self.thickness_value_label = QLabel()
+        self.thickness_value_label.setObjectName("iconThicknessValueLabel")
+        self.thickness_value_label.setFixedWidth(50)
+        self.thickness_value_label.setToolTip(thickness_tooltip)
+        grid_layout.addWidget(self.thickness_value_label, 6, 3)
+        
+        # Let column 4 take any extra space to push controls left
+        grid_layout.setColumnStretch(4, 1)
         colors_layout.addLayout(grid_layout)
         
         # Add window settings checkboxes (like Show Status Bar)
@@ -672,8 +726,8 @@ class AppearanceDialog(QDialog):
         # Set dynamic property for stylesheet styling of color buttons
         for btn in [
             self.accent_color_btn, self.window_color_btn, self.bg_dark_color_btn,
-            self.text_color_btn, self.border_color_btn, self.status_new_color_btn,
-            self.status_started_color_btn, self.status_completed_color_btn
+            self.text_color_btn, self.border_color_btn, self.icon_color_btn,
+            self.status_new_color_btn, self.status_started_color_btn, self.status_completed_color_btn
         ]:
             btn.setProperty("class", "color-btn")
             
@@ -683,13 +737,29 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_bg_dark(self.current_bg_dark)
         self.update_ui_from_text(self.current_text)
         self.update_ui_from_border(self.current_border)
+        self.update_ui_from_icon_color(self.current_icon_color)
         self.update_ui_from_status_new(self.current_status_new)
         self.update_ui_from_status_started(self.current_status_started)
         self.update_ui_from_status_completed(self.current_status_completed)
         self.update_checkboxes_ui()
+        self.update_ui_from_icon_thickness(self.current_icon_thickness)
+        
+    def on_thickness_slider_changed(self, value):
+        self.current_icon_thickness = value / 10.0
+        self.thickness_value_label.setText(f"{self.current_icon_thickness:.1f} px")
+        self.emit_preview()
+
+    def update_ui_from_icon_thickness(self, thickness: float):
+        """Synchronize custom icon line thickness slider and value label"""
+        self.updating_ui = True
+        try:
+            self.thickness_slider.setValue(int(thickness * 10))
+            self.thickness_value_label.setText(f"{thickness:.1f} px")
+        finally:
+            self.updating_ui = False
         
     def emit_preview(self):
-        """Emit current colors for live previewing"""
+        """Emit current colors and icon thickness for live previewing"""
         self.appearance_preview.emit(
             self.current_accent,
             self.current_window,
@@ -698,7 +768,9 @@ class AppearanceDialog(QDialog):
             self.current_border,
             self.current_status_new,
             self.current_status_started,
-            self.current_status_completed
+            self.current_status_completed,
+            self.current_icon_color,
+            self.current_icon_thickness
         )
 
     def get_tooltip_qss(self):
@@ -715,6 +787,7 @@ class AppearanceDialog(QDialog):
             ("bg_dark_color_btn", self.current_bg_dark),
             ("text_color_btn", self.current_text),
             ("border_color_btn", self.current_border),
+            ("icon_color_btn", self.current_icon_color),
             ("status_new_color_btn", self.current_status_new),
             ("status_started_color_btn", self.current_status_started),
             ("status_completed_color_btn", self.current_status_completed),
@@ -742,6 +815,8 @@ class AppearanceDialog(QDialog):
             self.current_text = color_hex
         elif btn == getattr(self, "border_color_btn", None):
             self.current_border = color_hex
+        elif btn == getattr(self, "icon_color_btn", None):
+            self.current_icon_color = color_hex
         elif btn == getattr(self, "status_new_color_btn", None):
             self.current_status_new = color_hex
         elif btn == getattr(self, "status_started_color_btn", None):
@@ -750,6 +825,10 @@ class AppearanceDialog(QDialog):
             self.current_status_completed = color_hex
 
         self.update_color_button_stylesheets()
+
+    def update_ui_from_icon_color(self, color_hex: str):
+        """Synchronize custom icon color button background and hex input"""
+        self.update_color_button(self.icon_color_btn, self.icon_hex_input, color_hex)
 
     def update_ui_from_status_new(self, color_hex: str):
         """Synchronize custom status new color button background and hex input"""
@@ -910,6 +989,31 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_border(color_hex)
         self.emit_preview()
 
+    def choose_icon_color(self):
+        """Open custom compact color picker dialog for icon color and preview changes live"""
+        color_before = self.current_icon_color
+        dialog = ColorPickerDialog(self, QColor(self.current_icon_color))
+        dialog.colorChanged.connect(self.select_icon_color_preview)
+        result = dialog.exec()
+        try:
+            dialog.colorChanged.disconnect(self.select_icon_color_preview)
+        except Exception:
+            pass
+
+        if result == QDialog.DialogCode.Accepted:
+            self.current_icon_color = dialog.color.name().upper()
+        else:
+            self.current_icon_color = color_before
+        self.update_ui_from_icon_color(self.current_icon_color)
+        self.emit_preview()
+            
+    def select_icon_color_preview(self, color: QColor):
+        """Update icon color preview from dialog changes"""
+        color_hex = color.name().upper()
+        self.current_icon_color = color_hex
+        self.update_ui_from_icon_color(color_hex)
+        self.emit_preview()
+
     def choose_status_new_color(self):
         """Open custom compact color picker dialog for status new and preview changes live"""
         color_before = self.current_status_new
@@ -1067,6 +1171,24 @@ class AppearanceDialog(QDialog):
                 self.update_ui_from_border(self.current_border)
                 self.emit_preview()
 
+    def on_icon_color_hex_changed(self, text: str):
+        """Update icon color picker button and emit preview from Icon Color Hex input box"""
+        if self.updating_ui:
+            return
+            
+        if not text.startswith("#"):
+            self.updating_ui = True
+            text = "#" + text.replace("#", "")
+            self.icon_hex_input.setText(text)
+            self.updating_ui = False
+            
+        if len(text) == 7:
+            color = QColor(text)
+            if color.isValid():
+                self.current_icon_color = text.upper()
+                self.update_ui_from_icon_color(self.current_icon_color)
+                self.emit_preview()
+
     def on_status_new_hex_changed(self, text: str):
         """Update status new picker button and emit preview from Hex input box"""
         if self.updating_ui:
@@ -1122,24 +1244,28 @@ class AppearanceDialog(QDialog):
                 self.emit_preview()
                 
     def reset_to_default(self):
-        """Reset current colors to theme default values"""
+        """Reset current colors and thickness to theme default values"""
         self.current_accent = self.default_accent
         self.current_window = self.default_window
         self.current_bg_dark = self.default_bg_dark
         self.current_text = self.default_text
         self.current_border = self.default_border
+        self.current_icon_color = self.default_icon_color
         self.current_status_new = self.default_status_new
         self.current_status_started = self.default_status_started
         self.current_status_completed = self.default_status_completed
+        self.current_icon_thickness = self.default_icon_thickness
         
         self.update_ui_from_accent(self.default_accent)
         self.update_ui_from_window(self.default_window)
         self.update_ui_from_bg_dark(self.default_bg_dark)
         self.update_ui_from_text(self.default_text)
         self.update_ui_from_border(self.default_border)
+        self.update_ui_from_icon_color(self.default_icon_color)
         self.update_ui_from_status_new(self.default_status_new)
         self.update_ui_from_status_started(self.default_status_started)
         self.update_ui_from_status_completed(self.default_status_completed)
+        self.update_ui_from_icon_thickness(self.default_icon_thickness)
         
         # Reset info line settings to True
         self.current_show_detailed_info = True
@@ -1186,6 +1312,10 @@ class AppearanceDialog(QDialog):
         if saved_border.lower() == self.default_border.lower():
             saved_border = ""
 
+        saved_icon_color = self.current_icon_color
+        if saved_icon_color.lower() == self.default_icon_color.lower():
+            saved_icon_color = ""
+
         saved_status_new = self.current_status_new
         if saved_status_new.lower() == self.default_status_new.lower():
             saved_status_new = ""
@@ -1199,7 +1329,8 @@ class AppearanceDialog(QDialog):
             saved_status_completed = ""
             
         self.appearance_saved.emit(saved_accent, saved_window, saved_bg_dark, saved_text, saved_border,
-                                   saved_status_new, saved_status_started, saved_status_completed)
+                                   saved_status_new, saved_status_started, saved_status_completed,
+                                   saved_icon_color, self.current_icon_thickness)
         # Also emit old compatibility signal
         self.accent_saved.emit(saved_accent)
         super().accept()
@@ -1211,19 +1342,23 @@ class AppearanceDialog(QDialog):
         self.current_bg_dark = self.original_bg_dark
         self.current_text = self.original_text
         self.current_border = self.original_border
+        self.current_icon_color = self.original_icon_color
         self.current_status_new = self.original_status_new
         self.current_status_started = self.original_status_started
         self.current_status_completed = self.original_status_completed
-
+        self.current_icon_thickness = self.original_icon_thickness
+ 
         self.update_ui_from_accent(self.original_accent)
         self.update_ui_from_window(self.original_window)
         self.update_ui_from_bg_dark(self.original_bg_dark)
         self.update_ui_from_text(self.original_text)
         self.update_ui_from_border(self.original_border)
+        self.update_ui_from_icon_color(self.original_icon_color)
         self.update_ui_from_status_new(self.original_status_new)
         self.update_ui_from_status_started(self.original_status_started)
         self.update_ui_from_status_completed(self.original_status_completed)
-
+        self.update_ui_from_icon_thickness(self.original_icon_thickness)
+ 
         self.current_show_detailed_info = self.original_show_detailed_info
         self.current_show_info_progress = self.original_show_info_progress
         self.current_show_info_file_count = self.original_show_info_file_count
@@ -1242,7 +1377,7 @@ class AppearanceDialog(QDialog):
         self.current_remember_filter_folders = self.original_remember_filter_folders
         
         self.update_checkboxes_ui()
-
+ 
         self.emit_preview()
         # Also emit old compatibility signal
         self.accent_preview.emit(self.original_accent)
