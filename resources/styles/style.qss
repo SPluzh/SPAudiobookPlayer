@@ -600,6 +600,11 @@ QListWidget::item:disabled {
     color: @text-disabled;
 }
 
+/* Remove border for the main window file list */
+QListWidget#fileList, QListWidget#fileList:focus, QListWidget#fileList:enabled, QListWidget#fileList:disabled {
+    border: none !important;
+}
+
 /* ============================================================
    TREES
    ============================================================ */
@@ -657,6 +662,11 @@ QTreeWidget::item[playing="true"] {
     background-color: @accent !important;
     color: @text-bright !important;
     border-radius: 0px;
+}
+
+/* Remove border for the main window book tree */
+QTreeWidget#bookTree, QTreeWidget#bookTree:focus, QTreeWidget#bookTree:enabled, QTreeWidget#bookTree:disabled {
+    border: none !important;
 }
 
 

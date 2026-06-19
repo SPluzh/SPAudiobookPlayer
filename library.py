@@ -2578,6 +2578,7 @@ class LibraryWidget(QWidget):
         layout.addLayout(filter_layout)
 
         self.tree = LibraryTree()
+        self.tree.setObjectName("bookTree")
         self.tree.setHeaderHidden(True)
         self.tree.setFocusPolicy(
             Qt.FocusPolicy.NoFocus
