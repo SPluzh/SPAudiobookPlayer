@@ -191,15 +191,6 @@ Audiobooks/
 
 The scanner will automatically find all audiobooks regardless of nesting depth.
 
-### Settings
-- **Library Path**: Change your audiobook library location.
-- **Rescan Library**: Manually trigger a library scan.
-- **Tools**:
-  - **Opus Converter**: Built-in tool to optimize library size by converting files to Opus format.
-  - **FFmpeg/FFprobe**: Check status and download updates.
-  - **Reset Data**: Clear all library data and covers (useful for clean rescans).
-- **Auto-updater**: Keeps your application up to date with the latest features and fixes.
-
 ## Acknowledgments
 
 - **[BASS Audio Library](https://www.un4seen.com/)**: High-quality audio playback
@@ -394,15 +385,6 @@ Audiobooks/
 
 
 Сканер автоматически найдёт все аудиокниги вне зависимости от глубины вложенности.
-
-### Настройки
-- **Путь к библиотеке**: Изменение расположения вашей библиотеки аудиокниг.
-- **Сканировать библиотеку**: Ручной запуск сканирования.
-- **Инструменты**:
-  - **Конвертер в Opus**: Встроенный инструмент для оптимизации размера библиотеки путем конвертации файлов в формат Opus.
-  - **FFmpeg/FFprobe**: Проверка статуса и обновление.
-  - **Сброс данных**: Очистка всей базы данных и обложек (полезно для чистого пересканирования).
-- **Авто-обновление**: Встроенный механизм проверки и установки обновлений приложения.
 
 ## Благодарности
 
