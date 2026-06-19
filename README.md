@@ -1,6 +1,6 @@
 <img width="1522" height="1151" alt="image" src="https://github.com/user-attachments/assets/a86c41ee-424d-4743-9d34-a8974b59a593" />
 
-# 🎧 SP Audiobook Player
+# SP Audiobook Player
 
 > Windows audiobook player for offline listening.
 > Audio book player with progress tracking, bookmarks and resume playback
@@ -13,11 +13,11 @@
 [![Downloads](https://img.shields.io/github/downloads/SPluzh/SPAudiobookPlayer/total)](https://github.com/SPluzh/SPAudiobookPlayer/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-**English** | [Русский](#-sp-audiobook-player-ru)
+**English** | [Русский](#sp-audiobook-player-ru)
 
 ---
 
-## 📖 About
+## About
 
 **SP Audiobook Player** is a modern and elegant audiobook player for Windows designed for a seamless listening experience. Built with PyQt6 and BASS audio library, it offers automatic library scanning, smart progress tracking per book, and a refined user interface that handles various audio formats and tag encodings effortlessly.
 
@@ -26,17 +26,17 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 ![](attachments/SP_Audiobook_Player_lpfBcdlMAz.gif)
 
 
-## ✨ Features
+## Features
 
-### 🎵 Playback
-- **Multi-format support**: MP3, M4A, M4B, OGG, FLAC, WAV, WMA, AAC, OPUS
+### Playback
+- **Multi-format support**: MP3, M4A, M4B, OGG, FLAC, WAV, WMA, AAC, OPUS, APE, M3U, M3U8, CUE
 - **High-quality audio**: Powered by BASS audio library
 - **Playback speed control**: Adjust from 0.5× to 3.0×
 - **Quick navigation**: Skip tracks, rewind/forward 10 or 60 seconds
 - **Windows taskbar integration**: Playback controls directly from the taskbar
 - **Visualizer**: Real-time audio spectrum visualization on the play button
 
-### 📚 Library Management
+### Library Management
 - **Automatic scanning**: Recursively scans directories for audiobooks
 - **Smart organization**: Automatically groups files into audiobooks by folder
 - **Tag support**: Reads author, title, narrator from ID3 tags (MP3) and other metadata
@@ -48,8 +48,9 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Tag System**: Organize library with custom tags
 - **Folder Merging**: Merge multiple folders into a single audiobook
 - **Drag & Drop**: Easily add books by dragging them into the library
+- **Mass Selection & Batch Operations**: Select multiple books/folders to batch assign tags, toggle favorite, mark as read/unread, edit metadata, or convert to Opus
 
-### 📊 Progress Tracking
+### Progress Tracking
 - **Per-book progress**: Automatically saves playback position for each audiobook
 - **Visual indicators**: Progress bars on cover thumbnails
 - **Status filtering**: Filter by status (Not Started, In Progress, Completed)
@@ -57,22 +58,24 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - **Bookmarks**: Create and manage bookmarks with visual markers on the progress bar
 - **Folder expansion state**: Remembers which folders were expanded in the library
 
-### 🎨 User Interface
-- **Modern dark theme**: Elegant and eye-friendly interface
+### User Interface
+- **Customizable aesthetics**: Choose from built-in themes (e.g. Dark Mint, Dark Pink, Miku) and customize icon colors and line thickness with instant live preview
 - **Dual-pane layout**: Library browser on the left, player controls on the right
 - **Context menus**: Right-click for quick actions (Play, Mark as Read, Open Folder)
-- **Multilingual support**: Full interface localization (12 languages: AR, DE, EN, ES, FR, HI, JA, KO, PT, RU, TR, ZH)
+- **Multilingual support**: Full interface localization (16 languages: AR, DE, EN, ES, FR, HI, HY, ID, JA, KO, PT, RU, TH, TR, VI, ZH)
 
 
-### 🎛️ Smart Audio Processing
+### Smart Audio Processing
 - **Smart Auto-Rewind**: Automatically rewinds after a pause to help you regain context (starts at 5s, adds 2s per minute of pause, up to 30s max).
 - **Voice Enhancement**: 
   - **De-Esser**: Reduces harsh sibilance (s/sh sounds) with Light/Medium/Strong presets.
   - **Compressor**: Balances dynamic range for consistent volume levels.
   - **Noise Suppression**: Removes background noise for clearer speech.
 - **Pitch Control**: Adjust playback pitch without changing speed (+/- 12 semitones).
+- **Volume Boost (VB)**: Amplifies volume up to 400% with adjustable levels (200%, 300%, 400%) for quiet recordings.
+- **Mono Downmix**: Mixes stereo channels into mono, perfect for single-earbud listening or unbalanced recordings.
 
-### ⌨️ Keyboard Shortcuts
+### Keyboard Shortcuts
 | Action | Key |
 | :--- | :--- |
 | **Play / Pause** | `Space` or `Media Play/Pause` |
@@ -84,12 +87,18 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 | **Speed +/- 0.1x** | `Up` / `Down` |
 | **Scan Library** | `Ctrl` + `R` |
 | **Settings** | `Ctrl` + `,` |
+| **Listening Statistics** | `Ctrl` + `T` |
+| **Reveal Current Audiobook** | `L` |
+| **Expand All Folders** | `E` |
+| **Collapse All Folders** | `W` |
+| **Toggle Minimal Interface** | `P` |
+| **Toggle Always on Top** | `T` |
 
 > [!NOTE]
 > Multimedia keys (`Play`, `Pause`, `Stop`, `Next`, `Prev`) are **global** and work even when the application is minimized or not in focus.
 
 
-## 🚀 Installation
+## Installation
 
 ### Requirements
 - Windows 10/11 (64-bit)
@@ -100,7 +109,7 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 2. Extract the archive to your desired location
 3. Run `SP Audiobook Player.exe`
 
-### 🔄 Manual Update
+### Manual Update
 If auto-update doesn't work or you prefer to update manually:
 
 1. Download the latest `.zip` from the [Releases](../../releases) page
@@ -112,7 +121,7 @@ If auto-update doesn't work or you prefer to update manually:
 
 
 <details>
-<summary>💻 Run from Source & Building</summary>
+<summary>Run from Source & Building</summary>
 
 ### Prerequisites
 - Python 3.8+
@@ -150,7 +159,7 @@ The executable will be created in `_build_/dist/`.
 >   ```
 </details>
 
-## 📘 Usage
+## Usage
 
 ### First Launch
 1. On first launch, open **Settings** (Menu → Settings)
@@ -208,7 +217,7 @@ Audiobooks/
 
 The scanner will automatically find all audiobooks regardless of nesting depth.
 
-### ⚙️ Settings
+### Settings
 - **Library Path**: Change your audiobook library location.
 - **Rescan Library**: Manually trigger a library scan.
 - **Tools**:
@@ -217,7 +226,7 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
   - **Reset Data**: Clear all library data and covers (useful for clean rescans).
 - **Auto-updater**: Keeps your application up to date with the latest features and fixes.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **BASS Audio Library**: High-quality audio playback
 - **PyQt6**: Modern GUI framework
@@ -230,15 +239,15 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 
 ---
 
-<a name="-sp-audiobook-player-ru"></a>
+<a name="sp-audiobook-player-ru"></a>
 
-# 🎧 SP Audiobook Player (RU)
+# SP Audiobook Player (RU)
 
-[English](#-sp-audiobook-player) | **Русский**
+[English](#sp-audiobook-player) | **Русский**
 
 ---
 
-## 📖 О программе
+## О программе
 
 **SP Audiobook Player** — это современный и элегантный плеер аудиокниг для Windows, созданный для комфортного прослушивания. Построенный на базе PyQt6 и аудиобиблиотеки BASS, он предлагает автоматическое сканирование библиотеки, умное сохранение прогресса для каждой книги и продуманный интерфейс, который корректно работает с различными аудиоформатами и кодировками тегов.
 
@@ -246,17 +255,17 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 
 ![](attachments/SP_Audiobook_Player_lpfBcdlMAz.gif)
 
-## ✨ Возможности
+## Возможности
 
-### 🎵 Воспроизведение
-- **Поддержка форматов**: MP3, M4A, M4B, OGG, FLAC, WAV, WMA, AAC, OPUS
+### Воспроизведение
+- **Поддержка форматов**: MP3, M4A, M4B, OGG, FLAC, WAV, WMA, AAC, OPUS, APE, M3U, M3U8, CUE
 - **Высокое качество звука**: На базе аудиобиблиотеки BASS
 - **Управление скоростью**: Регулировка от 0,5× до 3,0×
 - **Быстрая навигация**: Переключение треков, перемотка на 10 или 60 секунд
 - **Интеграция с Windows**: Кнопки управления прямо на панели задач
 - **Визуализатор**: Визуализация спектра аудио в реальном времени на кнопке воспроизведения
 
-### 📚 Управление библиотекой
+### Управление библиотекой
 - **Автоматическое сканирование**: Рекурсивный поиск аудиокниг в папках
 - **Умная организация**: Автоматическая группировка файлов в аудиокниги по папкам
 - **Поддержка тегов**: Чтение автора, названия, чтеца из ID3-тегов и других метаданных
@@ -269,8 +278,9 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - **Система тегов**: Организация библиотеки с помощью пользовательских тегов
 - **Объединение папок**: Возможность объединять несколько папок в одну аудиокнигу
 - **Drag & Drop**: Добавление книг простым перетаскиванием в окно плеера
+- **Массовый выбор и пакетные операции**: Возможность отмечать избранным, назначать теги, редактировать метаданные, изменять статус прослушивания или конвертировать в Opus для нескольких книг одновременно
 
-### 📊 Отслеживание прогресса
+### Отслеживание прогресса
 - **Прогресс для каждой книги**: Автоматическое сохранение позиции воспроизведения
 - **Визуальные индикаторы**: Полосы прогресса на миниатюрах обложек
 - **Фильтрация по статусу**: Фильтр по статусу (Не начато, В процессе, Завершено)
@@ -278,22 +288,24 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - **Закладки**: Создание и управление закладками с визуальными метками на шкале прогресса
 - **Состояние раскрытия папок**: Запоминает, какие папки были раскрыты в библиотеке
 
-### 🎨 Интерфейс
-- **Современная тёмная тема**: Элегантный и приятный для глаз интерфейс
+### Интерфейс
+- **Кастомизация оформления**: Выбор из встроенных тем (Dark Mint, Dark Pink, Miku) и настройка цвета иконок и толщины линий интерфейса с мгновенным предпросмотром
 - **Двухпанельная компоновка**: Браузер библиотеки слева, управление плеером справа
 - **Контекстные меню**: Правый клик для быстрых действий (Воспроизвести, Отметить прочитанным, Открыть папку)
-- **Многоязычность**: Полная локализация интерфейса (12 языков: AR, DE, EN, ES, FR, HI, JA, KO, PT, RU, TR, ZH)
+- **Многоязычность**: Полная локализация интерфейса (16 языков: AR, DE, EN, ES, FR, HI, HY, ID, JA, KO, PT, RU, TH, TR, VI, ZH)
 
 
-### 🎛️ Умная обработка звука
+### Умная обработка звука
 - **Smart Auto-Rewind**: Автоматическая перемотка назад после паузы для восстановления контекста (Базово 5с + 2с за минуту паузы, макс. 30с).
 - **Улучшение голоса**:
   - **De-Esser**: Уменьшает резкие свистящие звуки (с/ш) с пресетами (Лёгкий/Средний/Сильный).
   - **Компрессор**: Выравнивает динамический диапазон для равномерной громкости.
   - **Шумоподавление**: Удаляет фоновый шум для чёткости речи.
 - **Управление высотой тона**: Изменение тона без изменения скорости (+/- 12 полутонов).
+- **Усиление громкости (VB)**: Усиление звука до 400% с настраиваемыми уровнями (200%, 300%, 400%) для тихих записей.
+- **Моно-сведение**: Сведение стереоканалов в моно, что удобно при прослушивании в одном наушнике или при несбалансированных каналах.
 
-### ⌨️ Горячие клавиши
+### Горячие клавиши
 | Действие | Клавиша |
 | :--- | :--- |
 | **Воспр. / Пауза** | `Пробел` или `Media Play/Pause` |
@@ -305,12 +317,18 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 | **Скорость +/- 0.1x** | `Вверх` / `Вниз` |
 | **Сканировать** | `Ctrl` + `R` |
 | **Настройки** | `Ctrl` + `,` |
+| **Статистика прослушивания** | `Ctrl` + `T` |
+| **Показать текущую книгу** | `L` |
+| **Раскрыть все папки** | `E` |
+| **Свернуть все папки** | `W` |
+| **Компактный вид** | `P` |
+| **Поверх всех окон** | `T` |
 
 > [!NOTE]
 > Мультимедийные клавиши (`Play`, `Pause`, `Stop`, `Next`, `Prev`) являются **глобальными** и работают, даже когда приложение свёрнуто или находится не в фокусе.
 
 
-## 🚀 Установка
+## Установка
 
 ### Требования
 - Windows 10/11 (64-bit)
@@ -321,7 +339,7 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 2. Распакуйте архив в нужное место
 3. Запустите `SP Audiobook Player.exe`
 
-### 🔄 Ручное обновление
+### Ручное обновление
 Если авто-обновление не работает или вы предпочитаете обновлять вручную:
 
 1. Скачайте последний `.zip` со страницы [Releases](../../releases)
@@ -333,7 +351,7 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 
 
 <details>
-<summary>💻 Запуск из исходников и сборка</summary>
+<summary>Запуск из исходников и сборка</summary>
 
 ### Предварительные условия
 - Python 3.8+
@@ -371,7 +389,7 @@ __build.bat
 > ```
 </details>
 
-## 📘 Использование
+## Использование
 
 ### Первый запуск
 1. При первом запуске откройте **Настройки** (Меню → Настройки)
@@ -427,7 +445,7 @@ Audiobooks/
 
 Сканер автоматически найдёт все аудиокниги вне зависимости от глубины вложенности.
 
-### ⚙️ Настройки
+### Настройки
 - **Путь к библиотеке**: Изменение расположения вашей библиотеки аудиокниг.
 - **Сканировать библиотеку**: Ручной запуск сканирования.
 - **Инструменты**:
@@ -436,7 +454,7 @@ Audiobooks/
   - **Сброс данных**: Очистка всей базы данных и обложек (полезно для чистого пересканирования).
 - **Авто-обновление**: Встроенный механизм проверки и установки обновлений приложения.
 
-## 🙏 Благодарности
+## Благодарности
 
 - **BASS Audio Library**: Высококачественное воспроизведение аудио
 - **PyQt6**: Современный фреймворк для GUI
@@ -450,5 +468,5 @@ Audiobooks/
 ---
 
 <div align="center">
-Made with ❤️ for audiobook lovers
+Made for audiobook lovers
 </div>
