@@ -225,6 +225,8 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - **FFmpeg/ffprobe**: Advanced metadata extraction
 - **RNNoise**: Intelligent noise suppression
 - **BASS_VST**: VST effects support for BASS
+- **[Lucide Icons](https://lucide.dev/)**: Clean and consistent icon toolkit
+- **[audiobook-opus-converter](https://github.com/kadykov/audiobook-opus-converter)**: Basis for the built-in Opus converter logic
 
 ---
 
@@ -442,6 +444,8 @@ Audiobooks/
 - **FFmpeg/ffprobe**: Расширенное извлечение метаданных
 - **RNNoise**: Интеллектуальное шумоподавление
 - **BASS_VST**: Поддержка VST-эффектов для BASS
+- **[Lucide Icons](https://lucide.dev/)**: Современный набор векторных иконок
+- **[audiobook-opus-converter](https://github.com/kadykov/audiobook-opus-converter)**: Основа для логики встроенного конвертера Opus
 
 ---
 
