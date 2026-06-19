@@ -202,12 +202,12 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 
 ## Acknowledgments
 
-- **BASS Audio Library**: High-quality audio playback
+- **[BASS Audio Library](https://www.un4seen.com/)**: High-quality audio playback
+- **[BASS_VST](https://www.un4seen.com/)**: VST effects support for BASS
 - **PyQt6**: Modern GUI framework
 - **Mutagen**: Audio metadata reading
-- **FFmpeg/ffprobe**: Advanced metadata extraction
-- **RNNoise**: Intelligent noise suppression
-- **BASS_VST**: VST effects support for BASS
+- **[FFmpeg/ffprobe](https://ffmpeg.org/)**: Advanced metadata extraction and audio conversion
+- **[RNNoise](https://github.com/werman/noise-suppression-for-voice)**: Intelligent noise suppression
 - **[Lucide Icons](https://lucide.dev/)**: Clean and consistent icon toolkit
 - **[abopus](https://github.com/kadykov/abopus)**: Basis for the built-in Opus converter logic
 
@@ -406,12 +406,12 @@ Audiobooks/
 
 ## Благодарности
 
-- **BASS Audio Library**: Высококачественное воспроизведение аудио
+- **[BASS Audio Library](https://www.un4seen.com/)**: Высококачественное воспроизведение аудио
+- **[BASS_VST](https://www.un4seen.com/)**: Поддержка VST-эффектов для BASS
 - **PyQt6**: Современный фреймворк для GUI
 - **Mutagen**: Чтение метаданных аудио
-- **FFmpeg/ffprobe**: Расширенное извлечение метаданных
-- **RNNoise**: Интеллектуальное шумоподавление
-- **BASS_VST**: Поддержка VST-эффектов для BASS
+- **[FFmpeg/ffprobe](https://ffmpeg.org/)**: Расширенное извлечение метаданных и конвертация аудио
+- **[RNNoise](https://github.com/werman/noise-suppression-for-voice)**: Интеллектуальное шумоподавление
 - **[Lucide Icons](https://lucide.dev/)**: Современный набор векторных иконок
 - **[abopus](https://github.com/kadykov/abopus)**: Основа для логики встроенного конвертера Opus
 
