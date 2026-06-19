@@ -105,9 +105,9 @@ Perfect for audiobook enthusiasts who want a dedicated, feature-rich player with
 - Python 3.8+ (for source installation)
 
 ### Option 1: Download Executable (Recommended)
-1. Download the latest release from the [Releases](../../releases) page
-2. Extract the archive to your desired location
-3. Run `SP Audiobook Player.exe`
+You can download the latest version from the [Releases](../../releases) page in one of the following formats:
+- **Installer (Recommended)**: Download and run `SP_Audiobook_Player_Setup_vX.X.X.exe` to install the player.
+- **Portable Version**: Download the `.zip` archive (`SP_Audiobook_Player_vX.X.X.zip`), extract it to any desired folder, and run `SP Audiobook Player.exe`.
 
 ### Manual Update
 If auto-update doesn't work or you prefer to update manually:
@@ -335,9 +335,9 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 - Python 3.8+ (для запуска из исходников)
 
 ### Вариант 1: Скачать исполняемый файл (рекомендуется)
-1. Скачайте последний релиз со страницы [Releases](../../releases)
-2. Распакуйте архив в нужное место
-3. Запустите `SP Audiobook Player.exe`
+На странице [Releases](../../releases) доступны два варианта сборки:
+- **Установщик (рекомендуется)**: Скачайте и запустите `SP_Audiobook_Player_Setup_vX.X.X.exe` для полноценной установки плеера в систему.
+- **Портативная версия**: Скачайте `.zip` архив (`SP_Audiobook_Player_vX.X.X.zip`), распакуйте его в любую удобную папку и запустите `SP Audiobook Player.exe`.
 
 ### Ручное обновление
 Если авто-обновление не работает или вы предпочитаете обновлять вручную:
