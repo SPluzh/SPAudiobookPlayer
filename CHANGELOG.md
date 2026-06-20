@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.11]
+- **Metadata**: Fixed online cover search for Audible and Storytel to prevent displaying unrelated images or incorrect book covers when no matching books are found.
+
 ## [1.7.10]
 - **UI**: Centered the book details text vertically next to the cover image in the library list for a cleaner layout.
 
