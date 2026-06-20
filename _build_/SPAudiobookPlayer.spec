@@ -33,6 +33,7 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
+        'PIL',
         'tkinter',
         'unittest',
         'xmlrpc',
