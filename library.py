@@ -1210,6 +1210,80 @@ class MultiLineDelegate(QStyledItemDelegate):
             float(info_size),
         )
 
+    def _calculate_text_start_y(self, option_rect, index) -> int:
+        """Calculate the starting Y coordinate for the text block to center it vertically in the option_rect"""
+        data = index.data(Qt.ItemDataRole.UserRole + 2)
+        if not data:
+            return int(option_rect.top() + self.vertical_padding)
+
+        author = data[0] if len(data) > 0 else None
+        title = data[1] if len(data) > 1 else None
+        narrator = data[2] if len(data) > 2 else None
+        
+        file_count = data[3] if len(data) > 3 else 0
+        duration = data[4] if len(data) > 4 else 0
+        listened_duration = data[5] if len(data) > 5 else 0
+        progress_percent = data[6] if len(data) > 6 else 0
+        codec = data[7] if len(data) > 7 else None
+        b_min = data[8] if len(data) > 8 else None
+        b_max = data[9] if len(data) > 9 else None
+        b_mode = data[10] if len(data) > 10 else None
+        container = data[11] if len(data) > 11 else None
+        description = data[12] if len(data) > 12 else ""
+        total_size = data[13] if len(data) > 13 else 0
+        language = data[14] if len(data) > 14 else None
+        year_written = data[15] if len(data) > 15 else None
+        year_recorded = data[16] if len(data) > 16 else None
+
+        tags = index.data(Qt.ItemDataRole.UserRole + 4)
+
+        total_height = 0
+        elements_count = 0
+
+        # Title
+        font_title, _ = self._get_style("delegate_title")
+        title_height = QFontMetrics(font_title).height()
+        total_height += title_height
+        elements_count += 1
+
+        # Author
+        if author:
+            font_author, _ = self._get_style("delegate_author")
+            author_height = QFontMetrics(font_author).height()
+            total_height += author_height
+            elements_count += 1
+
+        # Narrator
+        if narrator:
+            font_narrator, _ = self._get_style("delegate_narrator")
+            narrator_height = QFontMetrics(font_narrator).height()
+            total_height += narrator_height
+            elements_count += 1
+
+        # Status info line
+        info_parts = self._get_info_parts(
+            progress_percent, file_count, duration, total_size,
+            b_min, b_max, b_mode, codec, container,
+            year_written, year_recorded, language
+        )
+        if info_parts and getattr(self, "show_detailed_info", True):
+            font_inf, _ = self._get_style("delegate_file_count")
+            info_height = QFontMetrics(font_inf).height()
+            total_height += info_height
+            elements_count += 1
+
+        # Tags
+        if tags:
+            font_tag, _ = self._get_style("delegate_info_font")
+            tag_height = QFontMetrics(font_tag).height() + 4
+            total_height += tag_height
+            elements_count += 1
+
+        if elements_count > 1:
+            total_height += (elements_count - 1) * self.line_spacing
+
+        return int(option_rect.top() + (option_rect.height() - total_height) // 2)
+
     def _paint_audiobook(self, painter, option, index):
         """Render detailed audiobook item with cover, progress, and metadata"""
         painter.save()
@@ -1555,7 +1629,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             text_x = icon_rect.right() + 43
         else:
             text_x = icon_rect.right() + 15
-        text_y = option.rect.top() + self.vertical_padding
+        text_y = self._calculate_text_start_y(option.rect, index)
         available_width = option.rect.right() - text_x - self.horizontal_padding
 
         # Title field
@@ -1776,7 +1850,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         tree = getattr(self, "tree", None) or self.parent()
         mass_mode = getattr(tree, "mass_selection_mode", False)
         text_x = icon_rect.right() + (43 if mass_mode else 15)
-        text_y = option_rect.top() + self.vertical_padding
+        text_y = self._calculate_text_start_y(option_rect, index)
 
         # Skip title
         font_title, _ = self._get_style("delegate_title")
@@ -1818,7 +1892,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         tree = getattr(self, "tree", None) or self.parent()
         mass_mode = getattr(tree, "mass_selection_mode", False)
         text_x = icon_rect.right() + (43 if mass_mode else 15)
-        text_y = option_rect.top() + self.vertical_padding
+        text_y = self._calculate_text_start_y(option_rect, index)
 
         # Skip title
         font_title, _ = self._get_style("delegate_title")
@@ -1895,7 +1969,7 @@ class MultiLineDelegate(QStyledItemDelegate):
             text_x = icon_rect.right() + 43
         else:
             text_x = icon_rect.right() + 15
-        text_y = option_rect.top() + self.vertical_padding
+        text_y = self._calculate_text_start_y(option_rect, index)
         available_width = option_rect.right() - text_x - self.horizontal_padding
 
         # Title
