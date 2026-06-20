@@ -48,15 +48,24 @@ class AudibleScraper:
             url = f"{base_url}/search?keywords={encoded_query}"
             print(f"[AudibleScraper] Trying fetch from {url}...")
             html = self._fetch(url)
-            if html and "productListItem" in html:
-                used_base_url = base_url
-                break
+            if html:
+                if "productListItem" in html:
+                    used_base_url = base_url
+                    break
+                elif any(cls in html for cls in ['class="bc-', "class='bc-", "class=bc-"]) or \
+                     any(kw in html for kw in ['name="keywords"', "name='keywords'", "name=keywords"]):
+                    used_base_url = base_url
+                    break
                 
         results = []
         is_blocked = True
         
-        if html and "productListItem" in html:
-            is_blocked = False
+        if html:
+            if "productListItem" in html:
+                is_blocked = False
+            elif any(cls in html for cls in ['class="bc-', "class='bc-", "class=bc-"]) or \
+                 any(kw in html for kw in ['name="keywords"', "name='keywords'", "name=keywords"]):
+                is_blocked = False
             
         if not is_blocked:
             try:
@@ -142,8 +151,8 @@ class AudibleScraper:
                 print(f"[AudibleScraper] Error parsing direct HTML: {e}")
                 is_blocked = True
                 
-        if is_blocked or not results:
-            print("[AudibleScraper] Direct search blocked or returned no results. Falling back to DuckDuckGo search...")
+        if is_blocked:
+            print("[AudibleScraper] Direct search blocked. Falling back to DuckDuckGo search...")
             try:
                 try:
                     from ddgs import DDGS
@@ -167,6 +176,21 @@ class AudibleScraper:
                         time.sleep(1.0)
                     
                 for res in raw_results:
+                    page_url = res.get("url", "")
+                    if not page_url or not any(domain in page_url for domain in [
+                        "audible.com", "audible.co.uk", "audible.de", "audible.ca", 
+                        "audible.com.au", "audible.co.jp", "audible.fr", "audible.it", "audible.in"
+                    ]):
+                        continue
+                        
+                    book_id = ""
+                    match = re.search(r'/pd/(?:[^/]+/)?([A-Z0-9]{10})', page_url)
+                    if match:
+                        book_id = match.group(1)
+                    
+                    if not book_id:
+                        continue
+                        
                     title = res.get("title", "")
                     for suffix in [" | Audible.com", " - Audiobook - Audible.com", " - Audible.com", " (Audiobook) | Audible.com"]:
                         if title.endswith(suffix):
@@ -175,12 +199,6 @@ class AudibleScraper:
                     image_url = res.get("image", "")
                     if image_url:
                         image_url = re.sub(r'\._[^.]+_(?=\.[a-z]+)', '', image_url, flags=re.IGNORECASE)
-                        
-                    page_url = res.get("url", "")
-                    book_id = ""
-                    match = re.search(r'/pd/(?:[^/]+/)?([A-Z0-9]{10})', page_url)
-                    if match:
-                        book_id = match.group(1)
                         
                     results.append({
                         "image": image_url,
