@@ -121,3 +121,91 @@ def test_storytel_search_worker(monkeypatch):
     worker.run()
     
     assert results == mock_data
+
+
+def test_storytel_scraper_no_results_no_fallback(monkeypatch):
+    """Test StorytelScraper returns empty list and does not fallback to DDG when direct API returns 0 results."""
+    mock_response = {
+        "items": []
+    }
+    
+    def mock_fetch(self, url):
+        return json.dumps(mock_response)
+        
+    monkeypatch.setattr(StorytelScraper, "_fetch", mock_fetch)
+    
+    # Mock DDGS to ensure it is not called
+    class MockDDGS:
+        def __init__(self, *args, **kwargs):
+            raise AssertionError("DuckDuckGo search should not be called!")
+            
+    try:
+        import ddgs
+        monkeypatch.setattr("ddgs.DDGS", MockDDGS)
+    except ImportError:
+        pass
+    monkeypatch.setattr("duckduckgo_search.DDGS", MockDDGS)
+    
+    scraper = StorytelScraper()
+    results = scraper.search("nonexistent", limit=5)
+    
+    assert results == []
+
+
+def test_storytel_scraper_ddg_fallback_filtering(monkeypatch):
+    """Test StorytelScraper fallback to DuckDuckGo filters out non-Storytel and invalid results."""
+    def mock_fetch(self, url):
+        return None
+        
+    monkeypatch.setattr(StorytelScraper, "_fetch", mock_fetch)
+    
+    mock_ddg_results = [
+        {
+            # Valid Storytel URL and ID
+            "title": "Valid Book | Storytel",
+            "image": "https://covers.storytel.com/jpg-640/9781781102374.jpg",
+            "url": "https://www.storytel.com/books/valid-book-117903",
+            "width": 640,
+            "height": 640
+        },
+        {
+            # Invalid: Non-Storytel URL
+            "title": "Wikipedia Book",
+            "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Wikipedia-logo.png",
+            "url": "https://en.wikipedia.org/wiki/Book",
+            "width": 200,
+            "height": 200
+        },
+        {
+            # Invalid: Storytel URL but no book ID
+            "title": "Storytel About Page",
+            "image": "https://covers.storytel.com/about.jpg",
+            "url": "https://www.storytel.com/about",
+            "width": 300,
+            "height": 300
+        }
+    ]
+    
+    class MockDDGS:
+        def __init__(self, *args, **kwargs):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+        def images(self, query, *args, **kwargs):
+            return mock_ddg_results
+            
+    try:
+        import ddgs
+        monkeypatch.setattr("ddgs.DDGS", MockDDGS)
+    except ImportError:
+        pass
+    monkeypatch.setattr("duckduckgo_search.DDGS", MockDDGS)
+    
+    scraper = StorytelScraper()
+    results = scraper.search("Query", limit=5)
+    
+    assert len(results) == 1
+    assert results[0]["id"] == "117903"
+    assert results[0]["title"] == "[Storytel] Valid Book"

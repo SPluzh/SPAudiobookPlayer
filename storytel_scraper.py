@@ -92,8 +92,8 @@ class StorytelScraper:
                 print(f"[StorytelScraper] Error parsing direct API response: {e}")
                 is_failed = True
                 
-        if is_failed or not results:
-            print("[StorytelScraper] Direct search failed or returned no results. Falling back to DuckDuckGo search...")
+        if is_failed:
+            print("[StorytelScraper] Direct search failed. Falling back to DuckDuckGo search...")
             try:
                 try:
                     from ddgs import DDGS
@@ -117,18 +117,24 @@ class StorytelScraper:
                         time.sleep(1.0)
                     
                 for res in raw_results:
-                    title = res.get("title", "")
-                    if title.endswith(" | Storytel"):
-                        title = title[:-11].strip()
-                        
-                    image_url = res.get("image", "")
                     page_url = res.get("url", "")
-                    
+                    if not page_url or "storytel." not in page_url:
+                        continue
+                        
                     book_id = ""
                     match = re.search(r'-(\d+)(?:\?|$)', page_url)
                     if match:
                         book_id = match.group(1)
                         
+                    if not book_id:
+                        continue
+                        
+                    title = res.get("title", "")
+                    if title.endswith(" | Storytel"):
+                        title = title[:-11].strip()
+                        
+                    image_url = res.get("image", "")
+                    
                     results.append({
                         "image": image_url,
                         "url": page_url,
