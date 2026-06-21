@@ -2046,9 +2046,23 @@ class LibraryTree(QTreeWidget):
         )
         self.mass_selection_mode = False
         self.selected_audiobook_paths = set()
+        self._last_checked_item = None
         # When True, scrollTo() calls from Qt internals (focus changes, etc.) are ignored.
         # Set to True during context menu to prevent the list from jumping.
         self._suppress_scroll = False
+
+    def _get_all_tree_items(self) -> list:
+        """Traverse the tree to get all items in pre-order traversal (visual sequence)"""
+        items = []
+        def traverse(item):
+            items.append(item)
+            for i in range(item.childCount()):
+                traverse(item.child(i))
+        
+        root = self.invisibleRootItem()
+        for i in range(root.childCount()):
+            traverse(root.child(i))
+        return items
 
     def scrollTo(self, index, hint=QTreeWidget.ScrollHint.EnsureVisible):
         """Block automatic scroll-to-current triggered by Qt focus changes during menu display"""
@@ -2230,22 +2244,53 @@ class LibraryTree(QTreeWidget):
                         cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
                         if cb_rect.contains(QPointF(event.pos())):
                             path = index.data(Qt.ItemDataRole.UserRole)
-                            if item_type == "folder":
-                                # Toggle folder selection recursively
+                            item = self.itemFromIndex(index)
+                            if item:
+                                is_shift = bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+                                if is_shift and getattr(self, "_last_checked_item", None) is not None:
+                                    last_item = self._last_checked_item
+                                    all_items = self._get_all_tree_items()
+                                    if last_item in all_items and item in all_items:
+                                        idx1 = all_items.index(last_item)
+                                        idx2 = all_items.index(item)
+                                        start_idx = min(idx1, idx2)
+                                        end_idx = max(idx1, idx2)
+                                        
+                                        # Target state is the opposite of current item's selection status
+                                        is_currently_checked = path in self.selected_audiobook_paths
+                                        target_checked_state = not is_currently_checked
+                                        
+                                        for i in range(start_idx, end_idx + 1):
+                                            range_item = all_items[i]
+                                            range_path = range_item.data(0, Qt.ItemDataRole.UserRole)
+                                            range_item_type = range_item.data(0, Qt.ItemDataRole.UserRole + 1)
+                                            if range_path:
+                                                if range_item_type == "folder":
+                                                    self._set_item_selected_recursive(range_item, target_checked_state)
+                                                else:
+                                                    if target_checked_state:
+                                                        self.selected_audiobook_paths.add(range_path)
+                                                    else:
+                                                        self.selected_audiobook_paths.discard(range_path)
+                                        
+                                        self._sync_all_folder_checkbox_states()
+                                        self._last_checked_item = item
+                                        self.viewport().update()
+                                        return
+                                
+                                # Regular click (no Shift or no last clicked item)
                                 is_checked = path in self.selected_audiobook_paths
-                                item = self.itemFromIndex(index)
-                                if item:
+                                if item_type == "folder":
                                     self._set_item_selected_recursive(item, not is_checked)
                                     self._update_parent_checkbox_states(item)
-                            else:
-                                # Toggle single audiobook
-                                if path in self.selected_audiobook_paths:
-                                    self.selected_audiobook_paths.remove(path)
                                 else:
-                                    self.selected_audiobook_paths.add(path)
-                                item = self.itemFromIndex(index)
-                                if item:
+                                    if is_checked:
+                                        self.selected_audiobook_paths.discard(path)
+                                    else:
+                                        self.selected_audiobook_paths.add(path)
                                     self._update_parent_checkbox_states(item)
+                                
+                                self._last_checked_item = item
                             self.viewport().update()
                             return
 
@@ -2968,6 +3013,7 @@ class LibraryWidget(QWidget):
         self.tree.mass_selection_mode = checked
         if not checked:
             self.tree.selected_audiobook_paths.clear()
+            self.tree._last_checked_item = None
         self.tree.viewport().update()
 
     def refresh_library(self):

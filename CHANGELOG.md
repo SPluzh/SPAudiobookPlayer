@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.12]
+- **Library**: Added support for Shift-clicking to select/deselect a range of items in the library when bulk selection mode is active.
+
 ## [1.7.11]
 - **Metadata**: Fixed online cover search for Audible and Storytel to prevent displaying unrelated images or incorrect book covers when no matching books are found.
 

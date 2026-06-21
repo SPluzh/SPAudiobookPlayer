@@ -321,3 +321,147 @@ def test_folder_mass_selection(tmp_path):
         assert "path/FolderX/BookA" in tree.selected_audiobook_paths
         assert "path/FolderX/BookB" in tree.selected_audiobook_paths
 
+
+def test_mass_select_shift_range_selection(tmp_path):
+    from PyQt6.QtCore import Qt, QPointF, QRect, QRectF
+    from PyQt6.QtGui import QMouseEvent
+    app = QApplication.instance() or QApplication([])
+
+    resources_dir = tmp_path / "resources"
+    resources_dir.mkdir(parents=True, exist_ok=True)
+    
+    settings_file = resources_dir / "settings.ini"
+    with open(settings_file, "w", encoding="utf-8") as f:
+        f.write(
+            "[Library]\n"
+            "remember_filter_folders=True\n"
+            "show_folders=True\n"
+        )
+
+    with patch('main.DatabaseManager') as mock_db_class, \
+         patch('main.BassPlayer'), \
+         patch('main.get_base_path', return_value=tmp_path):
+         
+        mock_db = mock_db_class.return_value
+        mock_db.get_audiobook_count.return_value = 4
+        mock_db.get_all_audiobook_tags.return_value = {}
+        mock_db.get_all_tags.return_value = []
+
+        def make_mock_book(id_, path, name):
+            return {
+                "id": id_,
+                "path": path,
+                "name": name,
+                "title": name,
+                "author": "Author",
+                "narrator": "Narrator X",
+                "time_added": 100.0,
+                "is_folder": False,
+                "file_count": 1,
+                "duration": 1000,
+                "listened_duration": 0,
+                "progress_percent": 0.0,
+                "codec": "mp3",
+                "bitrate_min": 128,
+                "bitrate_max": 128,
+                "bitrate_mode": "cbr",
+                "container": "mp3",
+                "description": "",
+                "total_size": 1000000,
+                "is_started": False,
+                "is_completed": False,
+                "is_favorite": False,
+            }
+
+        mock_db.load_audiobooks_from_db.return_value = {
+            "": [
+                make_mock_book(1, "path/BookA", "Book A"),
+                make_mock_book(2, "path/BookB", "Book B"),
+                make_mock_book(3, "path/BookC", "Book C"),
+                make_mock_book(4, "path/BookD", "Book D"),
+            ]
+        }
+
+        window = AudiobookPlayerWindow()
+        library = window.library_widget
+        library.load_audiobooks(use_cache=False)
+
+        tree = library.tree
+        # Enable mass select mode
+        library.btn_mass_select.click()
+        assert tree.mass_selection_mode is True
+
+        root_item = tree.invisibleRootItem()
+        item_a = root_item.child(0)
+        item_b = root_item.child(1)
+        item_c = root_item.child(2)
+        item_d = root_item.child(3)
+
+        all_items = tree._get_all_tree_items()
+        assert len(all_items) == 4
+
+        # Let's mock delegate.get_checkbox_rect to return a rect that contains event.pos()
+        mock_delegate = MagicMock()
+        mock_delegate.get_play_button_rect.return_value = QRectF(0, 0, 0, 0)
+        mock_delegate.get_checkbox_rect.return_value = QRectF(0, 0, 100, 100)
+        mock_delegate.get_icon_rect.return_value = QRectF(0, 0, 50, 50)
+        
+        with patch.object(tree, 'itemDelegate', return_value=mock_delegate), \
+             patch.object(tree, 'indexAt') as mock_index_at, \
+             patch.object(tree, 'itemFromIndex') as mock_item_from_index, \
+             patch.object(tree, 'visualRect', return_value=QRect(0, 0, 100, 100)):
+            
+            # Click A (no Shift)
+            mock_index_at.return_value = tree.model().index(0, 0)
+            mock_item_from_index.return_value = item_a
+            
+            # Mouse event with LeftButton and no modifiers
+            from PyQt6.QtCore import QEvent
+            event_a = QMouseEvent(
+                QEvent.Type.MouseButtonPress,
+                QPointF(10.0, 10.0),
+                Qt.MouseButton.LeftButton,
+                Qt.MouseButton.LeftButton,
+                Qt.KeyboardModifier.NoModifier
+            )
+            tree.mousePressEvent(event_a)
+            
+            assert "path/BookA" in tree.selected_audiobook_paths
+            assert tree._last_checked_item == item_a
+
+            # Shift-Click D
+            mock_index_at.return_value = tree.model().index(3, 0)
+            mock_item_from_index.return_value = item_d
+            
+            # Mouse event with LeftButton and Shift modifier
+            event_d = QMouseEvent(
+                QEvent.Type.MouseButtonPress,
+                QPointF(10.0, 10.0),
+                Qt.MouseButton.LeftButton,
+                Qt.MouseButton.LeftButton,
+                Qt.KeyboardModifier.ShiftModifier
+            )
+            tree.mousePressEvent(event_d)
+            
+            # Since target state (D) was unchecked, clicking D checks it, so target state is checked.
+            # All items in range A to D should now be checked.
+            assert "path/BookA" in tree.selected_audiobook_paths
+            assert "path/BookB" in tree.selected_audiobook_paths
+            assert "path/BookC" in tree.selected_audiobook_paths
+            assert "path/BookD" in tree.selected_audiobook_paths
+            assert tree._last_checked_item == item_d
+
+            # Shift-Click B (unchecking)
+            # D is currently checked, but let's click B. B is checked, so clicking it will uncheck it.
+            # Thus target state is unchecked. Range B to D should be unchecked.
+            mock_index_at.return_value = tree.model().index(1, 0)
+            mock_item_from_index.return_value = item_b
+            
+            tree.mousePressEvent(event_d) # event_d has ShiftModifier
+            
+            assert "path/BookA" in tree.selected_audiobook_paths
+            assert "path/BookB" not in tree.selected_audiobook_paths
+            assert "path/BookC" not in tree.selected_audiobook_paths
+            assert "path/BookD" not in tree.selected_audiobook_paths
+            assert tree._last_checked_item == item_b
+
