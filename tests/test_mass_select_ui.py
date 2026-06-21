@@ -465,3 +465,129 @@ def test_mass_select_shift_range_selection(tmp_path):
             assert "path/BookD" not in tree.selected_audiobook_paths
             assert tree._last_checked_item == item_b
 
+
+def test_mass_select_row_click(tmp_path):
+    from PyQt6.QtCore import Qt, QPointF, QRect, QRectF
+    from PyQt6.QtGui import QMouseEvent
+    app = QApplication.instance() or QApplication([])
+
+    resources_dir = tmp_path / "resources"
+    resources_dir.mkdir(parents=True, exist_ok=True)
+    
+    settings_file = resources_dir / "settings.ini"
+    with open(settings_file, "w", encoding="utf-8") as f:
+        f.write(
+            "[Library]\n"
+            "remember_filter_folders=True\n"
+            "show_folders=True\n"
+        )
+
+    with patch('main.DatabaseManager') as mock_db_class, \
+         patch('main.BassPlayer'), \
+         patch('main.get_base_path', return_value=tmp_path):
+         
+        mock_db = mock_db_class.return_value
+        mock_db.get_audiobook_count.return_value = 1
+        mock_db.get_all_audiobook_tags.return_value = {}
+        mock_db.get_all_tags.return_value = []
+
+        def make_mock_book(id_, path, name):
+            return {
+                "id": id_,
+                "path": path,
+                "name": name,
+                "title": name,
+                "author": "Author",
+                "narrator": "Narrator X",
+                "time_added": 100.0,
+                "is_folder": False,
+                "file_count": 1,
+                "duration": 1000,
+                "listened_duration": 0,
+                "progress_percent": 0.0,
+                "codec": "mp3",
+                "bitrate_min": 128,
+                "bitrate_max": 128,
+                "bitrate_mode": "cbr",
+                "container": "mp3",
+                "description": "Some description",
+                "total_size": 1000000,
+                "is_started": False,
+                "is_completed": False,
+                "is_favorite": True,
+            }
+
+        mock_db.load_audiobooks_from_db.return_value = {
+            "": [
+                make_mock_book(1, "path/BookA", "Book A"),
+            ]
+        }
+
+        window = AudiobookPlayerWindow()
+        library = window.library_widget
+        library.load_audiobooks(use_cache=False)
+
+        tree = library.tree
+        library.btn_mass_select.click()
+        assert tree.mass_selection_mode is True
+
+        root_item = tree.invisibleRootItem()
+        item_a = root_item.child(0)
+
+        # Mock delegate to return specific rects
+        mock_delegate = MagicMock()
+        mock_delegate.get_checkbox_rect.return_value = QRectF(10, 10, 20, 20)  # Checkbox at (10, 10)
+        mock_delegate.get_play_button_rect.return_value = QRectF(40, 10, 20, 20)  # Play at (40, 10)
+        mock_delegate.get_heart_rect.return_value = QRectF(70, 10, 20, 20)  # Favorite heart at (70, 10)
+        mock_delegate.get_info_rect.return_value = QRectF(100, 10, 20, 20)  # Info at (100, 10)
+        mock_delegate.get_icon_rect.return_value = QRectF(0, 0, 50, 50)
+        
+        with patch.object(tree, 'itemDelegate', return_value=mock_delegate), \
+             patch.object(tree, 'indexAt') as mock_index_at, \
+             patch.object(tree, 'itemFromIndex') as mock_item_from_index, \
+             patch.object(tree, 'visualRect', return_value=QRect(0, 0, 200, 40)):
+            
+            mock_index_at.return_value = tree.model().index(0, 0)
+            mock_item_from_index.return_value = item_a
+            
+            # Click A on play button: (50, 20)
+            # This should play, NOT toggle selection
+            from PyQt6.QtCore import QEvent
+            event_play = QMouseEvent(
+                QEvent.Type.MouseButtonPress,
+                QPointF(50.0, 20.0),
+                Qt.MouseButton.LeftButton,
+                Qt.MouseButton.LeftButton,
+                Qt.KeyboardModifier.NoModifier
+            )
+            try:
+                tree.play_button_clicked.disconnect()
+            except TypeError:
+                pass
+
+            play_signal_called = []
+            def on_play_clicked(path):
+                play_signal_called.append(path)
+            tree.play_button_clicked.connect(on_play_clicked)
+            tree.mousePressEvent(event_play)
+            assert "path/BookA" not in tree.selected_audiobook_paths
+            assert len(play_signal_called) == 1 and play_signal_called[0] == "path/BookA"
+            
+            # Click A on row empty space (e.g. at (150, 20))
+            # This should toggle selection (regular click)
+            event_row = QMouseEvent(
+                QEvent.Type.MouseButtonPress,
+                QPointF(150.0, 20.0),
+                Qt.MouseButton.LeftButton,
+                Qt.MouseButton.LeftButton,
+                Qt.KeyboardModifier.NoModifier
+            )
+            tree.mousePressEvent(event_row)
+            assert "path/BookA" in tree.selected_audiobook_paths
+            
+            # Click A on row empty space again
+            # This should untoggle selection
+            tree.mousePressEvent(event_row)
+            assert "path/BookA" not in tree.selected_audiobook_paths
+
+

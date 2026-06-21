@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.7.12]
 - **Library**: Added support for Shift-clicking to select/deselect a range of items in the library when bulk selection mode is active.
+- **Library**: In mass selection mode, clicking anywhere on a book's row now checks or unchecks it, rather than having to click precisely on the checkbox.
 
 ## [1.7.11]
 - **Metadata**: Fixed online cover search for Audible and Storytel to prevent displaying unrelated images or incorrect book covers when no matching books are found.

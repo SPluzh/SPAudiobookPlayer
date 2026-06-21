@@ -2242,7 +2242,34 @@ class LibraryTree(QTreeWidget):
                     # Check checkbox click first in mass selection mode
                     if self.mass_selection_mode and hasattr(delegate, "get_checkbox_rect"):
                         cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
+                        
+                        should_toggle = False
                         if cb_rect.contains(QPointF(event.pos())):
+                            should_toggle = True
+                        elif rect.contains(event.pos()):
+                            is_interactive = False
+                            if item_type == "audiobook":
+                                play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
+                                if play_rect.contains(QPointF(event.pos())):
+                                    is_interactive = True
+                                
+                                status_data = index.data(Qt.ItemDataRole.UserRole + 3)
+                                is_favorite = status_data[2] if status_data and len(status_data) >= 3 else False
+                                if is_favorite:
+                                    heart_rect = delegate.get_heart_rect(QRectF(icon_rect))
+                                    if heart_rect.contains(QPointF(event.pos())):
+                                        is_interactive = True
+                                
+                                data = index.data(Qt.ItemDataRole.UserRole + 2)
+                                description = data[12] if data and len(data) > 12 else ""
+                                if description:
+                                    info_rect = delegate.get_info_rect(QRectF(icon_rect))
+                                    if info_rect.contains(QPointF(event.pos())):
+                                        is_interactive = True
+                            if not is_interactive:
+                                should_toggle = True
+                                
+                        if should_toggle:
                             path = index.data(Qt.ItemDataRole.UserRole)
                             item = self.itemFromIndex(index)
                             if item:
