@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.13]
+- **Library**: Added a metadata and language filter menu to show audiobooks without covers, without authors, without narrators, without a language, or with a specific language.
+
 ## [1.7.12]
 - **Library**: Added support for Shift-clicking to select/deselect a range of items in the library when bulk selection mode is active.
 - **Library**: In mass selection mode, clicking anywhere on a book's row now checks or unchecks it, rather than having to click precisely on the checkbox.

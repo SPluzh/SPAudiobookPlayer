@@ -2531,6 +2531,8 @@ class LibraryWidget(QWidget):
         self.tag_filter_ids = self.config.get("tag_filter_ids", set())
         self.is_tag_filter_active = self.config.get("tag_filter_active", False)
         self.is_favorites_filter_active = self.config.get("favorites_active", False)
+        self.is_meta_filter_active = self.config.get("meta_filter_active", False)
+        self.current_meta_filter = self.config.get("current_meta_filter", "no_cover")
         self.sort_orders = self.config.get("sort_orders", {
             "all": "asc",
             "not_started": "desc",
@@ -2618,6 +2620,32 @@ class LibraryWidget(QWidget):
 
         filter_layout.addLayout(mass_layout)
 
+        # Create a layout to keep metadata filter toggle and dropdown in one flush button group
+        meta_filter_layout = QHBoxLayout()
+        meta_filter_layout.setSpacing(0)
+        meta_filter_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.btn_meta_filter = QPushButton("")
+        self.btn_meta_filter.setObjectName("filterBtn")
+        self.btn_meta_filter.setCheckable(True)
+        self.btn_meta_filter.setChecked(self.is_meta_filter_active)
+        self.btn_meta_filter.setIcon(get_icon("filter"))
+        self.btn_meta_filter.setFixedWidth(40)
+        self.btn_meta_filter.setToolTip(tr("library.tooltip_filter_metadata"))
+        self.btn_meta_filter.clicked.connect(self.toggle_meta_filter)
+        meta_filter_layout.addWidget(self.btn_meta_filter)
+
+        self.btn_meta_filter_arrow = QPushButton("")
+        self.btn_meta_filter_arrow.setObjectName("filterBtnArrow")
+        self.btn_meta_filter_arrow.setFixedWidth(20)
+        self.btn_meta_filter_arrow.setIcon(get_icon("chevron-down"))
+        self.btn_meta_filter_arrow.setIconSize(QSize(12, 12))
+        self.btn_meta_filter_arrow.setToolTip(tr("library.tooltip_filter_metadata"))
+        self.btn_meta_filter_arrow.clicked.connect(self.show_meta_filter_menu)
+        meta_filter_layout.addWidget(self.btn_meta_filter_arrow)
+
+        filter_layout.addLayout(meta_filter_layout)
+
         # Favorites Filter (Icon-only)
         self.btn_favorites = QPushButton("")
         self.btn_favorites.setObjectName("filterBtn")
@@ -2686,6 +2714,8 @@ class LibraryWidget(QWidget):
         self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
         self.btn_show_folders.clicked.connect(self.on_show_folders_toggled)
         filter_layout.addWidget(self.btn_show_folders)
+
+
 
         # Create a layout to keep sorting toggle and dropdown in one flush button group
         sort_layout = QHBoxLayout()
@@ -2847,6 +2877,10 @@ class LibraryWidget(QWidget):
             self.btn_favorites.setIcon(get_icon("favorites"))
         if hasattr(self, "btn_tags") and self.btn_tags:
             self.btn_tags.setIcon(get_icon("context_tags"))
+        if hasattr(self, "btn_meta_filter") and self.btn_meta_filter:
+            self.btn_meta_filter.setIcon(get_icon("filter"))
+        if hasattr(self, "btn_meta_filter_arrow") and self.btn_meta_filter_arrow:
+            self.btn_meta_filter_arrow.setIcon(get_icon("chevron-down"))
 
         if hasattr(self, "filter_buttons") and self.filter_buttons:
             for filter_id, btn in self.filter_buttons.items():
@@ -3212,6 +3246,10 @@ class LibraryWidget(QWidget):
                             if not item_data.get("is_favorite"):
                                 continue
 
+                        # Apply Metadata Filter
+                        if not self._matches_meta_filter(item_data):
+                            continue
+
                         all_items.append(item_data)
 
                 # Global flat sort — ignores folder hierarchy entirely.
@@ -3262,6 +3300,13 @@ class LibraryWidget(QWidget):
                                 and not item_data["is_folder"]
                             ):
                                 if not item_data.get("is_favorite"):
+                                    continue
+
+                            if (
+                                self.is_meta_filter_active
+                                and not item_data["is_folder"]
+                            ):
+                                if not self._matches_meta_filter(item_data):
                                     continue
 
                             filtered_items.append(item_data)
@@ -4535,6 +4580,10 @@ class LibraryWidget(QWidget):
             self.btn_favorites.setToolTip(tr("library.tooltip_favorites"))
         if hasattr(self, "btn_tags"):
             self.btn_tags.setToolTip(tr("library.tooltip_tags"))
+        if hasattr(self, "btn_meta_filter"):
+            self.btn_meta_filter.setToolTip(tr("library.tooltip_filter_metadata"))
+        if hasattr(self, "btn_meta_filter_arrow"):
+            self.btn_meta_filter_arrow.setToolTip(tr("library.tooltip_filter_metadata"))
         self.update_sort_button_ui()
         self.update_sort_field_button_ui()
             
@@ -4639,6 +4688,137 @@ class LibraryWidget(QWidget):
             loc_key = field_map.get(self.sort_field, "sort_by_name")
             field_name = tr(f"library.{loc_key}")
             self.btn_sort_field.setToolTip(f"{tr('library.tooltip_sort_field')} ({field_name})")
+
+    def toggle_meta_filter(self):
+        """Toggle the active state of metadata filter"""
+        self.is_meta_filter_active = self.btn_meta_filter.isChecked()
+        self.load_audiobooks(use_cache=True)
+
+    def show_meta_filter_menu(self):
+        """Display a popup menu to select the active metadata filter"""
+        menu = QMenu(self)
+        menu.setObjectName("metaFilterMenu")
+        
+        options = [
+            ("no_cover", "library.filter_no_cover"),
+            ("no_author", "library.filter_no_author"),
+            ("no_narrator", "library.filter_no_narrator")
+        ]
+        
+        current = self.current_meta_filter
+        for filter_key, loc_key in options:
+            translated = tr(loc_key)
+            if translated == loc_key:
+                fallbacks = {
+                    "library.filter_no_cover": "No cover",
+                    "library.filter_no_author": "No author",
+                    "library.filter_no_narrator": "No narrator"
+                }
+                translated = fallbacks.get(loc_key, loc_key)
+                
+            action = menu.addAction(translated)
+            action.setCheckable(True)
+            action.setChecked(filter_key == current)
+            action.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+            
+        menu.addSeparator()
+        
+        # "Without language" option
+        translated_none = tr("library.language_none")
+        if translated_none == "library.language_none":
+            translated_none = "Without Language"
+        act_none = menu.addAction(translated_none)
+        act_none.setCheckable(True)
+        act_none.setChecked(current == "lang:none")
+        act_none.triggered.connect(lambda checked: self._on_meta_filter_selected("lang:none"))
+        
+        # List of unique languages
+        langs = self.get_available_languages()
+        if langs:
+            for lang in langs:
+                filter_key = f"lang:{lang}"
+                action = menu.addAction(lang)
+                action.setCheckable(True)
+                action.setChecked(filter_key == current)
+                action.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+            
+        global_pos = self.btn_meta_filter_arrow.mapToGlobal(QPoint(0, self.btn_meta_filter_arrow.height()))
+        menu.exec(global_pos)
+
+    def _on_meta_filter_selected(self, filter_key):
+        self.current_meta_filter = filter_key
+        self.is_meta_filter_active = True
+        if hasattr(self, "btn_meta_filter"):
+            self.btn_meta_filter.setChecked(True)
+        self.load_audiobooks(use_cache=True)
+
+    def _matches_meta_filter(self, item_data) -> bool:
+        """Check if an item matches the active metadata/language filter requirements"""
+        if not self.is_meta_filter_active:
+            return True
+            
+        if item_data.get("is_folder"):
+            return True
+            
+        if self.current_meta_filter == "no_cover":
+            cover_p_str = item_data.get("cached_cover_path") or item_data.get("cover_path")
+            has_cover = False
+            if cover_p_str:
+                try:
+                    cover_p = Path(cover_p_str)
+                    if not cover_p.is_absolute() and self.config.get("default_path"):
+                        cover_p = Path(self.config.get("default_path")) / cover_p
+                    if cover_p.exists():
+                        has_cover = True
+                except Exception:
+                    pass
+            return not has_cover
+            
+        elif self.current_meta_filter == "no_author":
+            author = item_data.get("author")
+            is_empty_author = (
+                not author
+                or not author.strip()
+                or author.strip() == "(unknown author)"
+                or author.strip() == "(неизвестный автор)"
+                or author.strip() == tr("scanner.unknown_author")
+            )
+            return is_empty_author
+            
+        elif self.current_meta_filter == "no_narrator":
+            narrator = item_data.get("narrator")
+            is_empty_narrator = (
+                not narrator
+                or not narrator.strip()
+                or narrator.strip().lower() in ("(unknown narrator)", "(неизвестный чтец)", "(без чтеца)")
+            )
+            return is_empty_narrator
+
+        elif self.current_meta_filter == "lang:none":
+            lang = item_data.get("language")
+            return not (lang and lang.strip())
+
+        elif self.current_meta_filter.startswith("lang:"):
+            target_lang = self.current_meta_filter[5:]
+            lang = item_data.get("language")
+            if not lang or not lang.strip():
+                return False
+            return lang.strip().lower() == target_lang.lower()
+            
+        return True
+
+    def get_available_languages(self):
+        """Scan cached library for unique book languages"""
+        langs = set()
+        if self.cached_library_data:
+            for parent_path, items in self.cached_library_data.items():
+                for item in items:
+                    if not item.get("is_folder"):
+                        lang = item.get("language")
+                        if lang and lang.strip():
+                            langs.add(lang.strip())
+        # Sort case-insensitively
+        return sorted(list(langs), key=lambda s: s.lower())
 
     def show_mass_select_menu(self):
         """Display a popup menu for mass selection actions (select all, deselect all)"""

@@ -111,6 +111,13 @@
     "no_tags_available": "No tags available",
     "tooltip_favorites": "Show only favorite books",
     "tooltip_tags": "Filter by tags",
+    "tooltip_filter_metadata": "Filter by metadata",
+    "tooltip_filter_language": "Filter by Language",
+    "language_all": "All Languages",
+    "language_none": "Without Language",
+    "filter_no_cover": "No cover",
+    "filter_no_author": "No author",
+    "filter_no_narrator": "No narrator",
     "sort_by_year_written": "Writing date",
     "sort_by_year_recorded": "Recording date",
     "sort_by_language": "Language"

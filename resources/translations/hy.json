@@ -111,9 +111,16 @@
     "sort_by_progress": "Ընթերցման առաջընթաց",
     "tooltip_sort_field": "Սորտավորել ըստ...",
     "delete_from_disk_checkbox": "Նաև ջնջել աուդիոգրքի ֆայլերը սկավառակից",
-    "sort_by_year_written": "Writing date",
-    "sort_by_year_recorded": "Recording date",
-    "sort_by_language": "Language"
+    "sort_by_year_written": "Գրման տարեթիվ",
+    "sort_by_year_recorded": "Ձայնագրման տարեթիվ",
+    "sort_by_language": "Լեզու",
+    "tooltip_filter_metadata": "Ֆիլտրել ըստ մետատվյալների",
+    "filter_no_cover": "Առանց կազմի",
+    "filter_no_author": "Առանց հեղինակի",
+    "filter_no_narrator": "Առանց ընթերցողի",
+    "tooltip_filter_language": "Ֆիลտրել ըստ լեզվի",
+    "language_all": "Բոլոր լեզուները",
+    "language_none": "Առանց լեզվի"
   },
   "player": {
     "volume": "Ձայնի ուժգնություն",
@@ -214,7 +221,7 @@
     "browse": "Ընտրել...",
     "scan_group": "Գրադարանի թարմացում",
     "scan_button": "Սկանավորել գրադարանը",
-    "force_rescan": "Force rescan (bypass cache and clear cover art folder)",
+    "force_rescan": "Ստիպողաբար վերասկանավորել (անտեսել քեշը և մաքրել կազմերի թղթապանակը)",
     "scan_info": "Սկանավորումը կթարմացնի նշված թղթապանակում առկա բոլոր աուդիոգրքերի ցանկը",
     "save": "Պահպանել",
     "choose_directory": "Ընտրել թղթապանակը",

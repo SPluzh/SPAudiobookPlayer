@@ -25,16 +25,16 @@ def set_icon_color(color_hex: str):
     """Set the global icon color and clear cache if needed"""
     global ICON_COLOR
     ICON_COLOR = color_hex
-    get_colored_svg_icon.cache_clear()
+    get_colored_svg_pixmap.cache_clear()
 
 def set_icon_stroke_width(width: float):
     """Set the global icon stroke width and clear cache if needed"""
     global ICON_STROKE_WIDTH
     ICON_STROKE_WIDTH = width
-    get_colored_svg_icon.cache_clear()
+    get_colored_svg_pixmap.cache_clear()
 
 @lru_cache(maxsize=512)
-def get_colored_svg_icon(path_str: str, color_hex: str, stroke_width: float) -> QIcon:
+def get_colored_svg_pixmap(path_str: str, color_hex: str, stroke_width: float) -> QPixmap:
     """Load, recolor and render SVG icon using QSvgRenderer at 64x64 for high quality scaling"""
     import re
     from PyQt6.QtSvg import QSvgRenderer
@@ -61,18 +61,25 @@ def get_colored_svg_icon(path_str: str, color_hex: str, stroke_width: float) -> 
         renderer.render(painter)
         painter.end()
         
-        return QIcon(pixmap)
+        return pixmap
     except Exception as e:
-        print(f"Error rendering SVG icon {path_str}: {e}")
-        return QIcon(path_str)
+        print(f"Error rendering SVG pixmap {path_str}: {e}")
+        return None
 
-def get_icon(name: str, icons_dir: Path = None) -> QIcon:
+def get_colored_svg_icon(path_str: str, color_hex: str, stroke_width: float) -> QIcon:
+    pixmap = get_colored_svg_pixmap(path_str, color_hex, stroke_width)
+    if pixmap:
+        return QIcon(pixmap)
+    return QIcon(path_str)
+
+def get_icon(name: str, icons_dir: Path = None, active_color: str = None) -> QIcon:
     """
     Load an icon by name from the specified or default icons directory
     
     Args:
         name: Icon name (without extension)
         icons_dir: Path to the icons folder (defaults to ./resources/icons)
+        active_color: Optional hex color for State.On (checked) state
     
     Returns:
         QIcon or an empty icon if not found
@@ -83,7 +90,24 @@ def get_icon(name: str, icons_dir: Path = None) -> QIcon:
     # SVG has priority
     svg_path = icons_dir / f"{name}.svg"
     if svg_path.exists():
-        return get_colored_svg_icon(str(svg_path), ICON_COLOR, ICON_STROKE_WIDTH)
+        if active_color:
+            icon = QIcon()
+            # Render normal/off state
+            pixmap_off = get_colored_svg_pixmap(str(svg_path), ICON_COLOR, ICON_STROKE_WIDTH)
+            if pixmap_off:
+                icon.addPixmap(pixmap_off, QIcon.Mode.Normal, QIcon.State.Off)
+                icon.addPixmap(pixmap_off, QIcon.Mode.Active, QIcon.State.Off)
+                icon.addPixmap(pixmap_off, QIcon.Mode.Selected, QIcon.State.Off)
+            
+            # Render checked/on state
+            pixmap_on = get_colored_svg_pixmap(str(svg_path), active_color, ICON_STROKE_WIDTH)
+            if pixmap_on:
+                icon.addPixmap(pixmap_on, QIcon.Mode.Normal, QIcon.State.On)
+                icon.addPixmap(pixmap_on, QIcon.Mode.Active, QIcon.State.On)
+                icon.addPixmap(pixmap_on, QIcon.Mode.Selected, QIcon.State.On)
+            return icon
+        else:
+            return get_colored_svg_icon(str(svg_path), ICON_COLOR, ICON_STROKE_WIDTH)
         
     # Fallback to other formats
     for ext in ['.png', '.ico']:

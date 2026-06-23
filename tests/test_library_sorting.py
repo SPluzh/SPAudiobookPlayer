@@ -633,6 +633,187 @@ def test_library_sorting_books_inside_folders():
     assert child_paths == ["folder_parent/book_2020", "folder_parent/book_2010"]
 
 
+def test_library_metadata_filtering():
+    # Ensure QApplication is initialized
+    app = QApplication.instance() or QApplication([])
+    from unittest.mock import patch
+
+    def make_mock_book(id_, path, author, narrator, cover_path, cached_cover_path):
+        return {
+            "id": id_,
+            "path": path,
+            "name": f"Book {id_}",
+            "title": f"Book {id_}",
+            "author": author,
+            "narrator": narrator,
+            "time_added": 100.0,
+            "is_folder": False,
+            "file_count": 1,
+            "duration": 1000,
+            "listened_duration": 0,
+            "progress_percent": 0.0,
+            "codec": "mp3",
+            "bitrate_min": 128,
+            "bitrate_max": 128,
+            "bitrate_mode": "cbr",
+            "container": "mp3",
+            "description": "",
+            "total_size": 1000000,
+            "is_started": False,
+            "is_completed": False,
+            "is_favorite": False,
+            "cover_path": cover_path,
+            "cached_cover_path": cached_cover_path,
+        }
+
+    books = [
+        # Book 1: Complete metadata & cover
+        make_mock_book(1, "path/1", "Author A", "Narrator A", "cover.jpg", "cover_cached.jpg"),
+        # Book 2: Missing cover
+        make_mock_book(2, "path/2", "Author B", "Narrator B", "", ""),
+        # Book 3: Missing author
+        make_mock_book(3, "path/3", "", "Narrator C", "cover.jpg", "cover_cached.jpg"),
+        # Book 4: Missing narrator
+        make_mock_book(4, "path/4", "Author D", "", "cover.jpg", "cover_cached.jpg"),
+        # Book 5: Russian unknown author
+        make_mock_book(5, "path/5", "(неизвестный автор)", "Narrator E", "cover.jpg", "cover_cached.jpg"),
+    ]
+
+    db_manager = MagicMock()
+    db_manager.get_all_tags.return_value = []
+    db_manager.get_all_audiobook_tags.return_value = {}
+    db_manager.get_audiobook_count.return_value = 5
+    db_manager.load_audiobooks_from_db.return_value = {"": books}
+
+    config = {
+        "sort_orders": {"all": "asc"},
+        "sort_fields": {"all": "name"}
+    }
+
+    widget = LibraryWidget(db_manager=db_manager, config=config)
+    widget.show_folders = False
+
+    with patch("pathlib.Path.exists", return_value=True):
+        # --- Test 1: No cover filter active ---
+        widget.current_meta_filter = "no_cover"
+        widget.is_meta_filter_active = True
+        widget.load_audiobooks(use_cache=False)
+
+        root = widget.tree.invisibleRootItem()
+        items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+        # Book 2 has no cover path at all, so it should match
+        assert "path/2" in items
+        assert "path/1" not in items
+
+        # --- Test 2: No author filter active ---
+        widget.current_meta_filter = "no_author"
+        widget.is_meta_filter_active = True
+        widget.load_audiobooks(use_cache=True)
+
+        root = widget.tree.invisibleRootItem()
+        items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+        # Book 3 (empty author) and Book 5 (unknown Russian author) should be listed
+        assert "path/3" in items
+        assert "path/5" in items
+        assert "path/1" not in items
+
+        # --- Test 3: No narrator filter active ---
+        widget.current_meta_filter = "no_narrator"
+        widget.is_meta_filter_active = True
+        widget.load_audiobooks(use_cache=True)
+
+        root = widget.tree.invisibleRootItem()
+        items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+        # Book 4 (empty narrator) should be listed
+        assert "path/4" in items
+        assert "path/1" not in items
+
+
+def test_library_language_filtering():
+    # Ensure QApplication is initialized
+    app = QApplication.instance() or QApplication([])
+
+    def make_mock_book(id_, path, language):
+        return {
+            "id": id_,
+            "path": path,
+            "name": f"Book {id_}",
+            "title": f"Book {id_}",
+            "author": "Author A",
+            "narrator": "Narrator A",
+            "time_added": 100.0,
+            "is_folder": False,
+            "file_count": 1,
+            "duration": 1000,
+            "listened_duration": 0,
+            "progress_percent": 0.0,
+            "codec": "mp3",
+            "bitrate_min": 128,
+            "bitrate_max": 128,
+            "bitrate_mode": "cbr",
+            "container": "mp3",
+            "description": "",
+            "total_size": 1000000,
+            "is_started": False,
+            "is_completed": False,
+            "is_favorite": False,
+            "language": language,
+        }
+
+    books = [
+        # Book 1: English
+        make_mock_book(1, "path/1", "English"),
+        # Book 2: Russian
+        make_mock_book(2, "path/2", "Russian"),
+        # Book 3: No language (empty)
+        make_mock_book(3, "path/3", ""),
+        # Book 4: No language (None)
+        make_mock_book(4, "path/4", None),
+    ]
+
+    db_manager = MagicMock()
+    db_manager.get_all_tags.return_value = []
+    db_manager.get_all_audiobook_tags.return_value = {}
+    db_manager.get_audiobook_count.return_value = 4
+    db_manager.load_audiobooks_from_db.return_value = {"": books}
+
+    config = {
+        "sort_orders": {"all": "asc"},
+        "sort_fields": {"all": "name"}
+    }
+
+    widget = LibraryWidget(db_manager=db_manager, config=config)
+    widget.show_folders = False
+
+    # --- Test 1: Language filter for "English" ---
+    widget.current_meta_filter = "lang:English"
+    widget.is_meta_filter_active = True
+    widget.load_audiobooks(use_cache=False)
+
+    root = widget.tree.invisibleRootItem()
+    items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+    assert items == ["path/1"]
+
+    # --- Test 2: Language filter for "none" (without language) ---
+    widget.current_meta_filter = "lang:none"
+    widget.is_meta_filter_active = True
+    widget.load_audiobooks(use_cache=True)
+
+    root = widget.tree.invisibleRootItem()
+    items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+    assert sorted(items) == ["path/3", "path/4"]
+
+    # --- Test 3: Language filter inactive ---
+    widget.is_meta_filter_active = False
+    widget.load_audiobooks(use_cache=True)
+
+    root = widget.tree.invisibleRootItem()
+    items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+    assert len(items) == 4
+
+
+
+
 
 
 

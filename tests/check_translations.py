@@ -59,10 +59,47 @@ def flatten_dict(d, parent_key='', sep='.'):
             items.append((new_key, v))
     return dict(items)
 
+def is_naturally_identical(key, value):
+    """Check if the value is allowed/expected to be identical to the English reference."""
+    # 1. Format-only strings, or strings with purely placeholders/symbols/acronyms
+    # If the string doesn't contain alphabetical chars, it's fine
+    if not any(c.isalpha() for c in value):
+        return True
+    
+    # 2. Whitelist of key prefixes
+    if key.startswith("formats.") or key.startswith("delegate.") or key.startswith("units."):
+        return True
+    
+    # 3. Known technical terms/acronyms/names/identical-words that remain the same across languages
+    technical_words = {
+        "sp", "audiobook", "player", "deesser", "mono", "compressor", "github", "mutagen",
+        "ffprobe", "jpg", "jpeg", "png", "webp", "bmp", "vad", "rnnoise", "cue", "m3u", "m3u8", "id3",
+        "ar", "ds", "rg", "lv", "st", "preset", "audiobooks", "volume", "pitch", "ns", "tags", "menu", "kbps",
+        "color", "error", "pause", "database", "path", "bitrate", "april", "september", "november", "retro", "streaming", "default",
+        "cover", "parsing", "update", "ffmpeg", "version", "august"
+    }
+    
+    cleaned = value.lower()
+    # Remove placeholders like {author}, {title}, etc.
+    cleaned = re.sub(r'\{[^}]+\}', '', cleaned)
+    # Remove non-alphabetic chars except spaces
+    cleaned = re.sub(r'[^a-z\s]', ' ', cleaned)
+    words = [w for w in cleaned.split() if w]
+    
+    # If no words remain (e.g. only placeholders and punctuation), it is naturally identical
+    if not words:
+        return True
+        
+    # If all words are either in the technical/names list or short (3 letters or less), it's allowed to be identical
+    if all(w in technical_words or len(w) <= 3 for w in words):
+        return True
+        
+    return False
+
 def check_all_translations(project_root):
     """
     Performs full integrity check on translation files.
-    Returns the total number of missing keys across all languages.
+    Returns the total number of missing or untranslated keys across all languages.
     """
     translations_dir = Path(project_root) / 'resources' / 'translations'
     
@@ -85,9 +122,11 @@ def check_all_translations(project_root):
     # Load English as reference if available
     en_file = translations_dir / "en.json"
     en_keys = set()
+    en_flat = {}
     if en_file.exists():
         en_data = load_json(en_file)
-        en_keys = set(flatten_dict(en_data).keys())
+        en_flat = flatten_dict(en_data)
+        en_keys = set(en_flat.keys())
         # Remove metadata keys
         if "language_name" in en_keys: en_keys.remove("language_name")
         print(f"Loaded English reference: {len(en_keys)} keys.")
@@ -121,26 +160,44 @@ def check_all_translations(project_root):
                     if k not in missing_in_file_from_code:
                         missing_in_file_from_en.append(k)
 
+        # C. Check for untranslated keys (matching English exactly)
+        untranslated_keys = []
+        if lang_code != "en" and en_flat:
+            for k, v in file_keys_flat.items():
+                if k in en_flat and v == en_flat[k]:
+                    if not is_naturally_identical(k, v):
+                        untranslated_keys.append(k)
+
         # Report
+        has_errors = False
         if missing_in_file_from_code:
             print(f"  !! Missing {len(missing_in_file_from_code)} keys used in CODE:")
             for k in missing_in_file_from_code:
                 print(f"     - {k}")
             total_missing += len(missing_in_file_from_code)
+            has_errors = True
             
         if missing_in_file_from_en:
             print(f"  !! Missing {len(missing_in_file_from_en)} keys present in ENGLISH but not here:")
             for k in missing_in_file_from_en:
                 print(f"     - {k}")
             total_missing += len(missing_in_file_from_en)
+            has_errors = True
 
-        if not missing_in_file_from_code and not missing_in_file_from_en:
+        if untranslated_keys:
+            print(f"  !! Found {len(untranslated_keys)} untranslated keys matching English:")
+            for k in untranslated_keys:
+                print(f"     - {k}: \"{en_flat[k]}\"")
+            total_missing += len(untranslated_keys)
+            has_errors = True
+
+        if not has_errors:
              print("  OK.")
 
     if total_missing == 0:
         print("\n[SUCCESS] All languages are valid and complete!")
     else:
-        print(f"\n[WARNING] Found {total_missing} missing translations in total.")
+        print(f"\n[WARNING] Found {total_missing} missing or untranslated keys in total.")
         
     return total_missing
 

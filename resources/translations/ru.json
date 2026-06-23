@@ -111,6 +111,13 @@
     "no_tags_available": "Нет доступных тегов",
     "tooltip_favorites": "Показать только избранные книги",
     "tooltip_tags": "Фильтр по тегам",
+    "tooltip_filter_metadata": "Фильтр по метаданным",
+    "tooltip_filter_language": "Фильтр по языку",
+    "language_all": "Все языки",
+    "language_none": "Без языка",
+    "filter_no_cover": "Без обложки",
+    "filter_no_author": "Без автора",
+    "filter_no_narrator": "Без чтеца",
     "sort_by_year_written": "Дата написания",
     "sort_by_year_recorded": "Дата озвучания",
     "sort_by_language": "Язык"

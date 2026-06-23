@@ -353,6 +353,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 "ffprobe_path": self.ffprobe_path,
                 "tag_filter_active": self.tag_filter_active,
                 "tag_filter_ids": self.tag_filter_ids,
+                "meta_filter_active": self.meta_filter_active,
+                "current_meta_filter": self.current_meta_filter,
                 "filter_mode": self.library_filter_mode,
                 "favorites_active": self.library_favorites_active,
                 "sort_orders": self.library_sort_orders,
@@ -1164,6 +1166,12 @@ class AudiobookPlayerWindow(QMainWindow):
         self.tag_filter_active = config.getboolean(
             "Library", "tag_filter_active", fallback=False
         )
+        self.meta_filter_active = config.getboolean(
+            "Library", "meta_filter_active", fallback=False
+        )
+        self.current_meta_filter = config.get(
+            "Library", "current_meta_filter", fallback="no_cover"
+        )
         tag_ids_str = config.get("Library", "tag_filter_ids", fallback="")
         self.tag_filter_ids = set()
         if tag_ids_str:
@@ -1417,6 +1425,10 @@ class AudiobookPlayerWindow(QMainWindow):
             config["Library"]["tag_filter_active"] = str(
                 self.library_widget.is_tag_filter_active
             )
+            config["Library"]["meta_filter_active"] = str(
+                self.library_widget.is_meta_filter_active
+            )
+            config["Library"]["current_meta_filter"] = self.library_widget.current_meta_filter
             if self.library_widget.tag_filter_ids:
                 config["Library"]["tag_filter_ids"] = ",".join(
                     map(str, self.library_widget.tag_filter_ids)
