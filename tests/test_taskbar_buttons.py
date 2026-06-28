@@ -16,7 +16,7 @@ class TaskbarPreviewWindow(QMainWindow):
         
         self.taskbar_progress = TaskbarProgress()
         self.thumbnail_buttons = None
-        self.icons_dir = Path(__file__).parent / 'resources' / 'icons'
+        self.icons_dir = Path(__file__).parent.parent / 'src' / 'resources' / 'icons'
         
         btn = QPushButton("Добавить кнопки", self)
         btn.setGeometry(100, 80, 200, 40)

@@ -30,7 +30,7 @@ def merge_dicts(source, target):
     return source
 
 def main():
-    translations_dir = Path(__file__).resolve().parent.parent / 'resources' / 'translations'
+    translations_dir = Path(__file__).resolve().parent.parent / 'src' / 'resources' / 'translations'
     en_path = translations_dir / 'en.json'
     
     with open(en_path, 'r', encoding='utf-8') as f:

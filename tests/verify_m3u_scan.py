@@ -6,12 +6,12 @@ import sqlite3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 import configparser
 
 cfg = configparser.ConfigParser()
-cfg.read("resources/settings.ini", encoding="utf-8")
-db_path = cfg.get("Paths", "database", fallback="data/audiobooks.db")
+cfg.read("src/resources/settings.ini", encoding="utf-8")
+db_path = cfg.get("Paths", "database", fallback="src/data/audiobooks.db")
 
 conn = sqlite3.connect(db_path)
 conn.row_factory = sqlite3.Row

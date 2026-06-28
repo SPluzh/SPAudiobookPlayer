@@ -6,10 +6,10 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Mock or use actual DatabaseManager
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 from database import DatabaseManager
 
-db_path = Path(__file__).resolve().parent.parent / "data" / "audiobooks.db"
+db_path = Path(__file__).resolve().parent.parent / "src" / "data" / "audiobooks.db"
 db = DatabaseManager(db_path)
 
 # Let's mock the sorting key and sort behavior from library.py

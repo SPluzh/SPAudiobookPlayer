@@ -1,6 +1,6 @@
 @echo off
 pushd "%~dp0"
-python convert_icons.py "..\resources\icons"
+python convert_icons.py "..\src\resources\icons"
 if %errorlevel% neq 0 (
     echo Error occurred during conversion.
     pause

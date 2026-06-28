@@ -25,7 +25,7 @@ def safe_print(text):
             print(text.encode('ascii', 'replace').decode('ascii'))
 
 # Add project root to path if not already there
-project_root = str(Path(__file__).parent.parent)
+project_root = str(Path(__file__).parent.parent / "src")
 if project_root not in sys.path:
     sys.path.append(project_root)
 

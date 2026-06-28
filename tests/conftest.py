@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 
 # Add project root to path so we can import modules
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 @pytest.fixture
 def temp_dir():

@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 # Добавляем корень проекта в пути
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from scanner import AudiobookScanner
 from database import init_database

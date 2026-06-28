@@ -682,7 +682,7 @@ def test_appearance_dialog_color_hex_inputs_width_and_style():
 
     # 2. Check style.qss contains all object names so they get compact padding
     import os
-    qss_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resources", "styles", "style.qss")
+    qss_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src", "resources", "styles", "style.qss")
     if os.path.exists(qss_path):
         with open(qss_path, "r", encoding="utf-8") as f:
             content = f.read()

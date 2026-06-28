@@ -101,7 +101,7 @@ def check_all_translations(project_root):
     Performs full integrity check on translation files.
     Returns the total number of missing or untranslated keys across all languages.
     """
-    translations_dir = Path(project_root) / 'resources' / 'translations'
+    translations_dir = Path(project_root) / 'src' / 'resources' / 'translations'
     
     print(f"Project root: {project_root}")
     print(f"Translations dir: {translations_dir}")

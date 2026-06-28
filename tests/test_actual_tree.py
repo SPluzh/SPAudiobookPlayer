@@ -6,14 +6,14 @@ from PyQt6.QtCore import Qt
 sys.stdout.reconfigure(encoding='utf-8')
 
 project_root = Path(__file__).parent.parent
-sys.path.append(str(project_root))
+sys.path.append(str(project_root / "src"))
 
 from database import DatabaseManager
 from library import LibraryWidget
 
 app = QApplication([])
 
-db_path = project_root / "data" / "audiobooks.db"
+db_path = project_root / "src" / "data" / "audiobooks.db"
 db = DatabaseManager(db_path)
 
 config = {

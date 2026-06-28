@@ -8,7 +8,7 @@ echo ==================================================
 
 set "DIST_DIR=dist\SP Audiobook Player"
 set "VERSION_FILE=dist\SP Audiobook Player\_internal\resources\version.txt"
-if not exist "%VERSION_FILE%" set "VERSION_FILE=..\resources\version.txt"
+if not exist "%VERSION_FILE%" set "VERSION_FILE=..\src\resources\version.txt"
 
 if not exist "!DIST_DIR!" (
     echo [ERROR] Distribution directory not found: !DIST_DIR!

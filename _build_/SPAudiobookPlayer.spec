@@ -3,21 +3,21 @@
 block_cipher = None
 
 a = Analysis(
-    ['../main.py'],
-    pathex=['..'],
+    ['../src/main.py'],
+    pathex=['../src'],
     binaries=[
-        ('../resources/bin/*.dll', 'resources/bin'),
-        ('../resources/bin/*.exe', 'resources/bin'),
+        ('../src/resources/bin/*.dll', 'resources/bin'),
+        ('../src/resources/bin/*.exe', 'resources/bin'),
     ],
     datas=[
-        ('../resources/styles/*.qss', 'resources/styles'),
-        ('../resources/version.txt', 'resources'),
+        ('../src/resources/styles/*.qss', 'resources/styles'),
+        ('../src/resources/version.txt', 'resources'),
         # --- Translations ---
-        ('../resources/translations/*.json', 'resources/translations'),
+        ('../src/resources/translations/*.json', 'resources/translations'),
         # --- icons ---
-        ('../resources/icons/*.png', 'resources/icons'),
-        ('../resources/icons/*.ico', 'resources/icons'),
-        ('../resources/icons/*.svg', 'resources/icons'),
+        ('../src/resources/icons/*.png', 'resources/icons'),
+        ('../src/resources/icons/*.ico', 'resources/icons'),
+        ('../src/resources/icons/*.svg', 'resources/icons'),
     ],
     hiddenimports=[
         'scanner',
@@ -85,7 +85,7 @@ exe = EXE(
     strip=False,
     upx=False,
     console=False,
-    icon='../resources/icons/app_icon.ico',
+    icon='../src/resources/icons/app_icon.ico',
 )
 
 coll = COLLECT(

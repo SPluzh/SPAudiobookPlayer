@@ -7,7 +7,7 @@
     pytest tests/test_lang_detector.py -v -k "arabic"
 """
 import sys, os, pytest
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
 from lang_detector import detect, detect_detailed, DetectResult, SUPPORTED_LANGUAGES
 
