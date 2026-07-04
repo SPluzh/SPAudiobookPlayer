@@ -235,7 +235,8 @@
     "auto_update_info": "If enabled, the application will automatically check for new versions on GitHub every time it starts.",
     "opus_workers_label": "Parallel workers:",
     "opus_workers_auto": "Auto",
-    "opus_workers_tooltip": "Number of parallel encoding threads. Higher values speed up encoding but consume more CPU/disk resources. Set to 0 (Auto) to detect automatically."
+    "opus_workers_tooltip": "Number of parallel encoding threads. Higher values speed up encoding but consume more CPU/disk resources. Set to 0 (Auto) to detect automatically.",
+    "opus_group": "Opus Conversion"
   },
   "dialog": {
     "restart_title": "Language Change",

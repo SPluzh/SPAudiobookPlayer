@@ -217,7 +217,8 @@
     "auto_update_info": "如果启用，应用程序将在每次启动时自动检查 GitHub 上的新版本。",
     "opus_workers_label": "并行线程数:",
     "opus_workers_auto": "自动",
-    "opus_workers_tooltip": "并行编码线程数。较高的值可以加快编码速度，但会消耗更多的 CPU 和磁盘资源。设置为 0 (自动) 可自动检测。"
+    "opus_workers_tooltip": "并行编码线程数。较高的值可以加快编码速度，但会消耗更多的 CPU 和磁盘资源。设置为 0 (自动) 可自动检测。",
+    "opus_group": "Opus 转换"
   },
   "dialog": {
     "restart_title": "更改语言",

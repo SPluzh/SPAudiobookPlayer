@@ -235,7 +235,8 @@
     "auto_update_info": "Nếu bật, ứng dụng sẽ tự động kiểm tra phiên bản mới trên GitHub mỗi khi khởi động.",
     "opus_workers_label": "Số luồng song song:",
     "opus_workers_auto": "Tự động",
-    "opus_workers_tooltip": "Số luồng mã hóa song song. Giá trị cao hơn sẽ tăng tốc độ mã hóa nhưng tiêu tốn nhiều tài nguyên CPU và đĩa hơn. Đặt thành 0 (Tự động) để tự động phát hiện."
+    "opus_workers_tooltip": "Số luồng mã hóa song song. Giá trị cao hơn sẽ tăng tốc độ mã hóa nhưng tiêu tốn nhiều tài nguyên CPU và đĩa hơn. Đặt thành 0 (Tự động) để tự động phát hiện.",
+    "opus_group": "Chuyển đổi sang Opus"
   },
   "dialog": {
     "restart_title": "Thay đổi ngôn ngữ",

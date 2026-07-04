@@ -235,7 +235,8 @@
     "auto_update_info": "Jika diaktifkan, aplikasi akan secara otomatis memeriksa versi baru di GitHub setiap kali dijalankan.",
     "opus_workers_label": "Utas paralel:",
     "opus_workers_auto": "Otomatis",
-    "opus_workers_tooltip": "Jumlah utas encoding paralel. Nilai yang lebih tinggi mempercepat encoding tetapi mengonsumsi lebih banyak sumber daya CPU/disk. Setel ke 0 (Otomatis) untuk mendeteksi secara otomatis."
+    "opus_workers_tooltip": "Jumlah utas encoding paralel. Nilai yang lebih tinggi mempercepat encoding tetapi mengonsumsi lebih banyak sumber daya CPU/disk. Setel ke 0 (Otomatis) untuk mendeteksi secara otomatis.",
+    "opus_group": "Konversi Opus"
   },
   "dialog": {
     "restart_title": "Perubahan Bahasa",

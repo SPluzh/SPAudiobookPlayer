@@ -182,6 +182,10 @@ class SettingsDialog(QDialog):
         
         content_layout.addLayout(left_layout, 3)
 
+        # Right layout for columns
+        right_layout = QVBoxLayout()
+        right_layout.setSpacing(20)
+
         # Utilities and Tools
         tools_group = QGroupBox(tr("settings.tools_group"))
         tools_layout = QVBoxLayout(tools_group)
@@ -194,40 +198,6 @@ class SettingsDialog(QDialog):
         tools_info.setWordWrap(True)
         tools_info.setObjectName("infoLabelSmall")
         tools_layout.addWidget(tools_info)
-
-        # Opus Conversion
-        opus_btn = QPushButton(tr("opus_converter.settings_btn"))
-        opus_btn.clicked.connect(self.on_convert_opus)
-        tools_layout.addWidget(opus_btn)
-        
-        opus_info = QLabel(tr("opus_converter.settings_info"))
-        opus_info.setWordWrap(True)
-        opus_info.setObjectName("infoLabelSmall")
-        tools_layout.addWidget(opus_info)
-        
-        # Opus Workers selection
-        workers_layout = QHBoxLayout()
-        self.workers_lbl = QLabel(tr("settings.opus_workers_label"))
-        
-        preset_values = [0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 32]
-        if self.opus_workers not in preset_values:
-            preset_values.append(self.opus_workers)
-            preset_values.sort()
-            
-        self.workers_combo = QComboBox()
-        for val in preset_values:
-            if val == 0:
-                self.workers_combo.addItem(tr("settings.opus_workers_auto"), 0)
-            else:
-                self.workers_combo.addItem(str(val), val)
-                
-        self.workers_combo.setCurrentIndex(self.workers_combo.findData(self.opus_workers))
-        self.workers_combo.setToolTip(tr("settings.opus_workers_tooltip"))
-        
-        workers_layout.addWidget(self.workers_lbl)
-        workers_layout.addWidget(self.workers_combo)
-        workers_layout.addStretch()
-        tools_layout.addLayout(workers_layout)
         
         # Data Reset Configuration
         reset_btn = QPushButton(tr("settings.reset_data_btn"))
@@ -255,8 +225,50 @@ class SettingsDialog(QDialog):
         tools_layout.addWidget(auto_update_info)
         
         tools_layout.addStretch()
+        right_layout.addWidget(tools_group)
+
+        # Opus Conversion Group
+        opus_group = QGroupBox(tr("settings.opus_group"))
+        opus_layout = QVBoxLayout(opus_group)
         
-        content_layout.addWidget(tools_group, 1)
+        opus_btn = QPushButton(tr("opus_converter.settings_btn"))
+        opus_btn.clicked.connect(self.on_convert_opus)
+        opus_layout.addWidget(opus_btn)
+        
+        opus_info = QLabel(tr("opus_converter.settings_info"))
+        opus_info.setWordWrap(True)
+        opus_info.setObjectName("infoLabelSmall")
+        opus_layout.addWidget(opus_info)
+        
+        # Opus Workers selection
+        workers_layout = QHBoxLayout()
+        self.workers_lbl = QLabel(tr("settings.opus_workers_label"))
+        
+        preset_values = [0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 32]
+        if self.opus_workers not in preset_values:
+            preset_values.append(self.opus_workers)
+            preset_values.sort()
+            
+        self.workers_combo = QComboBox()
+        for val in preset_values:
+            if val == 0:
+                self.workers_combo.addItem(tr("settings.opus_workers_auto"), 0)
+            else:
+                self.workers_combo.addItem(str(val), val)
+                
+        self.workers_combo.setCurrentIndex(self.workers_combo.findData(self.opus_workers))
+        self.workers_combo.setToolTip(tr("settings.opus_workers_tooltip"))
+        
+        workers_layout.addWidget(self.workers_lbl)
+        workers_layout.addWidget(self.workers_combo)
+        workers_layout.addStretch()
+        opus_layout.addLayout(workers_layout)
+        
+        opus_layout.addStretch()
+        right_layout.addWidget(opus_group)
+        
+        right_layout.addStretch()
+        content_layout.addLayout(right_layout, 1)
         
         main_layout.addLayout(content_layout)
 

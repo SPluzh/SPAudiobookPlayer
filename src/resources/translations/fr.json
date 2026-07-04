@@ -217,7 +217,8 @@
     "auto_update_info": "Si activé, l'application vérifiera automatiquement les nouvelles versions sur GitHub à chaque démarrage.",
     "opus_workers_label": "Processus parallèles:",
     "opus_workers_auto": "Automatique",
-    "opus_workers_tooltip": "Nombre de threads d'encodage parallèles. Des valeurs plus élevées accélèrent l'encodage mais consomment plus de ressources processeur et disque. Réglez sur 0 (Auto) pour la valeur par défaut."
+    "opus_workers_tooltip": "Nombre de threads d'encodage parallèles. Des valeurs plus élevées accélèrent l'encodage mais consomment plus de ressources processeur et disque. Réglez sur 0 (Auto) pour la valeur par défaut.",
+    "opus_group": "Conversion en Opus"
   },
   "dialog": {
     "restart_title": "Changement de langue",

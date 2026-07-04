@@ -217,7 +217,8 @@
     "auto_update_info": "Falls aktiviert, sucht die Anwendung bei jedem Start automatisch auf GitHub nach neuen Versionen.",
     "opus_workers_label": "Parallele Prozesse:",
     "opus_workers_auto": "Automatisch",
-    "opus_workers_tooltip": "Anzahl der parallelen Codierungsthreads. Höhere Werte beschleunigen die Codierung, verbrauchen aber mehr CPU- und Festplattenressourcen. Auf 0 (Auto) setzen, um den Standardwert zu verwenden."
+    "opus_workers_tooltip": "Anzahl der parallelen Codierungsthreads. Höhere Werte beschleunigen die Codierung, verbrauchen aber mehr CPU- und Festplattenressourcen. Auf 0 (Auto) setzen, um den Standardwert zu verwenden.",
+    "opus_group": "Opus-Konvertierung"
   },
   "dialog": {
     "restart_title": "Sprachänderung",

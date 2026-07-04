@@ -217,7 +217,8 @@
     "auto_update_info": "Etkinleştirilirse, uygulama her başladığında GitHub'da yeni sürümleri otomatik olarak kontrol edecektir.",
     "opus_workers_label": "Paralel çalışanlar:",
     "opus_workers_auto": "Otomatik",
-    "opus_workers_tooltip": "Paralel kodlama iş parçacığı sayısı. Daha yüksek değerler kodlamayı hızlandırır ancak daha fazla CPU ve disk kaynağı tüketir. Otomatik algılama için 0 (Otomatik) olarak ayarlayın."
+    "opus_workers_tooltip": "Paralel kodlama iş parçacığı sayısı. Daha yüksek değerler kodlamayı hızlandırır ancak daha fazla CPU ve disk kaynağı tüketir. Otomatik algılama için 0 (Otomatik) olarak ayarlayın.",
+    "opus_group": "Opus Dönüştürme"
   },
   "dialog": {
     "restart_title": "Dil Değişikliği",

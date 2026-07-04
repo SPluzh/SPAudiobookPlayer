@@ -217,7 +217,8 @@
     "auto_update_info": "Si está activado, la aplicación buscará automáticamente nuevas versiones en GitHub cada vez que se inicie.",
     "opus_workers_label": "Hilos en paralelo:",
     "opus_workers_auto": "Automático",
-    "opus_workers_tooltip": "Número de hilos de codificación paralelos. Valores más altos aceleran la codificación pero consumen más recursos de CPU y disco. Establezca en 0 (Auto) para el valor por defecto."
+    "opus_workers_tooltip": "Número de hilos de codificación paralelos. Valores más altos aceleran la codificación pero consumen más recursos de CPU y disco. Establezca en 0 (Auto) para el valor por defecto.",
+    "opus_group": "Conversión a Opus"
   },
   "dialog": {
     "restart_title": "Cambio de idioma",
