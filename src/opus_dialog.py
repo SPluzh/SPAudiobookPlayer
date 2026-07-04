@@ -24,7 +24,7 @@ class OpusConversionDialog(QDialog):
     # Signal emitted when all conversions are complete
     conversion_complete = pyqtSignal()
     
-    def __init__(self, parent=None, library_path="", library_paths=None, ffmpeg_path="ffmpeg", ffprobe_path="ffprobe"):
+    def __init__(self, parent=None, library_path="", library_paths=None, ffmpeg_path="ffmpeg", ffprobe_path="ffprobe", max_workers=0):
         super().__init__(parent)
         if library_paths:
             self.library_paths = library_paths
@@ -34,6 +34,7 @@ class OpusConversionDialog(QDialog):
             self.library_path = library_path
         self.ffmpeg_path = ffmpeg_path
         self.ffprobe_path = ffprobe_path
+        self.max_workers = max_workers
         self.thread = None
         self._is_converting = False
         
@@ -204,6 +205,7 @@ class OpusConversionDialog(QDialog):
             stereo_strategy=stereo,
             ffmpeg_path=self.ffmpeg_path,
             ffprobe_path=self.ffprobe_path,
+            max_workers=self.max_workers,
             parent=self
         )
         

@@ -232,7 +232,10 @@
     "reset_confirm_title": "Xác nhận đặt lại",
     "reset_confirm_msg": "Thao tác này sẽ xóa toàn bộ cơ sở dữ liệu và ảnh bìa. Tất cả tiến trình sẽ bị mất. Tiếp tục?",
     "auto_update_label": "Kiểm tra cập nhật khi khởi động",
-    "auto_update_info": "Nếu bật, ứng dụng sẽ tự động kiểm tra phiên bản mới trên GitHub mỗi khi khởi động."
+    "auto_update_info": "Nếu bật, ứng dụng sẽ tự động kiểm tra phiên bản mới trên GitHub mỗi khi khởi động.",
+    "opus_workers_label": "Số luồng song song:",
+    "opus_workers_auto": "Tự động",
+    "opus_workers_tooltip": "Số luồng mã hóa song song. Giá trị cao hơn sẽ tăng tốc độ mã hóa nhưng tiêu tốn nhiều tài nguyên CPU và đĩa hơn. Đặt thành 0 (Tự động) để tự động phát hiện."
   },
   "dialog": {
     "restart_title": "Thay đổi ngôn ngữ",

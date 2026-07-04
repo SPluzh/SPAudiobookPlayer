@@ -3925,6 +3925,7 @@ class LibraryWidget(QWidget):
                 library_paths=abs_paths,
                 ffmpeg_path=ffmpeg_str,
                 ffprobe_path=ffprobe_str,
+                max_workers=self.config.get("opus_workers", 0)
             )
             print("[DEBUG] Connecting dialog signals")
             dialog.file_converted.connect(

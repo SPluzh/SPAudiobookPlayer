@@ -214,7 +214,10 @@
     "reset_confirm_title": "초기화 확인",
     "reset_confirm_msg": "데이터베이스와 커버가 모두 삭제됩니다. 모든 진행 상황이 손실됩니다. 계속하시겠습니까?",
     "auto_update_label": "시작 시 업데이트 확인",
-    "auto_update_info": "활성화하면 애플리케이션을 시작할 때마다 GitHub에서 새로운 버전을 자동으로 확인합니다."
+    "auto_update_info": "활성화하면 애플리케이션을 시작할 때마다 GitHub에서 새로운 버전을 자동으로 확인합니다.",
+    "opus_workers_label": "병렬 스레드 수:",
+    "opus_workers_auto": "자동",
+    "opus_workers_tooltip": "병렬 인코딩 스레드 수입니다. 값이 클수록 인코딩 속도가 빨라지지만 CPU 및 디스크 리소스가 더 많이 소모됩니다. 자동으로 감지하려면 0(자동)으로 설정하십시오."
   },
   "dialog": {
     "restart_title": "언어 변경",

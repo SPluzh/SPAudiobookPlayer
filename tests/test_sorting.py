@@ -7,6 +7,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # Mock or use actual DatabaseManager
 sys.path.append(str(Path(__file__).parent.parent / "src"))
+# pyrefly: ignore [missing-import]
 from database import DatabaseManager
 
 db_path = Path(__file__).resolve().parent.parent / "src" / "data" / "audiobooks.db"

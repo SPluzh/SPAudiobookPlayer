@@ -214,7 +214,10 @@
     "reset_confirm_title": "リセットの確認",
     "reset_confirm_msg": "データベースとカバー画像がすべて削除されます。すべての進捗が失われます。続行しますか？",
     "auto_update_label": "起動時にアップデートを確認",
-    "auto_update_info": "有効にすると、アプリケーションの起動時に毎回GitHubを確認し、新しいバージョンがあるかチェックします。"
+    "auto_update_info": "有効にすると、アプリケーションの起動時に毎回GitHubを確認し、新しいバージョンがあるかチェックします。",
+    "opus_workers_label": "並列処理スレッド数:",
+    "opus_workers_auto": "自動",
+    "opus_workers_tooltip": "並列エンコードスレッドの数。値を大きくするとエンコードは高速になりますが、CPUとディスクのリソースをより多く消費します。自動検出するには0（自動）に設定します。"
   },
   "dialog": {
     "restart_title": "言語の変更",

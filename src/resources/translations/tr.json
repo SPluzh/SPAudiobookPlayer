@@ -214,7 +214,10 @@
     "reset_confirm_title": "Sıfırlama Onayı",
     "reset_confirm_msg": "Bu, tüm veritabanını ve kapakları silecektir. Tüm ilerleme kaybolacak. Devam edilsin mi?",
     "auto_update_label": "Başlangıçta güncellemeleri kontrol et",
-    "auto_update_info": "Etkinleştirilirse, uygulama her başladığında GitHub'da yeni sürümleri otomatik olarak kontrol edecektir."
+    "auto_update_info": "Etkinleştirilirse, uygulama her başladığında GitHub'da yeni sürümleri otomatik olarak kontrol edecektir.",
+    "opus_workers_label": "Paralel çalışanlar:",
+    "opus_workers_auto": "Otomatik",
+    "opus_workers_tooltip": "Paralel kodlama iş parçacığı sayısı. Daha yüksek değerler kodlamayı hızlandırır ancak daha fazla CPU ve disk kaynağı tüketir. Otomatik algılama için 0 (Otomatik) olarak ayarlayın."
   },
   "dialog": {
     "restart_title": "Dil Değişikliği",

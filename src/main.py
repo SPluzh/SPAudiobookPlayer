@@ -361,6 +361,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 "sort_fields": self.library_sort_fields,
                 "remember_filter_folders": self.remember_filter_folders,
                 "show_folders_by_filter": self.library_show_folders,
+                "opus_workers": self.opus_workers,
             },
             self.delegate,
             show_folders=self.show_folders,
@@ -1097,6 +1098,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.volume_boost_enabled = config.getboolean("Audio", "volume_boost_enabled", fallback=False)
         self.volume_boost_level = config.getfloat("Audio", "volume_boost_level", fallback=4.0)
 
+        # Opus Workers
+        self.opus_workers = config.getint("Audio", "opus_workers", fallback=0)
+
         # Apply settings
         self.player.set_deesser_preset(self.deesser_preset)
         self.player.set_deesser(self.deesser_enabled)
@@ -1208,7 +1212,8 @@ class AudiobookPlayerWindow(QMainWindow):
             "inherit_parent_cover": "False",
         }
         config["Audio"] = {
-            "extensions": ".mp3,.m4a,.m4b,.mp4,.ogg,.flac,.wav,.aac,.wma,.opus,.ape"
+            "extensions": ".mp3,.m4a,.m4b,.mp4,.ogg,.flac,.wav,.aac,.wma,.opus,.ape",
+            "opus_workers": "0"
         }
         config["Display"] = {
             "window_width": "1200",
@@ -1394,6 +1399,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Audio"]["mono_enabled"] = str(self.mono_enabled)
         config["Audio"]["volume_boost_enabled"] = str(self.player.volume_boost_enabled)
         config["Audio"]["volume_boost_level"] = str(self.player.volume_boost_level)
+        config["Audio"]["opus_workers"] = str(self.opus_workers)
         if "Library" not in config:
             config["Library"] = {}
 
@@ -2542,6 +2548,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.ffprobe_path,
             db_manager=self.db_manager,
             auto_check=self.auto_check_updates,
+            opus_workers=self.opus_workers,
         )
 
         def on_path_saved(new_path):
@@ -2586,12 +2593,19 @@ class AudiobookPlayerWindow(QMainWindow):
             self.auto_check_updates = checked
             self.save_settings()
 
+        def on_opus_workers_changed(workers):
+            self.opus_workers = workers
+            self.save_settings()
+            if hasattr(self, "library_widget"):
+                self.library_widget.config["opus_workers"] = workers
+
         # Connect signals
         dialog.path_saved.connect(on_path_saved)
         dialog.scan_requested.connect(on_scan_requested)
         dialog.data_reset_requested.connect(self.perform_full_reset)
         dialog.opus_convert_requested.connect(on_conversion_complete)
         dialog.auto_update_toggled.connect(on_auto_update_toggled)
+        dialog.opus_workers_changed.connect(on_opus_workers_changed)
 
         dialog.exec()
         self.remove_blur()

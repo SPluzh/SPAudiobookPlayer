@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QGroupBox, QHBoxLayout, QLineEdit, QPushButton,
     QLabel, QFileDialog, QSizePolicy, QTextEdit, QProgressBar, QMessageBox,
-    QCheckBox
+    QCheckBox, QComboBox
 )
 from PyQt6.QtCore import pyqtSignal, QThread
 from PyQt6.QtGui import QFont, QTextCursor
@@ -113,9 +113,10 @@ class SettingsDialog(QDialog):
     data_reset_requested = pyqtSignal()# Request to wipe all local database and covers
     opus_convert_requested = pyqtSignal() # Request to open Opus conversion dialog
     auto_update_toggled = pyqtSignal(bool) # Auto-update check toggled
+    opus_workers_changed = pyqtSignal(int) # Number of parallel encoding threads updated
     closed = pyqtSignal()              # Dialog closed
     
-    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None, auto_check=True):
+    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None, auto_check=True, opus_workers=0):
         """Initialize settings dialog with current configuration values"""
         super().__init__(parent)
         self.setWindowTitle(tr("settings.title"))
@@ -124,6 +125,7 @@ class SettingsDialog(QDialog):
         self.ffprobe_path = ffprobe_path
         self.db_manager = db_manager
         self.auto_check = auto_check
+        self.opus_workers = opus_workers
         self.settings_path_edit = None
         self.auto_update_checkbox = None
         self.init_ui()
@@ -203,6 +205,30 @@ class SettingsDialog(QDialog):
         opus_info.setObjectName("infoLabelSmall")
         tools_layout.addWidget(opus_info)
         
+        # Opus Workers selection
+        workers_layout = QHBoxLayout()
+        self.workers_lbl = QLabel(tr("settings.opus_workers_label"))
+        
+        preset_values = [0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 32]
+        if self.opus_workers not in preset_values:
+            preset_values.append(self.opus_workers)
+            preset_values.sort()
+            
+        self.workers_combo = QComboBox()
+        for val in preset_values:
+            if val == 0:
+                self.workers_combo.addItem(tr("settings.opus_workers_auto"), 0)
+            else:
+                self.workers_combo.addItem(str(val), val)
+                
+        self.workers_combo.setCurrentIndex(self.workers_combo.findData(self.opus_workers))
+        self.workers_combo.setToolTip(tr("settings.opus_workers_tooltip"))
+        
+        workers_layout.addWidget(self.workers_lbl)
+        workers_layout.addWidget(self.workers_combo)
+        workers_layout.addStretch()
+        tools_layout.addLayout(workers_layout)
+        
         # Data Reset Configuration
         reset_btn = QPushButton(tr("settings.reset_data_btn"))
         reset_btn.setObjectName("resetBtn")
@@ -271,6 +297,9 @@ class SettingsDialog(QDialog):
         # Emit auto-update toggled signal
         self.auto_update_toggled.emit(self.auto_update_checkbox.isChecked())
         
+        # Emit opus workers changed signal
+        self.opus_workers_changed.emit(self.workers_combo.currentData())
+        
         self.accept()
     
     def on_scan_requested(self):
@@ -306,7 +335,8 @@ class SettingsDialog(QDialog):
             parent=self,
             library_path=self.current_path,
             ffmpeg_path=str(self.ffprobe_path).replace('ffprobe', 'ffmpeg') if self.ffprobe_path else 'ffmpeg',
-            ffprobe_path=str(self.ffprobe_path) if self.ffprobe_path else 'ffprobe'
+            ffprobe_path=str(self.ffprobe_path) if self.ffprobe_path else 'ffprobe',
+            max_workers=self.workers_combo.currentData()
         )
         # Connect file conversion signal to database update
         if self.db_manager:

@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.14]
+- **Settings**: Added a dropdown to choose how many files are converted at the same time during Opus conversion (with options from 1 to 32 and an Auto setting that automatically selects the optimal number based on your CPU).
+
 ## [1.7.13]
 - **Library**: Added a metadata and language filter menu to show audiobooks without covers, without authors, without narrators, without a language, or with a specific language.
 
