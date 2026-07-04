@@ -38,6 +38,7 @@
     "context_play": "Oynat",
     "menu_edit_metadata": "Meta Veriyi Düzenle",
     "menu_open_folder": "Klasörü Aç",
+    "menu_copy_path": "Yolu kopyala",
     "menu_convert_opus": "Opus'a Dönüştür",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Okundu Olarak İşaretle",

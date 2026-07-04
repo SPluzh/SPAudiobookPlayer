@@ -38,6 +38,7 @@
     "context_play": "चलाएं",
     "menu_edit_metadata": "मेटाडेटा संपादित करें",
     "menu_open_folder": "फ़ोल्डर खोलें",
+    "menu_copy_path": "पथ कॉपी करें",
     "menu_convert_opus": "Opus में बदलें",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "पढ़ा हुआ चिह्नित करें",

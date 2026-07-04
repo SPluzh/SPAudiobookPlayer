@@ -57,6 +57,7 @@
     "context_play": "Նվագարկել",
     "menu_edit_metadata": "Խմբագրել մետատվյալները",
     "menu_open_folder": "Բացել թղթապանակը",
+    "menu_copy_path": "Պատճենել ուղին",
     "menu_convert_opus": "Փոխակերպել Opus-ի",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Նշել որպես լսված",

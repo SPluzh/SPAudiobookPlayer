@@ -59,7 +59,8 @@ MAPPING = {
     "scan": "search",
     "square-check": "square-check",
     "statistics": "chart-pie",
-    "update": "refresh-cw"
+    "update": "refresh-cw",
+    "clipboard-copy": "clipboard-copy",
 }
 
 def download_svg(lucide_name: str) -> str:

@@ -38,6 +38,7 @@
     "context_play": "播放",
     "menu_edit_metadata": "编辑元数据",
     "menu_open_folder": "打开文件夹",
+    "menu_copy_path": "复制路径",
     "menu_convert_opus": "转换为 Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "标记为已读",

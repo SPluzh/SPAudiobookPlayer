@@ -56,6 +56,7 @@
     "context_play": "Phát",
     "menu_edit_metadata": "Sửa siêu dữ liệu",
     "menu_open_folder": "Mở thư mục",
+    "menu_copy_path": "Sao chép đường dẫn",
     "menu_convert_opus": "Chuyển đổi sang Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Đánh dấu là Đã nghe",

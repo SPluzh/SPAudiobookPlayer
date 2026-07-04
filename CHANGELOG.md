@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.15]
+- **Library**: Added a "Copy Path" context menu option to copy audiobook paths to the clipboard (supports copying multiple paths on separate lines).
+
 ## [1.7.14]
 - **Settings**: Added a dropdown to choose how many files are converted at the same time during Opus conversion (with options from 1 to 32 and an Auto setting that automatically selects the optimal number based on your CPU).
 

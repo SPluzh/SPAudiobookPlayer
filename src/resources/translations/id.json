@@ -56,6 +56,7 @@
     "context_play": "Putar",
     "menu_edit_metadata": "Ubah Metadata",
     "menu_open_folder": "Buka Folder",
+    "menu_copy_path": "Salin jalur",
     "menu_convert_opus": "Konversi ke Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Tandai Selesai",

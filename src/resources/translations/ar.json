@@ -38,6 +38,7 @@
     "context_play": "تشغيل",
     "menu_edit_metadata": "تعديل البيانات الوصفية",
     "menu_open_folder": "فتح المجلد",
+    "menu_copy_path": "نسخ المسار",
     "menu_convert_opus": "التحويل إلى Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "تحديد كمقروء",

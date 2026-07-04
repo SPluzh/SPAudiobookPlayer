@@ -38,6 +38,7 @@
     "context_play": "Reproducir",
     "menu_edit_metadata": "Editar metadatos",
     "menu_open_folder": "Abrir carpeta",
+    "menu_copy_path": "Copiar ruta",
     "menu_convert_opus": "Convertir a Opus",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "Marcar como leído",

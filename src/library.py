@@ -29,6 +29,7 @@ from PyQt6.QtWidgets import (
     QStyleOptionViewItem,
     QFrame,
     QCheckBox,
+    QApplication,
 )
 from PyQt6.QtCore import (
     Qt,
@@ -3825,6 +3826,13 @@ class LibraryWidget(QWidget):
                 menu.addAction(edit_metadata_action)
                 menu.addSeparator()
 
+                # Copy Path
+                copy_path_action = QAction(tr("library.menu_copy_path", "Copy Path"), self)
+                copy_path_action.setIcon(get_icon("clipboard-copy"))
+                copy_path_action.triggered.connect(lambda _, p=path: self.copy_paths_to_clipboard(p))
+                menu.addAction(copy_path_action)
+                menu.addSeparator()
+
                 # Open Folder
                 open_folder_action = QAction(tr("library.menu_open_folder"), self)
                 open_folder_action.setIcon(get_icon("context_open_folder"))
@@ -4413,6 +4421,36 @@ class LibraryWidget(QWidget):
                 )
         except Exception as e:
             QMessageBox.critical(self, tr("window.title"), f"Error opening folder: {e}")
+
+    def copy_paths_to_clipboard(self, clicked_path: str):
+        """Copy resolved absolute paths of selected audiobooks to the clipboard"""
+        selected_paths = getattr(self.tree, "selected_audiobook_paths", set())
+        mass_mode = getattr(self.tree, "mass_selection_mode", False)
+        is_batch = mass_mode and clicked_path in selected_paths and len(selected_paths) > 1
+
+        if is_batch:
+            paths_to_copy = list(selected_paths)
+        else:
+            paths_to_copy = [clicked_path]
+
+        library_root = Path(self.config.get("default_path", ""))
+        resolved_paths = []
+        for p in paths_to_copy:
+            abs_p = Path(p) if Path(p).is_absolute() else library_root / p
+            resolved_paths.append(str(abs_p.resolve()))
+
+        # Join paths with a newline
+        clipboard_text = "\n".join(resolved_paths)
+
+        # Copy to clipboard
+        QApplication.clipboard().setText(clipboard_text)
+
+        # Show status feedback
+        window = self.window()
+        if hasattr(window, "statusBar"):
+            window.statusBar().showMessage(
+                trf("status.copy_complete", count=len(resolved_paths))
+            )
 
     def on_item_double_clicked(self, item, column):
         if item.data(0, Qt.ItemDataRole.UserRole + 1) == "audiobook":

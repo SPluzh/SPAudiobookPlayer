@@ -38,6 +38,7 @@
     "context_play": "재생",
     "menu_edit_metadata": "메타데이터 편집",
     "menu_open_folder": "폴더 열기",
+    "menu_copy_path": "경로 복사",
     "menu_convert_opus": "Opus로 변환",
     "audiobook_display": "{author} — {title}",
     "menu_mark_read": "읽음으로 표시",
