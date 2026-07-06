@@ -3673,6 +3673,7 @@ class LibraryWidget(QWidget):
 
                 play_action = QAction(tr("library.context_play"), self)
                 play_action.setIcon(get_icon("context_play"))
+                play_action.setEnabled(not is_batch)
                 play_action.triggered.connect(
                     lambda _: self.on_item_double_clicked(item, 0)
                 )
@@ -3831,11 +3832,11 @@ class LibraryWidget(QWidget):
                 copy_path_action.setIcon(get_icon("clipboard-copy"))
                 copy_path_action.triggered.connect(lambda _, p=path: self.copy_paths_to_clipboard(p))
                 menu.addAction(copy_path_action)
-                menu.addSeparator()
 
                 # Open Folder
                 open_folder_action = QAction(tr("library.menu_open_folder"), self)
                 open_folder_action.setIcon(get_icon("context_open_folder"))
+                open_folder_action.setEnabled(not is_batch)
                 open_folder_action.triggered.connect(lambda _: self.open_folder(path))
                 menu.addAction(open_folder_action)
                 menu.addSeparator()
@@ -3843,6 +3844,7 @@ class LibraryWidget(QWidget):
                 # 4. Delete Action (Last line, single book only)
                 delete_action = QAction(tr("library.menu_delete"), self)
                 delete_action.setIcon(get_icon("delete"))
+                delete_action.setEnabled(not is_batch)
                 delete_action.triggered.connect(
                     lambda _: self.confirm_delete(audiobook_id, path)
                 )

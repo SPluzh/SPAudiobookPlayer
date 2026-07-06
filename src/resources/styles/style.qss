@@ -962,7 +962,11 @@ QMenu::item:selected {
 
 QMenu::item:pressed {
     background-color: @accent-dark;
+}
 
+QMenu::item:disabled {
+    color: @text-disabled;
+    background-color: transparent;
 }
 
 QMenu::separator {

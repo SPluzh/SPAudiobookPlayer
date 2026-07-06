@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.16]
+- **Library**: Disabled single-book actions (Play, Open Folder, Delete) when multiple books are selected.
+
 ## [1.7.15]
 - **Library**: Added a "Copy Path" context menu option to copy audiobook paths to the clipboard (supports copying multiple paths on separate lines).
 
