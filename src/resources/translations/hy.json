@@ -489,7 +489,8 @@
     "check_error": "Թարմացումների ստուգումը ձախողվեց՝ {error}",
     "download_error": "Բեռնումը ձախողվեց",
     "apply_error": "Չհաջողվեց կիրառել թարմացումը",
-    "error": "Թարմացման սխալ՝ {error}"
+    "error": "Թարմացման սխալ՝ {error}",
+    "manual_download_hint": "Դուք կարող եք ձեռքով ստուգել և ներբեռնել թարմացումները՝ <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Լսելու վիճակագրություն",

@@ -489,7 +489,8 @@
     "check_error": "確認に失敗しました: {error}",
     "download_error": "ダウンロードに失敗しました",
     "apply_error": "アップデートの適用に失敗しました",
-    "error": "更新エラー: {error}"
+    "error": "更新エラー: {error}",
+    "manual_download_hint": "手動でアップデートを確認してダウンロードできます: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "リスニング統計",

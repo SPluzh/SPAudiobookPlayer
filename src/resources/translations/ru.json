@@ -489,7 +489,8 @@
     "check_error": "Ошибка проверки обновлений: {error}",
     "download_error": "Ошибка загрузки",
     "apply_error": "Не удалось применить обновление",
-    "error": "Ошибка обновления: {error}"
+    "error": "Ошибка обновления: {error}",
+    "manual_download_hint": "Вы можете проверить и скачать обновления вручную: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Статистика прослушивания",

@@ -489,7 +489,8 @@
     "check_error": "Update-Prüfung fehlgeschlagen: {error}",
     "download_error": "Download fehlgeschlagen",
     "apply_error": "Anwenden des Updates fehlgeschlagen",
-    "error": "Update-Fehler: {error}"
+    "error": "Update-Fehler: {error}",
+    "manual_download_hint": "Sie können Updates manuell überprüfen und herunterladen: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Hörstatistiken",

@@ -489,7 +489,8 @@
     "check_error": "Kiểm tra cập nhật thất bại: {error}",
     "download_error": "Tải xuống thất bại",
     "apply_error": "Không thể áp dụng bản cập nhật",
-    "error": "Lỗi cập nhật: {error}"
+    "error": "Lỗi cập nhật: {error}",
+    "manual_download_hint": "Bạn có thể kiểm tra và tải xuống các bản cập nhật theo cách thủ công: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Thống kê nghe",

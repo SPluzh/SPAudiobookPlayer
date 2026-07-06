@@ -489,7 +489,8 @@
     "check_error": "업데이트 확인 실패: {error}",
     "download_error": "다운로드 실패",
     "apply_error": "업데이트 적용 실패",
-    "error": "업데이트 오류: {error}"
+    "error": "업데이트 오류: {error}",
+    "manual_download_hint": "업데이트를 수동으로 확인하고 다운로드할 수 있습니다: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "청취 통계",

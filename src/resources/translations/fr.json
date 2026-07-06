@@ -489,7 +489,8 @@
     "check_error": "Échec de la vérification : {error}",
     "download_error": "Échec du téléchargement",
     "apply_error": "Échec de l'application de la mise à jour",
-    "error": "Erreur de mise à jour : {error}"
+    "error": "Erreur de mise à jour : {error}",
+    "manual_download_hint": "Vous pouvez vérifier et télécharger les mises à jour manuellement: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Statistiques d'écoute",

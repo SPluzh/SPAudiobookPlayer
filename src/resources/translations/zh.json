@@ -489,7 +489,8 @@
     "check_error": "检查更新失败：{error}",
     "download_error": "下载失败",
     "apply_error": "应用更新失败",
-    "error": "更新错误：{error}"
+    "error": "更新错误：{error}",
+    "manual_download_hint": "您可以手动检查并下载更新：<a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "收听统计",

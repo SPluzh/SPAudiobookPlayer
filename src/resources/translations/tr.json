@@ -489,7 +489,8 @@
     "check_error": "Güncelleme kontrolü başarısız oldu: {error}",
     "download_error": "İndirme başarısız oldu",
     "apply_error": "Güncelleme uygulanamadı",
-    "error": "Güncelleme hatası: {error}"
+    "error": "Güncelleme hatası: {error}",
+    "manual_download_hint": "Güncellemeleri manuel olarak kontrol edip indirebilirsiniz: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Dinleme İstatistikleri",

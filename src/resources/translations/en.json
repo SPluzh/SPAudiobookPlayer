@@ -489,7 +489,8 @@
     "check_error": "Update check failed: {error}",
     "download_error": "Download failed",
     "apply_error": "Failed to apply update",
-    "error": "Update error: {error}"
+    "error": "Update error: {error}",
+    "manual_download_hint": "You can check and download updates manually: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Listening Statistics",

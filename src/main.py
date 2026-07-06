@@ -2789,9 +2789,17 @@ class AudiobookPlayerWindow(QMainWindow):
     def _on_update_check_manual(self, result):
         """Handle manual check result (show message even if up-to-date)"""
         if result.error:
-            QMessageBox.warning(
-                self, tr("error"), trf("updater.check_error", error=result.error)
-            )
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            msg_box.setWindowTitle(tr("error"))
+            
+            error_msg = trf("updater.check_error", error=result.error)
+            manual_hint = tr("updater.manual_download_hint")
+            
+            msg_box.setText(f"{error_msg}<br><br>{manual_hint}")
+            msg_box.setTextFormat(Qt.TextFormat.RichText)
+            msg_box.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+            msg_box.exec()
         elif result.update_available:
             self._show_update_dialog(result)
         else:

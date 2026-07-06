@@ -489,7 +489,8 @@
     "check_error": "فشل التحقق من التحديث: {error}",
     "download_error": "فشل التنزيل",
     "apply_error": "فشل تطبيق التحديث",
-    "error": "خطأ في التحديث: {error}"
+    "error": "خطأ في التحديث: {error}",
+    "manual_download_hint": "يمكنك التحقق من التحديثات وتنزيلها يدويًا: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "إحصائيات الاستماع",

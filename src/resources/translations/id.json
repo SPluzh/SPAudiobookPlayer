@@ -489,7 +489,8 @@
     "check_error": "Pemeriksaan pembaruan gagal: {error}",
     "download_error": "Unduhan gagal",
     "apply_error": "Gagal menerapkan pembaruan",
-    "error": "Kesalahan pembaruan: {error}"
+    "error": "Kesalahan pembaruan: {error}",
+    "manual_download_hint": "Anda dapat memeriksa dan mengunduh pembaruan secara manual: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Statistik Mendengarkan",

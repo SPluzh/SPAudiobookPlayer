@@ -489,7 +489,8 @@
     "check_error": "Falha na verificação: {error}",
     "download_error": "Falha no download",
     "apply_error": "Falha ao aplicar a atualização",
-    "error": "Erro de atualização: {error}"
+    "error": "Erro de atualização: {error}",
+    "manual_download_hint": "Você pode verificar e baixar atualizações manualmente: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "Estatísticas de audição",

@@ -489,7 +489,8 @@
     "check_error": "การตรวจสอบการอัปเดตล้มเหลว: {error}",
     "download_error": "ดาวน์โหลดล้มเหลว",
     "apply_error": "ไม่สามารถใช้การอัปเดตได้",
-    "error": "ข้อผิดพลาดในการอัปเดต: {error}"
+    "error": "ข้อผิดพลาดในการอัปเดต: {error}",
+    "manual_download_hint": "คุณสามารถตรวจสอบและดาวน์โหลดการอัปเดตได้ด้วยตนเอง: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "สถิติการฟัง",

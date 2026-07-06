@@ -489,7 +489,8 @@
     "check_error": "अपडेट जाँच विफल: {error}",
     "download_error": "डाउनलोड विफल",
     "apply_error": "अपडेट लागू करने में विफल",
-    "error": "अपडेट त्रुटि: {error}"
+    "error": "अपडेट त्रुटि: {error}",
+    "manual_download_hint": "आप मैन्युअल रूप से अपडेट की जांच कर सकते हैं और डाउनलोड कर सकते हैं: <a href='https://github.com/SPluzh/SPAudiobookPlayer/releases'>GitHub Releases</a>"
   },
   "statistics": {
     "title": "सुनने के आँकड़े",
