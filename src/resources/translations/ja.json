@@ -97,6 +97,7 @@
     "sort_by_year_written": "執筆年",
     "sort_by_year_recorded": "録音年",
     "sort_by_language": "言語",
+    "sort_by_duration": "長さ",
     "tooltip_filter_metadata": "メタデータでフィルタ",
     "filter_no_cover": "カバーなし",
     "filter_no_author": "著者なし",

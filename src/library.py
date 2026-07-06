@@ -4687,6 +4687,7 @@ class LibraryWidget(QWidget):
         options = [
             ("name", "library.sort_by_name"),
             ("author", "library.sort_by_author"),
+            ("duration", "library.sort_by_duration"),
             ("time_added", "library.sort_by_date_added"),
             ("last_updated", "library.sort_by_last_read"),
             ("time_finished", "library.sort_by_date_finished"),
@@ -4718,6 +4719,7 @@ class LibraryWidget(QWidget):
             field_map = {
                 "name": "sort_by_name",
                 "author": "sort_by_author",
+                "duration": "sort_by_duration",
                 "time_added": "sort_by_date_added",
                 "last_updated": "sort_by_last_read",
                 "time_finished": "sort_by_date_finished",

@@ -97,6 +97,7 @@
     "sort_by_year_written": "تاريخ التأليف",
     "sort_by_year_recorded": "تاريخ التسجيل",
     "sort_by_language": "اللغة",
+    "sort_by_duration": "المدة",
     "tooltip_filter_metadata": "تصفية حسب البيانات الوصفية",
     "filter_no_cover": "بدون غلاف",
     "filter_no_author": "بدون مؤلف",

@@ -115,6 +115,7 @@
     "sort_by_year_written": "Tahun Penulisan",
     "sort_by_year_recorded": "Tahun Perekaman",
     "sort_by_language": "Bahasa",
+    "sort_by_duration": "Durasi",
     "tooltip_filter_metadata": "Filter berdasarkan metadata",
     "filter_no_cover": "Tanpa sampul",
     "filter_no_author": "Tanpa penulis",

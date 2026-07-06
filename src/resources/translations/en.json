@@ -121,7 +121,8 @@
     "filter_no_narrator": "No narrator",
     "sort_by_year_written": "Writing date",
     "sort_by_year_recorded": "Recording date",
-    "sort_by_language": "Language"
+    "sort_by_language": "Language",
+    "sort_by_duration": "Duration"
   },
   "player": {
     "volume": "Volume",

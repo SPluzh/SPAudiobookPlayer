@@ -115,6 +115,7 @@
     "sort_by_year_written": "ปีที่แต่ง",
     "sort_by_year_recorded": "ปีที่บันทึกเสียง",
     "sort_by_language": "ภาษา",
+    "sort_by_duration": "ระยะเวลา",
     "tooltip_filter_metadata": "กรองตามข้อมูลเมตา",
     "filter_no_cover": "ไม่มีหน้าปก",
     "filter_no_author": "ไม่มีผู้แต่ง",

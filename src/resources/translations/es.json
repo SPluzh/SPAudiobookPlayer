@@ -97,6 +97,7 @@
     "sort_by_year_written": "Año de escritura",
     "sort_by_year_recorded": "Año de grabación",
     "sort_by_language": "Idioma",
+    "sort_by_duration": "Duración",
     "tooltip_filter_metadata": "Filtrar por metadatos",
     "filter_no_cover": "Sin portada",
     "filter_no_author": "Sin autor",

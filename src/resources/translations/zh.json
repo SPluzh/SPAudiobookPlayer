@@ -97,6 +97,7 @@
     "sort_by_year_written": "写作年份",
     "sort_by_year_recorded": "录音年份",
     "sort_by_language": "语言",
+    "sort_by_duration": "时长",
     "tooltip_filter_metadata": "按元数据过滤",
     "filter_no_cover": "无封面",
     "filter_no_author": "无作者",

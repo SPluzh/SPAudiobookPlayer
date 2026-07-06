@@ -115,6 +115,7 @@
     "sort_by_year_written": "Գրման տարեթիվ",
     "sort_by_year_recorded": "Ձայնագրման տարեթիվ",
     "sort_by_language": "Լեզու",
+    "sort_by_duration": "Տևողություն",
     "tooltip_filter_metadata": "Ֆիլտրել ըստ մետատվյալների",
     "filter_no_cover": "Առանց կազմի",
     "filter_no_author": "Առանց հեղինակի",

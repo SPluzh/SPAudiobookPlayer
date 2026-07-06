@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.7.16]
+- **Library**: Added support for sorting audiobooks and folders by their total duration.
 - **Library**: Disabled single-book actions (Play, Open Folder, Delete) when multiple books are selected.
 
 ## [1.7.15]

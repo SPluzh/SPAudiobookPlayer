@@ -97,6 +97,7 @@
     "sort_by_year_written": "लेखन वर्ष",
     "sort_by_year_recorded": "रिकॉर्डिंग वर्ष",
     "sort_by_language": "भाषा",
+    "sort_by_duration": "अवधि",
     "tooltip_filter_metadata": "मेटाडेटा द्वारा फ़िल्टर करें",
     "filter_no_cover": "कोई कवर नहीं",
     "filter_no_author": "कोई लेखक नहीं",
