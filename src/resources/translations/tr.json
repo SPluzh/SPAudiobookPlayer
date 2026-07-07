@@ -366,7 +366,8 @@
     "m3u_parsing": "Ayrıştırılıyor: {name}",
     "m3u_files_loaded": "Yüklenen parçalar: {count}",
     "probing_network_url": "  URL kontrol ediliyor [{current}/{total}]: {url}",
-    "probing_url_details": "  -> Codec: {codec}, Bit hızı: {bitrate} kbps, Süre: {duration}, Boyut: {size}"
+    "probing_url_details": "  -> Codec: {codec}, Bit hızı: {bitrate} kbps, Süre: {duration}, Boyut: {size}",
+    "matched_by_content": "  [HASH] Sesli kitap taşındı/yeniden adlandırıldı, ilerleme korundu: {path}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE GÜNCELLEMESİ (FFMPEG)",

@@ -499,7 +499,7 @@ class TestScannerExecution:
         
         # Initialize temp_state table which _process_standalone_file expects
         c = conn.cursor()
-        c.execute("CREATE TABLE temp_state (path TEXT, listened_duration REAL, progress_percent INTEGER, current_file_index INTEGER, current_position REAL, playback_speed REAL, is_started INTEGER, is_completed INTEGER)")
+        c.execute("CREATE TABLE temp_state (path TEXT, content_hash TEXT, listened_duration REAL, progress_percent INTEGER, current_file_index INTEGER, current_position REAL, playback_speed REAL, is_started INTEGER, is_completed INTEGER)")
         conn.commit()
 
         # Mock _extract_file_tags, _analyze_file
@@ -1026,6 +1026,56 @@ class TestCoverForcedUpdateOnRescan:
                 content_2 = f.read()
             assert content_2 == b"updated cover content"
 
+            conn.close()
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+
+    def test_backfill_content_hashes(self, mock_scanner, temp_dir):
+        # Create a book directory and file
+        book_dir = temp_dir / "Backfill Book"
+        book_dir.mkdir()
+        audio_file = book_dir / "01.mp3"
+        audio_file.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        # Mock metadata & file analysis
+        import unittest.mock
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': 'Backfill Book', 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 10.0, 'bitrate': 128, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+
+        try:
+            # 1. Populate DB with a record that has content_hash = NULL
+            import sqlite3
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            
+            # Insert the record directly with content_hash = NULL
+            c.execute("""
+                INSERT INTO audiobooks (path, parent_path, name, author, title, is_folder, content_hash, is_available)
+                VALUES (?, ?, ?, ?, ?, 0, NULL, 1)
+            """, ("Backfill Book", "", "Backfill Book", "Auth", "Backfill Book"))
+            conn.commit()
+            conn.close()
+
+            # 2. Run scan_directory. This should trigger the backfill migration.
+            mock_scanner.scan_directory(str(temp_dir))
+
+            # 3. Check if content_hash has been populated
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            c.execute("SELECT content_hash FROM audiobooks WHERE path = ?", ("Backfill Book",))
+            row = c.fetchone()
+            assert row is not None
+            assert row[0] is not None
+            
+            # The hash should be correct (first 4MB MD5 hash)
+            expected_hash = mock_scanner._get_content_hash(audio_file)
+            assert row[0] == expected_hash
+            
             conn.close()
         finally:
             mock_scanner._extract_metadata = original_extract

@@ -366,7 +366,8 @@
     "m3u_parsing": "구문 분석 중: {name}",
     "m3u_files_loaded": "로드된 트랙 수: {count}",
     "probing_network_url": "  URL 확인 중 [{current}/{total}]: {url}",
-    "probing_url_details": "  -> 코덱: {codec}, 비트레이트: {bitrate} kbps, 재생 시간: {duration}, 크기: {size}"
+    "probing_url_details": "  -> 코덱: {codec}, 비트레이트: {bitrate} kbps, 재생 시간: {duration}, 크기: {size}",
+    "matched_by_content": "  [HASH] 오디오북이 이동/이름 변경되었으며 진행 상황이 유지되었습니다: {path}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE 업데이트 (FFMPEG)",

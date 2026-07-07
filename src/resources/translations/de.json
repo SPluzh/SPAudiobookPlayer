@@ -366,7 +366,8 @@
     "m3u_parsing": "Parsing: {name}",
     "m3u_files_loaded": "Titel geladen: {count}",
     "probing_network_url": "  Überprüfe URL [{current}/{total}]: {url}",
-    "probing_url_details": "  -> Codec: {codec}, Bitrate: {bitrate} kbps, Dauer: {duration}, Größe: {size}"
+    "probing_url_details": "  -> Codec: {codec}, Bitrate: {bitrate} kbps, Dauer: {duration}, Größe: {size}",
+    "matched_by_content": "  [HASH] Hörbuch verschoben/umbenannt, Fortschritt beibehalten: {path}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE UPDATE (FFMPEG)",

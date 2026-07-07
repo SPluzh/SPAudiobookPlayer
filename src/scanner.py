@@ -1003,10 +1003,36 @@ class AudiobookScanner:
         except Exception:
             current_state_hash = ''
 
-        c.execute("SELECT id, state_hash FROM audiobooks WHERE path = ?", (book_path,))
+        c.execute("SELECT id, state_hash, content_hash FROM audiobooks WHERE path = ?", (book_path,))
         existing = c.fetchone()
-        if existing and existing[1] == current_state_hash and not force_rescan:
-            c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing[0],))
+        
+        was_matched_by_hash = False
+        content_hash = self._get_content_hash(m3u_path)
+        if not existing and content_hash:
+            c.execute("""
+                SELECT id, state_hash, path FROM audiobooks
+                WHERE content_hash = ? AND is_folder = 0
+            """, (content_hash,))
+            hash_match = c.fetchone()
+            if hash_match:
+                matched_id = hash_match[0]
+                matched_path = hash_match[2]
+                if not (root / matched_path).exists():
+                    c.execute("""
+                        UPDATE audiobooks
+                        SET path = ?, parent_path = ?, name = ?
+                        WHERE id = ?
+                    """, (book_path, parent_path, name, matched_id))
+                    existing = hash_match
+                    was_matched_by_hash = True
+                    self._log_success(self.tr("scanner.matched_by_content", path=book_path), indent=2)
+
+        if existing and existing[1] == current_state_hash and not force_rescan and not was_matched_by_hash:
+            db_content_hash = existing[2] if len(existing) > 2 else None
+            if content_hash and not db_content_hash:
+                c.execute("UPDATE audiobooks SET is_available = 1, content_hash = ? WHERE id = ?", (content_hash, existing[0]))
+            else:
+                c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (existing[0],))
             return
 
         from collections import Counter
@@ -1139,14 +1165,14 @@ class AudiobookScanner:
                     cover_path=?, cached_cover_path=?,
                     state_hash=?, is_available=1,
                     codec=?, bitrate_min=?, bitrate_max=?, bitrate_mode=?, container=?,
-                    total_size=?
+                    total_size=?, content_hash=?
                 WHERE path=?
             """, (parent_path, name, f_author, f_title, f_narrator,
                   language, year_written, year_recorded,
                   file_count, total_duration, rel_m3u,
                   cover, cover_cached, current_state_hash,
                   common_codec, bitrate_min, bitrate_max, bitrate_mode, container_val,
-                  total_size_val, book_path))
+                  total_size_val, content_hash, book_path))
         else:
             c.execute("""
                 INSERT INTO audiobooks
@@ -1157,14 +1183,14 @@ class AudiobookScanner:
                  listened_duration, progress_percent, current_file_index,
                  current_position, playback_speed, is_started, is_completed,
                  is_available, codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                 total_size, time_added)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,0,1,?,?,?,?,0,0,0,0,1.0,0,0,1,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+                 total_size, time_added, content_hash)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,0,1,?,?,?,?,0,0,0,0,1.0,0,0,1,?,?,?,?,?,?,CURRENT_TIMESTAMP,?)
             """, (book_path, parent_path, name, f_author, f_title, f_narrator,
                   language, year_written, year_recorded,
                   file_count, total_duration, rel_m3u,
                   cover, cover_cached, current_state_hash,
                   common_codec, bitrate_min, bitrate_max, bitrate_mode, container_val,
-                  total_size_val))
+                  total_size_val, content_hash))
             c.execute("SELECT id FROM audiobooks WHERE path = ?", (book_path,))
             book_id = c.fetchone()[0]
 
@@ -1995,6 +2021,20 @@ class AudiobookScanner:
             # Table 'audiobooks' might not exist in some unit test mocks
             pass
 
+    def _get_content_hash(self, file_path):
+        """Calculate content hash (MD5 of first 4MB) of the file for rename/move tracking"""
+        try:
+            p = Path(file_path)
+            if not p.is_file():
+                return None
+            hasher = hashlib.md5()
+            with open(p, 'rb') as f:
+                chunk = f.read(4 * 1024 * 1024)
+                hasher.update(chunk)
+            return hasher.hexdigest()
+        except Exception:
+            return None
+
     def _calculate_state_hash(self, files, cover_file=None, description_file=None, language=None):
         """Calculate hash based on audio files, cover image(s), description file, and language
         
@@ -2313,6 +2353,50 @@ class AudiobookScanner:
             c.execute("PRAGMA journal_mode = WAL")
             c.execute("PRAGMA cache_size = 10000")
             
+            # One-time migration/backfill of content hashes for existing books that are still at their current paths
+            try:
+                c.execute("SELECT id, path, is_playlist, playlist_path FROM audiobooks WHERE content_hash IS NULL AND is_folder = 0")
+                null_hash_books = c.fetchall()
+                if null_hash_books:
+                    self._log_info(f"Backfilling content hashes for {len(null_hash_books)} existing books...")
+                    for book_id, path_str, is_playlist, playlist_path in null_hash_books:
+                        try:
+                            # Resolve full path of the first audio file or playlist file
+                            resolved_file = None
+                            if is_playlist and playlist_path:
+                                resolved_file = root / playlist_path
+                            elif is_playlist:
+                                resolved_file = root / path_str
+                            else:
+                                book_dir = root / path_str
+                                if book_dir.exists() and book_dir.is_dir():
+                                    # Find the first audio file
+                                    audio_files = sorted(
+                                        f for f in book_dir.iterdir()
+                                        if f.is_file() and f.suffix.lower() in self.audio_extensions
+                                    )
+                                    if not audio_files:
+                                        # Try recursive rglob (e.g. for merged folders)
+                                        audio_files = sorted(
+                                            f for f in book_dir.rglob('*')
+                                            if f.is_file() and f.suffix.lower() in self.audio_extensions
+                                        )
+                                    if audio_files:
+                                        resolved_file = audio_files[0]
+                                elif book_dir.exists() and book_dir.is_file():
+                                    # Standalone file
+                                    resolved_file = book_dir
+                            
+                            if resolved_file and resolved_file.exists():
+                                c_hash = self._get_content_hash(resolved_file)
+                                if c_hash:
+                                    c.execute("UPDATE audiobooks SET content_hash = ? WHERE id = ?", (c_hash, book_id))
+                        except Exception as e:
+                            self._log_error(f"Error backfilling hash for book {book_id}: {e}")
+                    conn.commit()
+            except Exception as e:
+                self._log_error(f"Database error during content hash backfill: {e}")
+            
             # Save current progress state to temp table
             # Save current progress state to temp table
             self._log_section(self.tr("scanner.saving_state"))
@@ -2321,6 +2405,7 @@ class AudiobookScanner:
                 CREATE TEMP TABLE temp_state AS
                 SELECT
                     path,
+                    content_hash,
                     listened_duration,
                     progress_percent,
                     current_file_index,
@@ -2511,8 +2596,34 @@ class AudiobookScanner:
                     )
                 
                 # Query database for existing record
-                c.execute("SELECT id, state_hash, codec, total_size, cover_path FROM audiobooks WHERE path = ?", (str(rel),))
+                c.execute("SELECT id, state_hash, codec, total_size, cover_path, content_hash FROM audiobooks WHERE path = ?", (str(rel),))
                 existing_row_data = c.fetchone()
+                
+                was_matched_by_hash = False
+                content_hash = None
+                if files:
+                    content_hash = self._get_content_hash(files[0])
+                
+                if not existing_row_data and content_hash:
+                    # Fallback to lookup by content_hash to preserve progress on rename/move
+                    c.execute("""
+                        SELECT id, state_hash, codec, total_size, cover_path, path
+                        FROM audiobooks
+                        WHERE content_hash = ? AND is_folder = 0
+                    """, (content_hash,))
+                    hash_match = c.fetchone()
+                    if hash_match:
+                        matched_id = hash_match[0]
+                        matched_path = hash_match[5]
+                        if not (root / matched_path).exists():
+                            c.execute("""
+                                UPDATE audiobooks
+                                SET path = ?, parent_path = ?, name = ?
+                                WHERE id = ?
+                            """, (str(rel), str(parent), folder.name, matched_id))
+                            existing_row_data = hash_match
+                            was_matched_by_hash = True
+                            self._log_success(self.tr("scanner.matched_by_content", path=str(rel)), indent=2)
                 
                 # Fast determination of cover files and description file to use in state hash (no rglob)
                 cover_files = []
@@ -2556,15 +2667,26 @@ class AudiobookScanner:
                     db_codec = existing_row_data[2]
                     db_total_size = existing_row_data[3]
                     
-                    if not force_rescan and db_hash == current_state_hash and db_codec is not None:
-                        if not db_total_size:
-                            try:
-                                total_size = sum(f.stat().st_size for f in files)
-                            except Exception:
-                                total_size = 0
-                            c.execute("UPDATE audiobooks SET is_available = 1, total_size = ? WHERE id = ?", (total_size, db_id))
+                    if not force_rescan and db_hash == current_state_hash and db_codec is not None and not was_matched_by_hash:
+                        db_content_hash = existing_row_data[5] if len(existing_row_data) > 5 else None
+                        if content_hash and not db_content_hash:
+                            if not db_total_size:
+                                try:
+                                    total_size = sum(f.stat().st_size for f in files)
+                                except Exception:
+                                    total_size = 0
+                                c.execute("UPDATE audiobooks SET is_available = 1, total_size = ?, content_hash = ? WHERE id = ?", (total_size, content_hash, db_id))
+                            else:
+                                c.execute("UPDATE audiobooks SET is_available = 1, content_hash = ? WHERE id = ?", (content_hash, db_id))
                         else:
-                            c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (db_id,))
+                            if not db_total_size:
+                                try:
+                                    total_size = sum(f.stat().st_size for f in files)
+                                except Exception:
+                                    total_size = 0
+                                c.execute("UPDATE audiobooks SET is_available = 1, total_size = ? WHERE id = ?", (total_size, db_id))
+                            else:
+                                c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (db_id,))
                         if verbose:
                             self._log_info(self.tr('scanner.skip_existing', path=rel), indent=2)
                         continue
@@ -2729,6 +2851,21 @@ class AudiobookScanner:
                 """, (str(rel),))
                 
                 state = c.fetchone()
+                if not state and content_hash:
+                    c.execute("""
+                        SELECT
+                            listened_duration,
+                            progress_percent,
+                            current_file_index,
+                            current_position,
+                            playback_speed,
+                            is_started,
+                            is_completed,
+                            is_merged
+                        FROM temp_state
+                        WHERE content_hash = ?
+                    """, (content_hash,))
+                    state = c.fetchone()
                 if state:
                     listened, prog_pct, cur_idx, cur_pos, playback_speed, is_started, is_completed, saved_is_merged = state
                     # Ensure we respect the saved merged state preference if it matches
@@ -2788,7 +2925,8 @@ class AudiobookScanner:
                             is_merged = ?,
                             description = ?,
                             total_size = ?,
-                            is_folder = 0
+                            is_folder = 0,
+                            content_hash = ?
                         WHERE path = ?
                     """, (
                         str(parent),
@@ -2816,6 +2954,7 @@ class AudiobookScanner:
                         1 if is_merged else 0,
                         description,
                         total_size,
+                        content_hash,
                         str(rel)
                     ))
                     book_id = existing_row[0]
@@ -2841,9 +2980,9 @@ class AudiobookScanner:
                             is_available,
                             state_hash,
                             codec, bitrate_min, bitrate_max, bitrate_mode, container,
-                            time_added, is_merged, description, total_size
+                            time_added, is_merged, description, total_size, content_hash
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?)
                     """, (
                         str(rel),
                         str(parent),
@@ -2877,7 +3016,8 @@ class AudiobookScanner:
                         container,
                         1 if is_merged else 0,
                         description,
-                        total_size
+                        total_size,
+                        content_hash
                     ))
                     c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
                     book_id = c.fetchone()[0]
@@ -3046,23 +3186,57 @@ class AudiobookScanner:
         current_state_hash = self._calculate_state_hash([file_path], cover_file_path, description_file_path)
         
         # Check for existing
-        c.execute("SELECT id, state_hash, codec, cover_path, cached_cover_path, total_size FROM audiobooks WHERE path = ?", (str(rel),))
+        c.execute("SELECT id, state_hash, codec, cover_path, cached_cover_path, total_size, content_hash FROM audiobooks WHERE path = ?", (str(rel),))
         existing_row_data = c.fetchone()
+        
+        was_matched_by_hash = False
+        content_hash = self._get_content_hash(file_path)
+        if not existing_row_data and content_hash:
+            # Fallback to lookup by content_hash to preserve progress on rename/move
+            c.execute("""
+                SELECT id, state_hash, codec, cover_path, cached_cover_path, total_size, path
+                FROM audiobooks
+                WHERE content_hash = ? AND is_folder = 0
+            """, (content_hash,))
+            hash_match = c.fetchone()
+            if hash_match:
+                matched_id = hash_match[0]
+                matched_path = hash_match[6]
+                if not (root / matched_path).exists():
+                    c.execute("""
+                        UPDATE audiobooks
+                        SET path = ?, parent_path = ?, name = ?
+                        WHERE id = ?
+                    """, (str(rel), str(parent), file_path.name, matched_id))
+                    existing_row_data = hash_match
+                    was_matched_by_hash = True
+                    self._log_success(self.tr("scanner.matched_by_content", path=str(rel)), indent=2)
         
         if existing_row_data:
             db_id = existing_row_data[0]
             db_hash = existing_row_data[1]
             db_codec = existing_row_data[2]
             db_total_size = existing_row_data[5]
-            if not force_rescan and db_hash == current_state_hash and db_codec is not None:
-                if not db_total_size:
-                    try:
-                        total_size = file_path.stat().st_size
-                    except Exception:
-                        total_size = 0
-                    c.execute("UPDATE audiobooks SET is_available = 1, total_size = ? WHERE id = ?", (total_size, db_id))
+            if not force_rescan and db_hash == current_state_hash and db_codec is not None and not was_matched_by_hash:
+                db_content_hash = existing_row_data[6] if len(existing_row_data) > 6 else None
+                if content_hash and not db_content_hash:
+                    if not db_total_size:
+                        try:
+                            total_size = file_path.stat().st_size
+                        except Exception:
+                            total_size = 0
+                        c.execute("UPDATE audiobooks SET is_available = 1, total_size = ?, content_hash = ? WHERE id = ?", (total_size, content_hash, db_id))
+                    else:
+                        c.execute("UPDATE audiobooks SET is_available = 1, content_hash = ? WHERE id = ?", (content_hash, db_id))
                 else:
-                    c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (db_id,))
+                    if not db_total_size:
+                        try:
+                            total_size = file_path.stat().st_size
+                        except Exception:
+                            total_size = 0
+                        c.execute("UPDATE audiobooks SET is_available = 1, total_size = ? WHERE id = ?", (total_size, db_id))
+                    else:
+                        c.execute("UPDATE audiobooks SET is_available = 1 WHERE id = ?", (db_id,))
                 if verbose:
                     self._log_info(self.tr('scanner.skip_existing', path=rel), indent=2)
                 return
@@ -3138,6 +3312,20 @@ class AudiobookScanner:
             WHERE path = ?
         """, (str(rel),))
         state = c.fetchone()
+        if not state and content_hash:
+            c.execute("""
+                SELECT
+                    listened_duration,
+                    progress_percent,
+                    current_file_index,
+                    current_position,
+                    playback_speed,
+                    is_started,
+                    is_completed
+                FROM temp_state
+                WHERE content_hash = ?
+            """, (content_hash,))
+            state = c.fetchone()
         
         if state:
             listened, prog_pct, cur_idx, cur_pos, playback_speed, is_started, is_completed = state
@@ -3190,7 +3378,8 @@ class AudiobookScanner:
                     is_folder = 0,
                     language = COALESCE(NULLIF(language, ''), ?),
                     year_written = COALESCE(NULLIF(year_written, ''), ?),
-                    year_recorded = COALESCE(NULLIF(year_recorded, ''), ?)
+                    year_recorded = COALESCE(NULLIF(year_recorded, ''), ?),
+                    content_hash = ?
                 WHERE path = ?
             """, (
                 str(parent),
@@ -3217,6 +3406,7 @@ class AudiobookScanner:
                 language,
                 year_written,
                 year_recorded,
+                content_hash,
                 str(rel)
             ))
              book_id = existing_row_data[0]
@@ -3241,9 +3431,9 @@ class AudiobookScanner:
                     state_hash,
                     codec, bitrate_min, bitrate_max, bitrate_mode, container,
                     time_added, is_merged, description, total_size,
-                    language, year_written, year_recorded
+                    language, year_written, year_recorded, content_hash
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?, ?, ?, ?, ?)
             """, (
                 str(rel),
                 str(parent),
@@ -3276,7 +3466,8 @@ class AudiobookScanner:
                 total_size,
                 language,
                 year_written,
-                year_recorded
+                year_recorded,
+                content_hash
             ))
              c.execute("SELECT id FROM audiobooks WHERE path = ?", (str(rel),))
              book_id = c.fetchone()[0]

@@ -366,7 +366,8 @@
     "m3u_parsing": "पार्स करना: {name}",
     "m3u_files_loaded": "ट्रैक लोड किए गए: {count}",
     "probing_network_url": "  URL की जाँच की जा रही है [{current}/{total}]: {url}",
-    "probing_url_details": "  -> कोडेक: {codec}, बिटरेट: {bitrate} kbps, अवधि: {duration}, आकार: {size}"
+    "probing_url_details": "  -> कोडेक: {codec}, बिटरेट: {bitrate} kbps, अवधि: {duration}, आकार: {size}",
+    "matched_by_content": "  [HASH] ऑडियोबुक स्थानांतरित/नाम बदला गया, प्रगति सुरक्षित: {path}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE अपडेट (FFMPEG)",

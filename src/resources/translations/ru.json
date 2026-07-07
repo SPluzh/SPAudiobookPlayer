@@ -365,6 +365,7 @@
     "cover_found": "  Обложка: {name}",
     "progress_restored": "  Прогресс: {percent}% (восстановлено)",
     "skip_existing": "  Пропущено (изменений не обнаружено): {path}",
+    "matched_by_content": "  [HASH] Книга перемещена/переименована, прогресс сохранен: {path}",
     "checking_merged_folders": "Поиск объединенных папок...",
     "merged_folders_found": "  Найдено {count} объединенных папок:",
     "cue_found": "  Найден CUE-файл: {count} треков",

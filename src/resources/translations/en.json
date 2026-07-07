@@ -365,6 +365,7 @@
     "cover_found": "  Cover: {name}",
     "progress_restored": "  Progress: {percent}% (restored)",
     "skip_existing": "  Skipped (no changes detected): {path}",
+    "matched_by_content": "  [HASH] Book moved/renamed, progress preserved: {path}",
     "checking_merged_folders": "Checking for merged folders...",
     "merged_folders_found": "  Found {count} folder(s) marked as merged:",
     "cue_found": "  Found CUE sheet: {count} tracks",

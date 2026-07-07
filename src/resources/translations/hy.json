@@ -384,7 +384,8 @@
     "m3u_parsing": "Վերլուծում՝ {name}",
     "m3u_files_loaded": "Բեռնված ուղիներ՝ {count}",
     "probing_network_url": "  Հղման ստուգում [{current}/{total}]՝ {url}",
-    "probing_url_details": "  -> Կոդեկ՝ {codec}, Բիթրեյթ՝ {bitrate} կբ/վ, Տևողություն՝ {duration}, Չափս՝ {size}"
+    "probing_url_details": "  -> Կոդեկ՝ {codec}, Բիթրեյթ՝ {bitrate} կբ/վ, Տևողություն՝ {duration}, Չափս՝ {size}",
+    "matched_by_content": "  [HASH] Աուդիոգիրքը տեղափոխվել/վերանվանվել է, առաջընթացը պահպանվել է. {path}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE-Ի ԹԱՐՄԱՑՈՒՄ (FFMPEG)",

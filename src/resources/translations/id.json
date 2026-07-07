@@ -384,7 +384,8 @@
     "m3u_parsing": "Mengurai: {name}",
     "m3u_files_loaded": "Trek dimuat: {count}",
     "probing_network_url": "  Memeriksa URL [{current}/{total}]: {url}",
-    "probing_url_details": "  -> Codec: {codec}, Bitrate: {bitrate} kbps, Durasi: {duration}, Ukuran: {size}"
+    "probing_url_details": "  -> Codec: {codec}, Bitrate: {bitrate} kbps, Durasi: {duration}, Ukuran: {size}",
+    "matched_by_content": "  [HASH] Buku audio dipindahkan/diubah namanya, kemajuan dipertahankan: {path}"
   },
   "ffmpeg_updater": {
     "title": "PEMBARUAN FFPROBE (FFMPEG)",

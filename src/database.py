@@ -61,7 +61,8 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 playlist_path TEXT,
                 language TEXT,
                 year_written TEXT,
-                year_recorded TEXT
+                year_recorded TEXT,
+                content_hash TEXT
             )
         """)
         
@@ -248,6 +249,15 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
             c.execute("ALTER TABLE audiobook_files ADD COLUMN is_url INTEGER DEFAULT 0")
         except sqlite3.OperationalError:
             pass
+
+        # Migration: add content_hash column to audiobooks
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN content_hash TEXT DEFAULT NULL")
+        except sqlite3.OperationalError:
+            pass
+
+        # Index for content_hash
+        c.execute("CREATE INDEX IF NOT EXISTS idx_content_hash ON audiobooks(content_hash)")
 
         # Table: audiobook_covers
         c.execute("""
@@ -759,6 +769,27 @@ class DatabaseManager:
             
             if cursor.rowcount == 0:
                  pass
+
+    def find_audiobook_by_content_hash(self, content_hash: str) -> Optional[dict]:
+        """Find audiobook by content hash"""
+        if not content_hash:
+            return None
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, path FROM audiobooks
+                WHERE content_hash = ? AND is_folder = 0
+            ''', (content_hash,))
+            row = cursor.fetchone()
+            if row:
+                return {'id': row[0], 'path': row[1]}
+            return None
+        except sqlite3.Error as e:
+            print(f"Database error in find_audiobook_by_content_hash: {e}")
+            return None
+        finally:
+            conn.close()
 
     def get_audiobook_info(self, audiobook_path: str) -> Optional[Tuple]:
         """Get information about a specific audiobook by path"""

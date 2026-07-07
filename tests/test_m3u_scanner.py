@@ -1,6 +1,7 @@
 import pytest
 import sqlite3
 from pathlib import Path
+# pyrefly: ignore [missing-import]
 from scanner import AudiobookScanner
 
 def _create_test_schema(conn):
@@ -15,6 +16,7 @@ def _create_test_schema(conn):
             language TEXT,
             year_written TEXT,
             year_recorded TEXT,
+            content_hash TEXT,
             file_count INTEGER DEFAULT 0,
             duration REAL DEFAULT 0,
             is_folder INTEGER DEFAULT 0,

@@ -366,7 +366,8 @@
     "m3u_parsing": "解析中: {name}",
     "m3u_files_loaded": "読み込まれたトラック数: {count}",
     "probing_network_url": "  URLを検証中 [{current}/{total}]: {url}",
-    "probing_url_details": "  -> コーデック: {codec}, ビットレート: {bitrate} kbps, 長さ: {duration}, サイズ: {size}"
+    "probing_url_details": "  -> コーデック: {codec}, ビットレート: {bitrate} kbps, 長さ: {duration}, サイズ: {size}",
+    "matched_by_content": "  [HASH] オーディオブックが移動/名前変更され、進行状況が保存されました: {path}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBEの更新 (FFMPEG)",

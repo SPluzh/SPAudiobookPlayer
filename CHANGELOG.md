@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.17]
+- **Scanner**: Added automatic preservation of listening progress, bookmarks, and statistics when an audiobook folder, playlist, or standalone file is renamed or moved on disk.
+**Note:** Please perform a library rescan once *before* you rename or move your audiobook folders on disk to ensure the database has saved their content hashes.
+
 ## [1.7.16]
 - **Library**: Added support for sorting audiobooks and folders by their total duration.
 - **Library**: Disabled single-book actions (Play, Open Folder, Delete) when multiple books are selected.

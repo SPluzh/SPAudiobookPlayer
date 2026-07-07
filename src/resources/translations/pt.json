@@ -366,7 +366,8 @@
     "m3u_parsing": "Analisando: {name}",
     "m3u_files_loaded": "Faixas carregadas: {count}",
     "probing_network_url": "  Verificando URL [{current}/{total}]: {url}",
-    "probing_url_details": "  -> Codec: {codec}, Taxa de bits: {bitrate} kbps, Duração: {duration}, Tamanho: {size}"
+    "probing_url_details": "  -> Codec: {codec}, Taxa de bits: {bitrate} kbps, Duração: {duration}, Tamanho: {size}",
+    "matched_by_content": "  [HASH] Audiolivro movido/renomeado, progresso preservado: {path}"
   },
   "ffmpeg_updater": {
     "title": "ATUALIZAÇÃO DO FFPROBE (FFMPEG)",

@@ -384,7 +384,8 @@
     "m3u_parsing": "Đang phân tích: {name}",
     "m3u_files_loaded": "Số bài hát đã tải: {count}",
     "probing_network_url": "  Đang kiểm tra URL [{current}/{total}]: {url}",
-    "probing_url_details": "  -> Codec: {codec}, Tốc độ bit: {bitrate} kbps, Thời lượng: {duration}, Kích thước: {size}"
+    "probing_url_details": "  -> Codec: {codec}, Tốc độ bit: {bitrate} kbps, Thời lượng: {duration}, Kích thước: {size}",
+    "matched_by_content": "  [HASH] Sách nói đã được di chuyển/đổi tên, tiến trình được bảo toàn: {path}"
   },
   "ffmpeg_updater": {
     "title": "CẬP NHẬT FFPROBE (FFMPEG)",

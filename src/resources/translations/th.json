@@ -384,7 +384,8 @@
     "m3u_parsing": "กำลังแยกวิเคราะห์: {name}",
     "m3u_files_loaded": "โหลดแทร็กแล้ว: {count}",
     "probing_network_url": "  กำลังตรวจสอบ URL [{current}/{total}]: {url}",
-    "probing_url_details": "  -> ตัวถอดรหัส: {codec}, บิตเรต: {bitrate} kbps, ระยะเวลา: {duration}, ขนาด: {size}"
+    "probing_url_details": "  -> ตัวถอดรหัส: {codec}, บิตเรต: {bitrate} kbps, ระยะเวลา: {duration}, ขนาด: {size}",
+    "matched_by_content": "  [HASH] ย้าย/เปลี่ยนชื่อหนังสือเสียงแล้ว บันทึกความคืบหน้าแล้ว: {path}"
   },
   "ffmpeg_updater": {
     "title": "การอัปเดต FFPROBE (FFMPEG)",

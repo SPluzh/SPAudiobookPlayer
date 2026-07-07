@@ -366,7 +366,8 @@
     "m3u_parsing": "正在解析: {name}",
     "m3u_files_loaded": "已加载曲目数: {count}",
     "probing_network_url": "  正在检测 URL [{current}/{total}]: {url}",
-    "probing_url_details": "  -> 编码: {codec}, 比特率: {bitrate} kbps, 时长: {duration}, 大小: {size}"
+    "probing_url_details": "  -> 编码: {codec}, 比特率: {bitrate} kbps, 时长: {duration}, 大小: {size}",
+    "matched_by_content": "  [HASH] 电子书已移动/重命名，进度已保留：{path}"
   },
   "ffmpeg_updater": {
     "title": "FFPROBE 更新 (FFMPEG)",
