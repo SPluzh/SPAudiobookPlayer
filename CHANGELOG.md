@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.7.18]
 - **Library**: Added a grid/tile view mode with dynamic flow layout, cover art, hover control overlays, progress bars, and expandable folder headers.
+- **Library**: Optimized rendering performance and eliminated lag when switching or filtering in tile mode.
 
 ## [1.7.17]
 - **Scanner**: Added automatic preservation of listening progress, bookmarks, and statistics when an audiobook folder, playlist, or standalone file is renamed or moved on disk.

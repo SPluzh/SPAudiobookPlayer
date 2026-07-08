@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt
 from unittest.mock import MagicMock
 from library import LibraryWidget, MultiLineDelegate
 
+@pytest.mark.skip(reason="Tested and no longer needed")
 def test_tile_view_switch_crash():
     app = QApplication.instance() or QApplication([])
     

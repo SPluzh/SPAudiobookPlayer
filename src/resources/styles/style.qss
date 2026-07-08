@@ -1580,7 +1580,8 @@ QSlider.hue-slider::handle:horizontal:hover {
 
 #libraryTileView,
 #libraryTileView QWidget#qt_scrollarea_viewport,
-#libraryTileViewContainer {
+#libraryTileViewContainer,
+#libraryTileCanvas {
     background-color: @bg-dark;
     border: none;
 }
