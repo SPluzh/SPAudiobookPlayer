@@ -1432,6 +1432,7 @@ class MultiLineDelegate(QStyledItemDelegate):
                 _, accent_color = self._get_style("delegate_accent")
                 pen = QPen(accent_color, 8)
                 painter.setPen(pen)
+                painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.setRenderHint(QPainter.RenderHint.Antialiasing)
                 
                 has_progress = (progress_percent > 0 or is_started)
@@ -1573,7 +1574,7 @@ class MultiLineDelegate(QStyledItemDelegate):
 
                 # Button circle
                 _, accent_color = self._get_style("delegate_accent")
-                btn_color = accent_color
+                btn_color = QColor(accent_color)
                 if not is_over_btn:
                     btn_color.setAlpha(200)
                 else:
@@ -2764,6 +2765,7 @@ class BookTileWidget(QWidget):
             p.save()
             pen = QPen(accent_color, 8)
             p.setPen(pen)
+            p.setBrush(Qt.BrushStyle.NoBrush)
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             
             has_progress = (self.progress_percent > 0 or self.is_started)
@@ -2791,7 +2793,7 @@ class BookTileWidget(QWidget):
             _, accent_color = StyleManager.get_theme_property("delegate_accent")
             if not accent_color:
                 accent_color = QColor("#018574")
-            btn_color = accent_color
+            btn_color = QColor(accent_color)
             if not is_play_hovered:
                 btn_color.setAlpha(200)
             else:
@@ -4169,6 +4171,7 @@ class VirtualTileCanvas(QWidget):
             p.save()
             pen = QPen(accent_color, 8)
             p.setPen(pen)
+            p.setBrush(Qt.BrushStyle.NoBrush)
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             
             has_progress = (book.get("progress_percent", 0.0) > 0 or is_started)
