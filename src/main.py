@@ -2958,6 +2958,26 @@ class TaskbarEventFilter(QAbstractNativeEventFilter):
 def main():
     """Application entry point: initializes the Qt application context, registers native event filters, and launches the main window"""
     import traceback
+    import datetime
+
+    def log_uncaught_exception(exctype, value, tb):
+        err_msg = "".join(traceback.format_exception(exctype, value, tb))
+        print("CRITICAL ERROR (Uncaught Exception):", err_msg, file=sys.stderr)
+        
+        try:
+            log_dir = get_base_path() / "data"
+            log_dir.mkdir(exist_ok=True)
+            log_file = log_dir / "crash.log"
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(f"\n[{datetime.datetime.now().isoformat()}] Uncaught Exception:\n")
+                f.write(err_msg)
+                f.write("="*80 + "\n")
+        except Exception as log_err:
+            print(f"Failed to write crash log: {log_err}", file=sys.stderr)
+            
+        sys.__excepthook__(exctype, value, tb)
+
+    sys.excepthook = log_uncaught_exception
 
     try:
         print("Starting SPAudiobookPlayer...")

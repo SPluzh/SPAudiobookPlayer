@@ -2512,7 +2512,6 @@ class LibraryTree(QTreeWidget):
 
 class WrapLayout(QLayout):
     def __init__(self, parent=None, margin=-1, hspacing=-1, vspacing=-1):
-        print(f"[DEBUG WrapLayout] __init__ parent={parent}", flush=True)
         super().__init__(parent)
         self._hspacing = hspacing
         self._vspacing = vspacing
@@ -2520,14 +2519,10 @@ class WrapLayout(QLayout):
         self.setContentsMargins(margin, margin, margin, margin)
 
     def __del__(self):
-        print("[DEBUG WrapLayout] __del__ started", flush=True)
         if hasattr(self, "_items"):
-            print(f"[DEBUG WrapLayout] __del__ items count: {len(self._items)}", flush=True)
             del self._items
-        print("[DEBUG WrapLayout] __del__ finished", flush=True)
 
     def addItem(self, item):
-        print(f"[DEBUG WrapLayout] addItem item={item}", flush=True)
         self._items.append(item)
 
     def count(self):
@@ -2539,54 +2534,42 @@ class WrapLayout(QLayout):
         return None
 
     def takeAt(self, index):
-        print(f"[DEBUG WrapLayout] takeAt index={index}", flush=True)
         if 0 <= index < len(self._items):
             item = self._items.pop(index)
-            print(f"[DEBUG WrapLayout] takeAt item={item} popped", flush=True)
             return item
         return None
 
     def expandingDirections(self):
-        print("[DEBUG WrapLayout] expandingDirections called", flush=True)
         return Qt.Orientation(0)
 
     def hasHeightForWidth(self):
-        print("[DEBUG WrapLayout] hasHeightForWidth called", flush=True)
         return True
 
     def heightForWidth(self, width):
-        print(f"[DEBUG WrapLayout] heightForWidth called with width={width}", flush=True)
-        res = self._do_layout(QRect(0, 0, width, 0), True)
-        print(f"[DEBUG WrapLayout] heightForWidth returning {res}", flush=True)
+        # Force a minimum calculation width of 350 to prevent layout spikes when width is very small or 0
+        calc_width = max(width, 350)
+        res = self._do_layout(QRect(0, 0, calc_width, 0), True)
+        # Clamp the height to a safe maximum of 30000 to prevent Windows GDI 16-bit coordinate overflow crashes
+        res = min(res, 30000)
         return res
 
     def setGeometry(self, rect):
-        print(f"[DEBUG WrapLayout] setGeometry called with rect={rect}", flush=True)
         super().setGeometry(rect)
         self._do_layout(rect, False)
-        print("[DEBUG WrapLayout] setGeometry finished", flush=True)
 
     def sizeHint(self):
-        print("[DEBUG WrapLayout] sizeHint called", flush=True)
-        res = self.minimumSize()
-        print(f"[DEBUG WrapLayout] sizeHint returning {res}", flush=True)
-        return res
+        return self.minimumSize()
 
     def minimumSize(self):
-        print(f"[DEBUG WrapLayout] minimumSize started, items count={len(self._items)}", flush=True)
         size = QSize()
-        for i, item in enumerate(self._items):
+        for item in self._items:
             widget = item.widget()
             if widget and widget.isHidden():
                 continue
-            print(f"[DEBUG WrapLayout] minimumSize checking item {i}: {item}", flush=True)
             min_sz = item.minimumSize()
-            print(f"[DEBUG WrapLayout] minimumSize item {i} min size={min_sz}", flush=True)
             size = size.expandedTo(min_sz)
         margins = self.contentsMargins()
-        print("[DEBUG WrapLayout] minimumSize margins calculation", flush=True)
         size += QSize(margins.left() + margins.right(), margins.top() + margins.bottom())
-        print(f"[DEBUG WrapLayout] minimumSize returning {size}", flush=True)
         return size
 
     def _do_layout(self, rect, test_only):
@@ -3462,31 +3445,23 @@ class TileFlowWidget(QScrollArea):
         self.root_group = None
 
     def clear(self):
-        print("[DEBUG TileFlowWidget] clear started", flush=True)
         while self._layout.count():
             item = self._layout.takeAt(0)
             widget = item.widget()
             if widget:
                 widget.deleteLater()
         self.root_group = None
-        print("[DEBUG TileFlowWidget] clear finished", flush=True)
 
     def populate(self, tree_root_item):
-        print("[DEBUG TileFlowWidget] populate started", flush=True)
         self.clear()
         
-        print("[DEBUG TileFlowWidget] Creating FolderGroup", flush=True)
         self.root_group = FolderGroup(path="", header=None, books_container=BooksContainerWidget(chain=[], depth=0, parent=self), parent=None)
-        print("[DEBUG TileFlowWidget] Creating WrapLayout for books_container", flush=True)
         self.root_group.books_container.setLayout(WrapLayout(margin=0, hspacing=6, vspacing=6))
         
         self._expanded_paths = self.parent_library._expanded_paths_cache
         
-        print("[DEBUG TileFlowWidget] Building hierarchy...", flush=True)
         self._build_hierarchy(tree_root_item, self.root_group, depth=0)
-        print("[DEBUG TileFlowWidget] Adding books_container to _layout", flush=True)
         self._layout.addWidget(self.root_group.books_container)
-        print("[DEBUG TileFlowWidget] Hierarchy built. Adding stretch.", flush=True)
         self._layout.addStretch(1)
         self.update_visibility()
         # Restore active-book indicator after rebuilding all widgets
@@ -3503,7 +3478,6 @@ class TileFlowWidget(QScrollArea):
 
     def _build_hierarchy(self, tree_item, parent_group, depth):
         child_count = tree_item.childCount()
-        print(f"[DEBUG TileFlowWidget] _build_hierarchy depth={depth} parent={parent_group.path} child_count={child_count}", flush=True)
         for i in range(child_count):
             child = tree_item.child(i)
             if child.isHidden():
@@ -3511,7 +3485,6 @@ class TileFlowWidget(QScrollArea):
                 
             item_type = child.data(0, Qt.ItemDataRole.UserRole + 1)
             path = child.data(0, Qt.ItemDataRole.UserRole)
-            print(f"[DEBUG TileFlowWidget] child {i} type={item_type} path={path}", flush=True)
             
             # Get nesting chain and is_last_child for child
             chain = get_item_nesting_chain(child)
@@ -3555,7 +3528,6 @@ class TileFlowWidget(QScrollArea):
 
     def _create_tile_for_item(self, item):
         path = item.data(0, Qt.ItemDataRole.UserRole)
-        print(f"[DEBUG TileFlowWidget] _create_tile_for_item path={path}", flush=True)
         data = item.data(0, Qt.ItemDataRole.UserRole + 2) or ()
         status_data = item.data(0, Qt.ItemDataRole.UserRole + 3) or ()
         icon = item.data(0, Qt.ItemDataRole.DecorationRole)
@@ -3646,7 +3618,6 @@ class TileFlowWidget(QScrollArea):
         tile.favorite_clicked.connect(self.on_tile_favorite_clicked)
         tile.description_requested.connect(self.on_tile_description_requested)
         
-        print(f"[DEBUG TileFlowWidget] _create_tile_for_item finished path={path}", flush=True)
         return tile
 
     def on_tile_play_clicked(self, path):
@@ -3708,27 +3679,18 @@ class TileFlowWidget(QScrollArea):
             self.update_visibility()
 
     def update_visibility(self):
-        print("[DEBUG TileFlowWidget] update_visibility started", flush=True)
         def update_group_visibility(group, is_ancestors_expanded):
-            print(f"[DEBUG TileFlowWidget] update_group_visibility for group={group.path} expanded={is_ancestors_expanded}", flush=True)
             if group.header:
-                print(f"[DEBUG TileFlowWidget] Setting header visibility to {is_ancestors_expanded} for {group.path}", flush=True)
                 group.header.setVisible(is_ancestors_expanded)
-                print(f"[DEBUG TileFlowWidget] Header visibility set for {group.path}", flush=True)
             is_visible = is_ancestors_expanded and group.expanded
-            print(f"[DEBUG TileFlowWidget] Setting books_container visibility to {is_visible} for {group.path}", flush=True)
             group.books_container.setVisible(is_visible)
-            print(f"[DEBUG TileFlowWidget] books_container visibility set for {group.path}", flush=True)
             for child in group.child_groups:
                 update_group_visibility(child, is_visible)
                 
         if self.root_group:
-            print("[DEBUG TileFlowWidget] self.root_group exists", flush=True)
             self.root_group.books_container.setVisible(True)
-            print("[DEBUG TileFlowWidget] root books_container set to visible", flush=True)
             for child in self.root_group.child_groups:
                 update_group_visibility(child, is_ancestors_expanded=True)
-        print("[DEBUG TileFlowWidget] update_visibility finished", flush=True)
 
     def update_playback_state(self, playing_path, is_paused):
         def update_group(group):
@@ -4522,6 +4484,26 @@ class LibraryWidget(QWidget):
 
         # Helper to generate the key for client-side sorting
         def make_sort_key(field, reverse):
+            def coerce_field_value(fld, val):
+                if val is None or val == "":
+                    return None
+                
+                # Fields that should be compared as numbers
+                numeric_fields = {
+                    "duration", "listened_duration", "progress_percent", 
+                    "file_count", "bitrate_min", "bitrate_max", "total_size",
+                    "is_favorite", "is_completed", "is_started", "is_available", "is_merged"
+                }
+                
+                if fld in numeric_fields:
+                    try:
+                        return float(val)
+                    except (ValueError, TypeError):
+                        return 0.0
+                else:
+                    # String fields (including timestamps)
+                    return str(val).lower()
+
             def key_fn(x):
                 is_folder = x.get("is_folder", False)
                 if is_folder:
@@ -4544,58 +4526,32 @@ class LibraryWidget(QWidget):
                     recurse(x["path"])
                     
                     if not books_inside:
-                        return (0, "") if reverse else (1, "")
+                        return (0, None) if reverse else (1, None)
                     
                     # Extract values for each book
                     book_vals = []
                     for b in books_inside:
-                        b_val = b.get(field)
-                        if b_val is not None and b_val != "":
-                            if field in ("author", "language"):
-                                book_vals.append(str(b_val).lower())
-                            else:
-                                if isinstance(b_val, (int, float)):
-                                    book_vals.append(b_val)
-                                else:
-                                    try:
-                                        book_vals.append(float(b_val))
-                                    except (ValueError, TypeError):
-                                        book_vals.append(str(b_val))
+                        b_val = coerce_field_value(field, b.get(field))
+                        if b_val is not None:
+                            book_vals.append(b_val)
                     
                     if not book_vals:
-                        return (0, "") if reverse else (1, "")
+                        return (0, None) if reverse else (1, None)
                     
-                    try:
-                        val = max(book_vals) if reverse else min(book_vals)
-                    except TypeError:
-                        str_vals = [str(v) for v in book_vals]
-                        val = max(str_vals) if reverse else min(str_vals)
-                    
+                    val = max(book_vals) if reverse else min(book_vals)
                     return (1, val) if reverse else (0, val)
                 
                 if field == "name":
                     val = x.get("title") or x.get("name")
                 else:
                     val = x.get(field)
-                is_empty = (val is None or val == "")
                 
-                if is_empty:
+                coerced_val = coerce_field_value(field, val)
+                if coerced_val is None:
                     # Empty values always go to the end of the list, regardless of sort order
-                    return (0, "") if reverse else (1, "")
+                    return (0, None) if reverse else (1, None)
                 
-                if field in ("name", "author", "language"):
-                    val = str(val).lower()
-                else:
-                    # Keep numeric type if possible for proper numeric sorting, fallback to str
-                    if isinstance(val, (int, float)):
-                        pass
-                    else:
-                        try:
-                            val = float(val)
-                        except (ValueError, TypeError):
-                            val = str(val)
-                
-                return (1, val) if reverse else (0, val)
+                return (1, coerced_val) if reverse else (0, coerced_val)
             return key_fn
 
         # Check cache or force reload
@@ -4980,8 +4936,8 @@ class LibraryWidget(QWidget):
                                 tag_names.append(tag["name"])
 
                     # Bitrate search
-                    search_min = str(b_min // 1000) if b_min > 5000 else str(b_min)
-                    search_max = str(b_max // 1000) if b_max > 5000 else str(b_max)
+                    search_min = str(b_min // 1000) if (b_min is not None and b_min > 5000) else (str(b_min) if b_min is not None else "")
+                    search_max = str(b_max // 1000) if (b_max is not None and b_max > 5000) else (str(b_max) if b_max is not None else "")
 
                     searchables = [
                         author,
