@@ -2679,15 +2679,7 @@ class BookTileWidget(QWidget):
         self.update_texts()
 
     def update_texts(self):
-        tooltip_parts = []
-        if self.title:
-            tooltip_parts.append(self.title)
-        if self.author:
-            tooltip_parts.append(self.author)
-        progress_val = self.progress_percent if self.progress_percent is not None else 0.0
-        progress_str = f"{int(progress_val)}%"
-        tooltip_text = " - ".join(tooltip_parts) + f" ({progress_str})"
-        self.setToolTip(tooltip_text)
+        self.setToolTip("")
 
     def set_playing(self, is_playing, is_paused):
         self.is_playing = is_playing
@@ -3074,6 +3066,11 @@ class BookTileWidget(QWidget):
         
         p.end()
 
+    def enterEvent(self, event):
+        self.hovered = True
+        self.update()
+        super().enterEvent(event)
+
     def mouseMoveEvent(self, event):
         pos = event.position().toPoint()
         icon_rect = self.get_icon_rect()
@@ -3083,26 +3080,20 @@ class BookTileWidget(QWidget):
         heart_rect = self.get_heart_rect(icon_rect)
         info_rect = self.get_info_rect(icon_rect)
         
-        is_over_icon = icon_rect.contains(pos)
+        self.hovered = True
         is_over_heart = self.is_favorite and heart_rect.contains(QPointF(pos))
         is_over_info = bool(self.description) and info_rect.contains(QPointF(pos))
         
-        if is_over_icon or is_over_heart or is_over_info:
-            self.hovered = True
-            if (self.hovered or self.is_playing) and play_rect.contains(QPointF(pos)):
-                self.hovered_field = "play"
-                self.setCursor(Qt.CursorShape.PointingHandCursor)
-            elif is_over_heart:
-                self.hovered_field = "heart"
-                self.setCursor(Qt.CursorShape.PointingHandCursor)
-            elif is_over_info:
-                self.hovered_field = "info"
-                self.setCursor(Qt.CursorShape.PointingHandCursor)
-            else:
-                self.hovered_field = None
-                self.setCursor(Qt.CursorShape.ArrowCursor)
+        if play_rect.contains(QPointF(pos)):
+            self.hovered_field = "play"
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
+        elif is_over_heart:
+            self.hovered_field = "heart"
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
+        elif is_over_info:
+            self.hovered_field = "info"
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
         else:
-            self.hovered = False
             self.hovered_field = None
             self.setCursor(Qt.CursorShape.ArrowCursor)
             
@@ -3581,13 +3572,41 @@ class TileFlowWidget(QScrollArea):
         
         icon_size = int(self.config.get("audiobook_icon_size", 100) * 1.5)
         
-        if icon and not icon.isNull():
-            pixmap = icon.pixmap(QSize(icon_size, icon_size))
-        elif self.parent_library.default_audiobook_icon and not self.parent_library.default_audiobook_icon.isNull():
-            pixmap = self.parent_library.default_audiobook_icon.pixmap(QSize(icon_size, icon_size))
-        else:
-            pixmap = QPixmap(icon_size, icon_size)
-            pixmap.fill(Qt.GlobalColor.transparent)
+        # High-DPI support: Load high-resolution cover from stored path
+        dpr = self.devicePixelRatioF()
+        physical_size = int(icon_size * dpr)
+        cover_path = item.data(0, Qt.ItemDataRole.UserRole + 5)
+        pixmap = None
+        
+        if cover_path:
+            cover_p = Path(cover_path)
+            if not cover_p.is_absolute() and self.config.get("default_path"):
+                cover_p = Path(self.config.get("default_path")) / cover_p
+            if cover_p.exists() and cover_p.is_file():
+                tile_cover_icon = load_icon(cover_p, physical_size, force_square=True)
+                if tile_cover_icon and not tile_cover_icon.isNull():
+                    pixmap = tile_cover_icon.pixmap(QSize(physical_size, physical_size))
+                    pixmap.setDevicePixelRatio(dpr)
+                    
+        # Fallback to default cover icon
+        if pixmap is None or pixmap.isNull():
+            default_cover = self.config.get("default_cover_file", "resources/icons/default_cover.png")
+            default_cover_path = get_base_path() / default_cover
+            if default_cover_path.exists() and default_cover_path.is_file():
+                tile_cover_icon = load_icon(default_cover_path, physical_size, force_square=True)
+                if tile_cover_icon and not tile_cover_icon.isNull():
+                    pixmap = tile_cover_icon.pixmap(QSize(physical_size, physical_size))
+                    pixmap.setDevicePixelRatio(dpr)
+                    
+        # Ultimate fallback
+        if pixmap is None or pixmap.isNull():
+            if self.parent_library.default_audiobook_icon and not self.parent_library.default_audiobook_icon.isNull():
+                pixmap = self.parent_library.default_audiobook_icon.pixmap(QSize(physical_size, physical_size))
+                pixmap.setDevicePixelRatio(dpr)
+            else:
+                pixmap = QPixmap(physical_size, physical_size)
+                pixmap.fill(Qt.GlobalColor.transparent)
+                pixmap.setDevicePixelRatio(dpr)
             
         tile = BookTileWidget(
             path=path,
@@ -3772,6 +3791,40 @@ class TileFlowWidget(QScrollArea):
                 tile.is_completed = bool(data["is_completed"])
                 tile.is_favorite = bool(data["is_favorite"])
                 tile.description = data.get("description", "") or ""
+                
+                # Update cover pixmap in case it changed
+                cover_p_str = data.get("cached_cover_path")
+                if not cover_p_str:
+                    cover_p_str = data.get("cover_path")
+                
+                pixmap = None
+                dpr = self.devicePixelRatioF()
+                physical_size = int(tile.icon_size * dpr)
+                
+                if cover_p_str:
+                    cover_p = Path(cover_p_str)
+                    if not cover_p.is_absolute() and self.config.get("default_path"):
+                        cover_p = Path(self.config.get("default_path")) / cover_p
+                    if cover_p.exists() and cover_p.is_file():
+                        load_icon.cache_clear()
+                        tile_cover_icon = load_icon(cover_p, physical_size, force_square=True)
+                        if tile_cover_icon and not tile_cover_icon.isNull():
+                            pixmap = tile_cover_icon.pixmap(QSize(physical_size, physical_size))
+                            pixmap.setDevicePixelRatio(dpr)
+                
+                # Fallback to default cover icon
+                if pixmap is None or pixmap.isNull():
+                    default_cover = self.config.get("default_cover_file", "resources/icons/default_cover.png")
+                    default_cover_path = get_base_path() / default_cover
+                    if default_cover_path.exists() and default_cover_path.is_file():
+                        tile_cover_icon = load_icon(default_cover_path, physical_size, force_square=True)
+                        if tile_cover_icon and not tile_cover_icon.isNull():
+                            pixmap = tile_cover_icon.pixmap(QSize(physical_size, physical_size))
+                            pixmap.setDevicePixelRatio(dpr)
+                            
+                if pixmap is not None and not pixmap.isNull():
+                    tile.pixmap = pixmap
+                    
                 tile.update_texts()
                 tile.update()
 
@@ -4802,6 +4855,7 @@ class LibraryWidget(QWidget):
                 cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
             )
         item.setIcon(0, cover_icon or self.default_audiobook_icon)
+        item.setData(0, Qt.ItemDataRole.UserRole + 5, cover_p_str)
 
         # Store tags
         if "tags" in data:
@@ -5928,6 +5982,7 @@ class LibraryWidget(QWidget):
                     cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
                 )
             item.setIcon(0, cover_icon or self.default_audiobook_icon)
+            item.setData(0, Qt.ItemDataRole.UserRole + 5, cover_p_str)
 
             item.setText(0, item.text(0))
             self.update_cache_item_status(
