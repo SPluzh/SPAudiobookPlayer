@@ -3354,13 +3354,13 @@ class TileFlowWidget(QScrollArea):
         self.root_group = FolderGroup(path="", header=None, books_container=BooksContainerWidget(chain=[], depth=0, parent=self), parent=None)
         print("[DEBUG TileFlowWidget] Creating WrapLayout for books_container", flush=True)
         self.root_group.books_container.setLayout(WrapLayout(margin=0, hspacing=6, vspacing=6))
-        print("[DEBUG TileFlowWidget] Adding books_container to _layout", flush=True)
-        self._layout.addWidget(self.root_group.books_container)
         
         self._expanded_paths = self.parent_library._expanded_paths_cache
         
         print("[DEBUG TileFlowWidget] Building hierarchy...", flush=True)
         self._build_hierarchy(tree_root_item, self.root_group, depth=0)
+        print("[DEBUG TileFlowWidget] Adding books_container to _layout", flush=True)
+        self._layout.addWidget(self.root_group.books_container)
         print("[DEBUG TileFlowWidget] Hierarchy built. Adding stretch.", flush=True)
         self._layout.addStretch(1)
         self.update_visibility()
