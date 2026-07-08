@@ -104,7 +104,8 @@
     "filter_no_narrator": "بدون قارئ",
     "tooltip_filter_language": "تصفية حسب اللغة",
     "language_all": "جميع اللغات",
-    "language_none": "بدون لغة"
+    "language_none": "بدون لغة",
+    "tooltip_tile_view": "عرض الشبكة"
   },
   "player": {
     "volume": "مستوى الصوت",

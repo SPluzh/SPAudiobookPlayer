@@ -1573,3 +1573,24 @@ QSlider.hue-slider::handle:horizontal {
 QSlider.hue-slider::handle:horizontal:hover {
     background: #eeeeee;
 }
+
+/* ============================================================
+   GRID / TILE VIEW STYLING
+   ============================================================ */
+
+#libraryTileView,
+#libraryTileView QWidget#qt_scrollarea_viewport,
+#libraryTileViewContainer {
+    background-color: @bg-dark;
+    border: none;
+}
+
+#bookTile {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+}
+
+#FolderHeader {
+    background-color: transparent;
+}

@@ -104,7 +104,8 @@
     "filter_no_narrator": "Kein Sprecher",
     "tooltip_filter_language": "Nach Sprache filtern",
     "language_all": "Alle Sprachen",
-    "language_none": "Ohne Sprache"
+    "language_none": "Ohne Sprache",
+    "tooltip_tile_view": "Rasteransicht"
   },
   "player": {
     "volume": "Lautstärke",

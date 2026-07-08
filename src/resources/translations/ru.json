@@ -85,6 +85,7 @@
     "filter_tags": "Теги",
     "show_folders": "",
     "tooltip_show_folders": "Показать структуру папок",
+    "tooltip_tile_view": "Показать сеткой",
     "tooltip_mass_select": "Массовый выбор",
     "menu_select_all": "Выделить все",
     "menu_deselect_all": "Сбросить все",

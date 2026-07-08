@@ -104,7 +104,8 @@
     "filter_no_narrator": "无朗读者",
     "tooltip_filter_language": "按语言过滤",
     "language_all": "所有语言",
-    "language_none": "无语言"
+    "language_none": "无语言",
+    "tooltip_tile_view": "网格视图"
   },
   "player": {
     "volume": "音量",

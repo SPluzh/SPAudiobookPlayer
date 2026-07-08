@@ -122,7 +122,8 @@
     "filter_no_narrator": "ไม่มีผู้บรรยาย",
     "tooltip_filter_language": "กรองตามภาษา",
     "language_all": "ทุกภาษา",
-    "language_none": "ไม่มีภาษา"
+    "language_none": "ไม่มีภาษา",
+    "tooltip_tile_view": "มุมมองตาราง"
   },
   "player": {
     "volume": "ระดับเสียง",

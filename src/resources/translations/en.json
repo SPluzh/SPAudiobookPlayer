@@ -85,6 +85,7 @@
     "filter_tags": "Tags",
     "show_folders": "",
     "tooltip_show_folders": "Show folder hierarchy",
+    "tooltip_tile_view": "Show grid view",
     "tooltip_mass_select": "Mass selection",
     "menu_select_all": "Select all",
     "menu_deselect_all": "Clear all",

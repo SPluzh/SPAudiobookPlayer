@@ -104,7 +104,8 @@
     "filter_no_narrator": "낭독자 없음",
     "tooltip_filter_language": "언어로 필터링",
     "language_all": "모든 언어",
-    "language_none": "언어 없음"
+    "language_none": "언어 없음",
+    "tooltip_tile_view": "그리드 보기"
   },
   "player": {
     "volume": "음량",

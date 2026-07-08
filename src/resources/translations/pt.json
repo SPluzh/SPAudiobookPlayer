@@ -104,7 +104,8 @@
     "filter_no_narrator": "Sem narrador",
     "tooltip_filter_language": "Filtrar por idioma",
     "language_all": "Todos os idiomas",
-    "language_none": "Sem idioma"
+    "language_none": "Sem idioma",
+    "tooltip_tile_view": "Exibição em grade"
   },
   "player": {
     "volume": "Volume",

@@ -30,6 +30,11 @@ from PyQt6.QtWidgets import (
     QFrame,
     QCheckBox,
     QApplication,
+    QScrollArea,
+    QStackedWidget,
+    QLayout,
+    QStyleOption,
+    QSizePolicy,
 )
 from PyQt6.QtCore import (
     Qt,
@@ -55,6 +60,7 @@ from PyQt6.QtGui import (
     QPen,
     QPainter,
     QPainterPath,
+    QPalette,
     QFontMetrics,
     QTextCursor,
 )
@@ -596,6 +602,53 @@ class ScanProgressDialog(QDialog):
             super().closeEvent(event)
 
 
+# Nesting lines color palette
+NESTING_COLORS = [
+    QColor("#3498db"),  # Blue
+    QColor("#9b59b6"),  # Purple
+    QColor("#e74c3c"),  # Red
+    QColor("#2ecc71"),  # Light green
+    QColor("#8e44ad"),  # Deep purple
+    QColor("#d35400"),  # Pumpkin
+    QColor("#c0392b"),  # Dark red
+    QColor("#16a085"),  # Sea green
+    QColor("#2980b9"),  # Strong blue
+]
+
+
+def is_last_visible_child(item):
+    p_item = item.parent()
+    if p_item:
+        # Find all visible children of the parent
+        visible_children = [p_item.child(i) for i in range(p_item.childCount()) if not p_item.child(i).isHidden()]
+        return visible_children[-1] == item if visible_children else False
+    else:
+        tree = item.treeWidget()
+        if tree:
+            visible_top_items = [tree.topLevelItem(i) for i in range(tree.topLevelItemCount()) if not tree.topLevelItem(i).isHidden()]
+            return visible_top_items[-1] == item if visible_top_items else False
+        return False
+
+
+def get_item_nesting_chain(item):
+    """
+    Get chain of parent paths for consistent color hashing and last-child info.
+    Returns:
+        list: List of tuples (parent_path_str, is_last_child_bool)
+    """
+    chain = []
+    current = item.parent()
+    while current:
+        parent_path = current.data(0, Qt.ItemDataRole.UserRole)
+        is_last = is_last_visible_child(current)
+        if parent_path:
+            chain.insert(0, (str(parent_path), is_last))
+        else:
+            chain.insert(0, (f"unknown_{len(chain)}", is_last))
+        current = current.parent()
+    return chain
+
+
 class MultiLineDelegate(QStyledItemDelegate):
     """Custom item delegate for library tree items with styling and localization support"""
 
@@ -744,17 +797,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.info_language_icon = get_icon("languages")
 
         # Nesting lines color palette
-        self.NESTING_COLORS = [
-            QColor("#3498db"),  # Blue
-            QColor("#9b59b6"),  # Purple
-            QColor("#e74c3c"),  # Red
-            QColor("#2ecc71"),  # Light green
-            QColor("#8e44ad"),  # Deep purple
-            QColor("#d35400"),  # Pumpkin
-            QColor("#c0392b"),  # Dark red
-            QColor("#16a085"),  # Sea green
-            QColor("#2980b9"),  # Strong blue
-        ]
+        self.NESTING_COLORS = NESTING_COLORS
 
     @lru_cache(maxsize=32)
     def _get_style(self, style_name: str) -> tuple[QFont, QColor]:
@@ -2464,10 +2507,1139 @@ class LibraryTree(QTreeWidget):
         traceback.print_stack()
         super().focusOutEvent(event)
 
-    def changeEvent(self, event):
-        if event.type() == QEvent.Type.ActivationChange:
-            print(f"[DEBUG WINDOW] LibraryTree Window activation changed. Active: {self.isActiveWindow()}", flush=True)
         super().changeEvent(event)
+
+
+class WrapLayout(QLayout):
+    def __init__(self, parent=None, margin=-1, hspacing=-1, vspacing=-1):
+        print(f"[DEBUG WrapLayout] __init__ parent={parent}", flush=True)
+        super().__init__(parent)
+        self._hspacing = hspacing
+        self._vspacing = vspacing
+        self._items = []
+        self.setContentsMargins(margin, margin, margin, margin)
+
+    def __del__(self):
+        print("[DEBUG WrapLayout] __del__ started", flush=True)
+        if hasattr(self, "_items"):
+            print(f"[DEBUG WrapLayout] __del__ items count: {len(self._items)}", flush=True)
+            del self._items
+        print("[DEBUG WrapLayout] __del__ finished", flush=True)
+
+    def addItem(self, item):
+        print(f"[DEBUG WrapLayout] addItem item={item}", flush=True)
+        self._items.append(item)
+
+    def count(self):
+        return len(self._items)
+
+    def itemAt(self, index):
+        if 0 <= index < len(self._items):
+            return self._items[index]
+        return None
+
+    def takeAt(self, index):
+        print(f"[DEBUG WrapLayout] takeAt index={index}", flush=True)
+        if 0 <= index < len(self._items):
+            item = self._items.pop(index)
+            print(f"[DEBUG WrapLayout] takeAt item={item} popped", flush=True)
+            return item
+        return None
+
+    def expandingDirections(self):
+        print("[DEBUG WrapLayout] expandingDirections called", flush=True)
+        return Qt.Orientation(0)
+
+    def hasHeightForWidth(self):
+        print("[DEBUG WrapLayout] hasHeightForWidth called", flush=True)
+        return True
+
+    def heightForWidth(self, width):
+        print(f"[DEBUG WrapLayout] heightForWidth called with width={width}", flush=True)
+        res = self._do_layout(QRect(0, 0, width, 0), True)
+        print(f"[DEBUG WrapLayout] heightForWidth returning {res}", flush=True)
+        return res
+
+    def setGeometry(self, rect):
+        print(f"[DEBUG WrapLayout] setGeometry called with rect={rect}", flush=True)
+        super().setGeometry(rect)
+        self._do_layout(rect, False)
+        print("[DEBUG WrapLayout] setGeometry finished", flush=True)
+
+    def sizeHint(self):
+        print("[DEBUG WrapLayout] sizeHint called", flush=True)
+        res = self.minimumSize()
+        print(f"[DEBUG WrapLayout] sizeHint returning {res}", flush=True)
+        return res
+
+    def minimumSize(self):
+        print(f"[DEBUG WrapLayout] minimumSize started, items count={len(self._items)}", flush=True)
+        size = QSize()
+        for i, item in enumerate(self._items):
+            widget = item.widget()
+            if widget and widget.isHidden():
+                continue
+            print(f"[DEBUG WrapLayout] minimumSize checking item {i}: {item}", flush=True)
+            min_sz = item.minimumSize()
+            print(f"[DEBUG WrapLayout] minimumSize item {i} min size={min_sz}", flush=True)
+            size = size.expandedTo(min_sz)
+        margins = self.contentsMargins()
+        print("[DEBUG WrapLayout] minimumSize margins calculation", flush=True)
+        size += QSize(margins.left() + margins.right(), margins.top() + margins.bottom())
+        print(f"[DEBUG WrapLayout] minimumSize returning {size}", flush=True)
+        return size
+
+    def _do_layout(self, rect, test_only):
+        try:
+            margins = self.contentsMargins()
+            effective_rect = rect.adjusted(+margins.left(), +margins.top(), -margins.right(), -margins.bottom())
+            x = effective_rect.x()
+            y = effective_rect.y()
+            line_height = 0
+
+            for item in self._items:
+                widget = item.widget()
+                if not widget:
+                    continue
+                if widget.isHidden():
+                    continue
+                
+                space_x = self._hspacing
+                space_y = self._vspacing
+                if space_x == -1:
+                    space_x = widget.style().layoutSpacing(QSizePolicy.ControlType.PushButton, QSizePolicy.ControlType.PushButton, Qt.Orientation.Horizontal)
+                if space_y == -1:
+                    space_y = widget.style().layoutSpacing(QSizePolicy.ControlType.PushButton, QSizePolicy.ControlType.PushButton, Qt.Orientation.Vertical)
+
+                next_x = x + item.sizeHint().width() + space_x
+                if next_x - space_x > effective_rect.right() and line_height > 0:
+                    x = effective_rect.x()
+                    y = y + line_height + space_y
+                    next_x = x + item.sizeHint().width() + space_x
+                    line_height = 0
+
+                if not test_only:
+                    item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
+
+                x = next_x
+                line_height = max(line_height, item.sizeHint().height())
+
+            return y + line_height - effective_rect.y() + margins.top() + margins.bottom()
+        except Exception as e:
+            print(f"[DEBUG WrapLayout ERROR in _do_layout]: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
+            raise e
+
+
+
+class BookTileWidget(QWidget):
+    clicked = pyqtSignal(str)
+    double_clicked = pyqtSignal(str)
+    play_clicked = pyqtSignal(str)
+    context_menu_requested = pyqtSignal(str, QPoint)
+    favorite_clicked = pyqtSignal(str)
+    description_requested = pyqtSignal(str)
+
+    def __init__(self, path, title, author, narrator, progress_percent, is_started, is_completed, is_favorite, description, pixmap, icon_size, parent=None):
+        super().__init__(parent)
+        self.path = path if path is not None else ""
+        self.title = title if title is not None else ""
+        self.author = author if author is not None else ""
+        self.narrator = narrator if narrator is not None else ""
+        self.progress_percent = progress_percent if progress_percent is not None else 0.0
+        self.is_started = bool(is_started)
+        self.is_completed = bool(is_completed)
+        self.is_favorite = bool(is_favorite)
+        self.description = description if description is not None else ""
+        self.pixmap = pixmap
+        self.icon_size = icon_size
+        self.is_playing = False
+        self.is_paused = True
+        self.selected = False
+        
+        self.setObjectName("bookTile")
+        self.setMouseTracking(True)
+        
+        self.padding = 8
+        self.width_val = self.icon_size + self.padding * 2
+        self.height_val = self.icon_size + self.padding * 2 + 10
+        self.setFixedSize(self.width_val, self.height_val)
+        
+        self.hovered = False
+        self.hovered_field = None
+        
+        self.play_icon = get_icon("play")
+        self.pause_icon = get_icon("pause")
+        self.info_icon = get_icon("info_duration")
+        
+        self.update_texts()
+
+    def update_texts(self):
+        tooltip_parts = []
+        if self.title:
+            tooltip_parts.append(self.title)
+        if self.author:
+            tooltip_parts.append(self.author)
+        progress_val = self.progress_percent if self.progress_percent is not None else 0.0
+        progress_str = f"{int(progress_val)}%"
+        tooltip_text = " - ".join(tooltip_parts) + f" ({progress_str})"
+        self.setToolTip(tooltip_text)
+
+    def set_playing(self, is_playing, is_paused):
+        self.is_playing = is_playing
+        self.is_paused = is_paused
+        self.update()
+
+    def setSelected(self, selected):
+        self.selected = selected
+        self.setProperty("selected", selected)
+        self.style().polish(self)
+        self.update()
+
+    def get_icon_rect(self):
+        return QRect(self.padding, self.padding, self.icon_size, self.icon_size)
+
+    def get_play_button_rect(self, icon_rect):
+        btn_size = 40.0
+        center = icon_rect.center()
+        return QRectF(center.x() - btn_size / 2.0, center.y() - btn_size / 2.0, btn_size, btn_size)
+
+    def get_heart_rect(self, icon_rect):
+        size = 20.0
+        # Position: Top-Right of icon, adjusted to stay inside tile widget boundary (padding is 4)
+        return QRectF(
+            float(icon_rect.right() - size + 4),
+            float(icon_rect.top() - 4),
+            float(size),
+            float(size),
+        )
+
+    def get_info_rect(self, icon_rect):
+        size = 20
+        return QRect(icon_rect.right() - size - 4, icon_rect.bottom() - size - 4, size, size)
+
+    def paintEvent(self, event):
+        opt = QStyleOption()
+        opt.initFrom(self)
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, p, self)
+        
+        icon_rect = self.get_icon_rect()
+        
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(icon_rect), 3.0, 3.0)
+        p.save()
+        p.setClipPath(path)
+        p.drawPixmap(icon_rect, self.pixmap)
+        p.restore()
+        
+        if self.hovered:
+            _, overlay_bg = StyleManager.get_theme_property("overlay_background")
+            if not overlay_bg:
+                overlay_bg = QColor(0, 0, 0, 80)
+            p.save()
+            p.setClipPath(path)
+            p.fillRect(icon_rect, overlay_bg)
+            p.restore()
+            
+        # Draw status triangle (New / Started / Finished)
+        if self.is_completed:
+            _, status_color = StyleManager.get_theme_property("delegate_status_completed")
+            if not status_color or not status_color.isValid() or status_color == QColor():
+                status_color = QColor("#4ecca3")
+        elif self.is_started:
+            _, status_color = StyleManager.get_theme_property("delegate_status_started")
+            if not status_color or not status_color.isValid() or status_color == QColor():
+                status_color = QColor("#f9ca24")
+        else:
+            _, status_color = StyleManager.get_theme_property("delegate_status_new")
+            if not status_color or not status_color.isValid() or status_color == QColor():
+                status_color = QColor("#ff6b6b")
+
+        tri_size = icon_rect.width() * 0.25
+        tri_path = QPainterPath()
+        tri_path.moveTo(float(icon_rect.left()), float(icon_rect.top()))
+        tri_path.lineTo(float(icon_rect.left() + tri_size), float(icon_rect.top()))
+        tri_path.lineTo(float(icon_rect.left()), float(icon_rect.top() + tri_size))
+        tri_path.closeSubpath()
+
+        p.save()
+        p.setClipPath(path)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QBrush(status_color))
+        p.drawPath(tri_path)
+        p.restore()
+
+        pb_y = icon_rect.bottom()
+        pb_h = 5
+
+        # 4. Currently Playing Highlight Border
+        if self.is_playing:
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            if not accent_color:
+                accent_color = QColor("#018574")
+            p.save()
+            pen = QPen(accent_color, 8)
+            p.setPen(pen)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            
+            has_progress = (self.progress_percent > 0 or self.is_started)
+            if has_progress:
+                highlight_rect = QRectF(
+                    float(icon_rect.left()),
+                    float(icon_rect.top()),
+                    float(icon_rect.width()),
+                    float(pb_y + pb_h - icon_rect.top()),
+                )
+            else:
+                highlight_rect = QRectF(icon_rect)
+                
+            p.drawRoundedRect(highlight_rect.adjusted(-4, -4, 4, 4), 7, 7)
+            p.restore()
+
+        if self.hovered or self.is_playing:
+            play_rect = self.get_play_button_rect(icon_rect)
+            is_play_hovered = (self.hovered_field == "play")
+            
+            p.save()
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            # Button circle
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            if not accent_color:
+                accent_color = QColor("#018574")
+            btn_color = accent_color
+            if not is_play_hovered:
+                btn_color.setAlpha(200)
+            else:
+                btn_color = btn_color.lighter(110)
+
+            p.setBrush(btn_color)
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawEllipse(play_rect)
+
+            # Play/Pause Icon shapes
+            p.setBrush(Qt.GlobalColor.white)
+            if self.is_playing and not self.is_paused:
+                # Draw Pause bars
+                w = play_rect.width() // 5
+                h = play_rect.height() // 2
+                gap = w // 2
+
+                total_w = w * 2 + gap
+                start_x = (
+                    play_rect.left() + (play_rect.width() - total_w) // 2
+                )
+                start_y = play_rect.top() + (play_rect.height() - h) // 2
+
+                p.drawRect(QRectF(start_x, start_y, w, h))
+                p.drawRect(QRectF(start_x + w + gap, start_y, w, h))
+            else:
+                # Draw Play triangle
+                side = play_rect.width() // 2
+                center_f = QPointF(play_rect.center())
+
+                # Optical balancing adjustment
+                h_offset = play_rect.width() / 20.0
+
+                tri_path = QPainterPath()
+                tri_path.moveTo(
+                    center_f.x() - side / 3.0 + h_offset, center_f.y() - side / 2.0
+                )
+                tri_path.lineTo(
+                    center_f.x() - side / 3.0 + h_offset, center_f.y() + side / 2.0
+                )
+                tri_path.lineTo(center_f.x() + side / 2.0 + h_offset, center_f.y())
+                tri_path.closeSubpath()
+
+                p.fillPath(tri_path, Qt.GlobalColor.white)
+
+            p.restore()
+
+        if self.is_favorite:
+            heart_rect = self.get_heart_rect(icon_rect)
+            p.save()
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            is_over_heart = (self.hovered_field == "heart")
+
+            # Draw circle background
+            prop = "icon_background_hover" if is_over_heart else "icon_background"
+            _, bg_color = StyleManager.get_theme_property(prop)
+            if not bg_color or not bg_color.isValid() or bg_color == QColor():
+                bg_color = QColor(0, 0, 0, 150)
+            p.setBrush(bg_color)
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawEllipse(heart_rect)
+
+            # Draw Heart Shape
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            if not accent_color or not accent_color.isValid() or accent_color == QColor():
+                accent_color = QColor("#018574")
+            p.setBrush(accent_color)
+            
+            # Make the heart wider by reducing horizontal padding
+            hr = heart_rect.adjusted(1, 2, -1, -3)
+
+            path = QPainterPath()
+            path.moveTo(hr.center().x(), hr.bottom())
+            path.cubicTo(
+                hr.right(),
+                hr.center().y(),
+                hr.right(),
+                hr.top(),
+                hr.center().x(),
+                hr.top() + hr.height() * 0.2,
+            )
+            path.cubicTo(
+                hr.left(),
+                hr.top(),
+                hr.left(),
+                hr.center().y(),
+                hr.center().x(),
+                hr.bottom(),
+            )
+
+            p.drawPath(path)
+            p.drawPath(path)
+            p.restore()
+
+        if self.hovered and self.description:
+            info_rect = self.get_info_rect(icon_rect)
+            p.save()
+            pix = self.info_icon.pixmap(info_rect.size())
+            p.drawPixmap(info_rect, pix)
+            p.restore()
+
+        pb_x = icon_rect.left()
+        pb_w = icon_rect.width()
+        
+        _, border_color = StyleManager.get_theme_property("overlay_progress_bg")
+        if not border_color:
+            border_color = QColor("#444444")
+        _, accent_color = StyleManager.get_theme_property("theme_primary")
+        if not accent_color:
+            accent_color = QColor("#3498db")
+            
+        if self.progress_percent > 0 or self.is_started:
+            p.save()
+            pb_rect = QRectF(float(pb_x), float(pb_y), float(pb_w), float(pb_h))
+            
+            # Background
+            p.fillRect(pb_rect, border_color)
+            
+            # Fill
+            if self.progress_percent > 0:
+                fill_w = pb_rect.width() * self.progress_percent / 100.0
+                if fill_w > 0:
+                    fill_rect = QRectF(pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height())
+                    p.fillRect(fill_rect, accent_color)
+            p.restore()
+        
+        p.end()
+
+    def mouseMoveEvent(self, event):
+        pos = event.position().toPoint()
+        icon_rect = self.get_icon_rect()
+        old_hovered_field = self.hovered_field
+        
+        play_rect = self.get_play_button_rect(icon_rect)
+        heart_rect = self.get_heart_rect(icon_rect)
+        info_rect = self.get_info_rect(icon_rect)
+        
+        is_over_icon = icon_rect.contains(pos)
+        is_over_heart = self.is_favorite and heart_rect.contains(QPointF(pos))
+        is_over_info = bool(self.description) and info_rect.contains(QPointF(pos))
+        
+        if is_over_icon or is_over_heart or is_over_info:
+            self.hovered = True
+            if (self.hovered or self.is_playing) and play_rect.contains(QPointF(pos)):
+                self.hovered_field = "play"
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+            elif is_over_heart:
+                self.hovered_field = "heart"
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+            elif is_over_info:
+                self.hovered_field = "info"
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+            else:
+                self.hovered_field = None
+                self.setCursor(Qt.CursorShape.ArrowCursor)
+        else:
+            self.hovered = False
+            self.hovered_field = None
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            
+        if self.hovered_field != old_hovered_field:
+            self.update()
+        super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event):
+        self.hovered = False
+        self.hovered_field = None
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+        self.update()
+        super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            icon_rect = self.get_icon_rect()
+            pos = event.position().toPoint()
+            
+            if self.hovered_field == "play":
+                self.play_clicked.emit(self.path)
+                event.accept()
+                return
+            elif self.hovered_field == "heart":
+                self.favorite_clicked.emit(self.path)
+                event.accept()
+                return
+            elif self.hovered_field == "info":
+                self.description_requested.emit(self.path)
+                event.accept()
+                return
+            
+            if icon_rect.contains(pos):
+                self.clicked.emit(self.path)
+                event.accept()
+                return
+                
+            super().mousePressEvent(event)
+        elif event.button() == Qt.MouseButton.RightButton:
+            self.context_menu_requested.emit(self.path, event.globalPosition().toPoint())
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.double_clicked.emit(self.path)
+            event.accept()
+        else:
+            super().mouseDoubleClickEvent(event)
+
+
+class FolderBranchIndicator(QWidget):
+    def __init__(self, expanded=True, parent=None):
+        super().__init__(parent)
+        self.expanded = expanded
+        self.setFixedSize(12, 12)
+        
+    def set_expanded(self, expanded):
+        if self.expanded != expanded:
+            self.expanded = expanded
+            self.update()
+            
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        opt = QStyleOption()
+        opt.initFrom(self)
+        opt.rect = self.rect()
+        
+        # State flags matching branch indicator
+        opt.state = QStyle.StateFlag.State_Enabled
+        if self.expanded:
+            opt.state |= QStyle.StateFlag.State_Open
+            
+        pe = QStyle.PrimitiveElement.PE_IndicatorArrowDown if self.expanded else QStyle.PrimitiveElement.PE_IndicatorArrowRight
+        self.style().drawPrimitive(pe, opt, painter, self)
+
+
+class FolderHeaderWidget(QWidget):
+    toggled = pyqtSignal(str, bool)
+
+    def __init__(self, path, display_name, depth, chain, is_last_child, is_expanded=True, parent=None):
+        super().__init__(parent)
+        self.path = path
+        self.display_name = display_name
+        self.depth = depth
+        self.chain = chain
+        self.is_last_child = is_last_child
+        self.expanded = is_expanded
+        self.is_active = False
+        self.hovered = False
+        
+        self.setObjectName("FolderHeader")
+        
+        library = self.window().findChild(LibraryWidget)
+        row_height = 35
+        if library and hasattr(library, "delegate") and library.delegate:
+            row_height = library.delegate.folder_row_height
+        self.setFixedHeight(row_height)
+        
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(0)
+        
+        # 1. Left indent spacer
+        if depth > 0:
+            layout.addSpacing(depth * 12)
+            
+        # 2. Branch arrow widget
+        self.arrow_widget = FolderBranchIndicator(self.expanded, self)
+        layout.addWidget(self.arrow_widget, 0, Qt.AlignmentFlag.AlignVCenter)
+        
+        # 3. Spacing between arrow column and folder icon
+        layout.addSpacing(15)
+        
+        # 4. Folder icon label
+        self.icon_label = QLabel()
+        self.icon_label.setObjectName("FolderHeaderIcon")
+        self.icon_label.setFixedSize(20, 20)
+        self.icon_label.setScaledContents(True)
+        if library and library.folder_icon:
+            self.icon_label.setPixmap(library.folder_icon.pixmap(20, 20))
+        layout.addWidget(self.icon_label, 0, Qt.AlignmentFlag.AlignVCenter)
+        
+        # 5. Spacing between icon and title text
+        layout.addSpacing(8)
+        
+        # 6. Title label
+        self.title_label = QLabel(self.display_name)
+        self.title_label.setObjectName("FolderHeaderTitle")
+        font, color = StyleManager.get_theme_property("delegate_folder")
+        if font:
+            self.title_label.setFont(font)
+        if color:
+            palette = self.title_label.palette()
+            palette.setColor(QPalette.ColorRole.WindowText, color)
+            self.title_label.setPalette(palette)
+        layout.addWidget(self.title_label, 0, Qt.AlignmentFlag.AlignVCenter)
+        
+        layout.addStretch(1)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def set_active(self, is_active):
+        if self.is_active != is_active:
+            self.is_active = is_active
+            self.update()
+
+    def update_arrow_icon(self):
+        if hasattr(self, "arrow_widget"):
+            self.arrow_widget.set_expanded(self.expanded)
+
+    def enterEvent(self, event):
+        self.hovered = True
+        self.update()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.hovered = False
+        self.update()
+        super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.expanded = not self.expanded
+            self.update_arrow_icon()
+            self.toggled.emit(self.path, self.expanded)
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def paintEvent(self, event):
+        opt = QStyleOption()
+        opt.initFrom(self)
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        
+        # Draw hover background
+        if self.hovered:
+            _, text_color = StyleManager.get_theme_property("delegate_folder")
+            if text_color:
+                hover_color = QColor(text_color.red(), text_color.green(), text_color.blue(), 15)
+            else:
+                hover_color = QColor(255, 255, 255, 10)
+            p.fillRect(self.rect(), hover_color)
+            
+        self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, p, self)
+        
+        indent = 12
+        line_width = 2
+        
+        library = self.window().findChild(LibraryWidget)
+        show_nesting = getattr(library, "show_nesting_lines", True) if library else True
+        
+        if show_nesting:
+            # Draw nesting lines
+            for i in range(self.depth):
+                if i >= len(self.chain):
+                    continue
+                parent_path_str, _ = self.chain[i]
+                
+                # If ancestor line already ended in previous folder, skip it for descendants
+                if i < self.depth - 1:
+                    child_is_last = self.chain[i + 1][1]
+                    if child_is_last:
+                        continue
+                        
+                path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
+                color_index = path_hash % len(NESTING_COLORS)
+                color = NESTING_COLORS[color_index]
+                
+                p.setPen(Qt.PenStyle.NoPen)
+                p.setBrush(color)
+                
+                line_x = 12 + i * indent
+                
+                if i == self.depth - 1:
+                    # This is the folder's own nesting line/branch
+                    if self.is_last_child:
+                        # └ pattern
+                        v_end = self.height() if self.expanded else (self.height() // 2 + line_width // 2)
+                        p.drawRect(
+                            QRect(
+                                line_x,
+                                0,
+                                line_width,
+                                v_end,
+                            )
+                        )
+                        p.drawRect(
+                            QRect(
+                                line_x,
+                                (self.height() - line_width) // 2,
+                                indent,
+                                line_width,
+                            )
+                        )
+                    else:
+                        # ├ pattern
+                        p.drawRect(
+                            QRect(line_x, 0, line_width, self.height())
+                        )
+                        p.drawRect(
+                            QRect(
+                                line_x,
+                                (self.height() - line_width) // 2,
+                                indent,
+                                line_width,
+                            )
+                        )
+                else:
+                    # Regular full vertical line for parent levels
+                    p.drawRect(QRect(line_x, 0, line_width, self.height()))
+            
+        # Draw active folder indicator
+        if self.is_active:
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            if not accent_color:
+                accent_color = QColor("#018574")
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(accent_color)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+            
+            bar_x = self.depth * indent + 14
+            bar_rect = QRectF(
+                float(bar_x),
+                4.0,
+                3.0,
+                float(self.height() - 8),
+            )
+            p.drawRoundedRect(bar_rect, 2.0, 2.0)
+            
+        # Draw horizontal line at bottom for expanded folder
+        if show_nesting and self.expanded and self.depth >= 0:
+            if self.path:
+                path_hash = zlib.adler32(str(self.path).encode("utf-8", errors="ignore"))
+                color_index = path_hash % len(NESTING_COLORS)
+                line_color = NESTING_COLORS[color_index]
+                
+                p.setPen(QPen(line_color, line_width))
+                p.setBrush(Qt.BrushStyle.NoBrush)
+                p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+                
+                start_x = 0
+                if self.depth > 0:
+                    gap = 4
+                    start_x = self.depth * indent + 12 + line_width + gap
+                
+                y_pos = self.height() - 1
+                p.drawLine(start_x, y_pos, self.width(), y_pos)
+                
+        p.end()
+
+
+class BooksContainerWidget(QWidget):
+    def __init__(self, chain, depth, parent=None):
+        super().__init__(parent)
+        self.chain = chain
+        self.depth = depth
+        self.setContentsMargins(depth * 12 + 12, 4, 0, 4)
+        
+    def paintEvent(self, event):
+        library = self.window().findChild(LibraryWidget)
+        show_nesting = getattr(library, "show_nesting_lines", True) if library else True
+        if not show_nesting:
+            return
+            
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        
+        indent = 12
+        line_width = 2
+        
+        for i in range(self.depth):
+            if i >= len(self.chain):
+                continue
+            parent_path_str, _ = self.chain[i]
+            
+            # If ancestor line already ended, skip it
+            if i < self.depth - 1:
+                child_is_last = self.chain[i + 1][1]
+                if child_is_last:
+                    continue
+                    
+            path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
+            color_index = path_hash % len(NESTING_COLORS)
+            color = NESTING_COLORS[color_index]
+            
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(color)
+            
+            line_x = 12 + i * indent
+            p.drawRect(QRect(line_x, 0, line_width, self.height()))
+            
+        p.end()
+
+
+class FolderGroup:
+    def __init__(self, path, header, books_container, parent=None):
+        self.path = path
+        self.header = header
+        self.books_container = books_container
+        self.parent = parent
+        self.expanded = True
+        self.child_groups = []
+        self.books = []
+
+
+class TileFlowWidget(QScrollArea):
+    def __init__(self, parent_library, parent=None):
+        super().__init__(parent)
+        self.parent_library = parent_library
+        self.config = parent_library.config
+        
+        self.setObjectName("libraryTileView")
+        self.setWidgetResizable(True)
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        
+        self.container = QWidget()
+        self.container.setObjectName("libraryTileViewContainer")
+        
+        self._layout = QVBoxLayout(self.container)
+        self._layout.setContentsMargins(4, 4, 4, 4)
+        self._layout.setSpacing(0)
+        
+        self.setWidget(self.container)
+        self.root_group = None
+
+    def clear(self):
+        print("[DEBUG TileFlowWidget] clear started", flush=True)
+        while self._layout.count():
+            item = self._layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+        self.root_group = None
+        print("[DEBUG TileFlowWidget] clear finished", flush=True)
+
+    def populate(self, tree_root_item):
+        print("[DEBUG TileFlowWidget] populate started", flush=True)
+        self.clear()
+        
+        print("[DEBUG TileFlowWidget] Creating FolderGroup", flush=True)
+        self.root_group = FolderGroup(path="", header=None, books_container=BooksContainerWidget(chain=[], depth=0, parent=self), parent=None)
+        print("[DEBUG TileFlowWidget] Creating WrapLayout for books_container", flush=True)
+        self.root_group.books_container.setLayout(WrapLayout(margin=0, hspacing=6, vspacing=6))
+        print("[DEBUG TileFlowWidget] Adding books_container to _layout", flush=True)
+        self._layout.addWidget(self.root_group.books_container)
+        
+        self._expanded_paths = self.parent_library._expanded_paths_cache
+        
+        print("[DEBUG TileFlowWidget] Building hierarchy...", flush=True)
+        self._build_hierarchy(tree_root_item, self.root_group, depth=0)
+        print("[DEBUG TileFlowWidget] Hierarchy built. Adding stretch.", flush=True)
+        self._layout.addStretch(1)
+        self.update_visibility()
+        # Restore active-book indicator after rebuilding all widgets
+        playing_path = None
+        if hasattr(self.parent_library, "delegate") and self.parent_library.delegate:
+            playing_path = getattr(self.parent_library.delegate, "playing_path", None)
+        if not playing_path and hasattr(self.parent_library, "current_playing_item") and self.parent_library.current_playing_item:
+            try:
+                playing_path = self.parent_library.current_playing_item.data(0, Qt.ItemDataRole.UserRole)
+            except RuntimeError:
+                pass
+        is_paused = self.parent_library.delegate.is_paused if (hasattr(self.parent_library, "delegate") and self.parent_library.delegate) else True
+        self.update_playback_state(playing_path, is_paused)
+
+    def _build_hierarchy(self, tree_item, parent_group, depth):
+        child_count = tree_item.childCount()
+        print(f"[DEBUG TileFlowWidget] _build_hierarchy depth={depth} parent={parent_group.path} child_count={child_count}", flush=True)
+        for i in range(child_count):
+            child = tree_item.child(i)
+            if child.isHidden():
+                continue
+                
+            item_type = child.data(0, Qt.ItemDataRole.UserRole + 1)
+            path = child.data(0, Qt.ItemDataRole.UserRole)
+            print(f"[DEBUG TileFlowWidget] child {i} type={item_type} path={path}", flush=True)
+            
+            # Get nesting chain and is_last_child for child
+            chain = get_item_nesting_chain(child)
+            is_last_child = is_last_visible_child(child)
+
+            if item_type == "folder":
+                display_name = child.text(0)
+                is_expanded = child.isExpanded()
+                
+                header = FolderHeaderWidget(
+                    path=path,
+                    display_name=display_name,
+                    depth=depth,
+                    chain=chain,
+                    is_last_child=is_last_child,
+                    is_expanded=is_expanded,
+                    parent=self
+                )
+                header.toggled.connect(self.on_folder_toggled)
+                
+                # Initial active state — resolved after all tiles are built via update_playback_state()
+                # (called at the end of populate(), so no need to compute it per-header here)
+                
+                self._layout.addWidget(header)
+                
+                books_chain = chain + [(path, is_last_child)]
+                books_container = BooksContainerWidget(chain=books_chain, depth=depth + 1, parent=self)
+                books_container.setLayout(WrapLayout(margin=0, hspacing=6, vspacing=6))
+                self._layout.addWidget(books_container)
+                
+                group = FolderGroup(path, header, books_container, parent=parent_group)
+                group.expanded = is_expanded
+                parent_group.child_groups.append(group)
+                
+                self._build_hierarchy(child, group, depth + 1)
+                
+            elif item_type == "audiobook":
+                tile = self._create_tile_for_item(child)
+                parent_group.books.append(tile)
+                parent_group.books_container.layout().addWidget(tile)
+
+    def _create_tile_for_item(self, item):
+        path = item.data(0, Qt.ItemDataRole.UserRole)
+        print(f"[DEBUG TileFlowWidget] _create_tile_for_item path={path}", flush=True)
+        data = item.data(0, Qt.ItemDataRole.UserRole + 2) or ()
+        status_data = item.data(0, Qt.ItemDataRole.UserRole + 3) or ()
+        icon = item.data(0, Qt.ItemDataRole.DecorationRole)
+        
+        author = data[0] if len(data) > 0 and data[0] is not None else ""
+        title = data[1] if len(data) > 1 and data[1] is not None else ""
+        narrator = data[2] if len(data) > 2 and data[2] is not None else ""
+        progress_percent = data[6] if len(data) > 6 and data[6] is not None else 0
+        description = data[12] if len(data) > 12 and data[12] is not None else ""
+        
+        is_started = status_data[0] if len(status_data) > 0 and status_data[0] is not None else False
+        is_completed = status_data[1] if len(status_data) > 1 and status_data[1] is not None else False
+        is_favorite = status_data[2] if len(status_data) > 2 and status_data[2] is not None else False
+        
+        icon_size = self.config.get("audiobook_icon_size", 100)
+        
+        if icon and not icon.isNull():
+            pixmap = icon.pixmap(QSize(icon_size, icon_size))
+        elif self.parent_library.default_audiobook_icon and not self.parent_library.default_audiobook_icon.isNull():
+            pixmap = self.parent_library.default_audiobook_icon.pixmap(QSize(icon_size, icon_size))
+        else:
+            pixmap = QPixmap(icon_size, icon_size)
+            pixmap.fill(Qt.GlobalColor.transparent)
+            
+        tile = BookTileWidget(
+            path=path,
+            title=title,
+            author=author,
+            narrator=narrator,
+            progress_percent=progress_percent,
+            is_started=is_started,
+            is_completed=is_completed,
+            is_favorite=is_favorite,
+            description=description,
+            pixmap=pixmap,
+            icon_size=icon_size,
+            parent=self
+        )
+        
+        playing_path = None
+        if hasattr(self.parent_library, "delegate") and self.parent_library.delegate:
+            playing_path = getattr(self.parent_library.delegate, "playing_path", None)
+        if not playing_path and hasattr(self.parent_library, "current_playing_item") and self.parent_library.current_playing_item:
+            playing_path = self.parent_library.current_playing_item.data(0, Qt.ItemDataRole.UserRole)
+        
+        is_playing = False
+        if playing_path and path:
+            is_playing = (str(playing_path).replace("\\", "/") == str(path).replace("\\", "/"))
+            
+        is_paused = getattr(self.parent_library, "is_paused", True)
+        tile.set_playing(is_playing, is_paused)
+        
+        selected_paths = getattr(self.parent_library.tree, "selected_audiobook_paths", set())
+        tile.setSelected(path in selected_paths)
+        
+        tile.clicked.connect(self.on_tile_clicked)
+        tile.double_clicked.connect(self.on_tile_double_clicked)
+        tile.play_clicked.connect(self.on_tile_play_clicked)
+        tile.context_menu_requested.connect(self.on_tile_context_menu_requested)
+        tile.favorite_clicked.connect(self.on_tile_favorite_clicked)
+        tile.description_requested.connect(self.on_tile_description_requested)
+        
+        print(f"[DEBUG TileFlowWidget] _create_tile_for_item finished path={path}", flush=True)
+        return tile
+
+    def on_tile_play_clicked(self, path):
+        self.parent_library.tree.play_button_clicked.emit(path)
+
+    def on_tile_clicked(self, path):
+        item = self.parent_library.find_item_by_path(self.parent_library.tree.invisibleRootItem(), path)
+        if item:
+            if getattr(self.parent_library.tree, "mass_selection_mode", False):
+                self.parent_library.tree.toggle_item_selection_state(item)
+                self.update_selection_state(self.parent_library.tree.selected_audiobook_paths)
+            else:
+                self.parent_library.tree.setCurrentItem(item)
+                self.parent_library.audiobook_selected.emit(path)
+
+    def on_tile_double_clicked(self, path):
+        item = self.parent_library.find_item_by_path(self.parent_library.tree.invisibleRootItem(), path)
+        if item:
+            self.parent_library.on_item_double_clicked(item, 0)
+
+    def on_tile_context_menu_requested(self, path, pos):
+        item = self.parent_library.find_item_by_path(self.parent_library.tree.invisibleRootItem(), path)
+        if item:
+            tree_pos = self.parent_library.tree.viewport().mapFromGlobal(pos)
+            self.parent_library.show_context_menu(tree_pos)
+
+    def on_tile_favorite_clicked(self, path):
+        info = self.parent_library.db.get_audiobook_info(path)
+        if info:
+            self.parent_library.toggle_favorite(info[0], path)
+            self.refresh_tile(path)
+
+    def on_tile_description_requested(self, path):
+        item = self.parent_library.find_item_by_path(self.parent_library.tree.invisibleRootItem(), path)
+        if item:
+            self.parent_library.show_description_dialog(item)
+
+    def on_folder_toggled(self, path, is_expanded):
+        self.parent_library.db.update_folder_expanded_state(path, is_expanded)
+        self.parent_library.update_cached_folder_expanded_state(path, is_expanded)
+        
+        item = self.parent_library.find_item_by_path(self.parent_library.tree.invisibleRootItem(), path)
+        if item:
+            self.parent_library.tree.blockSignals(True)
+            item.setExpanded(is_expanded)
+            self.parent_library.tree.blockSignals(False)
+            
+        def find_and_set_expanded(group):
+            if group.path == path:
+                group.expanded = is_expanded
+                return True
+            for child in group.child_groups:
+                if find_and_set_expanded(child):
+                    return True
+            return False
+            
+        if self.root_group:
+            find_and_set_expanded(self.root_group)
+            self.update_visibility()
+
+    def update_visibility(self):
+        print("[DEBUG TileFlowWidget] update_visibility started", flush=True)
+        def update_group_visibility(group, is_ancestors_expanded):
+            print(f"[DEBUG TileFlowWidget] update_group_visibility for group={group.path} expanded={is_ancestors_expanded}", flush=True)
+            if group.header:
+                print(f"[DEBUG TileFlowWidget] Setting header visibility to {is_ancestors_expanded} for {group.path}", flush=True)
+                group.header.setVisible(is_ancestors_expanded)
+                print(f"[DEBUG TileFlowWidget] Header visibility set for {group.path}", flush=True)
+            is_visible = is_ancestors_expanded and group.expanded
+            print(f"[DEBUG TileFlowWidget] Setting books_container visibility to {is_visible} for {group.path}", flush=True)
+            group.books_container.setVisible(is_visible)
+            print(f"[DEBUG TileFlowWidget] books_container visibility set for {group.path}", flush=True)
+            for child in group.child_groups:
+                update_group_visibility(child, is_visible)
+                
+        if self.root_group:
+            print("[DEBUG TileFlowWidget] self.root_group exists", flush=True)
+            self.root_group.books_container.setVisible(True)
+            print("[DEBUG TileFlowWidget] root books_container set to visible", flush=True)
+            for child in self.root_group.child_groups:
+                update_group_visibility(child, is_ancestors_expanded=True)
+        print("[DEBUG TileFlowWidget] update_visibility finished", flush=True)
+
+    def update_playback_state(self, playing_path, is_paused):
+        def update_group(group):
+            if group.header and playing_path and group.path:
+                p_path = str(playing_path).replace("\\", "/")
+                f_path = str(group.path).replace("\\", "/")
+                is_active = False
+                if p_path.startswith(f_path):
+                    if len(p_path) == len(f_path) or p_path[len(f_path)] == "/":
+                        is_active = True
+                group.header.set_active(is_active)
+            elif group.header:
+                group.header.set_active(False)
+
+            for tile in group.books:
+                is_playing = False
+                if playing_path and tile.path:
+                    is_playing = (str(playing_path).replace("\\", "/") == str(tile.path).replace("\\", "/"))
+                tile.set_playing(is_playing, is_paused)
+            for child in group.child_groups:
+                update_group(child)
+        if self.root_group:
+            update_group(self.root_group)
+
+    def update_selection_state(self, selected_paths):
+        def update_group(group):
+            for tile in group.books:
+                tile.setSelected(tile.path in selected_paths)
+            for child in group.child_groups:
+                update_group(child)
+        if self.root_group:
+            update_group(self.root_group)
+
+    def update_texts(self):
+        def update_group(group):
+            for tile in group.books:
+                tile.update_texts()
+            for child in group.child_groups:
+                update_group(child)
+        if self.root_group:
+            update_group(self.root_group)
+
+    def refresh_tile(self, path):
+        def find_tile(group):
+            for tile in group.books:
+                if tile.path == path:
+                    return tile
+            for child in group.child_groups:
+                t = find_tile(child)
+                if t:
+                    return t
+            return None
+            
+        tile = find_tile(self.root_group) if self.root_group else None
+        if tile:
+            data = self.parent_library.db.get_audiobook_by_path(path)
+            if data:
+                tile.progress_percent = data["progress_percent"] if data["progress_percent"] is not None else 0.0
+                tile.is_started = bool(data["is_started"])
+                tile.is_completed = bool(data["is_completed"])
+                tile.is_favorite = bool(data["is_favorite"])
+                tile.description = data.get("description", "") or ""
+                tile.update_texts()
+                tile.update()
 
 
 class LibraryWidget(QWidget):
@@ -2552,9 +3724,12 @@ class LibraryWidget(QWidget):
             "in_progress": "last_updated",
             "completed": "time_finished"
         })
+        self.is_tile_view = self.config.get("tile_view", False)
+        self.show_nesting_lines = self.config.get("show_nesting_lines", True)
         self._expanded_paths_cache = set()
         self.setup_ui()
         self.load_icons()
+        self.set_tile_view_active(self.is_tile_view)
 
     @property
     def sort_order(self):
@@ -2592,6 +3767,17 @@ class LibraryWidget(QWidget):
 
         filter_layout = QHBoxLayout()
         filter_layout.setSpacing(10)
+
+        # Tile View Toggle
+        self.btn_tile_view = QPushButton("")
+        self.btn_tile_view.setObjectName("filterBtn")
+        self.btn_tile_view.setCheckable(True)
+        self.btn_tile_view.setChecked(self.is_tile_view)
+        self.btn_tile_view.setIcon(get_icon("layout-grid"))
+        self.btn_tile_view.setFixedWidth(40)
+        self.btn_tile_view.setToolTip(tr("library.tooltip_tile_view"))
+        self.btn_tile_view.clicked.connect(self.on_tile_view_toggled)
+        filter_layout.addWidget(self.btn_tile_view)
 
         # Mass Selection Sub-Layout (flush group)
         mass_layout = QHBoxLayout()
@@ -2718,6 +3904,8 @@ class LibraryWidget(QWidget):
 
 
 
+
+
         # Create a layout to keep sorting toggle and dropdown in one flush button group
         sort_layout = QHBoxLayout()
         sort_layout.setSpacing(0)
@@ -2754,6 +3942,8 @@ class LibraryWidget(QWidget):
 
         layout.addLayout(filter_layout)
 
+        self.stack = QStackedWidget()
+
         self.tree = LibraryTree()
         self.tree.setObjectName("bookTree")
         self.tree.setHeaderHidden(True)
@@ -2782,9 +3972,38 @@ class LibraryWidget(QWidget):
             self.delegate.tree = self.tree
             self.tree.setItemDelegate(self.delegate)
 
-        layout.addWidget(self.tree)
+        self.stack.addWidget(self.tree)
 
+        self.tile_view = TileFlowWidget(parent_library=self)
+        self.stack.addWidget(self.tile_view)
 
+        layout.addWidget(self.stack)
+
+    def set_tile_view_active(self, active: bool):
+        self.is_tile_view = active
+        self.config["tile_view"] = active
+        
+        if hasattr(self, "btn_tile_view") and self.btn_tile_view:
+            self.btn_tile_view.setChecked(active)
+            
+        if active:
+            self.stack.setCurrentWidget(self.tile_view)
+            self.tile_view.populate(self.tree.invisibleRootItem())
+            self.update_tile_playback_state()
+        else:
+            self.stack.setCurrentWidget(self.tree)
+
+    def on_tile_view_toggled(self, checked):
+        self.set_tile_view_active(checked)
+        window = self.window()
+        if hasattr(window, "save_settings"):
+            window.save_settings()
+
+    def update_tile_playback_state(self):
+        if self.is_tile_view and hasattr(self, "tile_view"):
+            playing_path = self.delegate.playing_path if self.delegate else None
+            is_paused = self.delegate.is_paused if self.delegate else True
+            self.tile_view.update_playback_state(playing_path, is_paused)
 
     def resizeEvent(self, event):
         """Update button labels when the widget is resized to avoid layout overflow"""
@@ -2892,6 +4111,8 @@ class LibraryWidget(QWidget):
 
         if hasattr(self, "btn_show_folders") and self.btn_show_folders:
             self.btn_show_folders.setIcon(get_icon("folder_cover"))
+        if hasattr(self, "btn_tile_view") and self.btn_tile_view:
+            self.btn_tile_view.setIcon(get_icon("layout-grid"))
         if hasattr(self, "btn_sort") and self.btn_sort:
             self.btn_sort.setIcon(
                 get_icon("arrow-up-narrow-wide")
@@ -3500,9 +4721,15 @@ class LibraryWidget(QWidget):
 
         if not search_text and self.current_filter == "all":
             self.show_all_items(self.tree.invisibleRootItem())
+            if self.is_tile_view:
+                self.tile_view.populate(self.tree.invisibleRootItem())
+                self.update_tile_playback_state()
             return
 
         self.filter_tree_items(self.tree.invisibleRootItem(), search_text)
+        if self.is_tile_view:
+            self.tile_view.populate(self.tree.invisibleRootItem())
+            self.update_tile_playback_state()
 
     def show_all_items(self, parent_item):
         """Reset the visibility of all items within the tree to visible"""
@@ -4477,6 +5704,10 @@ class LibraryWidget(QWidget):
             item.setFont(0, font)
             self.tree.scrollToItem(item)
 
+        if self.delegate:
+            self.delegate.playing_path = audiobook_path
+        self.update_tile_playback_state()
+
     def find_item_by_path(self, parent_item, path: str):
         for i in range(parent_item.childCount()):
             child = parent_item.child(i)
@@ -4569,6 +5800,8 @@ class LibraryWidget(QWidget):
                 audiobook_path, data["is_started"], data["is_completed"]
             )
             self.tree.viewport().update()
+            if self.is_tile_view and hasattr(self, "tile_view"):
+                self.tile_view.refresh_tile(audiobook_path)
 
     def update_item_progress(
         self, audiobook_path: str, listened_duration: float, progress_percent: int
@@ -4583,6 +5816,8 @@ class LibraryWidget(QWidget):
             new_data[6] = progress_percent
             item.setData(0, Qt.ItemDataRole.UserRole + 2, tuple(new_data))
             self.tree.viewport().update()
+            if self.is_tile_view and hasattr(self, "tile_view"):
+                self.tile_view.refresh_tile(audiobook_path)
 
     def update_cache_item_status(self, path: str, is_started: bool, is_completed: bool):
         if not self.cached_library_data:
@@ -4613,6 +5848,8 @@ class LibraryWidget(QWidget):
     def update_texts(self):
         if hasattr(self, "btn_show_folders"):
             self.btn_show_folders.setToolTip(tr("library.tooltip_show_folders"))
+        if hasattr(self, "btn_tile_view"):
+            self.btn_tile_view.setToolTip(tr("library.tooltip_tile_view"))
         if hasattr(self, "btn_mass_select"):
             self.btn_mass_select.setToolTip(tr("library.tooltip_mass_select"))
         if hasattr(self, "btn_mass_select_arrow"):
@@ -4635,6 +5872,8 @@ class LibraryWidget(QWidget):
                     tr(f"library.tooltip_filter_{filter_id}")
                 )
         self.search_edit.setPlaceholderText(tr("library.search_placeholder"))
+        if hasattr(self, "tile_flow") and self.tile_flow:
+            self.tile_flow.update_texts()
 
     def apply_blur(self):
         """Walk parent chain to find and call apply_blur on the main window"""

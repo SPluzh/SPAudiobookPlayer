@@ -362,6 +362,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 "remember_filter_folders": self.remember_filter_folders,
                 "show_folders_by_filter": self.library_show_folders,
                 "opus_workers": self.opus_workers,
+                "tile_view": self.library_tile_view,
+                "show_nesting_lines": self.show_nesting_lines,
             },
             self.delegate,
             show_folders=self.show_folders,
@@ -660,7 +662,13 @@ class AudiobookPlayerWindow(QMainWindow):
         if hasattr(self, "delegate") and self.delegate:
             self.delegate.show_nesting_lines = checked
             if hasattr(self, "library_widget"):
+                self.library_widget.show_nesting_lines = checked
                 self.library_widget.tree.viewport().update()
+                if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
+                    if hasattr(self.library_widget.tile_view, "container") and self.library_widget.tile_view.container:
+                        self.library_widget.tile_view.container.update()
+                    # Also update headers and containers inside tile_view
+                    self.library_widget.tile_view.update()
         self.save_settings()
 
 
@@ -1118,6 +1126,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_volume_boost(self.volume_boost_enabled)
         self.player.set_volume_boost_level(self.volume_boost_level)
         self.show_folders = config.getboolean("Library", "show_folders", fallback=False)
+        self.library_tile_view = config.getboolean("Library", "tile_view", fallback=False)
         self.remember_filter_folders = config.getboolean(
             "Library", "remember_filter_folders", fallback=True
         )
@@ -1407,9 +1416,11 @@ class AudiobookPlayerWindow(QMainWindow):
             self.remember_filter_folders = self.library_widget.remember_filter_folders
             self.library_show_folders = self.library_widget.show_folders_by_filter
             self.show_folders = self.library_widget.show_folders
+            self.library_tile_view = self.library_widget.is_tile_view
 
         config["Library"]["remember_filter_folders"] = str(self.remember_filter_folders)
         config["Library"]["show_folders"] = str(self.show_folders)
+        config["Library"]["tile_view"] = str(self.library_tile_view)
         config["Library"]["show_folders_all"] = str(self.library_show_folders.get("all", False))
         config["Library"]["show_folders_not_started"] = str(self.library_show_folders.get("not_started", False))
         config["Library"]["show_folders_in_progress"] = str(self.library_show_folders.get("in_progress", False))
@@ -1851,6 +1862,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.delegate.playing_path = None  # Remove tree highlighting
 
             self.library_widget.tree.viewport().update()
+            if hasattr(self.library_widget, "update_tile_playback_state"):
+                self.library_widget.update_tile_playback_state()
 
     def update_progress_bar_markers(self):
         """Update the bookmarks markers on the total progress bar"""
@@ -1896,6 +1909,8 @@ class AudiobookPlayerWindow(QMainWindow):
         if self.delegate:
             self.delegate.is_paused = not self.player.is_playing()
             self.library_widget.tree.viewport().update()
+            if hasattr(self.library_widget, "update_tile_playback_state"):
+                self.library_widget.update_tile_playback_state()
 
         self.player_widget.set_playing(self.player.is_playing())
 
@@ -2668,6 +2683,8 @@ class AudiobookPlayerWindow(QMainWindow):
             if self.delegate:
                 self.delegate.playing_path = None  # Remove tree highlighting
             self.library_widget.load_audiobooks()  # Populate empty tree
+            if hasattr(self.library_widget, "update_tile_playback_state"):
+                self.library_widget.update_tile_playback_state()
 
             self.statusBar().showMessage(tr("status.reset_success"))
 

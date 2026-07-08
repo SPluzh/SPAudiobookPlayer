@@ -104,7 +104,8 @@
     "filter_no_narrator": "ナレーターなし",
     "tooltip_filter_language": "言語でフィルタ",
     "language_all": "すべての言語",
-    "language_none": "言語なし"
+    "language_none": "言語なし",
+    "tooltip_tile_view": "グリッド表示"
   },
   "player": {
     "volume": "音量",

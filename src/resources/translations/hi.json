@@ -104,7 +104,8 @@
     "filter_no_narrator": "कोई वाचक नहीं",
     "tooltip_filter_language": "भाषा के आधार पर फ़िल्टर करें",
     "language_all": "सभी भाषाएँ",
-    "language_none": "बिना भाषा के"
+    "language_none": "बिना भाषा के",
+    "tooltip_tile_view": "ग्रिड दृश्य"
   },
   "player": {
     "volume": "वॉल्यूम",
