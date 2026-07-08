@@ -2662,7 +2662,7 @@ class BookTileWidget(QWidget):
         self.setMouseTracking(True)
         
         self.padding = 8
-        self.title_area_height = 75
+        self.title_area_height = 85
         self.width_val = self.icon_size + self.padding * 2
         self.height_val = self.icon_size + self.padding * 2 + self.title_area_height
         self.setFixedSize(self.width_val, self.height_val)
@@ -2952,7 +2952,7 @@ class BookTileWidget(QWidget):
             font, color = StyleManager.get_theme_property("delegate_title")
             if font:
                 font = QFont(font)
-                font.setPixelSize(11)
+                font.setPixelSize(13)
                 p.setFont(font)
             if color and color.isValid():
                 p.setPen(color)
@@ -2989,7 +2989,7 @@ class BookTileWidget(QWidget):
             font, color = StyleManager.get_theme_property("delegate_author")
             if font:
                 font = QFont(font)
-                font.setPixelSize(10)
+                font.setPixelSize(11)
                 p.setFont(font)
             if color and color.isValid():
                 p.setPen(color)
@@ -3034,7 +3034,7 @@ class BookTileWidget(QWidget):
             font, color = StyleManager.get_theme_property("delegate_narrator")
             if font:
                 font = QFont(font)
-                font.setPixelSize(10)
+                font.setPixelSize(11)
                 p.setFont(font)
             if color and color.isValid():
                 p.setPen(color)
