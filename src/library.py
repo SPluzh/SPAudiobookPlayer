@@ -3065,7 +3065,7 @@ class BookTileWidget(QWidget):
         
         self.hovered = True
         is_over_heart = self.is_favorite and heart_rect.contains(QPointF(pos))
-        is_over_info = bool(self.description) and info_rect.contains(QPointF(pos))
+        is_over_info = bool(self.description) and info_rect.contains(pos)
         
         if play_rect.contains(QPointF(pos)):
             self.hovered_field = "play"
