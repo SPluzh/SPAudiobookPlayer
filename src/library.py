@@ -2662,8 +2662,9 @@ class BookTileWidget(QWidget):
         self.setMouseTracking(True)
         
         self.padding = 8
+        self.title_area_height = 75
         self.width_val = self.icon_size + self.padding * 2
-        self.height_val = self.icon_size + self.padding * 2 + 10
+        self.height_val = self.icon_size + self.padding * 2 + self.title_area_height
         self.setFixedSize(self.width_val, self.height_val)
         
         self.hovered = False
@@ -2672,6 +2673,8 @@ class BookTileWidget(QWidget):
         self.play_icon = get_icon("play")
         self.pause_icon = get_icon("pause")
         self.info_icon = get_icon("info_duration")
+        self.author_icon = get_icon("author")
+        self.narrator_icon = get_icon("narrator")
         
         self.update_texts()
 
@@ -2938,6 +2941,137 @@ class BookTileWidget(QWidget):
                     p.fillRect(fill_rect, accent_color)
             p.restore()
         
+        # Draw metadata block below cover
+        text_y = self.icon_size + self.padding + 12
+        available_width = self.width_val - self.padding * 2
+        
+        # 1. Title
+        title_height = 0
+        if self.title:
+            p.save()
+            font, color = StyleManager.get_theme_property("delegate_title")
+            if font:
+                font = QFont(font)
+                font.setPixelSize(11)
+                p.setFont(font)
+            if color and color.isValid():
+                p.setPen(color)
+            else:
+                p.setPen(QColor("#e0e0e0"))
+            
+            fm = p.fontMetrics()
+            elided_title = fm.elidedText(self.title, Qt.TextElideMode.ElideRight, available_width * 2)
+            
+            title_bound = fm.boundingRect(
+                QRect(0, 0, available_width, 100),
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop | Qt.TextFlag.TextWordWrap,
+                elided_title
+            )
+            title_height = min(title_bound.height(), fm.height() * 2)
+            
+            title_rect = QRect(
+                self.padding,
+                text_y,
+                available_width,
+                title_height
+            )
+            p.drawText(
+                title_rect,
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop | Qt.TextFlag.TextWordWrap,
+                elided_title
+            )
+            p.restore()
+            text_y += title_height + 4
+            
+        # 2. Author
+        if self.author:
+            p.save()
+            font, color = StyleManager.get_theme_property("delegate_author")
+            if font:
+                font = QFont(font)
+                font.setPixelSize(10)
+                p.setFont(font)
+            if color and color.isValid():
+                p.setPen(color)
+            else:
+                p.setPen(QColor("#a0a0a0"))
+            
+            fm = p.fontMetrics()
+            
+            author_x = self.padding
+            if self.author_icon and not self.author_icon.isNull():
+                author_icon_size = 14
+                author_icon_y = text_y + (fm.height() - author_icon_size) // 2
+                author_icon_rect = QRect(self.padding, author_icon_y, author_icon_size, author_icon_size)
+                
+                p.save()
+                p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+                self.author_icon.paint(p, author_icon_rect)
+                p.restore()
+                
+                author_x += author_icon_size + 3
+                
+            elided_author = fm.elidedText(self.author, Qt.TextElideMode.ElideRight, available_width - (author_x - self.padding))
+            
+            author_rect = QRect(
+                author_x,
+                text_y,
+                available_width - (author_x - self.padding),
+                fm.height()
+            )
+            p.drawText(
+                author_rect,
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                elided_author
+            )
+            p.restore()
+            text_y += fm.height() + 2
+            
+        # 3. Narrator
+        if self.narrator:
+            p.save()
+            font, color = StyleManager.get_theme_property("delegate_narrator")
+            if font:
+                font = QFont(font)
+                font.setPixelSize(10)
+                p.setFont(font)
+            if color and color.isValid():
+                p.setPen(color)
+            else:
+                p.setPen(QColor("#808080"))
+            
+            fm = p.fontMetrics()
+            
+            narrator_x = self.padding
+            if self.narrator_icon and not self.narrator_icon.isNull():
+                narrator_icon_size = 14
+                narrator_icon_y = text_y + (fm.height() - narrator_icon_size) // 2
+                narrator_icon_rect = QRect(self.padding, narrator_icon_y, narrator_icon_size, narrator_icon_size)
+                
+                p.save()
+                p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+                self.narrator_icon.paint(p, narrator_icon_rect)
+                p.restore()
+                
+                narrator_x += narrator_icon_size + 3
+                
+            elided_narrator = fm.elidedText(self.narrator, Qt.TextElideMode.ElideRight, available_width - (narrator_x - self.padding))
+            
+            narrator_rect = QRect(
+                narrator_x,
+                text_y,
+                available_width - (narrator_x - self.padding),
+                fm.height()
+            )
+            p.drawText(
+                narrator_rect,
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                elided_narrator
+            )
+            p.restore()
+        
         p.end()
 
     def mouseMoveEvent(self, event):
@@ -3001,7 +3135,7 @@ class BookTileWidget(QWidget):
                 event.accept()
                 return
             
-            if icon_rect.contains(pos):
+            if self.rect().contains(pos):
                 self.clicked.emit(self.path)
                 event.accept()
                 return
@@ -3445,7 +3579,7 @@ class TileFlowWidget(QScrollArea):
         is_completed = status_data[1] if len(status_data) > 1 and status_data[1] is not None else False
         is_favorite = status_data[2] if len(status_data) > 2 and status_data[2] is not None else False
         
-        icon_size = self.config.get("audiobook_icon_size", 100)
+        icon_size = int(self.config.get("audiobook_icon_size", 100) * 1.5)
         
         if icon and not icon.isNull():
             pixmap = icon.pixmap(QSize(icon_size, icon_size))
