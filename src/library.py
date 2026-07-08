@@ -6644,7 +6644,43 @@ class LibraryWidget(QWidget):
         # Scroll to the audiobook (it's already highlighted by the delegate)
         item = self.find_item_by_path(self.tree.invisibleRootItem(), audiobook_path)
         if item:
+            # Expand all parent folders to ensure it's visible in both views
+            parent = item.parent()
+            parents_to_expand = []
+            while parent:
+                parents_to_expand.insert(0, parent)
+                parent = parent.parent()
+
+            for p in parents_to_expand:
+                if not p.isExpanded():
+                    p.setExpanded(True)
+
+            # Scroll list view
             self.tree.scrollToItem(item, QTreeWidget.ScrollHint.PositionAtCenter)
+
+            # Scroll tile view
+            if self.is_tile_view and hasattr(self, "tile_view"):
+                # Repopulate the tile view so the newly expanded items are rendered
+                self.tile_view.populate(self.tree.invisibleRootItem())
+                
+                # Scroll to the corresponding tile in the tile view
+                found_rect = None
+                if hasattr(self.tile_view, "canvas") and self.tile_view.canvas:
+                    for block in self.tile_view.canvas.blocks:
+                        if block["type"] == "books":
+                            for book in block["books"]:
+                                if book["path"] == audiobook_path:
+                                    found_rect = book["rect"]
+                                    break
+                            if found_rect:
+                                break
+                if found_rect:
+                    QTimer.singleShot(0, lambda r=found_rect: self.tile_view.ensureVisible(
+                        r.center().x(),
+                        r.center().y(),
+                        r.width() // 2,
+                        r.height() // 2
+                    ))
 
     def update_texts(self):
         if hasattr(self, "btn_show_folders"):
@@ -6697,10 +6733,14 @@ class LibraryWidget(QWidget):
     def collapse_all_folders(self):
         """Collapse all folders in the library tree"""
         self.tree.collapseAll()
+        if self.is_tile_view and hasattr(self, "tile_view"):
+            self.tile_view.populate(self.tree.invisibleRootItem())
 
     def expand_all_folders(self):
         """Expand all folders in the library tree"""
         self.tree.expandAll()
+        if self.is_tile_view and hasattr(self, "tile_view"):
+            self.tile_view.populate(self.tree.invisibleRootItem())
 
     def update_sort_button_ui(self):
         """Update the sort button icon and tooltip based on the current sort order"""
