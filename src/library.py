@@ -4400,34 +4400,37 @@ class VirtualTileCanvas(QWidget):
             p.fillRect(icon_rect, overlay_bg)
             p.restore()
             
-        is_completed = book.get("is_completed", False)
-        is_started = book.get("is_started", False)
-        if is_completed:
-            _, status_color = StyleManager.get_theme_property("delegate_status_completed")
-            if not status_color or not status_color.isValid():
-                status_color = QColor("#4ecca3")
-        elif is_started:
-            _, status_color = StyleManager.get_theme_property("delegate_status_started")
-            if not status_color or not status_color.isValid():
-                status_color = QColor("#f9ca24")
-        else:
-            _, status_color = StyleManager.get_theme_property("delegate_status_new")
-            if not status_color or not status_color.isValid():
-                status_color = QColor("#ff6b6b")
-                
-        tri_size = icon_rect.width() * 0.25
-        tri_path = QPainterPath()
-        tri_path.moveTo(float(icon_rect.left()), float(icon_rect.top()))
-        tri_path.lineTo(float(icon_rect.left() + tri_size), float(icon_rect.top()))
-        tri_path.lineTo(float(icon_rect.left()), float(icon_rect.top() + tri_size))
-        tri_path.closeSubpath()
-        
-        p.save()
-        p.setClipPath(path)
-        p.setPen(Qt.PenStyle.NoPen)
-        p.setBrush(QBrush(status_color))
-        p.drawPath(tri_path)
-        p.restore()
+        # Draw status triangle (New / Started / Finished)
+        show_status = getattr(library, "show_status_triangle", True) if library else True
+        if show_status:
+            is_completed = book.get("is_completed", False)
+            is_started = book.get("is_started", False)
+            if is_completed:
+                _, status_color = StyleManager.get_theme_property("delegate_status_completed")
+                if not status_color or not status_color.isValid():
+                    status_color = QColor("#4ecca3")
+            elif is_started:
+                _, status_color = StyleManager.get_theme_property("delegate_status_started")
+                if not status_color or not status_color.isValid():
+                    status_color = QColor("#f9ca24")
+            else:
+                _, status_color = StyleManager.get_theme_property("delegate_status_new")
+                if not status_color or not status_color.isValid():
+                    status_color = QColor("#ff6b6b")
+                    
+            tri_size = icon_rect.width() * 0.25
+            tri_path = QPainterPath()
+            tri_path.moveTo(float(icon_rect.left()), float(icon_rect.top()))
+            tri_path.lineTo(float(icon_rect.left() + tri_size), float(icon_rect.top()))
+            tri_path.lineTo(float(icon_rect.left()), float(icon_rect.top() + tri_size))
+            tri_path.closeSubpath()
+            
+            p.save()
+            p.setClipPath(path)
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QBrush(status_color))
+            p.drawPath(tri_path)
+            p.restore()
         
         pb_y = icon_rect.bottom()
         pb_h = 5

@@ -369,6 +369,7 @@ class AudiobookPlayerWindow(QMainWindow):
             show_folders=self.show_folders,
             show_filter_labels=self.show_filter_labels,
         )
+        self.library_widget.show_status_triangle = self.show_status_triangle
         self.library_widget.setMinimumWidth(200)
         self.splitter.addWidget(self.library_widget)
 
@@ -665,9 +666,8 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.library_widget.show_nesting_lines = checked
                 self.library_widget.tree.viewport().update()
                 if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
-                    if hasattr(self.library_widget.tile_view, "container") and self.library_widget.tile_view.container:
-                        self.library_widget.tile_view.container.update()
-                    # Also update headers and containers inside tile_view
+                    if hasattr(self.library_widget.tile_view, "canvas") and self.library_widget.tile_view.canvas:
+                        self.library_widget.tile_view.canvas.update()
                     self.library_widget.tile_view.update()
         self.save_settings()
 
@@ -680,7 +680,11 @@ class AudiobookPlayerWindow(QMainWindow):
         if hasattr(self, "delegate") and self.delegate:
             self.delegate.show_status_triangle = checked
             if hasattr(self, "library_widget"):
+                self.library_widget.show_status_triangle = checked
                 self.library_widget.tree.viewport().update()
+                if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
+                    if hasattr(self.library_widget.tile_view, "canvas") and self.library_widget.tile_view.canvas:
+                        self.library_widget.tile_view.canvas.update()
         self.save_settings()
 
     def toggle_minimal_interface(self, enabled: bool):
@@ -2400,6 +2404,12 @@ class AudiobookPlayerWindow(QMainWindow):
                 if self.delegate:
                     self.delegate.show_nesting_lines = interface_settings["show_nesting_lines"]
                     self.delegate.show_status_triangle = interface_settings["show_status_triangle"]
+                if hasattr(self, "library_widget") and self.library_widget:
+                    self.library_widget.show_nesting_lines = interface_settings["show_nesting_lines"]
+                    self.library_widget.show_status_triangle = interface_settings["show_status_triangle"]
+                    if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
+                        if hasattr(self.library_widget.tile_view, "canvas") and self.library_widget.tile_view.canvas:
+                            self.library_widget.tile_view.canvas.update()
                 
                 # Status bar
                 if self.statusBar().isVisible() != interface_settings["show_statusbar"]:
