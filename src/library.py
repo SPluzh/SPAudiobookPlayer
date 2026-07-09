@@ -5058,6 +5058,11 @@ class LibraryWidget(QWidget):
         # self.btn_favorites.setProperty('filter_type', 'favorites') # No longer an exclusive type
         filter_layout.addWidget(self.btn_favorites)
 
+        # Create a layout to keep tags filter toggle and dropdown in one flush button group
+        tag_filter_layout = QHBoxLayout()
+        tag_filter_layout.setSpacing(0)
+        tag_filter_layout.setContentsMargins(0, 0, 0, 0)
+
         # Tags Filter
         self.btn_tags = QPushButton("")
         self.btn_tags.setObjectName("filterBtn")
@@ -5067,9 +5072,20 @@ class LibraryWidget(QWidget):
         self.btn_tags.setIcon(get_icon("context_tags"))
         self.btn_tags.setToolTip(tr("library.tooltip_filter_tags"))
         self.btn_tags.clicked.connect(self.on_tag_filter_toggled)
-        self.btn_tags.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.btn_tags.customContextMenuRequested.connect(self.show_tag_filter_menu)
-        filter_layout.addWidget(self.btn_tags)
+        tag_filter_layout.addWidget(self.btn_tags)
+
+
+        # Tags Filter Dropdown Arrow Button
+        self.btn_tags_arrow = QPushButton("")
+        self.btn_tags_arrow.setObjectName("filterBtnArrow")
+        self.btn_tags_arrow.setFixedWidth(20)
+        self.btn_tags_arrow.setIcon(get_icon("chevron-down"))
+        self.btn_tags_arrow.setIconSize(QSize(12, 12))
+        self.btn_tags_arrow.setToolTip(tr("library.tooltip_filter_tags"))
+        self.btn_tags_arrow.clicked.connect(lambda: self.show_tag_filter_menu())
+        tag_filter_layout.addWidget(self.btn_tags_arrow)
+
+        filter_layout.addLayout(tag_filter_layout)
 
         filter_layout.addSpacing(5)
 
@@ -5257,11 +5273,12 @@ class LibraryWidget(QWidget):
             # Buffer: icon + text + horizontal padding (10+10) + icon spacing + requested 15px
             required_width = text_width + icon_width + 20 + 5 + 15
             btn.setMinimumWidth(required_width)
+            btn.setMaximumWidth(16777215)
         else:
             btn.setText("")
-            btn.setMinimumWidth(
-                0
-            )  # Reset min width allow shrinking to icon size (or rely on style)
+            btn.setMinimumWidth(0)  # Reset min width allow shrinking to icon size (or rely on style)
+            if btn == self.btn_tags:
+                btn.setFixedWidth(40)
 
     def load_icons(self):
         """Load and scale standard icons for folders and audiobook covers from resources"""
@@ -5310,6 +5327,8 @@ class LibraryWidget(QWidget):
             self.btn_favorites.setIcon(get_icon("favorites"))
         if hasattr(self, "btn_tags") and self.btn_tags:
             self.btn_tags.setIcon(get_icon("context_tags"))
+        if hasattr(self, "btn_tags_arrow") and self.btn_tags_arrow:
+            self.btn_tags_arrow.setIcon(get_icon("chevron-down"))
         if hasattr(self, "btn_meta_filter") and self.btn_meta_filter:
             self.btn_meta_filter.setIcon(get_icon("filter"))
         if hasattr(self, "btn_meta_filter_arrow") and self.btn_meta_filter_arrow:
@@ -5378,7 +5397,7 @@ class LibraryWidget(QWidget):
             )
         self.load_audiobooks(use_cache=False)
 
-    def show_tag_filter_menu(self, pos):
+    def show_tag_filter_menu(self, pos=None):
         """Show popup for selecting tags to filter by"""
         # Close existing popup if open? (Qt handles Popup focus loss close usually)
 
@@ -7107,6 +7126,8 @@ class LibraryWidget(QWidget):
             self.btn_favorites.setToolTip(tr("library.tooltip_favorites"))
         if hasattr(self, "btn_tags"):
             self.btn_tags.setToolTip(tr("library.tooltip_tags"))
+        if hasattr(self, "btn_tags_arrow"):
+            self.btn_tags_arrow.setToolTip(tr("library.tooltip_tags"))
         if hasattr(self, "btn_meta_filter"):
             self.btn_meta_filter.setToolTip(tr("library.tooltip_filter_metadata"))
         if hasattr(self, "btn_meta_filter_arrow"):
