@@ -32,7 +32,8 @@ class StyleManager:
         'delegate_info_font', 'delegate_regular_font', 'theme_primary',
         'overlay_background', 'overlay_progress_bg', 'separator_dot',
         'placeholder_title', 'placeholder_text', 'placeholder_icon',
-        'delegate_status_new', 'delegate_status_started', 'delegate_status_completed'
+        'delegate_status_new', 'delegate_status_started', 'delegate_status_completed',
+        'tile_background'
     ]
 
     @staticmethod

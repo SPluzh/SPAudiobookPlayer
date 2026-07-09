@@ -1587,11 +1587,16 @@ QSlider.hue-slider::handle:horizontal:hover {
 }
 
 #bookTile {
-    background-color: transparent;
+    background-color: @bg-main;
     border: 1px solid transparent;
     border-radius: 6px;
 }
 
 #FolderHeader {
     background-color: transparent;
+}
+
+/* Theme proxies */
+#tile_background {
+    color: @bg-main;
 }

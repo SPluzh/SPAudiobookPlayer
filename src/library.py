@@ -4212,16 +4212,27 @@ class VirtualTileCanvas(QWidget):
         mass_mode = getattr(library.tree, "mass_selection_mode", False)
 
         p.save()
+        # Draw base tile background
+        _, bg_color = StyleManager.get_theme_property("tile_background")
+        if not bg_color or not bg_color.isValid():
+            bg_color = QColor("#444444")
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(bg_color)
+        p.drawRoundedRect(QRectF(tile_rect), 6.0, 6.0)
+
+        # Draw selection or hover overlays
         if is_selected and not mass_mode:
             _, sel_bg = StyleManager.get_theme_property("theme_primary")
             if not sel_bg:
                 sel_bg = QColor("#3498db")
             sel_bg_alpha = QColor(sel_bg.red(), sel_bg.green(), sel_bg.blue(), 40)
-            p.fillRect(tile_rect, sel_bg_alpha)
-            p.setPen(QPen(sel_bg, 1))
-            p.drawRect(tile_rect)
+            p.setPen(QPen(sel_bg, 1.0))
+            p.setBrush(sel_bg_alpha)
+            p.drawRoundedRect(QRectF(tile_rect), 6.0, 6.0)
         elif is_hovered:
-            p.fillRect(tile_rect, QColor(255, 255, 255, 10))
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor(255, 255, 255, 10))
+            p.drawRoundedRect(QRectF(tile_rect), 6.0, 6.0)
         p.restore()
         
         icon_rect = QRect(tile_rect.left() + 8, tile_rect.top() + 8, icon_size, icon_size)
