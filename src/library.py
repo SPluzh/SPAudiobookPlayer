@@ -2353,20 +2353,7 @@ class LibraryTree(QTreeWidget):
                                         self.viewport().update()
                                         return
                                 
-                                # Regular click (no Shift or no last clicked item)
-                                is_checked = path in self.selected_audiobook_paths
-                                if item_type == "folder":
-                                    self._set_item_selected_recursive(item, not is_checked)
-                                    self._update_parent_checkbox_states(item)
-                                else:
-                                    if is_checked:
-                                        self.selected_audiobook_paths.discard(path)
-                                    else:
-                                        self.selected_audiobook_paths.add(path)
-                                    self._update_parent_checkbox_states(item)
-                                
-                                self._last_checked_item = item
-                            self.viewport().update()
+                                self.toggle_item_selection_state(item)
                             return
 
                     if item_type == "audiobook":
@@ -2498,6 +2485,27 @@ class LibraryTree(QTreeWidget):
         root = self.invisibleRootItem()
         for i in range(root.childCount()):
             sync_item(root.child(i))
+
+    def toggle_item_selection_state(self, item):
+        """Toggle selection state of a tree item (folder or audiobook) and synchronize parents/folders"""
+        path = item.data(0, Qt.ItemDataRole.UserRole)
+        item_type = item.data(0, Qt.ItemDataRole.UserRole + 1)
+        if not path:
+            return
+            
+        is_checked = path in self.selected_audiobook_paths
+        if item_type == "folder":
+            self._set_item_selected_recursive(item, not is_checked)
+            self._update_parent_checkbox_states(item)
+        else:
+            if is_checked:
+                self.selected_audiobook_paths.discard(path)
+            else:
+                self.selected_audiobook_paths.add(path)
+            self._update_parent_checkbox_states(item)
+            
+        self._last_checked_item = item
+        self.viewport().update()
 
     def focusInEvent(self, event):
         print(f"[DEBUG FOCUS] LibraryTree focusInEvent. FocusPolicy: {self.focusPolicy()}", flush=True)
@@ -3798,6 +3806,24 @@ class VirtualTileCanvas(QWidget):
             float(size),
         )
 
+    def get_tile_checkbox_rect(self, tile_rect) -> QRectF:
+        """Calculate bounds for the mass selection checkbox on a book tile"""
+        size = 20.0
+        return QRectF(
+            float(tile_rect.right() - size - 6),
+            float(tile_rect.bottom() - size - 6),
+            float(size),
+            float(size),
+        )
+
+    def get_folder_checkbox_rect(self, icon_rect) -> QRectF:
+        """Calculate bounds for the mass selection checkbox on a folder row"""
+        cb_width = 18.0
+        cb_height = 18.0
+        x = icon_rect.right() + 10.0
+        y = icon_rect.top() + (icon_rect.height() - cb_height) / 2.0
+        return QRectF(x, y, cb_width, cb_height)
+
     def mouseMoveEvent(self, event):
         pos = event.position().toPoint()
         
@@ -3818,6 +3844,16 @@ class VirtualTileCanvas(QWidget):
             if block_y <= pos.y() < block_y + block_h:
                 if block["type"] == "folder":
                     self.hovered_block = block
+                    mass_mode = getattr(self.tile_flow_widget.parent_library.tree, "mass_selection_mode", False)
+                    if mass_mode:
+                        icon_rect = QRect(block["depth"] * 12 + 12 + 15, block_y + (block_h - 20) // 2, 20, 20)
+                        cb_rect = self.get_folder_checkbox_rect(icon_rect)
+                        if cb_rect.contains(QPointF(pos)):
+                            self.hovered_field = "checkbox"
+                        else:
+                            self.hovered_field = None
+                    else:
+                        self.hovered_field = None
                     self.setCursor(Qt.CursorShape.PointingHandCursor)
                     break
                 elif block["type"] == "books":
@@ -3830,10 +3866,16 @@ class VirtualTileCanvas(QWidget):
                             heart_rect = self.get_heart_rect(icon_rect)
                             info_rect = self.get_info_rect(icon_rect)
                             
+                            mass_mode = getattr(self.tile_flow_widget.parent_library.tree, "mass_selection_mode", False)
+                            cb_rect = self.get_tile_checkbox_rect(tile_rect) if mass_mode else None
+                            is_over_cb = mass_mode and cb_rect and cb_rect.contains(QPointF(pos))
                             is_over_heart = book.get("is_favorite") and heart_rect.contains(QPointF(pos))
                             is_over_info = bool(book.get("description")) and info_rect.contains(QPointF(pos))
                             
-                            if play_rect.contains(QPointF(pos)):
+                            if is_over_cb:
+                                self.hovered_field = "checkbox"
+                                self.setCursor(Qt.CursorShape.PointingHandCursor)
+                            elif play_rect.contains(QPointF(pos)):
                                 self.hovered_field = "play"
                                 self.setCursor(Qt.CursorShape.PointingHandCursor)
                             elif is_over_heart:
@@ -3872,13 +3914,26 @@ class VirtualTileCanvas(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             if self.hovered_block and self.hovered_block["type"] == "folder":
                 path = self.hovered_block["path"]
+                mass_mode = getattr(self.tile_flow_widget.parent_library.tree, "mass_selection_mode", False)
+                if mass_mode and self.hovered_field == "checkbox":
+                    item = self.hovered_block["tree_item"]
+                    if item:
+                        self.tile_flow_widget.parent_library.tree.toggle_item_selection_state(item)
+                        self.update_selection_state(self.tile_flow_widget.parent_library.tree.selected_audiobook_paths)
+                        self.update()
+                    event.accept()
+                    return
                 is_expanded = not self.hovered_block["is_expanded"]
                 self.on_folder_toggled(path, is_expanded)
                 event.accept()
                 return
             elif self.hovered_book:
                 path = self.hovered_book["path"]
-                if self.hovered_field == "play":
+                if self.hovered_field == "checkbox":
+                    self.tile_flow_widget.on_tile_clicked(path)
+                    event.accept()
+                    return
+                elif self.hovered_field == "play":
                     self.tile_flow_widget.on_tile_play_clicked(path)
                     event.accept()
                     return
@@ -4035,6 +4090,47 @@ class VirtualTileCanvas(QWidget):
                 if library.folder_icon:
                     p.drawPixmap(icon_rect, library.folder_icon.pixmap(20, 20))
                     
+                mass_mode = getattr(library.tree, "mass_selection_mode", False)
+                if mass_mode:
+                    cb_rect = self.get_folder_checkbox_rect(icon_rect)
+                    is_checked = path in selected_paths
+                    is_over_cb = (self.hovered_block == block and self.hovered_field == "checkbox")
+                    
+                    p.save()
+                    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                    border_color = QColor("#555555")
+                    _, accent_color = StyleManager.get_theme_property("delegate_accent")
+                    if not accent_color or not accent_color.isValid() or accent_color == QColor():
+                        accent_color = QColor("#018574")
+                        
+                    if is_checked:
+                        bg_color = QColor(accent_color)
+                        if is_over_cb:
+                            bg_color = bg_color.lighter(110)
+                        p.setBrush(bg_color)
+                        p.setPen(Qt.PenStyle.NoPen)
+                        p.drawRoundedRect(cb_rect, 4.0, 4.0)
+                        
+                        checkmark_path = QPainterPath()
+                        w = cb_rect.width()
+                        h = cb_rect.height()
+                        checkmark_path.moveTo(cb_rect.left() + w * 0.25, cb_rect.top() + h * 0.5)
+                        checkmark_path.lineTo(cb_rect.left() + w * 0.45, cb_rect.top() + h * 0.75)
+                        checkmark_path.lineTo(cb_rect.left() + w * 0.75, cb_rect.top() + h * 0.35)
+                        
+                        pen = QPen(Qt.GlobalColor.white, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+                        p.setPen(pen)
+                        p.setBrush(Qt.BrushStyle.NoBrush)
+                        p.drawPath(checkmark_path)
+                    else:
+                        bg_color = QColor(Qt.GlobalColor.transparent)
+                        if is_over_cb:
+                            border_color = border_color.lighter(130)
+                        p.setBrush(bg_color)
+                        p.setPen(QPen(border_color, 1.5))
+                        p.drawRoundedRect(cb_rect, 4.0, 4.0)
+                    p.restore()
+
                 books_count = block["books_count"]
                 total_seconds = block["total_seconds"]
                 display_text = display_name
@@ -4044,6 +4140,8 @@ class VirtualTileCanvas(QWidget):
                     display_text = f"{display_name} ({books_str}, {duration_str})"
                     
                 text_x = depth * 12 + 55
+                if mass_mode:
+                    text_x += 30
                 font, color = StyleManager.get_theme_property("delegate_folder")
                 if font:
                     p.setFont(font)
@@ -4109,8 +4207,12 @@ class VirtualTileCanvas(QWidget):
         is_hovered = self.hovered_book == book
         is_playing = (playing_path and str(playing_path).replace("\\", "/") == str(book["path"]).replace("\\", "/"))
         
+        # Check if mass selection mode is active
+        library = self.tile_flow_widget.parent_library
+        mass_mode = getattr(library.tree, "mass_selection_mode", False)
+
         p.save()
-        if is_selected:
+        if is_selected and not mass_mode:
             _, sel_bg = StyleManager.get_theme_property("theme_primary")
             if not sel_bg:
                 sel_bg = QColor("#3498db")
@@ -4319,6 +4421,49 @@ class VirtualTileCanvas(QWidget):
             p.setFont(font)
             p.drawText(info_rect, Qt.AlignmentFlag.AlignCenter, "i")
             p.restore()
+
+        # Draw mass selection checkbox if mode is active
+        library = self.tile_flow_widget.parent_library
+        mass_mode = getattr(library.tree, "mass_selection_mode", False)
+        if mass_mode:
+            cb_rect = self.get_tile_checkbox_rect(tile_rect)
+            is_checked = book["path"] in selected_paths
+            is_over_cb = (is_hovered and self.hovered_field == "checkbox")
+            
+            p.save()
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            border_color = QColor("#555555")
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            if not accent_color or not accent_color.isValid() or accent_color == QColor():
+                accent_color = QColor("#018574")
+                
+            if is_checked:
+                bg_color = QColor(accent_color)
+                if is_over_cb:
+                    bg_color = bg_color.lighter(110)
+                p.setBrush(bg_color)
+                p.setPen(Qt.PenStyle.NoPen)
+                p.drawRoundedRect(cb_rect, 4.0, 4.0)
+                
+                checkmark_path = QPainterPath()
+                w = cb_rect.width()
+                h = cb_rect.height()
+                checkmark_path.moveTo(cb_rect.left() + w * 0.25, cb_rect.top() + h * 0.5)
+                checkmark_path.lineTo(cb_rect.left() + w * 0.45, cb_rect.top() + h * 0.75)
+                checkmark_path.lineTo(cb_rect.left() + w * 0.75, cb_rect.top() + h * 0.35)
+                
+                pen = QPen(Qt.GlobalColor.white, 2.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+                p.setPen(pen)
+                p.setBrush(Qt.BrushStyle.NoBrush)
+                p.drawPath(checkmark_path)
+            else:
+                bg_color = QColor(Qt.GlobalColor.transparent)
+                if is_over_cb:
+                    border_color = border_color.lighter(130)
+                p.setBrush(bg_color)
+                p.setPen(QPen(border_color, 1.5))
+                p.drawRoundedRect(cb_rect, 4.0, 4.0)
+            p.restore()
             
         pb_x = icon_rect.left()
         pb_w = icon_rect.width()
@@ -4482,6 +4627,7 @@ class TileFlowWidget(QScrollArea):
             if getattr(self.parent_library.tree, "mass_selection_mode", False):
                 self.parent_library.tree.toggle_item_selection_state(item)
                 self.canvas.update_selection_state(self.parent_library.tree.selected_audiobook_paths)
+                self.canvas.update()
             else:
                 self.parent_library.tree.setCurrentItem(item)
                 self.parent_library.audiobook_selected.emit(path)
@@ -5157,6 +5303,9 @@ class LibraryWidget(QWidget):
             self.tree.selected_audiobook_paths.clear()
             self.tree._last_checked_item = None
         self.tree.viewport().update()
+        if self.is_tile_view and hasattr(self, "tile_view"):
+            self.tile_view.canvas.update_selection_state(self.tree.selected_audiobook_paths)
+            self.tile_view.canvas.update()
 
     def refresh_library(self):
         """Force a database reload and refresh the UI"""
@@ -7041,8 +7190,14 @@ class LibraryWidget(QWidget):
         self.tree.selected_audiobook_paths.update(visible_paths)
         self.tree._sync_all_folder_checkbox_states()
         self.tree.viewport().update()
+        if self.is_tile_view and hasattr(self, "tile_view"):
+            self.tile_view.canvas.update_selection_state(self.tree.selected_audiobook_paths)
+            self.tile_view.canvas.update()
 
     def deselect_all_audiobooks(self):
         """Clear all selected audiobook paths"""
         self.tree.selected_audiobook_paths.clear()
         self.tree.viewport().update()
+        if self.is_tile_view and hasattr(self, "tile_view"):
+            self.tile_view.canvas.update_selection_state(self.tree.selected_audiobook_paths)
+            self.tile_view.canvas.update()
