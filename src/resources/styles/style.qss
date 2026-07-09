@@ -1190,12 +1190,12 @@ QFrame#aboutContainer {
 
 #TagPopupFrame {
     background-color: @bg-dark;
-    border: 1px solid @border;
-    border-radius: 5px;
+    border: 1px solid @bg-main;
+    border-radius: 3px;
 }
 
 #popupSeparator {
-    background-color: @border;
+    background-color: #555555;
     max-height: 1px;
 }
 
@@ -1301,7 +1301,7 @@ QLabel#aboutRightContent {
 /* ============================================================
    POPUPS AND DIALOGS
    ============================================================ */
-#TagPopupFrame, #vadPopup, #deesserPopup, #compressorPopup, #pitchPopup, #volumeBoostPopup {
+#vadPopup, #deesserPopup, #compressorPopup, #pitchPopup, #volumeBoostPopup {
     background-color: @bg-dark;
     border: 1px solid @border;
     border-radius: 3px;
