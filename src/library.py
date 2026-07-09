@@ -3682,6 +3682,7 @@ class VirtualTileCanvas(QWidget):
         is_favorite = status_data[2] if len(status_data) > 2 else False
         
         cover_path = item.data(0, Qt.ItemDataRole.UserRole + 5)
+        tags = item.data(0, Qt.ItemDataRole.UserRole + 4) or []
         
         return {
             "path": path,
@@ -3695,6 +3696,7 @@ class VirtualTileCanvas(QWidget):
             "is_favorite": is_favorite,
             "description": description,
             "cover_path": cover_path,
+            "tags": tags,
             "rect": QRect(),
             "tree_item": item
         }
@@ -3705,7 +3707,7 @@ class VirtualTileCanvas(QWidget):
         
         icon_size = int(self.tile_flow_widget.config.get("audiobook_icon_size", 100) * 1.5)
         tile_w = icon_size + 16
-        tile_h = icon_size + 16 + 85
+        tile_h = icon_size + 16 + 100
         hspacing = 6
         vspacing = 6
         
@@ -3818,6 +3820,72 @@ class VirtualTileCanvas(QWidget):
         self.update_layout()
         self.update()
 
+    def get_tags_rects(self, book) -> list:
+        tags = book.get("tags")
+        if not tags:
+            return []
+            
+        tile_rect = book["rect"]
+        icon_size = int(self.tile_flow_widget.config.get("audiobook_icon_size", 100) * 1.5)
+        icon_rect = QRect(tile_rect.left() + 8, tile_rect.top() + 8, icon_size, icon_size)
+        
+        text_y = icon_rect.bottom() + 12
+        available_width = tile_rect.width() - 16
+        padding = tile_rect.left() + 8
+        
+        title = book.get("title", "")
+        if title:
+            font, _ = StyleManager.get_theme_property("delegate_title")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(13)
+            fm = QFontMetrics(f)
+            elided_title = fm.elidedText(title, Qt.TextElideMode.ElideRight, available_width * 2)
+            title_bound = fm.boundingRect(QRect(0, 0, available_width, 100), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop | Qt.TextFlag.TextWordWrap, elided_title)
+            title_height = min(title_bound.height(), fm.height() * 2)
+            text_y += title_height + 4
+            
+        author = book.get("author", "")
+        if author:
+            font, _ = StyleManager.get_theme_property("delegate_author")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(11)
+            fm = QFontMetrics(f)
+            text_y += fm.height() + 2
+            
+        narrator = book.get("narrator", "")
+        if narrator:
+            font, _ = StyleManager.get_theme_property("delegate_narrator")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(11)
+            fm = QFontMetrics(f)
+            text_y += fm.height() + 2
+        elif author:
+            text_y += 2
+        elif title:
+            text_y += 2
+            
+        tag_rects = []
+        tag_x = padding
+        font_tag, _ = StyleManager.get_theme_property("delegate_info_font")
+        f = QFont(font_tag) if font_tag else QFont()
+        fm = QFontMetrics(f)
+        t_h = fm.height() + 4
+        
+        for tag in tags:
+            tag_name = tag["name"]
+            t_w = fm.horizontalAdvance(tag_name)
+            tag_rect = QRectF(
+                float(tag_x), float(text_y), float(t_w + 12), float(t_h)
+            )
+            
+            if tag_rect.right() > tile_rect.right() - 8:
+                break
+                
+            tag_rects.append((tag, tag_rect))
+            tag_x += tag_rect.width() + 6
+            
+        return tag_rects
+
     def get_play_button_rect(self, icon_rect):
         btn_size = 40.0
         center = icon_rect.center()
@@ -3907,6 +3975,15 @@ class VirtualTileCanvas(QWidget):
                             is_over_heart = book.get("is_favorite") and heart_rect.contains(QPointF(pos))
                             is_over_info = bool(book.get("description")) and info_rect.contains(QPointF(pos))
                             
+                            is_over_tag = False
+                            tags_rects = self.get_tags_rects(book)
+                            for tag, tag_rect in tags_rects:
+                                if tag_rect.contains(QPointF(pos)):
+                                    self.hovered_field = f"tag:{tag['id']}"
+                                    self.setCursor(Qt.CursorShape.PointingHandCursor)
+                                    is_over_tag = True
+                                    break
+                                    
                             if is_over_cb:
                                 self.hovered_field = "checkbox"
                                 self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -3919,6 +3996,8 @@ class VirtualTileCanvas(QWidget):
                             elif is_over_info:
                                 self.hovered_field = "info"
                                 self.setCursor(Qt.CursorShape.PointingHandCursor)
+                            elif is_over_tag:
+                                pass
                             else:
                                 self.hovered_field = None
                                 self.setCursor(Qt.CursorShape.ArrowCursor)
@@ -3980,6 +4059,14 @@ class VirtualTileCanvas(QWidget):
                     self.tile_flow_widget.on_tile_description_requested(path)
                     event.accept()
                     return
+                elif self.hovered_field and self.hovered_field.startswith("tag:"):
+                    tag_id = int(self.hovered_field.split(":")[1])
+                    for tag in self.hovered_book.get("tags", []):
+                        if tag["id"] == tag_id:
+                            self.tile_flow_widget.parent_library.tree.tag_clicked.emit(tag)
+                            break
+                    event.accept()
+                    return
                 else:
                     self.tile_flow_widget.on_tile_clicked(path)
                     event.accept()
@@ -4029,7 +4116,7 @@ class VirtualTileCanvas(QWidget):
         
         icon_size = int(self.tile_flow_widget.config.get("audiobook_icon_size", 100) * 1.5)
         tile_w = icon_size + 16
-        tile_h = icon_size + 16 + 85
+        tile_h = icon_size + 16 + 100
         hspacing = 6
         vspacing = 6
         
@@ -4652,6 +4739,48 @@ class VirtualTileCanvas(QWidget):
                 
             elided_narrator = fm.elidedText(narrator, Qt.TextElideMode.ElideRight, available_width - (narrator_x - padding))
             p.drawText(QRect(narrator_x, text_y, available_width - (narrator_x - padding), fm.height()), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, elided_narrator)
+            p.restore()
+            text_y += fm.height() + 2
+
+        # Draw tags
+        tags_rects = self.get_tags_rects(book)
+        if tags_rects:
+            p.save()
+            for tag, tag_rect in tags_rects:
+                tag_name = tag["name"]
+                _, accent_color = StyleManager.get_theme_property("delegate_accent")
+                if not accent_color or not accent_color.isValid():
+                    accent_color = QColor("#018574")
+                tag_color = QColor(tag["color"] or accent_color.name())
+                
+                # Dynamic text color based on brightness
+                text_color = (
+                    Qt.GlobalColor.white
+                    if tag_color.lightness() < 130
+                    else Qt.GlobalColor.black
+                )
+                
+                font_tag, _ = StyleManager.get_theme_property("delegate_info_font")
+                if font_tag:
+                    p.setFont(font_tag)
+                
+                # Highlight if hovered
+                is_hovered_tag = (
+                    self.hovered_book == book
+                    and getattr(self, "hovered_field", None) == f"tag:{tag['id']}"
+                )
+                if is_hovered_tag:
+                    tag_color = tag_color.lighter(115)
+                    
+                path = QPainterPath()
+                path.addRoundedRect(tag_rect, 4.0, 4.0)
+                
+                p.setBrush(tag_color)
+                p.setPen(Qt.PenStyle.NoPen)
+                p.drawPath(path)
+                
+                p.setPen(text_color)
+                p.drawText(tag_rect, Qt.AlignmentFlag.AlignCenter, tag_name)
             p.restore()
 
 
