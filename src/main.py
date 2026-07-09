@@ -368,12 +368,16 @@ class AudiobookPlayerWindow(QMainWindow):
                 "opus_workers": self.opus_workers,
                 "tile_view": self.library_tile_view,
                 "show_nesting_lines": self.show_nesting_lines,
+                "nesting_lines_single_color": self.nesting_lines_single_color,
+                "nesting_lines_color": self.nesting_lines_color,
             },
             self.delegate,
             show_folders=self.show_folders,
             show_filter_labels=self.show_filter_labels,
         )
         self.library_widget.show_status_triangle = self.show_status_triangle
+        self.library_widget.nesting_lines_single_color = self.nesting_lines_single_color
+        self.library_widget.nesting_lines_color = self.nesting_lines_color
         self.library_widget.setMinimumWidth(200)
         self.splitter.addWidget(self.library_widget)
 
