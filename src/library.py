@@ -4400,11 +4400,12 @@ class VirtualTileCanvas(QWidget):
             p.fillRect(icon_rect, overlay_bg)
             p.restore()
             
+        is_completed = book.get("is_completed", False)
+        is_started = book.get("is_started", False)
+
         # Draw status triangle (New / Started / Finished)
         show_status = getattr(library, "show_status_triangle", True) if library else True
         if show_status:
-            is_completed = book.get("is_completed", False)
-            is_started = book.get("is_started", False)
             if is_completed:
                 _, status_color = StyleManager.get_theme_property("delegate_status_completed")
                 if not status_color or not status_color.isValid():
