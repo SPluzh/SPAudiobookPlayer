@@ -3665,7 +3665,8 @@ class VirtualTileCanvas(QWidget):
                             "height": 0
                         }
                         blocks.append(current_books_block)
-                        
+                    
+                    current_books_block["is_last_child"] = is_last_child
                     book_data = self._extract_book_data(child)
                     current_books_block["books"].append(book_data)
                     
@@ -4335,7 +4336,29 @@ class VirtualTileCanvas(QWidget):
                         p.setPen(Qt.PenStyle.NoPen)
                         p.setBrush(color)
                         line_x = 24 + i * indent
-                        p.drawRect(QRect(line_x, block_y, line_width, block_h))
+                        
+                        if i == depth - 1:
+                            # Draw row-by-row branches and bends
+                            n = len(block["books"])
+                            cols = block.get("cols", 1)
+                            rows = math.ceil(n / cols)
+                            
+                            for r in range(rows):
+                                row_y = block_y + 4 + r * (tile_h + vspacing)
+                                row_h = tile_h
+                                cover_center_y = row_y + 8 + icon_size // 2
+                                
+                                is_last_row = (r == rows - 1)
+                                if is_last_row and block.get("is_last_child", False):
+                                    # └ pattern for the last row
+                                    p.drawRect(QRect(line_x, row_y, line_width, cover_center_y - row_y + line_width // 2))
+                                    p.drawRect(QRect(line_x, cover_center_y - line_width // 2, indent, line_width))
+                                else:
+                                    # ├ pattern for other rows
+                                    p.drawRect(QRect(line_x, row_y, line_width, row_h + (vspacing if not is_last_row else 4)))
+                                    p.drawRect(QRect(line_x, cover_center_y - line_width // 2, indent, line_width))
+                        else:
+                            p.drawRect(QRect(line_x, block_y, line_width, block_h))
                         
                 dpr = self.devicePixelRatioF()
                 physical_size = int(icon_size * dpr)
