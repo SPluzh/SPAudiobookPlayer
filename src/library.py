@@ -2212,6 +2212,11 @@ class LibraryTree(QTreeWidget):
                         self.viewport().update()
                         return
 
+                if item_type == "folder":
+                    self.setCursor(Qt.CursorShape.PointingHandCursor)
+                    self.viewport().update()
+                    return
+
                 if item_type == "audiobook":
                     play_rect = delegate.get_play_button_rect(QRectF(icon_rect))
                     if play_rect.contains(QPointF(event.pos())):
@@ -2288,6 +2293,22 @@ class LibraryTree(QTreeWidget):
             index = self.indexAt(event.pos())
             if index.isValid():
                 item_type = index.data(Qt.ItemDataRole.UserRole + 1)
+                if item_type == "folder":
+                    item = self.itemFromIndex(index)
+                    if item:
+                        delegate = self.itemDelegate()
+                        if self.mass_selection_mode and delegate and hasattr(delegate, "get_checkbox_rect") and hasattr(delegate, "get_icon_rect"):
+                            rect = self.visualRect(index)
+                            icon_rect = delegate.get_icon_rect(rect, index)
+                            cb_rect = delegate.get_checkbox_rect(QRectF(icon_rect))
+                            if cb_rect.contains(QPointF(event.pos())):
+                                self.toggle_item_selection_state(item)
+                                return
+                        
+                        item.setExpanded(not item.isExpanded())
+                        event.accept()
+                        return
+
                 delegate = self.itemDelegate()
                 if delegate and hasattr(delegate, "get_play_button_rect"):
                     rect = self.visualRect(index)

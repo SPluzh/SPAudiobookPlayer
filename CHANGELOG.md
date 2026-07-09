@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - **Library**: Optimized rendering performance and eliminated lag when switching or filtering in tile mode.
 - **Library**: Added a dropdown menu arrow next to the tag filter button for quick access to the tag list, and removed the right-click behavior from the main tag button.
 - **Appearance**: Added a setting to draw nesting lines with a single, uniform color instead of the multi-colored hashed palette.
+- **Library**: Added support for expanding and collapsing folders in the library list view by clicking anywhere on the folder row, matching the interaction behavior of the tile view.
 
 ## [1.7.17]
 - **Scanner**: Added automatic preservation of listening progress, bookmarks, and statistics when an audiobook folder, playlist, or standalone file is renamed or moved on disk.
