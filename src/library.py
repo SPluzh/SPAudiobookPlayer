@@ -2636,7 +2636,7 @@ class BookTileWidget(QWidget):
     favorite_clicked = pyqtSignal(str)
     description_requested = pyqtSignal(str)
 
-    def __init__(self, path, title, author, narrator, progress_percent, is_started, is_completed, is_favorite, description, pixmap, icon_size, parent=None):
+    def __init__(self, path, title, author, narrator, progress_percent, is_started, is_completed, is_favorite, description, pixmap, icon_size, duration=0.0, parent=None):
         super().__init__(parent)
         self.path = path if path is not None else ""
         self.title = title if title is not None else ""
@@ -2649,6 +2649,7 @@ class BookTileWidget(QWidget):
         self.description = description if description is not None else ""
         self.pixmap = pixmap
         self.icon_size = icon_size
+        self.duration = duration
         self.is_playing = False
         self.is_paused = True
         self.selected = False
@@ -2955,6 +2956,38 @@ class BookTileWidget(QWidget):
                 if fill_w > 0:
                     fill_rect = QRectF(pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height())
                     p.fillRect(fill_rect, accent_color)
+            p.restore()
+
+        if self.duration:
+            p.save()
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            duration_text = format_duration(self.duration)
+            font = p.font()
+            font.setPixelSize(10)
+            font.setBold(True)
+            p.setFont(font)
+            fm = p.fontMetrics()
+            text_width = fm.horizontalAdvance(duration_text)
+            text_height = fm.height()
+            pad_h = 4
+            pad_v = 2
+            pill_width = text_width + pad_h * 2
+            pill_height = text_height + pad_v * 2
+            
+            has_progress = (self.progress_percent > 0 or self.is_started)
+            margin_bottom = 4 + (pb_h if has_progress else 0)
+            margin_right = 4
+            
+            pill_x = icon_rect.right() - pill_width - margin_right
+            pill_y = icon_rect.bottom() - pill_height - margin_bottom
+            pill_rect = QRectF(pill_x, pill_y, pill_width, pill_height)
+            
+            p.setBrush(QColor(0, 0, 0, 180))
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawRoundedRect(pill_rect, 3.0, 3.0)
+            
+            p.setPen(QColor("#ffffff"))
+            p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, duration_text)
             p.restore()
         
         # Draw metadata block below cover
@@ -3641,6 +3674,7 @@ class VirtualTileCanvas(QWidget):
         title = data[1] if len(data) > 1 else ""
         narrator = data[2] if len(data) > 2 else ""
         progress_percent = data[6] if len(data) > 6 else 0.0
+        duration = data[4] if len(data) > 4 else 0.0
         description = data[12] if len(data) > 12 else ""
         
         is_started = status_data[0] if len(status_data) > 0 else False
@@ -3655,6 +3689,7 @@ class VirtualTileCanvas(QWidget):
             "author": author,
             "narrator": narrator,
             "progress_percent": progress_percent,
+            "duration": duration,
             "is_started": is_started,
             "is_completed": is_completed,
             "is_favorite": is_favorite,
@@ -4495,6 +4530,39 @@ class VirtualTileCanvas(QWidget):
                 if fill_w > 0:
                     fill_rect = QRectF(pb_rect.left(), pb_rect.top(), fill_w, pb_rect.height())
                     p.fillRect(fill_rect, accent_color)
+            p.restore()
+
+        duration = book.get("duration", 0.0)
+        if duration:
+            p.save()
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            duration_text = format_duration(duration)
+            font = p.font()
+            font.setPixelSize(10)
+            font.setBold(True)
+            p.setFont(font)
+            fm = p.fontMetrics()
+            text_width = fm.horizontalAdvance(duration_text)
+            text_height = fm.height()
+            pad_h = 4
+            pad_v = 2
+            pill_width = text_width + pad_h * 2
+            pill_height = text_height + pad_v * 2
+            
+            has_progress = (progress_percent > 0 or is_started)
+            margin_bottom = 4 + (pb_h if has_progress else 0)
+            margin_right = 4
+            
+            pill_x = icon_rect.right() - pill_width - margin_right
+            pill_y = icon_rect.bottom() - pill_height - margin_bottom
+            pill_rect = QRectF(pill_x, pill_y, pill_width, pill_height)
+            
+            p.setBrush(QColor(0, 0, 0, 180))
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawRoundedRect(pill_rect, 3.0, 3.0)
+            
+            p.setPen(QColor("#ffffff"))
+            p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, duration_text)
             p.restore()
             
         text_y = icon_rect.bottom() + 12
