@@ -3256,15 +3256,18 @@ class FolderHeaderWidget(QWidget):
         layout.setSpacing(0)
         
         # 1. Left indent spacer
+        show_nesting = getattr(library, "show_nesting_lines", True) if library else True
+        indent = 12 if show_nesting else 8
         if depth > 0:
-            layout.addSpacing(depth * 12)
+            layout.addSpacing(depth * indent)
             
         # 2. Branch arrow widget
         self.arrow_widget = FolderBranchIndicator(self.expanded, self)
         layout.addWidget(self.arrow_widget, 0, Qt.AlignmentFlag.AlignVCenter)
         
         # 3. Spacing between arrow column and folder icon
-        layout.addSpacing(15)
+        spacing = (10 if depth == 0 else 22) if show_nesting else 10
+        layout.addSpacing(spacing)
         
         # 4. Folder icon label
         self.icon_label = QLabel()
@@ -3364,7 +3367,7 @@ class FolderHeaderWidget(QWidget):
                 p.setPen(Qt.PenStyle.NoPen)
                 p.setBrush(color)
                 
-                line_x = 12 + i * indent
+                line_x = 24 + i * indent
                 
                 if i == self.depth - 1:
                     # This is the folder's own nesting line/branch
@@ -3413,7 +3416,10 @@ class FolderHeaderWidget(QWidget):
             p.setBrush(accent_color)
             p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
             
-            bar_x = self.depth * indent + 14
+            if show_nesting:
+                bar_x = 14 if self.depth == 0 else (26 + self.depth * 12)
+            else:
+                bar_x = 14 + self.depth * 8
             bar_rect = QRectF(
                 float(bar_x),
                 4.0,
@@ -3433,10 +3439,7 @@ class FolderHeaderWidget(QWidget):
                 p.setBrush(Qt.BrushStyle.NoBrush)
                 p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
                 
-                start_x = 0
-                if self.depth > 0:
-                    gap = 4
-                    start_x = self.depth * indent + 12 + line_width + gap
+                start_x = 12 if self.depth == 0 else (18 + self.depth * 12)
                 
                 y_pos = self.height() - 1
                 p.drawLine(start_x, y_pos, self.width(), y_pos)
@@ -3449,7 +3452,13 @@ class BooksContainerWidget(QWidget):
         super().__init__(parent)
         self.chain = chain
         self.depth = depth
-        self.setContentsMargins(depth * 12 + 12, 4, 0, 4)
+        library = self.window().findChild(LibraryWidget)
+        show_nesting = getattr(library, "show_nesting_lines", True) if library else True
+        if show_nesting:
+            left_margin = 14 if depth == 0 else (26 + depth * 12)
+        else:
+            left_margin = 14 + depth * 8
+        self.setContentsMargins(left_margin, 4, 0, 4)
         
     def paintEvent(self, event):
         library = self.window().findChild(LibraryWidget)
@@ -3481,7 +3490,7 @@ class BooksContainerWidget(QWidget):
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(color)
             
-            line_x = 12 + i * indent
+            line_x = 24 + i * indent
             p.drawRect(QRect(line_x, 0, line_width, self.height()))
             
         p.end()
@@ -3723,7 +3732,11 @@ class VirtualTileCanvas(QWidget):
                 block["height"] = folder_h
                 current_y += folder_h
             elif block["type"] == "books":
-                grid_left = block["depth"] * 12 + 12
+                show_nesting = getattr(library, "show_nesting_lines", True) if library else True
+                if show_nesting:
+                    grid_left = 14 if block["depth"] == 0 else (26 + block["depth"] * 12)
+                else:
+                    grid_left = 14 + block["depth"] * 8
                 avail_w = canvas_width - grid_left - 12
                 cols = max(1, int((avail_w + hspacing) / (tile_w + hspacing)))
                 block["cols"] = cols
@@ -3947,9 +3960,15 @@ class VirtualTileCanvas(QWidget):
             if block_y <= pos.y() < block_y + block_h:
                 if block["type"] == "folder":
                     self.hovered_block = block
-                    mass_mode = getattr(self.tile_flow_widget.parent_library.tree, "mass_selection_mode", False)
+                    library = self.tile_flow_widget.parent_library
+                    show_nesting = getattr(library, "show_nesting_lines", True) if library else True
+                    mass_mode = getattr(library.tree, "mass_selection_mode", False)
                     if mass_mode:
-                        icon_rect = QRect(block["depth"] * 12 + 12 + 15, block_y + (block_h - 20) // 2, 20, 20)
+                        if show_nesting:
+                            icon_x = 22 if block["depth"] == 0 else (34 + block["depth"] * 12)
+                        else:
+                            icon_x = 22 + block["depth"] * 8
+                        icon_rect = QRect(icon_x, block_y + (block_h - 20) // 2, 20, 20)
                         cb_rect = self.get_folder_checkbox_rect(icon_rect)
                         if cb_rect.contains(QPointF(pos)):
                             self.hovered_field = "checkbox"
@@ -4156,7 +4175,7 @@ class VirtualTileCanvas(QWidget):
                         hover_color = QColor(255, 255, 255, 10)
                     p.fillRect(block_rect, hover_color)
                     
-                indent = 12
+                indent = 12 if show_nesting else 8
                 line_width = 2
                 
                 if show_nesting:
@@ -4175,7 +4194,7 @@ class VirtualTileCanvas(QWidget):
                         
                         p.setPen(Qt.PenStyle.NoPen)
                         p.setBrush(color)
-                        line_x = 12 + i * indent
+                        line_x = 24 + i * indent
                         
                         if i == depth - 1:
                             if is_last_child:
@@ -4194,12 +4213,10 @@ class VirtualTileCanvas(QWidget):
                     line_color = NESTING_COLORS[color_index]
                     p.setPen(QPen(line_color, line_width))
                     p.setBrush(Qt.BrushStyle.NoBrush)
-                    start_x = 0
-                    if depth > 0:
-                        start_x = depth * indent + 12 + line_width + 4
+                    start_x = 12 if depth == 0 else (18 + depth * 12)
                     p.drawLine(start_x, block_y + block_h - 1, self.width(), block_y + block_h - 1)
                     
-                arrow_rect = QRect(depth * 12, block_y + (block_h - 12) // 2, 12, 12)
+                arrow_rect = QRect(depth * indent, block_y + (block_h - 12) // 2, 12, 12)
                 opt = QStyleOption()
                 opt.rect = arrow_rect
                 opt.state = QStyle.StateFlag.State_Enabled
@@ -4208,7 +4225,11 @@ class VirtualTileCanvas(QWidget):
                 pe = QStyle.PrimitiveElement.PE_IndicatorArrowDown if is_expanded else QStyle.PrimitiveElement.PE_IndicatorArrowRight
                 self.style().drawPrimitive(pe, opt, p, self)
                 
-                icon_rect = QRect(depth * 12 + 12 + 15, block_y + (block_h - 20) // 2, 20, 20)
+                if show_nesting:
+                    icon_x = 22 if depth == 0 else (34 + depth * 12)
+                else:
+                    icon_x = 22 + depth * 8
+                icon_rect = QRect(icon_x, block_y + (block_h - 20) // 2, 20, 20)
                 if library.folder_icon:
                     p.drawPixmap(icon_rect, library.folder_icon.pixmap(20, 20))
                     
@@ -4261,9 +4282,7 @@ class VirtualTileCanvas(QWidget):
                     books_str = library._format_books_count(books_count)
                     display_text = f"{display_name} ({books_str}, {duration_str})"
                     
-                text_x = depth * 12 + 55
-                if mass_mode:
-                    text_x += 30
+                text_x = icon_rect.right() + (43 if mass_mode else 8)
                 font, color = StyleManager.get_theme_property("delegate_folder")
                 if font:
                     p.setFont(font)
@@ -4286,7 +4305,10 @@ class VirtualTileCanvas(QWidget):
                             accent_color = QColor("#018574")
                         p.setPen(Qt.PenStyle.NoPen)
                         p.setBrush(accent_color)
-                        bar_x = depth * 12 + 14
+                        if show_nesting:
+                            bar_x = 14 if depth == 0 else (26 + depth * 12)
+                        else:
+                            bar_x = 14 + depth * 8
                         bar_rect = QRectF(float(bar_x), float(block_y + 4), 3.0, float(block_h - 8))
                         p.drawRoundedRect(bar_rect, 2.0, 2.0)
                         
@@ -4312,7 +4334,7 @@ class VirtualTileCanvas(QWidget):
                         
                         p.setPen(Qt.PenStyle.NoPen)
                         p.setBrush(color)
-                        line_x = 12 + i * indent
+                        line_x = 24 + i * indent
                         p.drawRect(QRect(line_x, block_y, line_width, block_h))
                         
                 dpr = self.devicePixelRatioF()

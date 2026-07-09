@@ -667,6 +667,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.library_widget.tree.viewport().update()
                 if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
                     if hasattr(self.library_widget.tile_view, "canvas") and self.library_widget.tile_view.canvas:
+                        self.library_widget.tile_view.canvas.update_layout()
                         self.library_widget.tile_view.canvas.update()
                     self.library_widget.tile_view.update()
         self.save_settings()
@@ -2409,6 +2410,7 @@ class AudiobookPlayerWindow(QMainWindow):
                     self.library_widget.show_status_triangle = interface_settings["show_status_triangle"]
                     if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
                         if hasattr(self.library_widget.tile_view, "canvas") and self.library_widget.tile_view.canvas:
+                            self.library_widget.tile_view.canvas.update_layout()
                             self.library_widget.tile_view.canvas.update()
                 
                 # Status bar
