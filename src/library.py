@@ -2698,8 +2698,14 @@ class BookTileWidget(QWidget):
         )
 
     def get_info_rect(self, icon_rect):
-        size = 20
-        return QRect(icon_rect.right() - size - 4, icon_rect.bottom() - size - 4, size, size)
+        size = 20.0
+        # Position: Top-Left of icon, mirrored from heart
+        return QRectF(
+            float(icon_rect.left() - 4),
+            float(icon_rect.top() - 4),
+            float(size),
+            float(size),
+        )
 
     def paintEvent(self, event):
         opt = QStyleOption()
@@ -2889,11 +2895,33 @@ class BookTileWidget(QWidget):
             p.drawPath(path)
             p.restore()
 
-        if self.hovered and self.description:
+        if self.description:
             info_rect = self.get_info_rect(icon_rect)
             p.save()
-            pix = self.info_icon.pixmap(info_rect.size())
-            p.drawPixmap(info_rect, pix)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            is_over_info = (self.hovered_field == "info")
+
+            # Background: Color from QSS
+            prop = "icon_background_hover" if is_over_info else "icon_background"
+            _, bg_color = StyleManager.get_theme_property(prop)
+            if not bg_color or not bg_color.isValid() or bg_color == QColor():
+                bg_color = QColor(0, 0, 0, 150)
+
+            p.setBrush(bg_color)
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawEllipse(info_rect)
+
+            # Draw 'i'
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            if not accent_color or not accent_color.isValid() or accent_color == QColor():
+                accent_color = QColor("#018574")
+            p.setPen(accent_color)
+            font = p.font()
+            font.setBold(True)
+            font.setPixelSize(14)
+            p.setFont(font)
+            p.drawText(info_rect, Qt.AlignmentFlag.AlignCenter, "i")
             p.restore()
 
         pb_x = icon_rect.left()
@@ -3070,7 +3098,7 @@ class BookTileWidget(QWidget):
         
         self.hovered = True
         is_over_heart = self.is_favorite and heart_rect.contains(QPointF(pos))
-        is_over_info = bool(self.description) and info_rect.contains(pos)
+        is_over_info = bool(self.description) and info_rect.contains(QPointF(pos))
         
         if play_rect.contains(QPointF(pos)):
             self.hovered_field = "play"
@@ -3762,8 +3790,13 @@ class VirtualTileCanvas(QWidget):
         )
 
     def get_info_rect(self, icon_rect):
-        size = 20
-        return QRect(icon_rect.right() - size - 4, icon_rect.bottom() - size - 4, size, size)
+        size = 20.0
+        return QRectF(
+            float(icon_rect.left() - 4),
+            float(icon_rect.top() - 4),
+            float(size),
+            float(size),
+        )
 
     def mouseMoveEvent(self, event):
         pos = event.position().toPoint()
@@ -3798,7 +3831,7 @@ class VirtualTileCanvas(QWidget):
                             info_rect = self.get_info_rect(icon_rect)
                             
                             is_over_heart = book.get("is_favorite") and heart_rect.contains(QPointF(pos))
-                            is_over_info = bool(book.get("description")) and info_rect.contains(pos)
+                            is_over_info = bool(book.get("description")) and info_rect.contains(QPointF(pos))
                             
                             if play_rect.contains(QPointF(pos)):
                                 self.hovered_field = "play"
@@ -4258,11 +4291,33 @@ class VirtualTileCanvas(QWidget):
             p.drawPath(hpath)
             p.restore()
             
-        if is_hovered and book.get("description"):
+        if book.get("description"):
             info_rect = self.get_info_rect(icon_rect)
             p.save()
-            pix = self.info_icon.pixmap(info_rect.size())
-            p.drawPixmap(info_rect, pix)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            is_over_info = (is_hovered and self.hovered_field == "info")
+
+            # Background: Color from QSS
+            prop = "icon_background_hover" if is_over_info else "icon_background"
+            _, bg_color = StyleManager.get_theme_property(prop)
+            if not bg_color or not bg_color.isValid() or bg_color == QColor():
+                bg_color = QColor(0, 0, 0, 150)
+
+            p.setBrush(bg_color)
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawEllipse(info_rect)
+
+            # Draw 'i'
+            _, accent_color = StyleManager.get_theme_property("delegate_accent")
+            if not accent_color or not accent_color.isValid() or accent_color == QColor():
+                accent_color = QColor("#018574")
+            p.setPen(accent_color)
+            font = p.font()
+            font.setBold(True)
+            font.setPixelSize(14)
+            p.setFont(font)
+            p.drawText(info_rect, Qt.AlignmentFlag.AlignCenter, "i")
             p.restore()
             
         pb_x = icon_rect.left()
