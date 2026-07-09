@@ -930,10 +930,13 @@ class MultiLineDelegate(QStyledItemDelegate):
                 if child_is_last:
                     continue
 
-            # Hash path to get stable positive integer
-            path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
-            color_index = path_hash % len(self.NESTING_COLORS)
-            color = self.NESTING_COLORS[color_index]
+            if getattr(self, "nesting_lines_single_color", False) and getattr(self, "nesting_lines_color", None):
+                color = QColor(self.nesting_lines_color)
+            else:
+                # Hash path to get stable positive integer
+                path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
+                color_index = path_hash % len(self.NESTING_COLORS)
+                color = self.NESTING_COLORS[color_index]
 
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(color)
@@ -1145,12 +1148,15 @@ class MultiLineDelegate(QStyledItemDelegate):
                 if is_exp and child_cnt > 0:
                     folder_path = index.data(Qt.ItemDataRole.UserRole)
                     if folder_path:
-                        # Calculate color for next nesting level (children's color)
-                        path_hash = zlib.adler32(
-                            str(folder_path).encode("utf-8", errors="ignore")
-                        )
-                        color_index = path_hash % len(self.NESTING_COLORS)
-                        line_color = self.NESTING_COLORS[color_index]
+                        if getattr(self, "nesting_lines_single_color", False) and getattr(self, "nesting_lines_color", None):
+                            line_color = QColor(self.nesting_lines_color)
+                        else:
+                            # Calculate color for next nesting level (children's color)
+                            path_hash = zlib.adler32(
+                                str(folder_path).encode("utf-8", errors="ignore")
+                            )
+                            color_index = path_hash % len(self.NESTING_COLORS)
+                            line_color = self.NESTING_COLORS[color_index]
 
                         # Draw horizontal line at bottom
                         line_width = 2
@@ -3346,6 +3352,8 @@ class FolderHeaderWidget(QWidget):
         
         library = self.window().findChild(LibraryWidget)
         show_nesting = getattr(library, "show_nesting_lines", True) if library else True
+        single_color = getattr(library, "nesting_lines_single_color", False) if library else False
+        custom_color = getattr(library, "nesting_lines_color", None) if library else None
         
         if show_nesting:
             # Draw nesting lines
@@ -3360,9 +3368,12 @@ class FolderHeaderWidget(QWidget):
                     if child_is_last:
                         continue
                         
-                path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
-                color_index = path_hash % len(NESTING_COLORS)
-                color = NESTING_COLORS[color_index]
+                if single_color and custom_color:
+                    color = QColor(custom_color)
+                else:
+                    path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
+                    color_index = path_hash % len(NESTING_COLORS)
+                    color = NESTING_COLORS[color_index]
                 
                 p.setPen(Qt.PenStyle.NoPen)
                 p.setBrush(color)
@@ -3431,9 +3442,12 @@ class FolderHeaderWidget(QWidget):
         # Draw horizontal line at bottom for expanded folder
         if show_nesting and self.expanded and self.depth >= 0:
             if self.path:
-                path_hash = zlib.adler32(str(self.path).encode("utf-8", errors="ignore"))
-                color_index = path_hash % len(NESTING_COLORS)
-                line_color = NESTING_COLORS[color_index]
+                if single_color and custom_color:
+                    line_color = QColor(custom_color)
+                else:
+                    path_hash = zlib.adler32(str(self.path).encode("utf-8", errors="ignore"))
+                    color_index = path_hash % len(NESTING_COLORS)
+                    line_color = NESTING_COLORS[color_index]
                 
                 p.setPen(QPen(line_color, line_width))
                 p.setBrush(Qt.BrushStyle.NoBrush)
@@ -3466,6 +3480,9 @@ class BooksContainerWidget(QWidget):
         if not show_nesting:
             return
             
+        single_color = getattr(library, "nesting_lines_single_color", False) if library else False
+        custom_color = getattr(library, "nesting_lines_color", None) if library else None
+            
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         
@@ -3483,9 +3500,12 @@ class BooksContainerWidget(QWidget):
                 if child_is_last:
                     continue
                     
-            path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
-            color_index = path_hash % len(NESTING_COLORS)
-            color = NESTING_COLORS[color_index]
+            if single_color and custom_color:
+                color = QColor(custom_color)
+            else:
+                path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
+                color_index = path_hash % len(NESTING_COLORS)
+                color = NESTING_COLORS[color_index]
             
             p.setPen(Qt.PenStyle.NoPen)
             p.setBrush(color)
@@ -4133,6 +4153,8 @@ class VirtualTileCanvas(QWidget):
         
         library = self.tile_flow_widget.parent_library
         show_nesting = getattr(library, "show_nesting_lines", True) if library else True
+        single_color = getattr(library, "nesting_lines_single_color", False) if library else False
+        custom_color = getattr(library, "nesting_lines_color", None) if library else None
         
         icon_size = int(self.tile_flow_widget.config.get("audiobook_icon_size", 100) * 1.5)
         tile_w = icon_size + 16
@@ -4189,9 +4211,12 @@ class VirtualTileCanvas(QWidget):
                             if child_is_last:
                                 continue
                                 
-                        path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
-                        color_index = path_hash % len(NESTING_COLORS)
-                        color = NESTING_COLORS[color_index]
+                        if single_color and custom_color:
+                            color = QColor(custom_color)
+                        else:
+                            path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
+                            color_index = path_hash % len(NESTING_COLORS)
+                            color = NESTING_COLORS[color_index]
                         
                         p.setPen(Qt.PenStyle.NoPen)
                         p.setBrush(color)
@@ -4209,9 +4234,12 @@ class VirtualTileCanvas(QWidget):
                             p.drawRect(QRect(line_x, block_y, line_width, block_h))
                             
                 if show_nesting and is_expanded and depth >= 0 and path:
-                    path_hash = zlib.adler32(str(path).encode("utf-8", errors="ignore"))
-                    color_index = path_hash % len(NESTING_COLORS)
-                    line_color = NESTING_COLORS[color_index]
+                    if single_color and custom_color:
+                        line_color = QColor(custom_color)
+                    else:
+                        path_hash = zlib.adler32(str(path).encode("utf-8", errors="ignore"))
+                        color_index = path_hash % len(NESTING_COLORS)
+                        line_color = NESTING_COLORS[color_index]
                     p.setPen(QPen(line_color, line_width))
                     p.setBrush(Qt.BrushStyle.NoBrush)
                     start_x = 12 if depth == 0 else (18 + depth * 12)
@@ -4329,9 +4357,12 @@ class VirtualTileCanvas(QWidget):
                             if child_is_last:
                                 continue
                                 
-                        path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
-                        color_index = path_hash % len(NESTING_COLORS)
-                        color = NESTING_COLORS[color_index]
+                        if single_color and custom_color:
+                            color = QColor(custom_color)
+                        else:
+                            path_hash = zlib.adler32(parent_path_str.encode("utf-8", errors="ignore"))
+                            color_index = path_hash % len(NESTING_COLORS)
+                            color = NESTING_COLORS[color_index]
                         
                         p.setPen(Qt.PenStyle.NoPen)
                         p.setBrush(color)
@@ -4988,6 +5019,8 @@ class LibraryWidget(QWidget):
         })
         self.is_tile_view = self.config.get("tile_view", False)
         self.show_nesting_lines = self.config.get("show_nesting_lines", True)
+        self.nesting_lines_single_color = self.config.get("nesting_lines_single_color", False)
+        self.nesting_lines_color = self.config.get("nesting_lines_color", "#808080")
         self._expanded_paths_cache = set()
         self.setup_ui()
         self.load_icons()

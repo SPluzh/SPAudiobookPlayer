@@ -608,6 +608,10 @@
     "icon_thickness_label": "Icon Line Thickness:",
     "icon_thickness_tooltip": "Adjust the stroke thickness of all interface icons (1.0 to 3.0 pixels)",
     "cover_progress_label": "Cover Progress Color:",
-    "cover_progress_tooltip": "Color of the progress bar shown on book covers"
+    "cover_progress_tooltip": "Color of the progress bar shown on book covers",
+    "nesting_lines_single_color": "Draw nesting lines with one color",
+    "nesting_lines_single_color_tooltip": "Use a single color for all nesting lines instead of different colors for each level",
+    "nesting_lines_color_label": "Nesting Lines Color:",
+    "nesting_lines_color_tooltip": "Choose color for nesting lines (default #808080)"
   }
 }

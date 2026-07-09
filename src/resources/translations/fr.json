@@ -608,6 +608,10 @@
     "icon_thickness_label": "Épaisseur de ligne de l'icône :",
     "icon_thickness_tooltip": "Ajustez l'épaisseur du trait de toutes les icônes de l'interface (1,0 à 3,0 pixels)",
     "cover_progress_label": "Couleur de la barre de progression sur la couverture:",
-    "cover_progress_tooltip": "Couleur de la barre de progression affichée sur les couvertures de livres"
+    "cover_progress_tooltip": "Couleur de la barre de progression affichée sur les couvertures de livres",
+    "nesting_lines_single_color": "Dessiner les lignes d'imbrication avec une seule couleur",
+    "nesting_lines_single_color_tooltip": "Utiliser une seule couleur pour toutes les lignes d'imbrication au lieu de couleurs différentes pour chaque niveau",
+    "nesting_lines_color_label": "Couleur des lignes d'imbrication :",
+    "nesting_lines_color_tooltip": "Choisissez la couleur des lignes d'imbrication (par défaut #808080)"
   }
 }

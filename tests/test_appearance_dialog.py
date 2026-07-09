@@ -674,6 +674,7 @@ def test_appearance_dialog_color_hex_inputs_width_and_style():
         ("statusNewHexInput", dialog.status_new_hex_input),
         ("statusStartedHexInput", dialog.status_started_hex_input),
         ("statusCompletedHexInput", dialog.status_completed_hex_input),
+        ("nestingLinesHexInput", dialog.nesting_lines_hex_input),
     ]
 
     # 1. Assert width is at least 80
@@ -688,5 +689,44 @@ def test_appearance_dialog_color_hex_inputs_width_and_style():
             content = f.read()
         for name, _ in inputs:
             assert f"#{name}" in content, f"style.qss is missing selector for #{name}"
+
+
+def test_appearance_dialog_nesting_lines_single_color():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        nesting_lines_single_color=True,
+        nesting_lines_color="#123456",
+        default_nesting_lines_color="#808080"
+    )
+
+    # 1. Verify initial states
+    assert dialog.original_nesting_lines_single_color is True
+    assert dialog.current_nesting_lines_single_color is True
+    assert dialog.current_nesting_lines_color == "#123456"
+    assert dialog.default_nesting_lines_color == "#808080"
+    assert dialog.chk_single_nesting_color.isChecked() is True
+    assert dialog.nesting_lines_hex_input.text() == "#123456"
+
+    # 2. Modify value
+    dialog.chk_single_nesting_color.setChecked(False)
+    assert dialog.current_nesting_lines_single_color is False
+
+    dialog.nesting_lines_hex_input.setText("#abcdef")
+    assert dialog.current_nesting_lines_color == "#ABCDEF"
+
+    # 3. Test reset to default
+    dialog.reset_to_default()
+    assert dialog.current_nesting_lines_single_color is False
+    assert dialog.current_nesting_lines_color == "#808080"
+    assert dialog.chk_single_nesting_color.isChecked() is False
+    assert dialog.nesting_lines_hex_input.text() == "#808080"
+
+    # 4. Test reject restores original values
+    dialog.reject()
+    assert dialog.current_nesting_lines_single_color is True
+    assert dialog.current_nesting_lines_color == "#123456"
+
 
 

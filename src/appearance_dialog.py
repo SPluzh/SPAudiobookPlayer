@@ -175,11 +175,12 @@ class AppearanceDialog(QDialog):
                  show_visualizer=True, show_nesting_lines=True, show_status_triangle=True, show_statusbar=True,
                  remember_filter_folders=True,
                  info_order="progress,file_count,duration,size,technical,year_written,year_recorded,language",
-                 default_info_order="progress,file_count,duration,size,technical,year_written,year_recorded,language"):
+                 default_info_order="progress,file_count,duration,size,technical,year_written,year_recorded,language",
+                 nesting_lines_single_color=False, nesting_lines_color="", default_nesting_lines_color="#808080"):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
-        self.setMinimumSize(760, 600)
+        self.setMinimumSize(780, 670)
         
         # Keep track of original, current, and default values
         self.original_accent = current_accent
@@ -225,6 +226,12 @@ class AppearanceDialog(QDialog):
         self.original_cover_progress = current_cover_progress
         self.default_cover_progress = default_cover_progress
         self.current_cover_progress = current_cover_progress or default_cover_progress
+
+        self.original_nesting_lines_single_color = nesting_lines_single_color
+        self.current_nesting_lines_single_color = nesting_lines_single_color
+        self.original_nesting_lines_color = nesting_lines_color
+        self.default_nesting_lines_color = default_nesting_lines_color
+        self.current_nesting_lines_color = nesting_lines_color or default_nesting_lines_color
 
         # Book info settings states
         self.original_show_detailed_info = show_detailed_info
@@ -703,10 +710,48 @@ class AppearanceDialog(QDialog):
         info_layout.addLayout(checkbox_layout)
 
         info_layout.addWidget(self.chk_nesting_lines)
+        
+        self.chk_single_nesting_color = QCheckBox(tr("appearance.nesting_lines_single_color", "Draw nesting lines with one color"))
+        self.chk_single_nesting_color.setToolTip(tr("appearance.nesting_lines_single_color_tooltip"))
+        info_layout.addWidget(self.chk_single_nesting_color)
+        
+        self.nesting_colors_widget = QWidget()
+        nesting_colors_grid = QGridLayout(self.nesting_colors_widget)
+        nesting_colors_grid.setHorizontalSpacing(8)
+        nesting_colors_grid.setVerticalSpacing(8)
+        nesting_colors_grid.setContentsMargins(15, 0, 0, 4)
+        
+        nesting_color_label = QLabel(tr("appearance.nesting_lines_color_label", "Nesting Lines Color:"))
+        nesting_color_tooltip = tr("appearance.nesting_lines_color_tooltip")
+        nesting_color_label.setToolTip(nesting_color_tooltip)
+        nesting_colors_grid.addWidget(nesting_color_label, 0, 0)
+        
+        self.nesting_lines_color_btn = QPushButton()
+        self.nesting_lines_color_btn.setFixedSize(field_height, field_height)
+        self.nesting_lines_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.nesting_lines_color_btn.setToolTip(nesting_color_tooltip)
+        self.nesting_lines_color_btn.clicked.connect(self.choose_nesting_lines_color)
+        nesting_colors_grid.addWidget(self.nesting_lines_color_btn, 0, 1)
+        
+        self.nesting_lines_hex_input = QLineEdit()
+        self.nesting_lines_hex_input.setObjectName("nestingLinesHexInput")
+        self.nesting_lines_hex_input.setMaxLength(7)
+        self.nesting_lines_hex_input.setFixedWidth(80)
+        self.nesting_lines_hex_input.setFixedHeight(field_height)
+        self.nesting_lines_hex_input.setValidator(validator)
+        self.nesting_lines_hex_input.setToolTip(nesting_color_tooltip)
+        self.nesting_lines_hex_input.textChanged.connect(self.on_nesting_lines_hex_changed)
+        nesting_colors_grid.addWidget(self.nesting_lines_hex_input, 0, 2)
+        
+        nesting_colors_grid.addItem(QSpacerItem(1, 1, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum), 0, 3)
+        nesting_colors_grid.setColumnStretch(3, 1)
+        info_layout.addWidget(self.nesting_colors_widget)
+
         info_layout.addWidget(self.chk_remember_filter_folders)
         
         self.chk_status_triangle.stateChanged.connect(self.on_interface_checkbox_changed)
         self.chk_nesting_lines.stateChanged.connect(self.on_interface_checkbox_changed)
+        self.chk_single_nesting_color.stateChanged.connect(self.on_interface_checkbox_changed)
         self.chk_remember_filter_folders.stateChanged.connect(self.on_interface_checkbox_changed)
         
         self.chk_show_detailed_info.stateChanged.connect(self.on_show_detailed_info_changed)
@@ -769,7 +814,7 @@ class AppearanceDialog(QDialog):
             self.accent_color_btn, self.window_color_btn, self.bg_dark_color_btn,
             self.text_color_btn, self.border_color_btn, self.icon_color_btn,
             self.status_new_color_btn, self.status_started_color_btn, self.status_completed_color_btn,
-            self.cover_progress_color_btn
+            self.cover_progress_color_btn, self.nesting_lines_color_btn
         ]:
             btn.setProperty("class", "color-btn")
             
@@ -784,6 +829,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_status_new(self.current_status_new)
         self.update_ui_from_status_started(self.current_status_started)
         self.update_ui_from_status_completed(self.current_status_completed)
+        self.update_ui_from_nesting_lines_color(self.current_nesting_lines_color)
         self.update_checkboxes_ui()
         self.update_ui_from_icon_thickness(self.current_icon_thickness)
         
@@ -847,6 +893,7 @@ class AppearanceDialog(QDialog):
             ("status_new_color_btn", self.current_status_new),
             ("status_started_color_btn", self.current_status_started),
             ("status_completed_color_btn", self.current_status_completed),
+            ("nesting_lines_color_btn", self.current_nesting_lines_color),
         ]
         for attr, color_hex in buttons:
             btn = getattr(self, attr, None)
@@ -881,8 +928,14 @@ class AppearanceDialog(QDialog):
             self.current_status_started = color_hex
         elif btn == getattr(self, "status_completed_color_btn", None):
             self.current_status_completed = color_hex
+        elif btn == getattr(self, "nesting_lines_color_btn", None):
+            self.current_nesting_lines_color = color_hex
 
         self.update_color_button_stylesheets()
+
+    def update_ui_from_nesting_lines_color(self, color_hex: str):
+        """Synchronize custom nesting lines color button background and hex input"""
+        self.update_color_button(self.nesting_lines_color_btn, self.nesting_lines_hex_input, color_hex)
 
     def update_ui_from_icon_color(self, color_hex: str):
         """Synchronize custom icon color button background and hex input"""
@@ -1167,6 +1220,28 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_status_completed(color_hex)
         self.emit_preview()
 
+    def choose_nesting_lines_color(self):
+        """Open custom compact color picker dialog for nesting lines color and preview changes live"""
+        color_before = self.current_nesting_lines_color
+        dialog = ColorPickerDialog(self, QColor(self.current_nesting_lines_color))
+        dialog.colorChanged.connect(self.select_nesting_lines_color_preview)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.current_nesting_lines_color = dialog.color.name().upper()
+            self.update_ui_from_nesting_lines_color(self.current_nesting_lines_color)
+            self.emit_preview()
+        else:
+            self.current_nesting_lines_color = color_before
+            self.update_ui_from_nesting_lines_color(self.current_nesting_lines_color)
+            self.emit_preview()
+            
+    def select_nesting_lines_color_preview(self, color: QColor):
+        """Update nesting lines color preview from dialog changes"""
+        color_hex = color.name().upper()
+        self.current_nesting_lines_color = color_hex
+        self.update_ui_from_nesting_lines_color(color_hex)
+        self.emit_preview()
+
     def on_accent_hex_changed(self, text: str):
         """Update accent picker button and emit preview from Accent Hex input box"""
         if self.updating_ui:
@@ -1348,6 +1423,24 @@ class AppearanceDialog(QDialog):
                 self.update_ui_from_status_completed(self.current_status_completed)
                 self.emit_preview()
                 
+    def on_nesting_lines_hex_changed(self, text: str):
+        """Update nesting lines picker button and emit preview from Hex input box"""
+        if self.updating_ui:
+            return
+            
+        if not text.startswith("#"):
+            self.updating_ui = True
+            text = "#" + text.replace("#", "")
+            self.nesting_lines_hex_input.setText(text)
+            self.updating_ui = False
+            
+        if len(text) == 7:
+            color = QColor(text)
+            if color.isValid():
+                self.current_nesting_lines_color = text.upper()
+                self.update_ui_from_nesting_lines_color(self.current_nesting_lines_color)
+                self.emit_preview()
+                
     def reset_to_default(self):
         """Reset current colors and thickness to theme default values"""
         self.current_accent = self.default_accent
@@ -1361,6 +1454,8 @@ class AppearanceDialog(QDialog):
         self.current_status_completed = self.default_status_completed
         self.current_icon_thickness = self.default_icon_thickness
         self.current_cover_progress = self.default_cover_progress
+        self.current_nesting_lines_single_color = False
+        self.current_nesting_lines_color = self.default_nesting_lines_color
         
         self.update_ui_from_accent(self.default_accent)
         self.update_ui_from_window(self.default_window)
@@ -1372,6 +1467,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_status_new(self.default_status_new)
         self.update_ui_from_status_started(self.default_status_started)
         self.update_ui_from_status_completed(self.default_status_completed)
+        self.update_ui_from_nesting_lines_color(self.default_nesting_lines_color)
         self.update_ui_from_icon_thickness(self.default_icon_thickness)
         
         # Reset info line settings to True
@@ -1459,6 +1555,8 @@ class AppearanceDialog(QDialog):
         self.current_status_completed = self.original_status_completed
         self.current_icon_thickness = self.original_icon_thickness
         self.current_cover_progress = self.original_cover_progress
+        self.current_nesting_lines_single_color = self.original_nesting_lines_single_color
+        self.current_nesting_lines_color = self.original_nesting_lines_color
  
         self.update_ui_from_accent(self.original_accent)
         self.update_ui_from_window(self.original_window)
@@ -1470,6 +1568,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_status_new(self.original_status_new)
         self.update_ui_from_status_started(self.original_status_started)
         self.update_ui_from_status_completed(self.original_status_completed)
+        self.update_ui_from_nesting_lines_color(self.original_nesting_lines_color)
         self.update_ui_from_icon_thickness(self.original_icon_thickness)
  
         self.current_show_detailed_info = self.original_show_detailed_info
@@ -1618,6 +1717,7 @@ class AppearanceDialog(QDialog):
             
             self.chk_visualizer.setChecked(self.current_show_visualizer)
             self.chk_nesting_lines.setChecked(self.current_show_nesting_lines)
+            self.chk_single_nesting_color.setChecked(self.current_nesting_lines_single_color)
             self.chk_status_triangle.setChecked(self.current_show_status_triangle)
             self.chk_statusbar.setChecked(self.current_show_statusbar)
             self.chk_remember_filter_folders.setChecked(self.current_remember_filter_folders)
@@ -1630,6 +1730,10 @@ class AppearanceDialog(QDialog):
             
             # Enable/disable status colors customization
             self.status_colors_widget.setEnabled(self.current_show_status_triangle)
+            
+            # Enable/disable nesting lines single color customization
+            self.chk_single_nesting_color.setEnabled(self.current_show_nesting_lines)
+            self.nesting_colors_widget.setEnabled(self.current_show_nesting_lines and self.current_nesting_lines_single_color)
         finally:
             self.updating_ui = old_updating
 
@@ -1656,12 +1760,17 @@ class AppearanceDialog(QDialog):
             
         self.current_show_visualizer = self.chk_visualizer.isChecked()
         self.current_show_nesting_lines = self.chk_nesting_lines.isChecked()
+        self.current_nesting_lines_single_color = self.chk_single_nesting_color.isChecked()
         self.current_show_status_triangle = self.chk_status_triangle.isChecked()
         self.current_show_statusbar = self.chk_statusbar.isChecked()
         self.current_remember_filter_folders = self.chk_remember_filter_folders.isChecked()
         
         # Enable/disable status colors customization dynamically
         self.status_colors_widget.setEnabled(self.current_show_status_triangle)
+        
+        # Enable/disable nesting lines single color customization
+        self.chk_single_nesting_color.setEnabled(self.current_show_nesting_lines)
+        self.nesting_colors_widget.setEnabled(self.current_show_nesting_lines and self.current_nesting_lines_single_color)
         
         # Emit live preview to update the layout
         self.emit_preview()
@@ -1686,6 +1795,8 @@ class AppearanceDialog(QDialog):
         return {
             "show_visualizer": self.current_show_visualizer,
             "show_nesting_lines": self.current_show_nesting_lines,
+            "nesting_lines_single_color": self.current_nesting_lines_single_color,
+            "nesting_lines_color": self.current_nesting_lines_color,
             "show_status_triangle": self.current_show_status_triangle,
             "show_statusbar": self.current_show_statusbar,
             "remember_filter_folders": self.current_remember_filter_folders

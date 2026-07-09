@@ -608,6 +608,10 @@
     "icon_thickness_label": "아이콘 선 두께:",
     "icon_thickness_tooltip": "모든 인터페이스 아이콘의 획 두께를 조정합니다 (1.0 ~ 3.0 픽셀)",
     "cover_progress_label": "표지 진행 바 색상:",
-    "cover_progress_tooltip": "책 표지에 표시되는 진행률 표시줄의 색상"
+    "cover_progress_tooltip": "책 표지에 표시되는 진행률 표시줄의 색상",
+    "nesting_lines_single_color": "중첩 선을 단색으로 그리기",
+    "nesting_lines_single_color_tooltip": "각 단계별로 다른 색상을 사용하는 대신 모든 중첩 선에 단일 색상을 사용합니다",
+    "nesting_lines_color_label": "중첩 선 색상:",
+    "nesting_lines_color_tooltip": "중첩 선의 색상을 선택합니다 (기본값 #808080)"
   }
 }

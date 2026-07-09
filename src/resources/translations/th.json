@@ -608,6 +608,10 @@
     "icon_thickness_label": "ความหนาของเส้นไอคอน:",
     "icon_thickness_tooltip": "ปรับความหนาของเส้นขอบสำหรับไอคอนอินเทอร์เฟซทั้งหมด (1.0 ถึง 3.0 พิกเซล)",
     "cover_progress_label": "สีแถบความคืบหน้าบนปก:",
-    "cover_progress_tooltip": "สีของแถบความคืบหน้าการอ่านที่แสดงบนปกหนังสือ"
+    "cover_progress_tooltip": "สีของแถบความคืบหน้าการอ่านที่แสดงบนปกหนังสือ",
+    "nesting_lines_single_color": "วาดเส้นซ้อนด้วยสีเดียว",
+    "nesting_lines_single_color_tooltip": "ใช้สีเดียวสำหรับเส้นซ้อนทั้งหมดแทนที่จะใช้สีต่างกันสำหรับแต่ละระดับ",
+    "nesting_lines_color_label": "สีของเส้นซ้อน:",
+    "nesting_lines_color_tooltip": "เลือกสีสำหรับเส้นซ้อน (ค่าเริ่มต้น #808080)"
   }
 }

@@ -608,6 +608,10 @@
     "icon_thickness_label": "アイコンの線の太さ:",
     "icon_thickness_tooltip": "すべてのインターフェースアイコンの線の太さを調整します (1.0 ～ 3.0 ピクセル)",
     "cover_progress_label": "カバーの進行状況バーの色:",
-    "cover_progress_tooltip": "ブックカバーに表示される進行状況バーの色"
+    "cover_progress_tooltip": "ブックカバーに表示される進行状況バーの色",
+    "nesting_lines_single_color": "ネストラインを単色で描画",
+    "nesting_lines_single_color_tooltip": "階層ごとに異なる色を使用する代わりに、すべてのネストラインに単一の色を使用します",
+    "nesting_lines_color_label": "ネストラインの色:",
+    "nesting_lines_color_tooltip": "ネストラインの色を選択します（デフォルト #808080）"
   }
 }

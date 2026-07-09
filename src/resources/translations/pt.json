@@ -608,6 +608,10 @@
     "icon_thickness_label": "Espessura da linha do ícone:",
     "icon_thickness_tooltip": "Ajuste a espessura do traço de todos os ícones da interface (1,0 a 3,0 pixels)",
     "cover_progress_label": "Cor da barra de progresso da capa:",
-    "cover_progress_tooltip": "Cor da barra de progresso exibida nas capas dos livros"
+    "cover_progress_tooltip": "Cor da barra de progresso exibida nas capas dos livros",
+    "nesting_lines_single_color": "Desenhar linhas de aninhamento com uma cor",
+    "nesting_lines_single_color_tooltip": "Usar uma única cor para todas as linhas de aninhamento em vez de cores diferentes para cada nível",
+    "nesting_lines_color_label": "Cor das linhas de aninhamento:",
+    "nesting_lines_color_tooltip": "Escolha a cor para as linhas de aninhamento (padrão #808080)"
   }
 }

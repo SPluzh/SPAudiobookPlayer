@@ -608,6 +608,10 @@
     "icon_thickness_label": "Độ dày đường biểu tượng:",
     "icon_thickness_tooltip": "Điều chỉnh độ dày nét của tất cả các biểu tượng giao diện (1.0 đến 3.0 pixel)",
     "cover_progress_label": "Màu thanh tiến trình trên bìa:",
-    "cover_progress_tooltip": "Màu sắc của thanh tiến trình hiển thị trên bìa sách"
+    "cover_progress_tooltip": "Màu sắc của thanh tiến trình hiển thị trên bìa sách",
+    "nesting_lines_single_color": "Vẽ các đường lồng nhau bằng một màu",
+    "nesting_lines_single_color_tooltip": "Sử dụng một màu duy nhất cho tất cả các đường lồng nhau thay vì các màu khác nhau cho mỗi cấp độ",
+    "nesting_lines_color_label": "Màu đường lồng nhau:",
+    "nesting_lines_color_tooltip": "Chọn màu cho các đường lồng nhau (mặc định #808080)"
   }
 }

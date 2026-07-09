@@ -608,6 +608,10 @@
     "icon_thickness_label": "Ketebalan Garis Ikon:",
     "icon_thickness_tooltip": "Sesuaikan ketebalan garis (stroke) semua ikon antarmuka (1,0 hingga 3,0 piksel)",
     "cover_progress_label": "Warna Bilah Kemajuan Sampul:",
-    "cover_progress_tooltip": "Warna bilah kemajuan yang ditampilkan pada sampul buku"
+    "cover_progress_tooltip": "Warna bilah kemajuan yang ditampilkan pada sampul buku",
+    "nesting_lines_single_color": "Gambar garis bersarang dengan satu warna",
+    "nesting_lines_single_color_tooltip": "Gunakan satu warna untuk semua garis bersarang alih-alih warna berbeda untuk setiap tingkat",
+    "nesting_lines_color_label": "Warna Garis Bersarang:",
+    "nesting_lines_color_tooltip": "Pilih warna untuk garis bersarang (default #808080)"
   }
 }

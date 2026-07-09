@@ -608,6 +608,10 @@
     "icon_thickness_label": "Simge Çizgi Kalınlığı:",
     "icon_thickness_tooltip": "Tüm arayüz simgelerinin kontur kalınlığını ayarlayın (1,0 ila 3,0 piksel)",
     "cover_progress_label": "Kapak İlerleme Çubuğu Rengi:",
-    "cover_progress_tooltip": "Kitap kapaklarında gösterilen ilerleme çubuğunun rengi"
+    "cover_progress_tooltip": "Kitap kapaklarında gösterilen ilerleme çubuğunun rengi",
+    "nesting_lines_single_color": "İç içe geçmiş çizgileri tek renk çiz",
+    "nesting_lines_single_color_tooltip": "Her seviye için farklı renkler yerine tüm iç içe geçmiş çizgiler için tek bir renk kullanın",
+    "nesting_lines_color_label": "İç İçe Geçmiş Çizgi Rengi:",
+    "nesting_lines_color_tooltip": "İç içe geçmiş çizgiler için renk seçin (varsayılan #808080)"
   }
 }

@@ -608,6 +608,10 @@
     "icon_thickness_label": "سمك خط الأيقونة:",
     "icon_thickness_tooltip": "ضبط سمك خط جميع أيقونات الواجهة (من 1.0 إلى 3.0 بكسل)",
     "cover_progress_label": "لون شريط تقدم الغلاف:",
-    "cover_progress_tooltip": "لون شريط التقدم المعروض على أغلفة الكتب"
+    "cover_progress_tooltip": "لون شريط التقدم المعروض على أغلفة الكتب",
+    "nesting_lines_single_color": "رسم خطوط التداخل بلون واحد",
+    "nesting_lines_single_color_tooltip": "استخدم لونًا واحدًا لجميع خطوط التداخل بدلاً من ألوان مختلفة لكل مستوى",
+    "nesting_lines_color_label": "لون خطوط التداخل:",
+    "nesting_lines_color_tooltip": "اختر لونًا لخطوط التداخل (الافتراضي #808080)"
   }
 }

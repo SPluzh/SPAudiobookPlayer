@@ -148,6 +148,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.last_pause_time = None
         self.show_visualizer = True
         self.show_nesting_lines = True
+        self.nesting_lines_single_color = False
+        self.nesting_lines_color = "#808080"
         self.show_detailed_info = True
         self.show_status_triangle = True
         self.show_statusbar = True
@@ -207,6 +209,8 @@ class AudiobookPlayerWindow(QMainWindow):
             self.delegate.folder_row_height = self.folder_row_height
             self.delegate.audiobook_icon_size = self.audiobook_icon_size
             self.delegate.show_nesting_lines = self.show_nesting_lines
+            self.delegate.nesting_lines_single_color = self.nesting_lines_single_color
+            self.delegate.nesting_lines_color = self.nesting_lines_color
             self.delegate.show_detailed_info = self.show_detailed_info
             self.delegate.show_status_triangle = self.show_status_triangle
             self.delegate.show_info_progress = self.show_info_progress
@@ -1147,6 +1151,12 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_nesting_lines = config.getboolean(
             "Library", "show_nesting_lines", fallback=True
         )
+        self.nesting_lines_single_color = config.getboolean(
+            "Library", "nesting_lines_single_color", fallback=False
+        )
+        self.nesting_lines_color = config.get(
+            "Library", "nesting_lines_color", fallback="#808080"
+        )
         self.show_detailed_info = config.getboolean(
             "Library", "show_detailed_info", fallback=True
         )
@@ -1258,6 +1268,8 @@ class AudiobookPlayerWindow(QMainWindow):
             "filter_mode": "all",
             "favorites_active": "False",
             "show_nesting_lines": "True",
+            "nesting_lines_single_color": "False",
+            "nesting_lines_color": "#808080",
             "show_detailed_info": "True",
             "show_status_triangle": "True",
             "info_order": "progress,file_count,duration,size,technical,year_written,year_recorded,language",
@@ -1432,6 +1444,8 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Library"]["show_folders_completed"] = str(self.library_show_folders.get("completed", False))
         config["Library"]["show_filter_labels"] = str(self.show_filter_labels)
         config["Library"]["show_nesting_lines"] = str(self.show_nesting_lines)
+        config["Library"]["nesting_lines_single_color"] = str(self.nesting_lines_single_color)
+        config["Library"]["nesting_lines_color"] = str(self.nesting_lines_color)
         config["Library"]["show_detailed_info"] = str(self.show_detailed_info)
         config["Library"]["show_status_triangle"] = str(self.show_status_triangle)
         config["Library"]["show_info_progress"] = str(self.show_info_progress)
@@ -2330,7 +2344,10 @@ class AudiobookPlayerWindow(QMainWindow):
                 show_status_triangle=self.show_status_triangle,
                 show_statusbar=self.show_statusbar,
                 remember_filter_folders=self.remember_filter_folders,
-                info_order=self.info_order
+                info_order=self.info_order,
+                nesting_lines_single_color=self.nesting_lines_single_color,
+                nesting_lines_color=self.nesting_lines_color,
+                default_nesting_lines_color="#808080"
             )
             
             self.appearance_dialog = dialog
@@ -2404,9 +2421,13 @@ class AudiobookPlayerWindow(QMainWindow):
                 # Nesting lines & status triangle
                 if self.delegate:
                     self.delegate.show_nesting_lines = interface_settings["show_nesting_lines"]
+                    self.delegate.nesting_lines_single_color = interface_settings["nesting_lines_single_color"]
+                    self.delegate.nesting_lines_color = interface_settings["nesting_lines_color"]
                     self.delegate.show_status_triangle = interface_settings["show_status_triangle"]
                 if hasattr(self, "library_widget") and self.library_widget:
                     self.library_widget.show_nesting_lines = interface_settings["show_nesting_lines"]
+                    self.library_widget.nesting_lines_single_color = interface_settings["nesting_lines_single_color"]
+                    self.library_widget.nesting_lines_color = interface_settings["nesting_lines_color"]
                     self.library_widget.show_status_triangle = interface_settings["show_status_triangle"]
                     if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
                         if hasattr(self.library_widget.tile_view, "canvas") and self.library_widget.tile_view.canvas:
@@ -2520,6 +2541,17 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.toggle_nesting_lines(interface_settings["show_nesting_lines"])
             else:
                 self.save_setting("Library", "show_nesting_lines", str(self.show_nesting_lines))
+
+            self.nesting_lines_single_color = interface_settings["nesting_lines_single_color"]
+            self.nesting_lines_color = interface_settings["nesting_lines_color"]
+            self.save_setting("Library", "nesting_lines_single_color", str(self.nesting_lines_single_color))
+            self.save_setting("Library", "nesting_lines_color", str(self.nesting_lines_color))
+            if self.delegate:
+                self.delegate.nesting_lines_single_color = self.nesting_lines_single_color
+                self.delegate.nesting_lines_color = self.nesting_lines_color
+            if hasattr(self, "library_widget") and self.library_widget:
+                self.library_widget.nesting_lines_single_color = self.nesting_lines_single_color
+                self.library_widget.nesting_lines_color = self.nesting_lines_color
 
             if interface_settings["show_status_triangle"] != self.show_status_triangle:
                 self.toggle_status_triangle(interface_settings["show_status_triangle"])

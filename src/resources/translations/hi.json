@@ -608,6 +608,10 @@
     "icon_thickness_label": "आइकन लाइन की मोटाई:",
     "icon_thickness_tooltip": "सभी इंटरफ़ेस आइकन की स्ट्रोक मोटाई को समायोजित करें (1.0 से 3.0 पिक्सेल)",
     "cover_progress_label": "कवर प्रगति पट्टी का रंग:",
-    "cover_progress_tooltip": "पुस्तक के कवर पर दिखाई जाने वाली प्रगति पट्टी का रंग"
+    "cover_progress_tooltip": "पुस्तक के कवर पर दिखाई जाने वाली प्रगति पट्टी का रंग",
+    "nesting_lines_single_color": "नेस्टिंग लाइनों को एक ही रंग में खींचें",
+    "nesting_lines_single_color_tooltip": "प्रत्येक स्तर के लिए अलग-अलग रंगों के बजाय सभी नेस्टिंग लाइनों के लिए एकल रंग का उपयोग करें",
+    "nesting_lines_color_label": "नेस्टिंग लाइन का रंग:",
+    "nesting_lines_color_tooltip": "नेस्टिंग लाइनों के लिए रंग चुनें (डिफ़ॉल्ट #808080)"
   }
 }

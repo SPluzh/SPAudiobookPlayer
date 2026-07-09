@@ -997,7 +997,8 @@ QLineEdit#iconHexInput,
 QLineEdit#coverProgressHexInput,
 QLineEdit#statusNewHexInput,
 QLineEdit#statusStartedHexInput,
-QLineEdit#statusCompletedHexInput {
+QLineEdit#statusCompletedHexInput,
+QLineEdit#nestingLinesHexInput {
     padding: 2px 4px;
 }
 

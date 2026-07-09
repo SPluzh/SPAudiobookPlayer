@@ -608,6 +608,10 @@
     "icon_thickness_label": "Symbol-Linienstärke:",
     "icon_thickness_tooltip": "Passen Sie die Strichstärke aller Interface-Symbole an (1,0 bis 3,0 Pixel)",
     "cover_progress_label": "Farbe des Cover-Fortschrittsbalkens:",
-    "cover_progress_tooltip": "Farbe des Fortschrittsbalkens auf den Buchcovern"
+    "cover_progress_tooltip": "Farbe des Fortschrittsbalkens auf den Buchcovern",
+    "nesting_lines_single_color": "Verschachtelungslinien einfarbig zeichnen",
+    "nesting_lines_single_color_tooltip": "Verwenden Sie eine einzige Farbe für alle Verschachtelungslinien anstelle von unterschiedlichen Farben für jede Ebene",
+    "nesting_lines_color_label": "Farbe der Verschachtelungslinien:",
+    "nesting_lines_color_tooltip": "Wählen Sie die Farbe für Verschachtelungslinien (Standard #808080)"
   }
 }

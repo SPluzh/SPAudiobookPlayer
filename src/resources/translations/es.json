@@ -608,6 +608,10 @@
     "icon_thickness_label": "Grosor de línea del icono:",
     "icon_thickness_tooltip": "Ajuste el grosor del trazo de todos los iconos de la interfaz (1,0 a 3,0 píxeles)",
     "cover_progress_label": "Color de la barra de progreso en la portada:",
-    "cover_progress_tooltip": "Color de la barra de progreso que se muestra en las portadas de los libros"
+    "cover_progress_tooltip": "Color de la barra de progreso que se muestra en las portadas de los libros",
+    "nesting_lines_single_color": "Dibujar líneas de anidación con un solo color",
+    "nesting_lines_single_color_tooltip": "Usar un solo color para todas las líneas de anidación en lugar de colores diferentes para cada nivel",
+    "nesting_lines_color_label": "Color de líneas de anidación:",
+    "nesting_lines_color_tooltip": "Elija el color para las líneas de anidación (predeterminado #808080)"
   }
 }
