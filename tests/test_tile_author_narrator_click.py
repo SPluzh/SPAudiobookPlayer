@@ -43,12 +43,19 @@ class MockLibraryTree:
 class MockLibraryWidget:
     def __init__(self):
         self.tree = MockLibraryTree()
+        self.favorite_clicks = []
+        
+    def on_tree_favorite_clicked(self, path: str):
+        self.favorite_clicks.append(path)
 
 class MockTileFlowWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.config = {"audiobook_icon_size": 100}
         self.parent_library = MockLibraryWidget()
+        
+    def on_tile_favorite_clicked(self, path):
+        self.parent_library.on_tree_favorite_clicked(path)
 
 def test_tile_author_narrator_layout_and_hover():
     app = QApplication.instance() or QApplication([])
@@ -62,7 +69,7 @@ def test_tile_author_narrator_layout_and_hover():
         3600.0,
         50.0,
     )
-    status_tuple = (True, False, False)
+    status_tuple = (True, False, True) # is_favorite = True
     
     item = MockTreeItem("some/path", data_tuple, status_tuple, "cover.jpg", [])
     
@@ -148,6 +155,34 @@ def test_tile_author_narrator_layout_and_hover():
         canvas.mousePressEvent(press_event)
         assert len(searches) == 2
         assert searches[1] == "Test Narrator"
+
+        # Test mouseMoveEvent for Heart Hover
+        icon_size = 150
+        icon_rect = QRect(18, 18, icon_size, icon_size)
+        heart_rect = canvas.get_heart_rect(icon_rect)
+        
+        heart_center = heart_rect.center()
+        move_event = QMouseEvent(
+            QMouseEvent.Type.MouseMove,
+            QPointF(heart_center),
+            Qt.MouseButton.NoButton,
+            Qt.MouseButton.NoButton,
+            Qt.KeyboardModifier.NoModifier
+        )
+        canvas.mouseMoveEvent(move_event)
+        assert canvas.hovered_field == "heart"
+        assert canvas.cursor().shape() == Qt.CursorShape.PointingHandCursor
+
+        # Test mousePressEvent for Heart Click (should delegate to on_tree_favorite_clicked)
+        press_event = QMouseEvent(
+            QMouseEvent.Type.MouseButtonPress,
+            QPointF(heart_center),
+            Qt.MouseButton.LeftButton,
+            Qt.MouseButton.LeftButton,
+            Qt.KeyboardModifier.NoModifier
+        )
+        canvas.mousePressEvent(press_event)
+        assert mock_tile_flow.parent_library.favorite_clicks == ["some/path"]
         
     finally:
         canvas.deleteLater()

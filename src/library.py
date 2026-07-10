@@ -5137,10 +5137,7 @@ class TileFlowWidget(QScrollArea):
             self.parent_library.on_item_double_clicked(item, 0)
             
     def on_tile_favorite_clicked(self, path):
-        info = self.parent_library.db.get_audiobook_info(path)
-        if info:
-            self.parent_library.toggle_favorite(info[0], path)
-            self.refresh_tile(path)
+        self.parent_library.on_tree_favorite_clicked(path)
             
     def on_tile_description_requested(self, path):
         self.parent_library.show_description_dialog(path)
