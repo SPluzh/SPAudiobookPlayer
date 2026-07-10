@@ -39,6 +39,9 @@ data/
 *.log
 settings.ini
 
+# GitHub token for update testing (never commit!)
+.github_token
+
 # Binaries
 ffmpeg.exe
 ffprobe.exe

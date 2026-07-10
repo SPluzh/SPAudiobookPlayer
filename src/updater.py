@@ -5,6 +5,7 @@ Works both in development mode and PyInstaller-built exe.
 """
 import sys
 import os
+import ssl
 import json
 import time
 import shutil
@@ -22,6 +23,11 @@ from concurrent.futures import ThreadPoolExecutor
 GITHUB_REPO = "SPluzh/SPAudiobookPlayer"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
+# Fallback: check raw version file (public branch)
+GITHUB_RAW_VERSION_URL = (
+    f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/resources/version.txt"
+)
+
 # Files/folders to preserve during update (never overwrite)
 PRESERVE_PATHS = {
     "data",
@@ -31,6 +37,39 @@ PRESERVE_PATHS = {
 
 # User-Agent for GitHub API requests
 USER_AGENT = "SPAudiobookPlayer-Updater/1.0"
+
+# Network settings
+_TIMEOUT = 12          # seconds per attempt
+_MAX_RETRIES = 2       # how many times to retry on transient errors
+_RETRY_DELAY = 1.5     # seconds between retries
+
+# Token file name (placed next to exe or src/, never committed)
+_TOKEN_FILE = ".github_token"
+
+
+def _get_github_token() -> str:
+    """
+    Load a GitHub Personal Access Token for authenticated API requests.
+    Priority:
+      1. Environment variable GITHUB_TOKEN
+      2. File .github_token next to the exe / src directory
+    Returns empty string if not found.
+    """
+    # 1. Env var
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        return token
+    # 2. Token file
+    if getattr(sys, 'frozen', False):
+        token_path = Path(sys.executable).parent / _TOKEN_FILE
+    else:
+        token_path = Path(__file__).parent / _TOKEN_FILE
+    if token_path.exists():
+        try:
+            token = token_path.read_text("utf-8").strip()
+        except Exception:
+            pass
+    return token
 
 
 def get_app_root() -> Path:
@@ -87,43 +126,163 @@ class UpdateCheckResult:
         self.error = None
 
 
+def _make_ssl_context(verify: bool = True) -> ssl.SSLContext:
+    """Create an SSL context, optionally with verification disabled."""
+    if verify:
+        ctx = ssl.create_default_context()
+    else:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
+def _urlopen_with_retry(req: urllib.request.Request, timeout: int = _TIMEOUT) -> bytes:
+    """
+    Open a URL with retry logic and SSL fallback.
+    Returns response bytes. Raises on final failure.
+    """
+    last_error = None
+    # First pass: normal SSL; second pass: relaxed SSL
+    ssl_contexts = [_make_ssl_context(verify=True), _make_ssl_context(verify=False)]
+
+    for ctx in ssl_contexts:
+        for attempt in range(_MAX_RETRIES + 1):
+            try:
+                with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+                    return resp.read()
+            except urllib.error.HTTPError as e:
+                # HTTP errors (4xx/5xx) are final — no point retrying
+                raise
+            except urllib.error.URLError as e:
+                last_error = e
+                reason = str(e.reason) if e.reason else str(e)
+                if attempt < _MAX_RETRIES:
+                    time.sleep(_RETRY_DELAY)
+            except OSError as e:
+                last_error = e
+                if attempt < _MAX_RETRIES:
+                    time.sleep(_RETRY_DELAY)
+        # If we survived the retry loop without success, try next SSL context
+
+    raise last_error or Exception("Unknown network error")
+
+
+def _describe_url_error(e: urllib.error.URLError) -> str:
+    """Turn a URLError into a user-friendly Russian/English message."""
+    reason = str(e.reason) if e.reason else str(e)
+    reason_lower = reason.lower()
+    if "ssl" in reason_lower or "certificate" in reason_lower:
+        return f"SSL error: {reason}"
+    if "timed out" in reason_lower or "timeout" in reason_lower:
+        return f"Connection timed out (server did not respond in {_TIMEOUT}s)"
+    if "name or service not known" in reason_lower or "getaddrinfo" in reason_lower:
+        return "DNS lookup failed — check your internet connection"
+    if "connection refused" in reason_lower:
+        return "Connection refused by server"
+    return f"Network error: {reason}"
+
+
+def _check_via_releases_api() -> "UpdateCheckResult":
+    """Primary method: fetch the latest release from GitHub API."""
+    result = UpdateCheckResult()
+    headers = {
+        'User-Agent': USER_AGENT,
+        'Accept': 'application/vnd.github.v3+json'
+    }
+    token = _get_github_token()
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+    req = urllib.request.Request(GITHUB_API_URL, headers=headers)
+    try:
+        raw = _urlopen_with_retry(req)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            result.error = "Repository or releases not found on GitHub (404)"
+        elif e.code == 403:
+            result.error = "GitHub API rate limit exceeded — try again later (403)"
+        else:
+            result.error = f"GitHub API error: HTTP {e.code}"
+        return result
+    except urllib.error.URLError as e:
+        result.error = _describe_url_error(e)
+        return result
+    except Exception as e:
+        result.error = str(e)
+        return result
+
+    try:
+        data = json.loads(raw.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        result.error = f"Invalid API response: {e}"
+        return result
+
+    remote_version = data.get("tag_name", "").lstrip("vV")
+    local_version = get_current_version()
+    result.remote_version = remote_version
+    result.release_notes = data.get("body", "")
+
+    for asset in data.get("assets", []):
+        if asset["name"].endswith(".zip"):
+            result.download_url = asset["browser_download_url"]
+            result.download_size = asset.get("size", 0)
+            break
+
+    if remote_version and result.download_url:
+        result.update_available = is_newer_version(remote_version, local_version)
+    elif remote_version and not result.download_url:
+        # Release exists but has no zip asset yet
+        result.error = f"Release v{remote_version} found but has no downloadable asset"
+
+    return result
+
+
+def _check_via_raw_version() -> "UpdateCheckResult":
+    """
+    Fallback method: read version.txt from GitHub raw content.
+    Only tells us whether a newer version exists — no download URL.
+    """
+    result = UpdateCheckResult()
+    headers = {'User-Agent': USER_AGENT}
+    token = _get_github_token()
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+    req = urllib.request.Request(GITHUB_RAW_VERSION_URL, headers=headers)
+    try:
+        raw = _urlopen_with_retry(req)
+        remote_version = raw.decode('utf-8').strip().lstrip("vV")
+        local_version = get_current_version()
+        result.remote_version = remote_version
+        if remote_version:
+            result.update_available = is_newer_version(remote_version, local_version)
+    except urllib.error.HTTPError as e:
+        result.error = f"Raw version check failed: HTTP {e.code}"
+    except urllib.error.URLError as e:
+        result.error = _describe_url_error(e)
+    except Exception as e:
+        result.error = str(e)
+    return result
+
+
 def check_for_update() -> UpdateCheckResult:
     """
     Check GitHub releases for a newer version.
+    Tries the Releases API first; falls back to raw version.txt if the API
+    fails with a network error (not an HTTP error like 404/403).
     Returns UpdateCheckResult with all relevant info.
     """
-    result = UpdateCheckResult()
-    
-    try:
-        req = urllib.request.Request(GITHUB_API_URL, headers={
-            'User-Agent': USER_AGENT,
-            'Accept': 'application/vnd.github.v3+json'
-        })
-        
-        with urllib.request.urlopen(req, timeout=10) as response:
-            data = json.loads(response.read().decode('utf-8'))
-        
-        remote_version = data.get("tag_name", "").lstrip("vV")
-        local_version = get_current_version()
-        
-        result.remote_version = remote_version
-        result.release_notes = data.get("body", "")
-        
-        # Find the zip asset
-        for asset in data.get("assets", []):
-            if asset["name"].endswith(".zip"):
-                result.download_url = asset["browser_download_url"]
-                result.download_size = asset.get("size", 0)
-                break
-        
-        if remote_version and result.download_url:
-            result.update_available = is_newer_version(remote_version, local_version)
-    
-    except urllib.error.URLError as e:
-        result.error = f"Network error: {e.reason}"
-    except Exception as e:
-        result.error = str(e)
-    
+    result = _check_via_releases_api()
+
+    # If the API failed with a non-HTTP network error, try the simpler fallback
+    if result.error and not result.remote_version:
+        raw_result = _check_via_raw_version()
+        if not raw_result.error:
+            # Fallback worked: report availability but no download URL
+            raw_result.release_notes = "[Detailed release info unavailable — update via GitHub Releases page]"
+            return raw_result
+        # Both failed — return the original API error (more informative)
+        result.error = f"{result.error}; fallback also failed: {raw_result.error}"
+
     return result
 
 
