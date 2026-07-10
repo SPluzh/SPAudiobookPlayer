@@ -119,9 +119,8 @@ class UpdateDialog(QDialog):
             self.notes_text = QTextEdit()
             self.notes_text.setObjectName("updateNotes")
             self.notes_text.setReadOnly(True)
-            self.notes_text.setMaximumHeight(200)
             self.notes_text.setMarkdown(self.update_info.release_notes)
-            layout.addWidget(self.notes_text)
+            layout.addWidget(self.notes_text, 1)
         
         # Download size
         if self.update_info.download_size > 0:
@@ -147,7 +146,8 @@ class UpdateDialog(QDialog):
         layout.addWidget(self.progress_frame)
         
         # Spacer
-        layout.addStretch()
+        if not self.update_info.release_notes:
+            layout.addStretch()
         
         # Buttons
         btn_layout = QHBoxLayout()
