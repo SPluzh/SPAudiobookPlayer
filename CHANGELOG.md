@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.8.1]
 - **UI**: Redesigned the hotkeys and global media keys sections in the About dialog to display shortcuts in a polished, grid-based keyboard key layout.
 - **Library**: Added duration, size, and playback progress filters as separate submenus in the metadata filter dropdown menu.
+- **UI**: Added support for Markdown formatting in the update dialog's release notes section to show formatted lists and descriptions.
 
 ## [1.8.0]
 - **Library**: Added a grid/tile view mode with dynamic flow layout, cover art, hover control overlays, progress bars, and expandable folder headers.

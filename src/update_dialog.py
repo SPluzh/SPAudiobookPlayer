@@ -117,9 +117,10 @@ class UpdateDialog(QDialog):
             layout.addWidget(notes_label)
             
             self.notes_text = QTextEdit()
+            self.notes_text.setObjectName("updateNotes")
             self.notes_text.setReadOnly(True)
             self.notes_text.setMaximumHeight(200)
-            self.notes_text.setPlainText(self.update_info.release_notes)
+            self.notes_text.setMarkdown(self.update_info.release_notes)
             layout.addWidget(self.notes_text)
         
         # Download size

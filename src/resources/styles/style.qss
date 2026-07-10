@@ -423,7 +423,7 @@ QComboBox::down-arrow:disabled {
    INPUT FIELDS
    ============================================================ */
 
-QLineEdit {
+QLineEdit, QTextEdit {
     background-color: @bg-dark;
     border: 1px solid @border;
     padding: 8px;
@@ -432,20 +432,20 @@ QLineEdit {
     border-radius: 3px;
 }
 
-QLineEdit:focus {
+QLineEdit:focus, QTextEdit:focus {
     border-color: @accent;
     background-color: @bg-focus;
 }
 
-QLineEdit:hover {
+QLineEdit:hover, QTextEdit:hover {
     border-color: @text-dim;
 }
 
-QLineEdit::placeholder {
+QLineEdit::placeholder, QTextEdit::placeholder {
     color: @text-disabled;
 }
 
-QLineEdit:disabled {
+QLineEdit:disabled, QTextEdit:disabled {
     background-color: @bg-disabled;
     color: @text-disabled;
     border-color: @bg-disabled;
