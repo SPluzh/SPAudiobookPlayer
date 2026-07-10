@@ -4002,6 +4002,94 @@ class VirtualTileCanvas(QWidget):
             
         return tag_rects
 
+    def get_author_rect(self, book) -> QRect:
+        author = book.get("author", "")
+        if not author:
+            return QRect()
+            
+        tile_rect = book["rect"]
+        icon_size = int(self.tile_flow_widget.config.get("audiobook_icon_size", 100) * 1.5)
+        icon_rect = QRect(tile_rect.left() + 8, tile_rect.top() + 8, icon_size, icon_size)
+        
+        text_y = icon_rect.bottom() + 12
+        available_width = tile_rect.width() - 16
+        padding = tile_rect.left() + 8
+        
+        title = book.get("title", "")
+        if title:
+            font, _ = StyleManager.get_theme_property("delegate_title")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(13)
+            fm = QFontMetrics(f)
+            elided_title = fm.elidedText(title, Qt.TextElideMode.ElideRight, available_width * 2)
+            title_bound = fm.boundingRect(QRect(0, 0, available_width, 100), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop | Qt.TextFlag.TextWordWrap, elided_title)
+            title_height = min(title_bound.height(), fm.height() * 2)
+            text_y += title_height + 4
+            
+        font, _ = StyleManager.get_theme_property("delegate_author")
+        f = QFont(font) if font else QFont()
+        f.setPixelSize(11)
+        fm = QFontMetrics(f)
+        
+        author_x = padding
+        icon_width = 0
+        if self.author_icon and not self.author_icon.isNull():
+            icon_width = 14 + 3
+            author_x += icon_width
+            
+        text_width = fm.horizontalAdvance(author)
+        actual_width = min(text_width, available_width - icon_width)
+        
+        return QRect(padding, text_y, icon_width + actual_width, fm.height())
+
+    def get_narrator_rect(self, book) -> QRect:
+        narrator = book.get("narrator", "")
+        if not narrator:
+            return QRect()
+            
+        tile_rect = book["rect"]
+        icon_size = int(self.tile_flow_widget.config.get("audiobook_icon_size", 100) * 1.5)
+        icon_rect = QRect(tile_rect.left() + 8, tile_rect.top() + 8, icon_size, icon_size)
+        
+        text_y = icon_rect.bottom() + 12
+        available_width = tile_rect.width() - 16
+        padding = tile_rect.left() + 8
+        
+        title = book.get("title", "")
+        if title:
+            font, _ = StyleManager.get_theme_property("delegate_title")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(13)
+            fm = QFontMetrics(f)
+            elided_title = fm.elidedText(title, Qt.TextElideMode.ElideRight, available_width * 2)
+            title_bound = fm.boundingRect(QRect(0, 0, available_width, 100), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop | Qt.TextFlag.TextWordWrap, elided_title)
+            title_height = min(title_bound.height(), fm.height() * 2)
+            text_y += title_height + 4
+            
+        author = book.get("author", "")
+        if author:
+            font, _ = StyleManager.get_theme_property("delegate_author")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(11)
+            fm = QFontMetrics(f)
+            text_y += fm.height() + 2
+            
+        font, _ = StyleManager.get_theme_property("delegate_narrator")
+        f = QFont(font) if font else QFont()
+        f.setPixelSize(11)
+        fm = QFontMetrics(f)
+        
+        narrator_x = padding
+        icon_width = 0
+        if self.narrator_icon and not self.narrator_icon.isNull():
+            icon_width = 14 + 3
+            narrator_x += icon_width
+            
+        text_width = fm.horizontalAdvance(narrator)
+        actual_width = min(text_width, available_width - icon_width)
+        
+        return QRect(padding, text_y, icon_width + actual_width, fm.height())
+
     def get_play_button_rect(self, icon_rect):
         btn_size = 40.0
         center = icon_rect.center()
@@ -4090,12 +4178,16 @@ class VirtualTileCanvas(QWidget):
                             play_rect = self.get_play_button_rect(icon_rect)
                             heart_rect = self.get_heart_rect(icon_rect)
                             info_rect = self.get_info_rect(icon_rect)
+                            author_rect = self.get_author_rect(book)
+                            narrator_rect = self.get_narrator_rect(book)
                             
                             mass_mode = getattr(self.tile_flow_widget.parent_library.tree, "mass_selection_mode", False)
                             cb_rect = self.get_tile_checkbox_rect(tile_rect) if mass_mode else None
                             is_over_cb = mass_mode and cb_rect and cb_rect.contains(QPointF(pos))
                             is_over_heart = book.get("is_favorite") and heart_rect.contains(QPointF(pos))
                             is_over_info = bool(book.get("description")) and info_rect.contains(QPointF(pos))
+                            is_over_author = not author_rect.isEmpty() and author_rect.contains(pos)
+                            is_over_narrator = not narrator_rect.isEmpty() and narrator_rect.contains(pos)
                             
                             is_over_tag = False
                             tags_rects = self.get_tags_rects(book)
@@ -4120,6 +4212,12 @@ class VirtualTileCanvas(QWidget):
                                 self.setCursor(Qt.CursorShape.PointingHandCursor)
                             elif is_over_tag:
                                 pass
+                            elif is_over_author:
+                                self.hovered_field = "author"
+                                self.setCursor(Qt.CursorShape.PointingHandCursor)
+                            elif is_over_narrator:
+                                self.hovered_field = "narrator"
+                                self.setCursor(Qt.CursorShape.PointingHandCursor)
                             else:
                                 self.hovered_field = None
                                 self.setCursor(Qt.CursorShape.ArrowCursor)
@@ -4179,6 +4277,18 @@ class VirtualTileCanvas(QWidget):
                     return
                 elif self.hovered_field == "info":
                     self.tile_flow_widget.on_tile_description_requested(path)
+                    event.accept()
+                    return
+                elif self.hovered_field == "author":
+                    author = self.hovered_book.get("author", "")
+                    if author:
+                        self.tile_flow_widget.parent_library.tree.search_requested.emit(author)
+                    event.accept()
+                    return
+                elif self.hovered_field == "narrator":
+                    narrator = self.hovered_book.get("narrator", "")
+                    if narrator:
+                        self.tile_flow_widget.parent_library.tree.search_requested.emit(narrator)
                     event.accept()
                     return
                 elif self.hovered_field and self.hovered_field.startswith("tag:"):
@@ -4854,6 +4964,12 @@ class VirtualTileCanvas(QWidget):
             if font:
                 font = QFont(font)
                 font.setPixelSize(11)
+                is_hovered_author = (
+                    self.hovered_book == book
+                    and getattr(self, "hovered_field", None) == "author"
+                )
+                if is_hovered_author:
+                    font.setBold(True)
                 p.setFont(font)
             if color and color.isValid():
                 p.setPen(color)
@@ -4886,6 +5002,12 @@ class VirtualTileCanvas(QWidget):
             if font:
                 font = QFont(font)
                 font.setPixelSize(11)
+                is_hovered_narrator = (
+                    self.hovered_book == book
+                    and getattr(self, "hovered_field", None) == "narrator"
+                )
+                if is_hovered_narrator:
+                    font.setBold(True)
                 p.setFont(font)
             if color and color.isValid():
                 p.setPen(color)
