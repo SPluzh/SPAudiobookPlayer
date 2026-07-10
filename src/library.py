@@ -7355,6 +7355,27 @@ class LibraryWidget(QWidget):
 
     def show_meta_filter_menu(self):
         """Display a popup menu to select the active metadata filter"""
+        from translations import get_language
+        lang = get_language()
+        
+        def tr_local(key, default):
+            ru_translations = {
+                "library.filter_duration_title": "Длительность",
+                "library.filter_size_title": "Размер",
+                "library.filter_progress_title": "Прогресс воспроизведения",
+                "duration:short": "Короткие (< 3 ч)",
+                "duration:medium": "Средние (3–10 ч)",
+                "duration:long": "Длинные (> 10 ч)",
+                "size:small": "Маленькие (< 100 МБ)",
+                "size:large": "Большие (> 1 ГБ)",
+                "progress:almost": "Почти дослушано (> 80%)",
+                "progress:just_started": "Только начато (< 10%)",
+                "progress:never_opened": "Ни разу не открыто",
+            }
+            if lang == "ru":
+                return ru_translations.get(key, default)
+            return default
+
         menu = QMenu(self)
         menu.setObjectName("metaFilterMenu")
         
@@ -7381,6 +7402,55 @@ class LibraryWidget(QWidget):
             action.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
             
         menu.addSeparator()
+
+        # Duration Submenu
+        duration_menu = menu.addMenu(tr_local("library.filter_duration_title", "Duration"))
+        duration_menu.setObjectName("durationFilterSubMenu")
+        
+        duration_options = [
+            ("duration:short", "duration:short", "Short (< 3 hrs)"),
+            ("duration:medium", "duration:medium", "Medium (3-10 hrs)"),
+            ("duration:long", "duration:long", "Long (> 10 hrs)")
+        ]
+        
+        for filter_key, key_tr, default_val in duration_options:
+            act = duration_menu.addAction(tr_local(key_tr, default_val))
+            act.setCheckable(True)
+            act.setChecked(filter_key == current)
+            act.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+
+        # Size Submenu
+        size_menu = menu.addMenu(tr_local("library.filter_size_title", "Size"))
+        size_menu.setObjectName("sizeFilterSubMenu")
+        
+        size_options = [
+            ("size:small", "size:small", "Small (< 100 MB)"),
+            ("size:large", "size:large", "Large (> 1 GB)")
+        ]
+        
+        for filter_key, key_tr, default_val in size_options:
+            act = size_menu.addAction(tr_local(key_tr, default_val))
+            act.setCheckable(True)
+            act.setChecked(filter_key == current)
+            act.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+
+        # Progress Submenu
+        progress_menu = menu.addMenu(tr_local("library.filter_progress_title", "Playback Progress"))
+        progress_menu.setObjectName("progressFilterSubMenu")
+        
+        progress_options = [
+            ("progress:almost", "progress:almost", "Almost completed (> 80%)"),
+            ("progress:just_started", "progress:just_started", "Just started (< 10%)"),
+            ("progress:never_opened", "progress:never_opened", "Never opened")
+        ]
+        
+        for filter_key, key_tr, default_val in progress_options:
+            act = progress_menu.addAction(tr_local(key_tr, default_val))
+            act.setCheckable(True)
+            act.setChecked(filter_key == current)
+            act.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+
+        menu.addSeparator()
         
         # "Without language" option
         translated_none = tr("library.language_none")
@@ -7394,9 +7464,9 @@ class LibraryWidget(QWidget):
         # List of unique languages
         langs = self.get_available_languages()
         if langs:
-            for lang in langs:
-                filter_key = f"lang:{lang}"
-                action = menu.addAction(lang)
+            for lang_val in langs:
+                filter_key = f"lang:{lang_val}"
+                action = menu.addAction(lang_val)
                 action.setCheckable(True)
                 action.setChecked(filter_key == current)
                 action.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
@@ -7452,6 +7522,43 @@ class LibraryWidget(QWidget):
                 or narrator.strip().lower() in ("(unknown narrator)", "(неизвестный чтец)", "(без чтеца)")
             )
             return is_empty_narrator
+
+        elif self.current_meta_filter == "duration:short":
+            duration = item_data.get("duration") or 0.0
+            return duration < 3 * 3600
+            
+        elif self.current_meta_filter == "duration:medium":
+            duration = item_data.get("duration") or 0.0
+            return 3 * 3600 <= duration < 10 * 3600
+            
+        elif self.current_meta_filter == "duration:long":
+            duration = item_data.get("duration") or 0.0
+            return duration >= 10 * 3600
+            
+        elif self.current_meta_filter == "size:small":
+            total_size = item_data.get("total_size") or 0
+            return total_size < 100 * 1024 * 1024
+            
+        elif self.current_meta_filter == "size:large":
+            total_size = item_data.get("total_size") or 0
+            return total_size > 1024 * 1024 * 1024
+            
+        elif self.current_meta_filter == "progress:almost":
+            prog = item_data.get("progress_percent") or 0
+            is_completed = item_data.get("is_completed")
+            return prog > 80 and not is_completed
+            
+        elif self.current_meta_filter == "progress:just_started":
+            prog = item_data.get("progress_percent") or 0
+            is_started = item_data.get("is_started")
+            is_completed = item_data.get("is_completed")
+            return prog < 10 and is_started and not is_completed
+            
+        elif self.current_meta_filter == "progress:never_opened":
+            is_started = item_data.get("is_started")
+            listened = item_data.get("listened_duration") or 0.0
+            prog = item_data.get("progress_percent") or 0
+            return not is_started and listened == 0.0 and prog == 0
 
         elif self.current_meta_filter == "lang:none":
             lang = item_data.get("language")
