@@ -4223,6 +4223,8 @@ class VirtualTileCanvas(QWidget):
                 line_width = 2
                 
                 if show_nesting:
+                    p.save()
+                    p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
                     for i in range(depth):
                         if i >= len(chain):
                             continue
@@ -4254,17 +4256,18 @@ class VirtualTileCanvas(QWidget):
                         else:
                             p.drawRect(QRect(line_x, block_y, line_width, block_h))
                             
-                if show_nesting and is_expanded and depth >= 0 and path:
-                    if single_color and custom_color:
-                        line_color = QColor(custom_color)
-                    else:
-                        path_hash = zlib.adler32(str(path).encode("utf-8", errors="ignore"))
-                        color_index = path_hash % len(NESTING_COLORS)
-                        line_color = NESTING_COLORS[color_index]
-                    p.setPen(QPen(line_color, line_width))
-                    p.setBrush(Qt.BrushStyle.NoBrush)
-                    start_x = 12 if depth == 0 else (18 + depth * 12)
-                    p.drawLine(start_x, block_y + block_h - 1, self.width(), block_y + block_h - 1)
+                    if is_expanded and depth >= 0 and path:
+                        if single_color and custom_color:
+                            line_color = QColor(custom_color)
+                        else:
+                            path_hash = zlib.adler32(str(path).encode("utf-8", errors="ignore"))
+                            color_index = path_hash % len(NESTING_COLORS)
+                            line_color = NESTING_COLORS[color_index]
+                        p.setPen(QPen(line_color, line_width))
+                        p.setBrush(Qt.BrushStyle.NoBrush)
+                        start_x = 12 if depth == 0 else (18 + depth * 12)
+                        p.drawLine(start_x, block_y + block_h - 1, self.width(), block_y + block_h - 1)
+                    p.restore()
                     
                 arrow_rect = QRect(depth * indent, block_y + (block_h - 12) // 2, 12, 12)
                 opt = QStyleOption()
@@ -4367,6 +4370,8 @@ class VirtualTileCanvas(QWidget):
                 chain = block["chain"]
                 
                 if show_nesting:
+                    p.save()
+                    p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
                     indent = 12
                     line_width = 2
                     for i in range(depth):
@@ -4412,6 +4417,7 @@ class VirtualTileCanvas(QWidget):
                                     p.drawRect(QRect(line_x, cover_center_y - line_width // 2, indent, line_width))
                         else:
                             p.drawRect(QRect(line_x, block_y, line_width, block_h))
+                    p.restore()
                         
                 dpr = self.devicePixelRatioF()
                 physical_size = int(icon_size * dpr)
