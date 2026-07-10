@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QApplication,
     QHBoxLayout,
+    QGridLayout,
 )
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QIcon, QFont
@@ -159,36 +160,73 @@ class AboutDialog(QDialog):
         left_column.addSpacing(5)
 
         # Hotkeys
-        hotkeys_title = QLabel(tr("about.hotkeys_title", "Hotkeys:"))
-        hotkeys_title.setObjectName("aboutSectionTitle")
-        left_column.addWidget(hotkeys_title)
-
-        hotkeys_content = QLabel(
-            tr(
-                "about.hotkeys_list",
-                "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)",
+        categories = [
+            (
+                "category_playback",
+                [
+                    (tr("hotkeys.keys.space", "Space"), tr("hotkeys.toggle_pause", "Play / Pause")),
+                    ("[ / ]", f"{tr('hotkeys.prev_file', 'Previous File')} / {tr('hotkeys.next_file', 'Next File')}"),
+                    ("← / →", f"{tr('hotkeys.seek_backward', 'Rewind 10s')} / {tr('hotkeys.seek_forward', 'Forward 10s')}"),
+                    (f"{tr('hotkeys.keys.shift', 'Shift')} + ← / →", f"{tr('hotkeys.seek_backward_60', 'Rewind 60s')} / {tr('hotkeys.seek_forward_60', 'Forward 60s')}"),
+                    ("↑ / ↓", f"{tr('hotkeys.speed_up', 'Playback Speed (±0.1x)')} / {tr('hotkeys.speed_down', 'Playback Speed (±0.1x)')}"),
+                    (f"{tr('hotkeys.keys.shift', 'Shift')} + ↑ / ↓", f"{tr('hotkeys.volume_up', 'Volume (±5%)')} / {tr('hotkeys.volume_down', 'Volume (±5%)')}"),
+                ]
+            ),
+            (
+                "category_global",
+                [
+                    ("Play / Pause", tr("hotkeys.global_play_pause", "Play / Pause")),
+                    ("Stop", tr("hotkeys.global_pause", "Pause")),
+                    ("Next Track", tr("hotkeys.global_forward_10", "Forward 10s")),
+                    ("Prev Track", tr("hotkeys.global_rewind_10", "Rewind 10s")),
+                ]
             )
-        )
-        hotkeys_content.setObjectName("aboutSectionContent")
-        hotkeys_content.setWordWrap(True)
-        left_column.addWidget(hotkeys_content)
+        ]
 
-        left_column.addSpacing(5)
+        hotkeys_grid = QGridLayout()
+        hotkeys_grid.setContentsMargins(0, 0, 0, 0)
+        hotkeys_grid.setHorizontalSpacing(10)
+        hotkeys_grid.setVerticalSpacing(4)
+        hotkeys_grid.setColumnStretch(0, 0)
+        hotkeys_grid.setColumnStretch(1, 0)
+        hotkeys_grid.setColumnStretch(2, 1)
 
-        # Global Hotkeys
-        global_hotkeys_title = QLabel(tr("about.global_hotkeys_title", "Global Media Keys (in background):"))
-        global_hotkeys_title.setObjectName("aboutSectionTitle")
-        left_column.addWidget(global_hotkeys_title)
+        row = 0
+        for category_key, hotkeys_list in categories:
+            # Category title
+            if category_key == "category_playback":
+                title_text = tr("hotkeys.category_playback", "Playback Shortcuts")
+            else:
+                title_text = tr("hotkeys.category_global", "Global Media Keys (in background)")
+            
+            category_label = QLabel(title_text)
+            category_label.setObjectName("hotkeyCategoryTitle")
+            category_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            if row > 0:
+                category_label.setStyleSheet("margin-top: 10px;")
+            hotkeys_grid.addWidget(category_label, row, 0, 1, 3)
+            row += 1
 
-        global_hotkeys_content = QLabel(
-            tr(
-                "about.global_hotkeys_list",
-                "Play/Pause — Play / Pause\nStop — Pause\nNext Track — Forward 10s\nPrev Track — Rewind 10s",
-            )
-        )
-        global_hotkeys_content.setObjectName("aboutSectionContent")
-        global_hotkeys_content.setWordWrap(True)
-        left_column.addWidget(global_hotkeys_content)
+            for key, desc in hotkeys_list:
+                key_label = QLabel(key)
+                key_label.setObjectName("hotkeyKey")
+                key_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                
+                dash_label = QLabel("—")
+                dash_label.setObjectName("hotkeyDesc")
+                dash_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                
+                desc_label = QLabel(desc)
+                desc_label.setObjectName("hotkeyDesc")
+                desc_label.setWordWrap(True)
+                desc_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                
+                hotkeys_grid.addWidget(key_label, row, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                hotkeys_grid.addWidget(dash_label, row, 1, Qt.AlignmentFlag.AlignCenter)
+                hotkeys_grid.addWidget(desc_label, row, 2)
+                row += 1
+                
+        left_column.addLayout(hotkeys_grid)
 
         # Right Column: Recommended Library Structure
         right_column = QVBoxLayout()

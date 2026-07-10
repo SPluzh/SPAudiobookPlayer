@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.8.1]
+- **UI**: Redesigned the hotkeys and global media keys sections in the About dialog to display shortcuts in a polished, grid-based keyboard key layout.
 - **Library**: Added duration, size, and playback progress filters as separate submenus in the metadata filter dropdown menu.
 
 ## [1.8.0]

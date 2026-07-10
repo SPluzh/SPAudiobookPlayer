@@ -420,6 +420,29 @@
     "dialog_title": "ffprobe Update",
     "missing_ffprobe_scanning": "ffprobe not found. Starting download..."
   },
+  "hotkeys": {
+    "category_playback": "Playback Shortcuts",
+    "category_global": "Global Media Keys (in background)",
+    "toggle_pause": "Play / Pause",
+    "prev_file": "Previous File",
+    "next_file": "Next File",
+    "seek_backward": "Rewind 10s",
+    "seek_forward": "Forward 10s",
+    "seek_backward_60": "Rewind 60s",
+    "seek_forward_60": "Forward 60s",
+    "speed_up": "Speed Up (0.1x)",
+    "speed_down": "Speed Down (0.1x)",
+    "volume_up": "Volume +5%",
+    "volume_down": "Volume -5%",
+    "global_play_pause": "Play / Pause",
+    "global_pause": "Pause",
+    "global_forward_10": "Forward 10s",
+    "global_rewind_10": "Rewind 10s",
+    "keys": {
+      "space": "Space",
+      "shift": "Shift"
+    }
+  },
   "about": {
     "version": "Version: {version}",
     "description": "The program allows you to conveniently browse your collection, save listening progress and quickly find the books you need.\nBuilt on PyQt6 and BASS library.",
@@ -427,10 +450,6 @@
     "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE support (chapter markers and metadata)\n+ M3U, M3U8 (playlists, incl. network)",
     "supported_covers_title": "Supported cover formats:",
     "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
-    "hotkeys_title": "Hotkeys:",
-    "hotkeys_list": "Space — Play / Pause\n[ and ] — Previous / Next File\nLeft / Right — Rewind / Forward 10s\nShift + Left / Right — Rewind / Forward 60s\nUp / Down — Playback Speed (±0.1x)\nShift + Up / Down — Volume (±5%)",
-    "global_hotkeys_title": "Global Media Keys (in background):",
-    "global_hotkeys_list": "Play/Pause — Play / Pause\nStop — Pause\nNext Track — Forward 10s\nPrev Track — Rewind 10s",
     "library_hierarchy_title": "Recommended Library Structure:",
     "library_hierarchy_text": "Audiobooks/\n├── Author Name/\n│   ├── Series Name/\n│   │   └── Author - Book Title [Narrator]/\n│   │       ├── 01 - Chapter 1.mp3\n│   │       ├── 02 - Chapter 2.mp3\n│   │       ├── cover.jpg\n│   │       └── info.txt\n│   └── Author - Standalone Book [Narrator]/\n│       └── audiobook.m4b\n└── Another Author/\n    ├── Author - Book Title [Narrator]/\n    │   └── file.mp3\n    ├── Author - Playlist Book [Narrator]/\n    │   ├── playlist.m3u8\n    │   └── cover.jpg\n    └── Playlist Collection/\n        ├── Author - Book Title [Narrator].m3u\n        ├── Author - Another Book [Narrator].m3u8\n        └── cover.jpg\n\nThe scanner supports any folder hierarchy.\nEach folder with audio files = one audiobook.\n\nFor M3U: single playlist in a folder (with cover)\nor multiple playlists in one folder\n(each as a separate book).\n\nBook description is loaded from info.txt\n(or description.txt, about.txt).",
     "close": "Close",

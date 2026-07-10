@@ -1128,17 +1128,68 @@ QFrame#aboutContainer {
     border: 1px solid @bg-main;
     border-radius: 3px;
     padding: 40px 30px 30px 30px; /* Replacing layout margins (T, R, B, L) */
-    min-width: 780px;
+    min-width: 920px;
 }
 
 #aboutContainer QLabel {
     color: @text;
+}
+
+#aboutTitle, #aboutDesc, #aboutSectionTitle, #aboutSectionContent {
     qproperty-alignment: 'AlignCenter';
 }
 
 #aboutContainer #aboutTitle {
     font-size: 24px;
     font-weight: bold;
+}
+
+#hotkeyCategoryTitle {
+    font-weight: bold;
+    font-size: 13px;
+    padding-top: 8px;
+    padding-bottom: 4px;
+}
+
+#hotkeyCategorySeparator {
+    background-color: @border;
+    max-height: 1px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+#hotkeyWidget {
+    background-color: transparent;
+}
+
+#hotkeyKey {
+    background-color: @bg-tabbar;
+    border: 1px solid @border;
+    border-bottom: 2px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 0px 5px;
+    font-weight: bold;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 11px;
+    min-width: 40px;
+}
+
+#hotkeyDesc { 
+    font-size: 11px;
+}
+
+#aboutSectionContent {
+    font-size: 12px;
+}
+
+#aboutHotkeyScroll QScrollBar:vertical {
+    width: 8px;
+    background: transparent;
+}
+
+#aboutHotkeyScroll QScrollBar::handle:vertical {
+    background: @border;
+    border-radius: 4px;
 }
 
 /* ============================================================
