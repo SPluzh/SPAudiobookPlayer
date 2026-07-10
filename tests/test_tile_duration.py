@@ -46,6 +46,8 @@ def test_tile_duration_extraction():
         7200.0, # duration (2 hours)
         3600.0,
         50.0,
+        None, None, None, None, None, None, None, # 7 to 13
+        "ru", # 14: language
     )
     status_tuple = (True, False, False)
     
@@ -60,6 +62,7 @@ def test_tile_duration_extraction():
         assert book_data["title"] == "Test Title"
         assert book_data["author"] == "Test Author"
         assert book_data["progress_percent"] == 50.0
+        assert book_data["language"] == "ru"
     finally:
         canvas.deleteLater()
         mock_tile_flow.deleteLater()

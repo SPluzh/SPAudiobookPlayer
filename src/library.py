@@ -2663,7 +2663,7 @@ class BookTileWidget(QWidget):
     favorite_clicked = pyqtSignal(str)
     description_requested = pyqtSignal(str)
 
-    def __init__(self, path, title, author, narrator, progress_percent, is_started, is_completed, is_favorite, description, pixmap, icon_size, duration=0.0, parent=None):
+    def __init__(self, path, title, author, narrator, progress_percent, is_started, is_completed, is_favorite, description, pixmap, icon_size, duration=0.0, language=None, parent=None):
         super().__init__(parent)
         self.path = path if path is not None else ""
         self.title = title if title is not None else ""
@@ -2677,6 +2677,7 @@ class BookTileWidget(QWidget):
         self.pixmap = pixmap
         self.icon_size = icon_size
         self.duration = duration
+        self.language = language
         self.is_playing = False
         self.is_paused = True
         self.selected = False
@@ -3015,6 +3016,38 @@ class BookTileWidget(QWidget):
             
             p.setPen(QColor("#ffffff"))
             p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, duration_text)
+            p.restore()
+            
+        if self.language and str(self.language).strip() and str(self.language).lower() != "unknown":
+            p.save()
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            lang_text = str(self.language).strip().upper()
+            font = p.font()
+            font.setPixelSize(10)
+            font.setBold(True)
+            p.setFont(font)
+            fm = p.fontMetrics()
+            text_width = fm.horizontalAdvance(lang_text)
+            text_height = fm.height()
+            pad_h = 4
+            pad_v = 2
+            pill_width = text_width + pad_h * 2
+            pill_height = text_height + pad_v * 2
+            
+            has_progress = (self.progress_percent > 0 or self.is_started)
+            margin_bottom = 4 + (pb_h if has_progress else 0)
+            margin_left = 4
+            
+            pill_x = icon_rect.left() + margin_left
+            pill_y = icon_rect.bottom() - pill_height - margin_bottom
+            pill_rect = QRectF(pill_x, pill_y, pill_width, pill_height)
+            
+            p.setBrush(QColor(0, 0, 0, 180))
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawRoundedRect(pill_rect, 3.0, 3.0)
+            
+            p.setPen(QColor("#ffffff"))
+            p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, lang_text)
             p.restore()
         
         # Draw metadata block below cover
@@ -3788,6 +3821,7 @@ class VirtualTileCanvas(QWidget):
         progress_percent = data[6] if len(data) > 6 else 0.0
         duration = data[4] if len(data) > 4 else 0.0
         description = data[12] if len(data) > 12 else ""
+        language = data[14] if len(data) > 14 else None
         
         is_started = status_data[0] if len(status_data) > 0 else False
         is_completed = status_data[1] if len(status_data) > 1 else False
@@ -3803,6 +3837,7 @@ class VirtualTileCanvas(QWidget):
             "narrator": narrator,
             "progress_percent": progress_percent,
             "duration": duration,
+            "language": language,
             "is_started": is_started,
             "is_completed": is_completed,
             "is_favorite": is_favorite,
@@ -4929,6 +4964,39 @@ class VirtualTileCanvas(QWidget):
             
             p.setPen(QColor("#ffffff"))
             p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, duration_text)
+            p.restore()
+            
+        language = book.get("language")
+        if language and str(language).strip() and str(language).lower() != "unknown":
+            p.save()
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            lang_text = str(language).strip().upper()
+            font = p.font()
+            font.setPixelSize(10)
+            font.setBold(True)
+            p.setFont(font)
+            fm = p.fontMetrics()
+            text_width = fm.horizontalAdvance(lang_text)
+            text_height = fm.height()
+            pad_h = 4
+            pad_v = 2
+            pill_width = text_width + pad_h * 2
+            pill_height = text_height + pad_v * 2
+            
+            has_progress = (progress_percent > 0 or is_started)
+            margin_bottom = 4 + (pb_h if has_progress else 0)
+            margin_left = 4
+            
+            pill_x = icon_rect.left() + margin_left
+            pill_y = icon_rect.bottom() - pill_height - margin_bottom
+            pill_rect = QRectF(pill_x, pill_y, pill_width, pill_height)
+            
+            p.setBrush(QColor(0, 0, 0, 180))
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawRoundedRect(pill_rect, 3.0, 3.0)
+            
+            p.setPen(QColor("#ffffff"))
+            p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, lang_text)
             p.restore()
             
         text_y = icon_rect.bottom() + 12
