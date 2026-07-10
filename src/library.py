@@ -3579,15 +3579,76 @@ class CoverLoader(QThread):
                     continue
                 image = QImage(path)
                 if not image.isNull():
-                    w = image.width()
-                    h = image.height()
-                    min_side = min(w, h)
-                    cropped = image.copy((w - min_side) // 2, (h - min_side) // 2, min_side, min_side)
-                    scaled_image = cropped.scaled(
+                    # Scale original image once (Foreground)
+                    fg = image.scaled(
                         physical_size, physical_size,
                         Qt.AspectRatioMode.KeepAspectRatio,
                         Qt.TransformationMode.SmoothTransformation
                     )
+                    
+                    if fg.width() < physical_size or fg.height() < physical_size:
+                        # Create square image canvas and fill background
+                        result = QImage(physical_size, physical_size, QImage.Format.Format_ARGB32)
+                        result.fill(Qt.GlobalColor.black)
+                        
+                        painter = QPainter(result)
+                        try:
+                            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                            painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+                            
+                            blur_factor = 0.05  # Strong blur for the background
+                            
+                            if fg.height() < physical_size:  # Landscape
+                                y_offset = (physical_size - fg.height()) // 2
+                                
+                                # Top
+                                if y_offset > 0:
+                                    top_strip = fg.copy(0, 0, fg.width(), 1)
+                                    top_bg = top_strip.scaled(physical_size, y_offset, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    small = top_bg.scaled(int(physical_size * blur_factor), int(y_offset * blur_factor) or 1, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    blurred = small.scaled(physical_size, y_offset, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    painter.drawImage(0, 0, blurred)
+                                
+                                # Bottom
+                                if physical_size - (y_offset + fg.height()) > 0:
+                                    bot_h = physical_size - (y_offset + fg.height())
+                                    bot_strip = fg.copy(0, fg.height() - 1, fg.width(), 1)
+                                    bot_bg = bot_strip.scaled(physical_size, bot_h, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    small = bot_bg.scaled(int(physical_size * blur_factor), int(bot_h * blur_factor) or 1, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    blurred = small.scaled(physical_size, bot_h, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    painter.drawImage(0, y_offset + fg.height(), blurred)
+                                
+                            elif fg.width() < physical_size:  # Portrait
+                                x_offset = (physical_size - fg.width()) // 2
+                                
+                                # Left
+                                if x_offset > 0:
+                                    left_strip = fg.copy(0, 0, 1, fg.height())
+                                    left_bg = left_strip.scaled(x_offset, physical_size, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    small = left_bg.scaled(int(x_offset * blur_factor) or 1, int(physical_size * blur_factor), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    blurred = small.scaled(x_offset, physical_size, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    painter.drawImage(0, 0, blurred)
+                                
+                                # Right
+                                if physical_size - (x_offset + fg.width()) > 0:
+                                    right_w = physical_size - (x_offset + fg.width())
+                                    right_strip = fg.copy(fg.width() - 1, 0, 1, fg.height())
+                                    right_bg = right_strip.scaled(right_w, physical_size, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    small = right_bg.scaled(int(right_w * blur_factor) or 1, int(physical_size * blur_factor), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    blurred = small.scaled(right_w, physical_size, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                                    painter.drawImage(x_offset + fg.width(), 0, blurred)
+                                
+                            # Draw original image in center
+                            x = (physical_size - fg.width()) // 2
+                            y = (physical_size - fg.height()) // 2
+                            painter.drawImage(x, y, fg)
+                        finally:
+                            painter.end()
+                        
+                        scaled_image = result
+                    else:
+                        scaled_image = fg
+                    
                     if not scaled_image.isNull():
                         self.cover_loaded.emit(path, physical_size, scaled_image)
             except Exception as e:
