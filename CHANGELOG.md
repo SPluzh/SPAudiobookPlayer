@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.8.1]
 - **Library**: Added duration, size, and playback progress filters as separate submenus in the metadata filter dropdown menu.
+- **Library**: Fixed a visual gap in the vertical nesting lines between folders and audiobook tiles in tile mode.
 
 ## [1.8.0]
 - **Library**: Added a grid/tile view mode with dynamic flow layout, cover art, hover control overlays, progress bars, and expandable folder headers.

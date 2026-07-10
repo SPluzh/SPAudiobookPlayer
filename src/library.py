@@ -4400,14 +4400,15 @@ class VirtualTileCanvas(QWidget):
                                 row_h = tile_h
                                 cover_center_y = row_y + 8 + icon_size // 2
                                 
+                                segment_top = block_y if r == 0 else row_y
                                 is_last_row = (r == rows - 1)
                                 if is_last_row and block.get("is_last_child", False):
                                     # └ pattern for the last row
-                                    p.drawRect(QRect(line_x, row_y, line_width, cover_center_y - row_y + line_width // 2))
+                                    p.drawRect(QRect(line_x, segment_top, line_width, cover_center_y - segment_top + line_width // 2))
                                     p.drawRect(QRect(line_x, cover_center_y - line_width // 2, indent, line_width))
                                 else:
                                     # ├ pattern for other rows
-                                    p.drawRect(QRect(line_x, row_y, line_width, row_h + (vspacing if not is_last_row else 4)))
+                                    p.drawRect(QRect(line_x, segment_top, line_width, (row_y + row_h + (vspacing if not is_last_row else 4)) - segment_top))
                                     p.drawRect(QRect(line_x, cover_center_y - line_width // 2, indent, line_width))
                         else:
                             p.drawRect(QRect(line_x, block_y, line_width, block_h))
