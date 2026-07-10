@@ -26,3 +26,24 @@ def test_update_dialog_markdown():
     # Check if UI and Library list items are rendered
     assert "UI" in html
     assert "Library" in html
+
+def test_update_dialog_buttons():
+    app = QApplication.instance() or QApplication([])
+    
+    # Create mock update info
+    info = UpdateCheckResult()
+    info.remote_version = "1.8.0"
+    info.download_url = "https://example.com/update.zip"
+    info.download_size = 1024
+    info.release_notes = "Release notes"
+    
+    dialog = UpdateDialog(info)
+    
+    # Verify skip_btn exists and is hidden initially (so 'Later' is not shown)
+    assert hasattr(dialog, 'skip_btn')
+    assert dialog.skip_btn.isHidden() is True
+    
+    # Verify update_btn exists and is visible (not hidden)
+    assert hasattr(dialog, 'update_btn')
+    assert dialog.update_btn.isHidden() is False
+

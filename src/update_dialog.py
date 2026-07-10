@@ -82,17 +82,7 @@ class UpdateDialog(QDialog):
         self.setup_ui()
     
     def setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(12)
-        
-        # Header
-        header = QLabel(trf("updater.new_version_available", version=self.update_info.remote_version))
-        header.setObjectName("updateHeader")
-        header_font = header.font()
-        header_font.setPointSize(14)
-        header_font.setBold(True)
-        header.setFont(header_font)
-        layout.addWidget(header)
+        layout = QVBoxLayout(self)    
         
         # Current version info
         current_ver = get_current_version()
@@ -109,13 +99,7 @@ class UpdateDialog(QDialog):
         layout.addWidget(line)
         
         # Release notes
-        if self.update_info.release_notes:
-            notes_label = QLabel(tr("updater.release_notes"))
-            notes_font = notes_label.font()
-            notes_font.setBold(True)
-            notes_label.setFont(notes_font)
-            layout.addWidget(notes_label)
-            
+        if self.update_info.release_notes:            
             self.notes_text = QTextEdit()
             self.notes_text.setObjectName("updateNotes")
             self.notes_text.setReadOnly(True)
@@ -155,6 +139,7 @@ class UpdateDialog(QDialog):
         
         self.skip_btn = QPushButton(tr("updater.skip"))
         self.skip_btn.clicked.connect(self.reject)
+        self.skip_btn.hide()  # Hidden initially to remove the "Later" option
         btn_layout.addWidget(self.skip_btn)
         
         self.update_btn = QPushButton(tr("updater.update_now"))
@@ -172,6 +157,7 @@ class UpdateDialog(QDialog):
         self.skip_btn.setText(tr("updater.cancel"))
         self.skip_btn.clicked.disconnect()
         self.skip_btn.clicked.connect(self.cancel_download)
+        self.skip_btn.show()
         
         self.progress_frame.show()
         self.progress_label.setText(tr("updater.starting_download"))
@@ -207,6 +193,7 @@ class UpdateDialog(QDialog):
             self.skip_btn.setText(tr("updater.close"))
             self.skip_btn.clicked.disconnect()
             self.skip_btn.clicked.connect(self.reject)
+            self.skip_btn.show()
             return
         
         # Download succeeded, now apply update
@@ -237,9 +224,16 @@ class UpdateDialog(QDialog):
             self.skip_btn.setText(tr("updater.close"))
             self.skip_btn.clicked.disconnect()
             self.skip_btn.clicked.connect(self.reject)
+            self.skip_btn.show()
     
     def restart_app(self):
         """Close the app to let the update script take over"""
         self.update_accepted.emit()
         # The main window will handle closing the app
         self.accept()
+    
+    def reject(self):
+        """Handle dialog rejection (cancel download if active)"""
+        if self.download_thread and self.download_thread.isRunning():
+            self.download_thread.cancel()
+        super().reject()
