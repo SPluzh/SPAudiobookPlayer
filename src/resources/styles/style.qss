@@ -1667,7 +1667,6 @@ QSlider.hue-slider::handle:horizontal:hover {
 QWidget#subtitlePanel {
     background-color: @bg-dark;
     border-top: 1px solid @border;
-    border-bottom: 1px solid @border;
 }
 
 QTextBrowser#subtitleBrowser {

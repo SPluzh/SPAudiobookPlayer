@@ -4,7 +4,8 @@ from typing import List, Dict, Optional, Callable
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider, 
     QLabel, QProgressBar, QListWidget, QListWidgetItem, QSizePolicy,
-    QFrame, QGridLayout, QStyle, QStyleOptionSlider, QStyleOptionProgressBar
+    QFrame, QGridLayout, QStyle, QStyleOptionSlider, QStyleOptionProgressBar,
+    QSplitter
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QPoint, pyqtProperty
 from PyQt6.QtGui import QPainter, QPen, QColor, QPaintEvent
@@ -1150,17 +1151,28 @@ class PlayerWidget(QWidget):
         player_layout.addLayout(total_box)
         layout.addWidget(player_frame)
         
+        # Splitter for subtitle panel and file list
+        self.splitter = QSplitter(Qt.Orientation.Vertical)
+        self.splitter.setObjectName("playerSplitter")
+        
         # Subtitle Panel (between player_frame and file_list)
         self.subtitle_panel = SubtitlePanel()
         self.subtitle_panel.setVisible(False)
-        layout.addWidget(self.subtitle_panel)
+        self.splitter.addWidget(self.subtitle_panel)
         
         self.file_list = QListWidget()
         self.file_list.setObjectName("fileList")
         self.file_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
         self.file_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.file_list.itemDoubleClicked.connect(self.on_file_double_clicked)
-        layout.addWidget(self.file_list)
+        self.splitter.addWidget(self.file_list)
+        
+        self.splitter.setCollapsible(0, True)
+        self.splitter.setCollapsible(1, True)
+        self.splitter.setStretchFactor(0, 0)
+        self.splitter.setStretchFactor(1, 1)
+        
+        layout.addWidget(self.splitter)
         
         # Seek Tooltip
         self.seek_tooltip = QLabel(self)
@@ -1311,7 +1323,14 @@ class PlayerWidget(QWidget):
     
     def _on_subtitles_toggled(self, checked: bool):
         """Show/hide the subtitle panel"""
-        self.subtitle_panel.setVisible(checked)
+        if not checked:
+            if self.subtitle_panel.isVisible():
+                self._saved_splitter_state = self.splitter.saveState()
+            self.subtitle_panel.setVisible(False)
+        else:
+            self.subtitle_panel.setVisible(True)
+            if hasattr(self, '_saved_splitter_state') and self._saved_splitter_state:
+                self.splitter.restoreState(self._saved_splitter_state)
         self.subtitles_toggled_signal.emit(checked)
         
     def on_id3_toggled(self, checked):
