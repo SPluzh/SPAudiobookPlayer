@@ -75,7 +75,7 @@ QPushButton#playBtn {
 }
 
 /* ID3 & Subtitles Toggle Buttons & Subtitle Zoom Buttons */
-QPushButton#id3Btn, QPushButton#subtitlesBtn, QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn {
+QPushButton#id3Btn, QPushButton#subtitlesBtn, QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslationToggleBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
@@ -90,17 +90,17 @@ QPushButton#id3Btn, QPushButton#subtitlesBtn {
     margin-top: 2px;
 }
 
-QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn {
+QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslationToggleBtn {
     margin-top: 0px;
 }
 
-QPushButton#id3Btn:hover, QPushButton#subtitlesBtn:hover, QPushButton#subSizeMinusBtn:hover, QPushButton#subSizePlusBtn:hover {
+QPushButton#id3Btn:hover, QPushButton#subtitlesBtn:hover, QPushButton#subSizeMinusBtn:hover, QPushButton#subSizePlusBtn:hover, QPushButton#subTranslationToggleBtn:hover {
     background-color: @accent;
     border-color: @accent;
     color: @text-bright;
 }
 
-QPushButton#id3Btn:checked, QPushButton#subtitlesBtn:checked {
+QPushButton#id3Btn:checked, QPushButton#subtitlesBtn:checked, QPushButton#subTranslationToggleBtn:checked {
     background-color: @accent;
     border-color: @accent;
     font-weight: bold;
@@ -332,20 +332,20 @@ QPushButton#filterBtn:checked {
     font-weight: bold;
 }
 
-/* Metadata Cover Refresh, Open Folder & From Tags Buttons */
-QPushButton#refreshCoversBtn, QPushButton#openFolderBtn, QPushButton#fromTagsBtn, QPushButton#searchCoverBtn {
+/* Metadata Cover Refresh, Open Folder & From Tags Buttons, Translation Popup Buttons */
+QPushButton#refreshCoversBtn, QPushButton#openFolderBtn, QPushButton#fromTagsBtn, QPushButton#searchCoverBtn, QPushButton#pronounceBtn, QPushButton#dictBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     border-radius: 4px;
     padding: 0px;
 }
 
-QPushButton#refreshCoversBtn:hover, QPushButton#openFolderBtn:hover, QPushButton#fromTagsBtn:hover, QPushButton#searchCoverBtn:hover {
+QPushButton#refreshCoversBtn:hover, QPushButton#openFolderBtn:hover, QPushButton#fromTagsBtn:hover, QPushButton#searchCoverBtn:hover, QPushButton#pronounceBtn:hover, QPushButton#dictBtn:hover {
     background-color: @accent;
     border-color: @accent;
 }
 
-QPushButton#refreshCoversBtn:pressed, QPushButton#openFolderBtn:pressed, QPushButton#fromTagsBtn:pressed, QPushButton#searchCoverBtn:pressed {
+QPushButton#refreshCoversBtn:pressed, QPushButton#openFolderBtn:pressed, QPushButton#fromTagsBtn:pressed, QPushButton#searchCoverBtn:pressed, QPushButton#pronounceBtn:pressed, QPushButton#dictBtn:pressed {
     background-color: @accent-dark;
     border-color: @accent-dark;
 }
@@ -1666,6 +1666,15 @@ QSlider.hue-slider::handle:horizontal:hover {
 #tile_background {
     color: @bg-main;
 }
+
+#popup_background {
+    color: @bg-dark;
+}
+
+#popup_border {
+    color: @border;
+}
+
 
 /* ============================================================
    SUBTITLES SYSTEM

@@ -182,7 +182,8 @@
     "btn_subtitles": "Sub",
     "show_subtitles": "Tampilkan panel subtitle",
     "zoom_in": "Perbesar ukuran subtitle",
-    "zoom_out": "Perkecil ukuran subtitle"
+    "zoom_out": "Perkecil ukuran subtitle",
+    "translation_on_hover": "Aktifkan/nonaktifkan terjemahan saat diarahkan"
   },
   "status": {
     "load_library": "📚 Muat perpustakaan audiobook",

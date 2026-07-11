@@ -33,7 +33,7 @@ class StyleManager:
         'overlay_background', 'overlay_progress_bg', 'separator_dot',
         'placeholder_title', 'placeholder_text', 'placeholder_icon',
         'delegate_status_new', 'delegate_status_started', 'delegate_status_completed',
-        'tile_background'
+        'tile_background', 'popup_background', 'popup_border'
     ]
 
     @staticmethod

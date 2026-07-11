@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.8.2]
 - **Subtitles**: Added support for synchronized subtitles (SRT) with automatic scanning, real-time highlighting, auto-scrolling, and a toggle button.
+- **Subtitles**: Added interactive word translation on hover and selection with a translation popup, plus a toggle button next to subtitle zoom controls to enable/disable hover translation (with settings persistence).
 - **Subtitles**: Added a splitter between the subtitles panel and the track list, allowing users to dynamically adjust their heights or fully collapse either panel.
 - **Subtitles**: Added font size zoom controls (+/- buttons) to the subtitle panel with customizable text size and settings persistence.
 

@@ -164,7 +164,8 @@
     "btn_subtitles": "Alt",
     "show_subtitles": "Altyazı panelini göster",
     "zoom_in": "Altyazı boyutunu artır",
-    "zoom_out": "Altyazı boyutunu azalt"
+    "zoom_out": "Altyazı boyutunu azalt",
+    "translation_on_hover": "Üzerine gelindiğinde çeviriyi aç/kapat"
   },
   "status": {
     "load_library": "📚 Sesli kitap kütüphanesini yükle",

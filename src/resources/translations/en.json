@@ -182,7 +182,8 @@
     "stream_ready": "▶ Stream ready",
     "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})",
     "zoom_in": "Increase subtitle size",
-    "zoom_out": "Decrease subtitle size"
+    "zoom_out": "Decrease subtitle size",
+    "translation_on_hover": "Toggle translation on hover"
   },
   "status": {
     "load_library": "📚 Load audiobook library",

@@ -179,3 +179,30 @@ def test_subtitle_font_size_zoom():
     panel.font_size = 10
     panel.decrease_font_size()
     assert panel.font_size == 10  # should not go below 10
+
+def test_subtitle_translation_toggle():
+    """Verify that translation_on_hover attribute, toggle button, and signals work correctly"""
+    panel = SubtitlePanel()
+    
+    # Check default state
+    assert panel.translation_on_hover is True
+    assert panel.btn_translation_toggle.isChecked() is True
+    assert panel.browser.translation_on_hover is True
+    
+    # Listen to signal
+    emitted_states = []
+    panel.translation_on_hover_changed.connect(emitted_states.append)
+    
+    # Simulate clicking toggle button to turn off hover translation
+    panel.btn_translation_toggle.click()
+    assert panel.translation_on_hover is False
+    assert panel.btn_translation_toggle.isChecked() is False
+    assert panel.browser.translation_on_hover is False
+    assert emitted_states == [False]
+    
+    # Toggle it back on
+    panel.btn_translation_toggle.click()
+    assert panel.translation_on_hover is True
+    assert panel.btn_translation_toggle.isChecked() is True
+    assert panel.browser.translation_on_hover is True
+    assert emitted_states == [False, True]

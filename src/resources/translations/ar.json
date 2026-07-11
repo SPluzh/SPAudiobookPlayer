@@ -164,7 +164,8 @@
     "btn_subtitles": "ترج",
     "show_subtitles": "إظهار لوحة الترجمة",
     "zoom_in": "تكبير حجم الترجمة",
-    "zoom_out": "تصغير حجم الترجمة"
+    "zoom_out": "تصغير حجم الترجمة",
+    "translation_on_hover": "تبديل الترجمة عند التمرير"
   },
   "status": {
     "load_library": "📚 تحميل مكتبة الكتب الصوتية",

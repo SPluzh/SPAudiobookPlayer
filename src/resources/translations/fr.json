@@ -164,7 +164,8 @@
     "btn_subtitles": "Sous",
     "show_subtitles": "Afficher le panneau des sous-titres",
     "zoom_in": "Augmenter la taille des sous-titres",
-    "zoom_out": "Diminuer la taille des sous-titres"
+    "zoom_out": "Diminuer la taille des sous-titres",
+    "translation_on_hover": "Activer/désactiver la traduction au survol"
   },
   "status": {
     "load_library": "📚 Chargement de la bibliothèque",

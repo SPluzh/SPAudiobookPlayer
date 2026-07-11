@@ -341,6 +341,29 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         c.execute("CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_listening_stats(listen_date)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_daily_stats_audiobook ON daily_listening_stats(audiobook_id)")
         
+        # Subtitle translation cache table
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS translations_cache (
+                original_text TEXT NOT NULL,
+                target_lang TEXT NOT NULL,
+                translation TEXT NOT NULL,
+                parts_of_speech_json TEXT,
+                synonyms_json TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (original_text, target_lang)
+            )
+        """)
+
+        # Dictionary table
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS dictionary (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                word TEXT UNIQUE NOT NULL,
+                translation TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
         conn.commit()
     finally:
         conn.close()
@@ -2143,5 +2166,120 @@ class DatabaseManager:
             return {}
         finally:
             conn.close()
+
+    # ===================== TRANSLATIONS CACHE =====================
+    def get_cached_translation(self, text: str, target_lang: str) -> Optional[dict]:
+        """Retrieves a cached translation from the database."""
+        import json
+        cleaned = text.strip()
+        conn = sqlite3.connect(self.db_file)
+        try:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT translation, parts_of_speech_json, synonyms_json FROM translations_cache WHERE original_text = ? AND target_lang = ?",
+                (cleaned, target_lang)
+            )
+            row = c.fetchone()
+            if row:
+                return {
+                    "translation": row["translation"],
+                    "parts_of_speech": json.loads(row["parts_of_speech_json"]) if row["parts_of_speech_json"] else {},
+                    "synonyms": json.loads(row["synonyms_json"]) if row["synonyms_json"] else {}
+                }
+        except Exception as e:
+            print(f"Error reading translation cache: {e}")
+        finally:
+            conn.close()
+        return None
+
+    def save_cached_translation(self, text: str, target_lang: str, result_dict: dict):
+        """Saves a translation result to the database cache."""
+        import json
+        cleaned = text.strip()
+        translation = result_dict.get("translation", "")
+        parts_of_speech_json = json.dumps(result_dict.get("parts_of_speech", {}))
+        synonyms_json = json.dumps(result_dict.get("synonyms", {}))
+        conn = sqlite3.connect(self.db_file)
+        try:
+            c = conn.cursor()
+            c.execute(
+                """
+                INSERT OR REPLACE INTO translations_cache 
+                (original_text, target_lang, translation, parts_of_speech_json, synonyms_json)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (cleaned, target_lang, translation, parts_of_speech_json, synonyms_json)
+            )
+            conn.commit()
+        except Exception as e:
+            print(f"Error writing to translation cache: {e}")
+        finally:
+            conn.close()
+
+    # ===================== USER DICTIONARY =====================
+    def add_to_dictionary(self, word: str, translation: str) -> bool:
+        """
+        Adds a word and its translation to the user dictionary.
+        Returns True if added successfully, False otherwise.
+        """
+        cleaned_word = word.strip()
+        cleaned_trans = translation.strip()
+        if not cleaned_word:
+            return False
+        conn = sqlite3.connect(self.db_file)
+        try:
+            c = conn.cursor()
+            c.execute(
+                "INSERT OR IGNORE INTO dictionary (word, translation) VALUES (?, ?)",
+                (cleaned_word, cleaned_trans)
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error adding to dictionary: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def is_in_dictionary(self, word: str) -> bool:
+        """Checks if a word is already in the dictionary."""
+        cleaned_word = word.strip()
+        if not cleaned_word:
+            return False
+        conn = sqlite3.connect(self.db_file)
+        try:
+            c = conn.cursor()
+            c.execute(
+                "SELECT 1 FROM dictionary WHERE LOWER(word) = LOWER(?)",
+                (cleaned_word,)
+            )
+            return c.fetchone() is not None
+        except Exception as e:
+            print(f"Error checking dictionary: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def remove_from_dictionary(self, word: str) -> bool:
+        """Removes a word from the dictionary."""
+        cleaned_word = word.strip()
+        if not cleaned_word:
+            return False
+        conn = sqlite3.connect(self.db_file)
+        try:
+            c = conn.cursor()
+            c.execute(
+                "DELETE FROM dictionary WHERE LOWER(word) = LOWER(?)",
+                (cleaned_word,)
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error removing from dictionary: {e}")
+            return False
+        finally:
+            conn.close()
+
 
 

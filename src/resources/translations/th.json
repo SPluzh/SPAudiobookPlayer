@@ -182,7 +182,8 @@
     "btn_subtitles": "ซับ",
     "show_subtitles": "แสดงแผงคำบรรยาย",
     "zoom_in": "เพิ่มขนาดคำบรรยาย",
-    "zoom_out": "ลดขนาดคำบรรยาย"
+    "zoom_out": "ลดขนาดคำบรรยาย",
+    "translation_on_hover": "สลับการแปลเมื่อวางเมาส์"
   },
   "status": {
     "load_library": "📚 กำลังโหลดคลังหนังสือเสียง",

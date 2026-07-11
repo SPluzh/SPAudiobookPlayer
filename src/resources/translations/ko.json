@@ -164,7 +164,8 @@
     "btn_subtitles": "자막",
     "show_subtitles": "자막 패널 표시",
     "zoom_in": "자막 크기 키우기",
-    "zoom_out": "자막 크기 줄이기"
+    "zoom_out": "자막 크기 줄이기",
+    "translation_on_hover": "마우스 오버 시 번역 토글"
   },
   "status": {
     "load_library": "📚 오디오북 라이브러리 불러오기",

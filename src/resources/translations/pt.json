@@ -164,7 +164,8 @@
     "btn_subtitles": "Leg",
     "show_subtitles": "Mostrar painel de legendas",
     "zoom_in": "Aumentar tamanho da legenda",
-    "zoom_out": "Diminuir tamanho da legenda"
+    "zoom_out": "Diminuir tamanho da legenda",
+    "translation_on_hover": "Ativar/desativar tradução ao passar o mouse"
   },
   "status": {
     "load_library": "📚 Carregar biblioteca de audiolivros",

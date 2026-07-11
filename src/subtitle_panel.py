@@ -1,10 +1,14 @@
 import re
+import string
 from dataclasses import dataclass
 from typing import List, Optional
 from pathlib import Path
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextBrowser
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint, QTimer, QRect
+from PyQt6.QtGui import QTextCursor, QTextCharFormat, QColor
 from translations import tr
+from subtitle_translator import TranslationPopup
+from utils import get_icon
 
 
 @dataclass
@@ -88,9 +92,166 @@ def find_srt_for_audio(audio_abs_path: str) -> Optional[str]:
     return None
 
 
+class InteractiveSubBrowser(QTextBrowser):
+    wordHovered = pyqtSignal(str, QPoint)      # (word, global_pos)
+    selectionSelected = pyqtSignal(str, QPoint) # (text, global_pos)
+    hoverCleared = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMouseTracking(True)
+        self.viewport().setMouseTracking(True)
+        
+        self.hover_timer = QTimer(self)
+        self.hover_timer.setSingleShot(True)
+        self.hover_timer.timeout.connect(self._on_hover_timeout)
+
+        self.current_hovered_word = ""
+        self.current_hovered_cursor = None
+        self.hover_pos = QPoint()
+        self.translation_on_hover = True
+
+    def _on_hover_timeout(self):
+        try:
+            if self.current_hovered_word and self.current_hovered_cursor:
+                self.highlight_word(self.current_hovered_cursor)
+                self.wordHovered.emit(self.current_hovered_word, self.hover_pos)
+        except Exception as e:
+            import logging
+            logging.error(f"Error in _on_hover_timeout: {e}", exc_info=True)
+
+    def highlight_word(self, cursor):
+        try:
+            selection = QTextBrowser.ExtraSelection()
+            selection.cursor = cursor
+            
+            format = QTextCharFormat()
+            # Premium highlight: gold semi-transparent background
+            format.setBackground(QColor(255, 215, 0, 80)) 
+            selection.format = format
+            self.setExtraSelections([selection])
+        except Exception as e:
+            import logging
+            logging.error(f"Error in highlight_word: {e}", exc_info=True)
+
+    def clear_highlight(self):
+        try:
+            self.setExtraSelections([])
+            self.current_hovered_word = ""
+            self.current_hovered_cursor = None
+            self.hoverCleared.emit()
+        except Exception as e:
+            import logging
+            logging.error(f"Error in clear_highlight: {e}", exc_info=True)
+
+    def mouseMoveEvent(self, event):
+        try:
+            super().mouseMoveEvent(event)
+
+            if not getattr(self, "translation_on_hover", True):
+                self.hover_timer.stop()
+                if self.current_hovered_word:
+                    self.clear_highlight()
+                return
+
+            pos = event.position().toPoint()
+
+            if event.buttons() & Qt.MouseButton.LeftButton:
+                self.hover_timer.stop()
+                return
+
+            if self.textCursor().hasSelection():
+                self.hover_timer.stop()
+                return
+
+            cursor = self.cursorForPosition(pos)
+
+            if not cursor.isNull():
+                rect = self.cursorRect(cursor)
+                char_width = 12
+                char_height = rect.height()
+                expanded_rect = QRect(rect.x() - char_width, rect.y(), char_width * 2, char_height)
+                
+                if expanded_rect.contains(pos):
+                    cursor.select(QTextCursor.SelectionType.WordUnderCursor)
+                    word = cursor.selectedText()
+                    cleaned_word = word.strip(string.punctuation + " \n\r\t»«“”‘’")
+                    
+                    if cleaned_word and cleaned_word.isalpha():
+                        if cleaned_word != self.current_hovered_word:
+                            self.current_hovered_word = cleaned_word
+                            self.current_hovered_cursor = cursor
+                            
+                            start_cursor = QTextCursor(cursor)
+                            start_cursor.setPosition(cursor.selectionStart())
+                            end_cursor = QTextCursor(cursor)
+                            end_cursor.setPosition(cursor.selectionEnd())
+                            
+                            r_start = self.cursorRect(start_cursor)
+                            r_end = self.cursorRect(end_cursor)
+                            
+                            if abs(r_start.top() - r_end.top()) < 5:
+                                x = (r_start.left() + r_end.left()) // 2
+                            else:
+                                x = r_start.left()
+                            y = r_start.top()
+                            
+                            self.hover_pos = self.viewport().mapToGlobal(QPoint(x, y))
+                            self.hover_timer.start(300) # 300ms debounce
+                        return
+
+            self.hover_timer.stop()
+            if self.current_hovered_word:
+                self.clear_highlight()
+        except Exception as e:
+            import logging
+            logging.error(f"Error in mouseMoveEvent: {e}", exc_info=True)
+
+    def mouseReleaseEvent(self, event):
+        try:
+            super().mouseReleaseEvent(event)
+            cursor = self.textCursor()
+            if cursor.hasSelection():
+                selected_text = cursor.selectedText().strip()
+                if selected_text:
+                    start_cursor = QTextCursor(cursor)
+                    start_cursor.setPosition(cursor.selectionStart())
+                    end_cursor = QTextCursor(cursor)
+                    end_cursor.setPosition(cursor.selectionEnd())
+                    
+                    r_start = self.cursorRect(start_cursor)
+                    r_end = self.cursorRect(end_cursor)
+                    
+                    if abs(r_start.top() - r_end.top()) < 5:
+                        x = (r_start.left() + r_end.left()) // 2
+                    else:
+                        x = r_start.left()
+                    y = r_start.top()
+                    
+                    global_pos = self.viewport().mapToGlobal(QPoint(x, y))
+                    self.selectionSelected.emit(selected_text, global_pos)
+        except Exception as e:
+            import logging
+            logging.error(f"Error in mouseReleaseEvent: {e}", exc_info=True)
+
+    def leaveEvent(self, event):
+        try:
+            self.hover_timer.stop()
+            cursor = self.textCursor()
+            if cursor.hasSelection():
+                cursor.clearSelection()
+                self.setTextCursor(cursor)
+            self.clear_highlight()
+            super().leaveEvent(event)
+        except Exception as e:
+            import logging
+            logging.error(f"Error in leaveEvent: {e}", exc_info=True)
+
+
 class SubtitlePanel(QWidget):
     """Subtitle panel with active line highlighting and auto-scrolling"""
     font_size_changed = pyqtSignal(int)
+    translation_on_hover_changed = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -98,7 +259,15 @@ class SubtitlePanel(QWidget):
         self._entries: List[SRTEntry] = []
         self._current_idx: int = -1
         self._font_size: int = 15
+        self._translation_on_hover: bool = True
         self._setup_ui()
+        self.translation_on_hover = True
+        
+        # Instantiate Translation Popup
+        self.translation_popup = TranslationPopup(self)
+        self.browser.wordHovered.connect(self._on_word_hovered)
+        self.browser.selectionSelected.connect(self._on_selection_selected)
+        self.browser.hoverCleared.connect(self._on_hover_cleared)
 
     def _setup_ui(self):
         lay = QVBoxLayout(self)
@@ -123,9 +292,18 @@ class SubtitlePanel(QWidget):
         self.btn_zoom_in.clicked.connect(self.increase_font_size)
         controls_layout.addWidget(self.btn_zoom_in)
 
+        self.btn_translation_toggle = QPushButton()
+        self.btn_translation_toggle.setFixedWidth(24)
+        self.btn_translation_toggle.setCheckable(True)
+        self.btn_translation_toggle.setObjectName("subTranslationToggleBtn")
+        self.btn_translation_toggle.setIcon(get_icon("languages"))
+        self.btn_translation_toggle.clicked.connect(self._on_translation_toggle_clicked)
+        controls_layout.addWidget(self.btn_translation_toggle)
+
         lay.addLayout(controls_layout)
 
-        self.browser = QTextBrowser()
+        # Use the interactive browser class instead of standard QTextBrowser
+        self.browser = InteractiveSubBrowser()
         self.browser.setObjectName("subtitleText")
         self.browser.setReadOnly(True)
         self.browser.setOpenLinks(False)
@@ -133,6 +311,17 @@ class SubtitlePanel(QWidget):
         lay.addWidget(self.browser)
 
         self.update_texts()
+
+    def _on_word_hovered(self, word, global_pos):
+        self.translation_popup.hide_timer.stop()
+        self.translation_popup.show_translation(word, target_lang="ru", anchor_pos=global_pos)
+
+    def _on_selection_selected(self, text, global_pos):
+        self.translation_popup.hide_timer.stop()
+        self.translation_popup.show_translation(text, target_lang="ru", anchor_pos=global_pos)
+
+    def _on_hover_cleared(self):
+        self.translation_popup.hide_timer.start(500)
 
     @property
     def font_size(self) -> int:
@@ -142,6 +331,22 @@ class SubtitlePanel(QWidget):
     def font_size(self, size: int):
         self._font_size = max(10, min(size, 40))
         self._render()
+
+    @property
+    def translation_on_hover(self) -> bool:
+        return self._translation_on_hover
+
+    @translation_on_hover.setter
+    def translation_on_hover(self, enabled: bool):
+        self._translation_on_hover = enabled
+        self.btn_translation_toggle.setChecked(enabled)
+        self.browser.translation_on_hover = enabled
+        if not enabled:
+            self.browser.clear_highlight()
+
+    def _on_translation_toggle_clicked(self, checked: bool):
+        self.translation_on_hover = checked
+        self.translation_on_hover_changed.emit(checked)
 
     def decrease_font_size(self):
         new_size = max(10, self._font_size - 1)
@@ -159,6 +364,7 @@ class SubtitlePanel(QWidget):
         """Update tooltips for control buttons on language change"""
         self.btn_zoom_in.setToolTip(tr("player.zoom_in"))
         self.btn_zoom_out.setToolTip(tr("player.zoom_out"))
+        self.btn_translation_toggle.setToolTip(tr("player.translation_on_hover", "Translation on hover"))
 
     # -- Public API ---------------------------------------------
 
