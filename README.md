@@ -22,7 +22,7 @@ Offline audiobook player for Windows. It provides library scanning, playback pro
 ## Features
 
 ### Playback & Audio
-- **Multi-format support**: Plays MP3, M4A, M4B, OGG, FLAC, WAV, OPUS, APE, and CUE playlists.
+- **Multi-format support**: Plays MP3, M4A, M4B, OGG, FLAC, WAV, OPUS, APE, M3U/M3U8, and CUE playlists.
 - **Audio Engine**: Powered by BASS library for high-quality audio and independent pitch control (±12 semitones).
 - **Speed Control**: Adjust playback speed from 0.5× to 3.0×.
 - **Navigation**: Quick track skip, rewind/forward (10s/60s), and Windows taskbar controls.
@@ -219,7 +219,7 @@ The scanner will automatically find all audiobooks regardless of nesting depth.
 ## Возможности
 
 ### Воспроизведение и звук
-- **Поддержка форматов**: Воспроизведение MP3, M4A, M4B, OGG, FLAC, WAV, OPUS, APE и плейлистов CUE.
+- **Поддержка форматов**: Воспроизведение MP3, M4A, M4B, OGG, FLAC, WAV, OPUS, APE, плейлистов M3U/M3U8 и CUE.
 - **Аудиодвижок**: Высокое качество звука на базе BASS и независимое изменение тона (±12 полутонов).
 - **Регулировка скорости**: Изменение темпа воспроизведения от 0.5× до 3.0×.
 - **Навигация**: Быстрый переход по трекам, шаг 10/60 секунд и управление из панели задач Windows.
