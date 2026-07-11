@@ -589,6 +589,14 @@ def test_library_widget_load_icons_updates_icons(monkeypatch):
     assert "favorites" in loaded_icons
     assert "context_tags" in loaded_icons
 
+    # Break references and clean up to avoid crash on exit
+    delegate.tree = None
+    widget.delegate = None
+    widget.tree.setItemDelegate(None)
+    widget.deleteLater()
+    app.processEvents()
+
+
 
 def test_appearance_dialog_save_cancel_buttons_update_icons(monkeypatch):
     import utils

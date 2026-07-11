@@ -1,8 +1,0 @@
-﻿============================= test session starts =============================
-platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Program Files\Python314\python.exe
-cachedir: .pytest_cache
-rootdir: C:\Users\user\Desktop\python\SPAudiobookPlayer
-plugins: anyio-4.12.1, mock-3.15.1
-collecting ... collected 1 item
-
-tests/test_status_triangle_ui.py::test_status_triangle_toggle_and_rendering 

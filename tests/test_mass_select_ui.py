@@ -26,6 +26,8 @@ def test_mass_select_ui_behavior(tmp_path):
         mock_db.load_audiobooks_from_db.return_value = {}
         mock_db.get_all_audiobook_tags.return_value = {}
         mock_db.get_all_tags.return_value = []
+        mock_db.get_audiobook_by_path.return_value = None
+
          
         window = AudiobookPlayerWindow()
         library = window.library_widget
@@ -124,6 +126,10 @@ def test_mass_select_mark_actions(tmp_path):
         mock_db.load_audiobooks_from_db.return_value = {}
         mock_db.get_all_audiobook_tags.return_value = {}
         mock_db.get_all_tags.return_value = []
+        mock_db.get_audiobook_by_path.return_value = None
+        mock_db.get_tags_for_audiobook.return_value = []
+
+
          
         window = AudiobookPlayerWindow()
         library = window.library_widget
@@ -225,6 +231,8 @@ def test_folder_mass_selection(tmp_path):
         mock_db.get_audiobook_count.return_value = 2
         mock_db.get_all_audiobook_tags.return_value = {}
         mock_db.get_all_tags.return_value = []
+        mock_db.get_audiobook_by_path.return_value = None
+
 
         def make_mock_book(id_, path, name):
             return {
@@ -269,14 +277,17 @@ def test_folder_mass_selection(tmp_path):
         }
 
         window = AudiobookPlayerWindow()
+        print("TRACE: AudiobookPlayerWindow created", flush=True)
         library = window.library_widget
         library.load_audiobooks(use_cache=False)
+        print("TRACE: load_audiobooks completed", flush=True)
 
         tree = library.tree
         assert tree.topLevelItemCount() > 0
         
         # Enable mass select mode
         library.btn_mass_select.click()
+        print("TRACE: btn_mass_select clicked", flush=True)
         assert tree.mass_selection_mode is True
 
         # Let's locate the tree items
@@ -289,8 +300,11 @@ def test_folder_mass_selection(tmp_path):
         book_b_item = folder_item.child(1)
 
         # 1. Test clicking a folder recursively selects children
+        print("TRACE: calling _set_item_selected_recursive", flush=True)
         tree._set_item_selected_recursive(folder_item, True)
+        print("TRACE: calling _update_parent_checkbox_states", flush=True)
         tree._update_parent_checkbox_states(folder_item)
+        print("TRACE: finished recursion check", flush=True)
 
         assert "path/FolderX" in tree.selected_audiobook_paths
         assert "path/FolderX/BookA" in tree.selected_audiobook_paths
@@ -316,10 +330,13 @@ def test_folder_mass_selection(tmp_path):
         assert "path/FolderX/BookB" not in tree.selected_audiobook_paths
 
         # 5. Test select_all_audiobooks selects folders too via sync
+        print("TRACE: calling select_all_audiobooks", flush=True)
         library.select_all_audiobooks()
+        print("TRACE: select_all_audiobooks completed", flush=True)
         assert "path/FolderX" in tree.selected_audiobook_paths
         assert "path/FolderX/BookA" in tree.selected_audiobook_paths
         assert "path/FolderX/BookB" in tree.selected_audiobook_paths
+
 
 
 def test_mass_select_shift_range_selection(tmp_path):
@@ -346,6 +363,8 @@ def test_mass_select_shift_range_selection(tmp_path):
         mock_db.get_audiobook_count.return_value = 4
         mock_db.get_all_audiobook_tags.return_value = {}
         mock_db.get_all_tags.return_value = []
+        mock_db.get_audiobook_by_path.return_value = None
+
 
         def make_mock_book(id_, path, name):
             return {
@@ -490,6 +509,8 @@ def test_mass_select_row_click(tmp_path):
         mock_db.get_audiobook_count.return_value = 1
         mock_db.get_all_audiobook_tags.return_value = {}
         mock_db.get_all_tags.return_value = []
+        mock_db.get_audiobook_by_path.return_value = None
+
 
         def make_mock_book(id_, path, name):
             return {
