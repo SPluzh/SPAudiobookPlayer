@@ -168,6 +168,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.info_order = "progress,file_count,duration,size,technical,year_written,year_recorded,language"
         self.normal_geometry = None
         self.normal_splitter_state = None
+        self.player_splitter_state = None
+        self.player_saved_splitter_state = None
         self.always_on_top = False
         self.remember_filter_folders = True
         self.library_show_folders = {
@@ -459,6 +461,21 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.play_btn.visualizer_enabled = self.show_visualizer
         self.player_widget.subtitles_btn.setChecked(self.show_subtitles)
         self.player_widget._on_subtitles_toggled(self.show_subtitles)
+        # Restore player splitter states
+        if getattr(self, "player_saved_splitter_state", None):
+            try:
+                self.player_widget._saved_splitter_state = QByteArray.fromHex(
+                    self.player_saved_splitter_state.encode()
+                )
+            except Exception:
+                pass
+        if getattr(self, "player_splitter_state", None):
+            try:
+                self.player_widget.splitter.restoreState(
+                    QByteArray.fromHex(self.player_splitter_state.encode())
+                )
+            except Exception:
+                pass
         self.player_widget.subtitle_panel.font_size = self.subtitle_font_size
         self.player_widget.subtitle_panel.translation_on_hover = (
             self.subtitle_translation_on_hover
@@ -1080,6 +1097,8 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Splitter Layout State
         self.splitter_state = config.get("Layout", "splitter_state", fallback="")
+        self.player_splitter_state = config.get("Layout", "player_splitter_state", fallback="")
+        self.player_saved_splitter_state = config.get("Layout", "player_saved_splitter_state", fallback="")
 
         # Player Functional Preferences
         self.show_id3 = config.getboolean("Player", "show_id3", fallback=False)
@@ -1440,6 +1459,18 @@ class AudiobookPlayerWindow(QMainWindow):
             config["Layout"]["splitter_state"] = (
                 self.splitter.saveState().toHex().data().decode()
             )
+        if hasattr(self, "player_widget") and hasattr(self.player_widget, "splitter"):
+            config["Layout"]["player_splitter_state"] = (
+                self.player_widget.splitter.saveState().toHex().data().decode()
+            )
+            saved_state = getattr(self.player_widget, "_saved_splitter_state", None)
+            if saved_state:
+                config["Layout"]["player_saved_splitter_state"] = (
+                    saved_state.toHex().data().decode()
+                )
+            else:
+                if "player_saved_splitter_state" in config["Layout"]:
+                    del config["Layout"]["player_saved_splitter_state"]
 
         # Player and Audio Functional Preferences
         if "Player" not in config:
