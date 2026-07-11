@@ -245,7 +245,11 @@
     "opus_workers_label": "Utas paralel:",
     "opus_workers_auto": "Otomatis",
     "opus_workers_tooltip": "Jumlah utas encoding paralel. Nilai yang lebih tinggi mempercepat encoding tetapi mengonsumsi lebih banyak sumber daya CPU/disk. Setel ke 0 (Otomatis) untuk mendeteksi secara otomatis.",
-    "opus_group": "Konversi Opus"
+    "opus_group": "Konversi Opus",
+    "translation_group": "Terjemahan Subtitel",
+    "translation_lang_label": "Bahasa Terjemahan:",
+    "translation_provider_label": "Penyedia Terjemahan:",
+    "translation_provider_tooltip": "Penyedia terjemahan kata/pilihan saat mengarahkan kursor ke subtitel"
   },
   "dialog": {
     "restart_title": "Perubahan Bahasa",

@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.8.2]
+- **Settings**: Added translation settings allowing users to specify the target language for subtitle translation, listing all 100+ supported translation languages.
 - **Subtitles**: Fixed an issue where the subtitle panel scrolled to the wrong position on repeated phrases by switching to unique anchor-based scrolling.
 - **Subtitles**: Added support for synchronized subtitles (SRT) with automatic scanning, real-time highlighting, auto-scrolling, and a toggle button.
 - **Subtitles**: Added interactive word translation on hover and selection with a translation popup, plus a toggle button next to subtitle zoom controls to enable/disable hover translation (with settings persistence).

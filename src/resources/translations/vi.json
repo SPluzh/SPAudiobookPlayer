@@ -245,7 +245,11 @@
     "opus_workers_label": "Số luồng song song:",
     "opus_workers_auto": "Tự động",
     "opus_workers_tooltip": "Số luồng mã hóa song song. Giá trị cao hơn sẽ tăng tốc độ mã hóa nhưng tiêu tốn nhiều tài nguyên CPU và đĩa hơn. Đặt thành 0 (Tự động) để tự động phát hiện.",
-    "opus_group": "Chuyển đổi sang Opus"
+    "opus_group": "Chuyển đổi sang Opus",
+    "translation_group": "Dịch phụ đề",
+    "translation_lang_label": "Ngôn ngữ dịch:",
+    "translation_provider_label": "Nhà cung cấp dịch thuật:",
+    "translation_provider_tooltip": "Nhà cung cấp dịch các từ/lựa chọn khi di chuột qua phụ đề"
   },
   "dialog": {
     "restart_title": "Thay đổi ngôn ngữ",

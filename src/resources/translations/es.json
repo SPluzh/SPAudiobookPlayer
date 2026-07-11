@@ -227,7 +227,11 @@
     "opus_workers_label": "Hilos en paralelo:",
     "opus_workers_auto": "Automático",
     "opus_workers_tooltip": "Número de hilos de codificación paralelos. Valores más altos aceleran la codificación pero consumen más recursos de CPU y disco. Establezca en 0 (Auto) para el valor por defecto.",
-    "opus_group": "Conversión a Opus"
+    "opus_group": "Conversión a Opus",
+    "translation_group": "Traducción de subtítulos",
+    "translation_lang_label": "Idioma de traducción:",
+    "translation_provider_label": "Proveedor de traducción:",
+    "translation_provider_tooltip": "Proveedor para traducir palabras/selecciones al pasar el cursor sobre los subtítulos"
   },
   "dialog": {
     "restart_title": "Cambio de idioma",

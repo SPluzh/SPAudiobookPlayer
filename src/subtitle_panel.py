@@ -274,6 +274,8 @@ class SubtitlePanel(QWidget):
         self._translation_on_hover: bool = True
         self._autoscroll: bool = True
         self._autoscroll_suspended: bool = False
+        self.translation_target_lang: str = "ru"
+        self.translation_provider: str = "google"
         self._setup_ui()
         self.translation_on_hover = True
         self.autoscroll = True
@@ -339,11 +341,11 @@ class SubtitlePanel(QWidget):
 
     def _on_word_hovered(self, word, global_pos):
         self.translation_popup.hide_timer.stop()
-        self.translation_popup.show_translation(word, target_lang="ru", anchor_pos=global_pos)
+        self.translation_popup.show_translation(word, target_lang=self.translation_target_lang, provider=self.translation_provider, anchor_pos=global_pos)
 
     def _on_selection_selected(self, text, global_pos):
         self.translation_popup.hide_timer.stop()
-        self.translation_popup.show_translation(text, target_lang="ru", anchor_pos=global_pos)
+        self.translation_popup.show_translation(text, target_lang=self.translation_target_lang, provider=self.translation_provider, anchor_pos=global_pos)
 
     def _on_hover_cleared(self):
         self.translation_popup.hide_timer.start(500)

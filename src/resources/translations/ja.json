@@ -227,7 +227,11 @@
     "opus_workers_label": "並列処理スレッド数:",
     "opus_workers_auto": "自動",
     "opus_workers_tooltip": "並列エンコードスレッドの数。値を大きくするとエンコードは高速になりますが、CPUとディスクのリソースをより多く消費します。自動検出するには0（自動）に設定します。",
-    "opus_group": "Opus 変換"
+    "opus_group": "Opus 変換",
+    "translation_group": "字幕翻訳",
+    "translation_lang_label": "翻訳言語:",
+    "translation_provider_label": "翻訳プロバイダー:",
+    "translation_provider_tooltip": "字幕上でホバーした単語や選択範囲を翻訳するプロバイダー"
   },
   "dialog": {
     "restart_title": "言語の変更",

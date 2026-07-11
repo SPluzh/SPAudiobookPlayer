@@ -227,7 +227,11 @@
     "opus_workers_label": "병렬 스레드 수:",
     "opus_workers_auto": "자동",
     "opus_workers_tooltip": "병렬 인코딩 스레드 수입니다. 값이 클수록 인코딩 속도가 빨라지지만 CPU 및 디스크 리소스가 더 많이 소모됩니다. 자동으로 감지하려면 0(자동)으로 설정하십시오.",
-    "opus_group": "Opus 변환"
+    "opus_group": "Opus 변환",
+    "translation_group": "자막 번역",
+    "translation_lang_label": "번역 언어:",
+    "translation_provider_label": "번역 제공자:",
+    "translation_provider_tooltip": "자막 위로 마우스를 가져갈 때 단어/선택 영역을 번역할 제공자"
   },
   "dialog": {
     "restart_title": "언어 변경",

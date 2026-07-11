@@ -245,7 +245,11 @@
     "opus_workers_label": "เธรดการประมวลผลคู่ขนาน:",
     "opus_workers_auto": "อัตโนมัติ",
     "opus_workers_tooltip": "จำนวนเธรดการเข้ารหัสแบบขนาน ค่าที่สูงขึ้นจะช่วยเร่งการเข้ารหัส แต่จะใช้ทรัพยากร CPU และดิสก์มากขึ้น ตั้งค่าเป็น 0 (อัตโนมัติ) เพื่อตรวจหาโดยอัตโนมัติ",
-    "opus_group": "การแปลง Opus"
+    "opus_group": "การแปลง Opus",
+    "translation_group": "การแปลซับไตเติล",
+    "translation_lang_label": "ภาษาแปล:",
+    "translation_provider_label": "ผู้ให้บริการแปล:",
+    "translation_provider_tooltip": "ผู้ให้บริการแปลคำศัพท์/ส่วนที่เลือกเมื่อชี้เมาส์ที่ซับไตเติล"
   },
   "dialog": {
     "restart_title": "การเปลี่ยนภาษา",

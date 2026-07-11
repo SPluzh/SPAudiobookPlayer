@@ -227,7 +227,11 @@
     "opus_workers_label": "समानांतर थ्रेड:",
     "opus_workers_auto": "ऑटो",
     "opus_workers_tooltip": "समानांतर एन्कोडिंग थ्रेड्स की संख्या। उच्च मान एन्코डिंग को गति देते हैं लेकिन अधिक सीपीयू/डिस्क संसाधनों की खपत करते हैं। स्वचालित रूप से पता लगाने के लिए 0 (ऑटो) पर सेट करें।",
-    "opus_group": "ओपस रूपांतरण"
+    "opus_group": "ओपस रूपांतरण",
+    "translation_group": "उपशीर्षक अनुवाद",
+    "translation_lang_label": "अनुवाद भाषा:",
+    "translation_provider_label": "अनुवाद प्रदाता:",
+    "translation_provider_tooltip": "उपशीर्षक पर होवर करने पर शब्दों/चयन के अनुवाद के लिए प्रदाता"
   },
   "dialog": {
     "restart_title": "भाषा परिवर्तन",

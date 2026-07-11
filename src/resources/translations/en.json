@@ -245,7 +245,11 @@
     "opus_workers_label": "Parallel workers:",
     "opus_workers_auto": "Auto",
     "opus_workers_tooltip": "Number of parallel encoding threads. Higher values speed up encoding but consume more CPU/disk resources. Set to 0 (Auto) to detect automatically.",
-    "opus_group": "Opus Conversion"
+    "opus_group": "Opus Conversion",
+    "translation_group": "Subtitle Translation",
+    "translation_lang_label": "Translation Language:",
+    "translation_provider_label": "Translation Provider:",
+    "translation_provider_tooltip": "Provider for translating words/selections on hover in subtitles"
   },
   "dialog": {
     "restart_title": "Language Change",

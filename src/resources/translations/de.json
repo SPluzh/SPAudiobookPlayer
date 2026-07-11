@@ -227,7 +227,11 @@
     "opus_workers_label": "Parallele Prozesse:",
     "opus_workers_auto": "Automatisch",
     "opus_workers_tooltip": "Anzahl der parallelen Codierungsthreads. Höhere Werte beschleunigen die Codierung, verbrauchen aber mehr CPU- und Festplattenressourcen. Auf 0 (Auto) setzen, um den Standardwert zu verwenden.",
-    "opus_group": "Opus-Konvertierung"
+    "opus_group": "Opus-Konvertierung",
+    "translation_group": "Untertitelübersetzung",
+    "translation_lang_label": "Übersetzungssprache:",
+    "translation_provider_label": "Übersetzungsanbieter:",
+    "translation_provider_tooltip": "Anbieter für das Übersetzen von Wörtern/Auswahlen beim Zeigen auf Untertitel"
   },
   "dialog": {
     "restart_title": "Sprachänderung",

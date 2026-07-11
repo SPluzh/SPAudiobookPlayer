@@ -227,7 +227,11 @@
     "opus_workers_label": "并行线程数:",
     "opus_workers_auto": "自动",
     "opus_workers_tooltip": "并行编码线程数。较高的值可以加快编码速度，但会消耗更多的 CPU 和磁盘资源。设置为 0 (自动) 可自动检测。",
-    "opus_group": "Opus 转换"
+    "opus_group": "Opus 转换",
+    "translation_group": "字幕翻译",
+    "translation_lang_label": "翻译语言:",
+    "translation_provider_label": "翻译服务商:",
+    "translation_provider_tooltip": "鼠标悬停在字幕上时翻译单词/选区的内容"
   },
   "dialog": {
     "restart_title": "更改语言",

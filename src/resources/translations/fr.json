@@ -227,7 +227,11 @@
     "opus_workers_label": "Processus parallèles:",
     "opus_workers_auto": "Automatique",
     "opus_workers_tooltip": "Nombre de threads d'encodage parallèles. Des valeurs plus élevées accélèrent l'encodage mais consomment plus de ressources processeur et disque. Réglez sur 0 (Auto) pour la valeur par défaut.",
-    "opus_group": "Conversion en Opus"
+    "opus_group": "Conversion en Opus",
+    "translation_group": "Traduction des sous-titres",
+    "translation_lang_label": "Langue de traduction :",
+    "translation_provider_label": "Fournisseur de traduction :",
+    "translation_provider_tooltip": "Fournisseur pour traduire les mots/sélections au survol des sous-titres"
   },
   "dialog": {
     "restart_title": "Changement de langue",

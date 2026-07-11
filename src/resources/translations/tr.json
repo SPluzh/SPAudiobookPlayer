@@ -227,7 +227,11 @@
     "opus_workers_label": "Paralel çalışanlar:",
     "opus_workers_auto": "Otomatik",
     "opus_workers_tooltip": "Paralel kodlama iş parçacığı sayısı. Daha yüksek değerler kodlamayı hızlandırır ancak daha fazla CPU ve disk kaynağı tüketir. Otomatik algılama için 0 (Otomatik) olarak ayarlayın.",
-    "opus_group": "Opus Dönüştürme"
+    "opus_group": "Opus Dönüştürme",
+    "translation_group": "Altyazı Çevirisi",
+    "translation_lang_label": "Çeviri Dili:",
+    "translation_provider_label": "Çeviri Sağlayıcısı:",
+    "translation_provider_tooltip": "Altyazıların üzerine gelindiğinde kelimeleri/seçimleri çeviren sağlayıcı"
   },
   "dialog": {
     "restart_title": "Dil Değişikliği",

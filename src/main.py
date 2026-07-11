@@ -483,6 +483,12 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.subtitle_panel.autoscroll = (
             self.subtitle_autoscroll
         )
+        self.player_widget.subtitle_panel.translation_target_lang = (
+            self.subtitle_target_lang
+        )
+        self.player_widget.subtitle_panel.translation_provider = (
+            self.subtitle_translation_provider
+        )
 
         # Set initial values for sliders
         self.player_widget.set_vad_threshold_value(self.vad_threshold)
@@ -1130,6 +1136,12 @@ class AudiobookPlayerWindow(QMainWindow):
         self.subtitle_autoscroll = config.getboolean(
             "Player", "subtitle_autoscroll", fallback=True
         )
+        self.subtitle_target_lang = config.get(
+            "Player", "subtitle_target_lang", fallback="ru"
+        )
+        self.subtitle_translation_provider = config.get(
+            "Player", "subtitle_translation_provider", fallback="google"
+        )
 
         # Audio Settings (Unified in [Audio])
         self.deesser_enabled = config.getboolean(
@@ -1324,6 +1336,8 @@ class AudiobookPlayerWindow(QMainWindow):
             "subtitle_font_size": "15",
             "subtitle_translation_on_hover": "True",
             "subtitle_autoscroll": "True",
+            "subtitle_target_lang": "ru",
+            "subtitle_translation_provider": "google",
         }
         config["Library"] = {
             "show_folders": "False",
@@ -1490,6 +1504,8 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Player"]["subtitle_autoscroll"] = str(
             self.subtitle_autoscroll
         )
+        config["Player"]["subtitle_target_lang"] = self.subtitle_target_lang
+        config["Player"]["subtitle_translation_provider"] = self.subtitle_translation_provider
 
         if "Audio" not in config:
             config["Audio"] = {}
@@ -2776,6 +2792,8 @@ class AudiobookPlayerWindow(QMainWindow):
             db_manager=self.db_manager,
             auto_check=self.auto_check_updates,
             opus_workers=self.opus_workers,
+            subtitle_target_lang=self.subtitle_target_lang,
+            subtitle_translation_provider=self.subtitle_translation_provider,
         )
 
         def on_path_saved(new_path):
@@ -2826,6 +2844,16 @@ class AudiobookPlayerWindow(QMainWindow):
             if hasattr(self, "library_widget"):
                 self.library_widget.config["opus_workers"] = workers
 
+        def on_subtitle_target_lang_changed(lang):
+            self.subtitle_target_lang = lang
+            self.save_settings()
+            self.player_widget.subtitle_panel.translation_target_lang = lang
+
+        def on_subtitle_translation_provider_changed(provider):
+            self.subtitle_translation_provider = provider
+            self.save_settings()
+            self.player_widget.subtitle_panel.translation_provider = provider
+
         # Connect signals
         dialog.path_saved.connect(on_path_saved)
         dialog.scan_requested.connect(on_scan_requested)
@@ -2833,6 +2861,8 @@ class AudiobookPlayerWindow(QMainWindow):
         dialog.opus_convert_requested.connect(on_conversion_complete)
         dialog.auto_update_toggled.connect(on_auto_update_toggled)
         dialog.opus_workers_changed.connect(on_opus_workers_changed)
+        dialog.subtitle_target_lang_changed.connect(on_subtitle_target_lang_changed)
+        dialog.subtitle_translation_provider_changed.connect(on_subtitle_translation_provider_changed)
 
         dialog.exec()
         self.remove_blur()

@@ -227,7 +227,11 @@
     "opus_workers_label": "Processos paralelos:",
     "opus_workers_auto": "Automático",
     "opus_workers_tooltip": "Número de threads de codificação paralelas. Valores mais altos aceleram a codificação mas consomem mais recursos de CPU e disco. Defina como 0 (Auto) para detetar automaticamente.",
-    "opus_group": "Conversão para Opus"
+    "opus_group": "Conversão para Opus",
+    "translation_group": "Tradução de legendas",
+    "translation_lang_label": "Idioma de tradução:",
+    "translation_provider_label": "Provedor de tradução:",
+    "translation_provider_tooltip": "Provedor para traduzir palavras/seleções ao passar o cursor sobre as legendas"
   },
   "dialog": {
     "restart_title": "Alteração de Idioma",

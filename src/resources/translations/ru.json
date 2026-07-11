@@ -245,7 +245,11 @@
     "opus_workers_label": "Количество потоков:",
     "opus_workers_auto": "Авто",
     "opus_workers_tooltip": "Число параллельных потоков кодирования. Больше потоков — быстрее кодирование, но выше нагрузка на процессор и диск. 0 (Авто) выберет оптимальное количество.",
-    "opus_group": "Конвертация в Opus"
+    "opus_group": "Конвертация в Opus",
+    "translation_group": "Перевод субтитров",
+    "translation_lang_label": "Язык перевода:",
+    "translation_provider_label": "Провайдер перевода:",
+    "translation_provider_tooltip": "Провайдер для перевода слов/выделений при наведении на субтитры"
   },
   "dialog": {
     "restart_title": "Изменение языка",

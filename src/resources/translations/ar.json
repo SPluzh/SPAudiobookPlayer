@@ -227,7 +227,11 @@
     "opus_workers_label": "خيوط المعالجة المتوازية:",
     "opus_workers_auto": "تلقائي",
     "opus_workers_tooltip": "عدد خيوط الترميز المتوازية. تسرع القيم الأعلى الترميز ولكنها تستهلك المزيد من موارد وحدة المعالجة المركزية والقرص. اضبط على 0 (تلقائي) للكشف التلقائي.",
-    "opus_group": "تحويل Opus"
+    "opus_group": "تحويل Opus",
+    "translation_group": "ترجمة الترجمة المصاحبة",
+    "translation_lang_label": "لغة الترجمة:",
+    "translation_provider_label": "مزود الترجمة:",
+    "translation_provider_tooltip": "مزود ترجمة الكلمات أو التحديدات عند تمرير مؤشر الماوس فوق الترجمة المصاحبة"
   },
   "dialog": {
     "restart_title": "تغيير اللغة",

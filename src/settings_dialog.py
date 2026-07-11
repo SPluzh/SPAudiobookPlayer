@@ -9,7 +9,7 @@ import sys
 import configparser
 from pathlib import Path
 import update_ffmpeg
-from translations import tr, trf
+from translations import tr, trf, get_all_translation_languages
 from utils import get_icon, OutputCapture
 from opus_dialog import OpusConversionDialog
 
@@ -114,9 +114,11 @@ class SettingsDialog(QDialog):
     opus_convert_requested = pyqtSignal() # Request to open Opus conversion dialog
     auto_update_toggled = pyqtSignal(bool) # Auto-update check toggled
     opus_workers_changed = pyqtSignal(int) # Number of parallel encoding threads updated
+    subtitle_target_lang_changed = pyqtSignal(str) # Target translation language updated
+    subtitle_translation_provider_changed = pyqtSignal(str) # Translation provider updated
     closed = pyqtSignal()              # Dialog closed
     
-    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None, auto_check=True, opus_workers=0):
+    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None, auto_check=True, opus_workers=0, subtitle_target_lang="ru", subtitle_translation_provider="google"):
         """Initialize settings dialog with current configuration values"""
         super().__init__(parent)
         self.setWindowTitle(tr("settings.title"))
@@ -126,6 +128,8 @@ class SettingsDialog(QDialog):
         self.db_manager = db_manager
         self.auto_check = auto_check
         self.opus_workers = opus_workers
+        self.subtitle_target_lang = subtitle_target_lang
+        self.subtitle_translation_provider = subtitle_translation_provider
         self.settings_path_edit = None
         self.auto_update_checkbox = None
         self.init_ui()
@@ -178,6 +182,41 @@ class SettingsDialog(QDialog):
         scan_layout.addWidget(scan_info)
         
         left_layout.addWidget(scan_group)
+
+        # Subtitle Translation Settings Group
+        translation_group = QGroupBox(tr("settings.translation_group"))
+        translation_layout = QVBoxLayout(translation_group)
+
+        # Subtitle Target Language selection
+        lang_layout = QHBoxLayout()
+        self.lang_lbl = QLabel(tr("settings.translation_lang_label"))
+        
+        self.lang_combo = QComboBox()
+        # Populate with available languages
+        for code, name in get_all_translation_languages():
+            self.lang_combo.addItem(name, code)
+        self.lang_combo.setCurrentIndex(self.lang_combo.findData(self.subtitle_target_lang))
+        
+        lang_layout.addWidget(self.lang_lbl)
+        lang_layout.addWidget(self.lang_combo)
+        lang_layout.addStretch()
+        translation_layout.addLayout(lang_layout)
+
+        # Subtitle Translation Provider selection
+        provider_layout = QHBoxLayout()
+        self.provider_lbl = QLabel(tr("settings.translation_provider_label"))
+        
+        self.provider_combo = QComboBox()
+        self.provider_combo.addItem("Google", "google")
+        self.provider_combo.setCurrentIndex(self.provider_combo.findData(self.subtitle_translation_provider))
+        self.provider_combo.setToolTip(tr("settings.translation_provider_tooltip"))
+        
+        provider_layout.addWidget(self.provider_lbl)
+        provider_layout.addWidget(self.provider_combo)
+        provider_layout.addStretch()
+        translation_layout.addLayout(provider_layout)
+
+        left_layout.addWidget(translation_group)
         left_layout.addStretch()
         
         content_layout.addLayout(left_layout, 3)
@@ -311,6 +350,10 @@ class SettingsDialog(QDialog):
         
         # Emit opus workers changed signal
         self.opus_workers_changed.emit(self.workers_combo.currentData())
+
+        # Emit target language and translation provider signals
+        self.subtitle_target_lang_changed.emit(self.lang_combo.currentData())
+        self.subtitle_translation_provider_changed.emit(self.provider_combo.currentData())
         
         self.accept()
     

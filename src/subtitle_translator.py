@@ -20,10 +20,11 @@ class TranslationWorker(QThread):
     finished = pyqtSignal(str, dict)  # (original, translation_details)
     error = pyqtSignal(str)
 
-    def __init__(self, text, target_lang="ru"):
+    def __init__(self, text, target_lang="ru", provider="google"):
         super().__init__()
         self.text = text
         self.target_lang = target_lang
+        self.provider = provider
 
     def run(self):
         try:
@@ -32,13 +33,15 @@ class TranslationWorker(QThread):
                 self.finished.emit(self.text, {"translation": ""})
                 return
 
+            import ssl
+            context = ssl._create_unverified_context()
+
+            # Default to google
             url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={self.target_lang}&dt=t&dt=bd&dt=ss&q={urllib.parse.quote(cleaned)}"
             req = urllib.request.Request(
                 url,
                 headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
             )
-            import ssl
-            context = ssl._create_unverified_context()
             with urllib.request.urlopen(req, timeout=5, context=context) as response:
                 data = json.loads(response.read().decode('utf-8'))
                 if data and data[0]:
@@ -189,9 +192,9 @@ class TranslationPopup(QFrame):
             p = p.parent()
         return None
 
-    def show_translation(self, text, target_lang="ru", anchor_pos=QPoint()):
+    def show_translation(self, text, target_lang="ru", provider="google", anchor_pos=QPoint()):
         """Starts asynchronous translation and positions the popup above anchor_pos."""
-        logging.debug(f"show_translation called with text='{text}', target_lang='{target_lang}'")
+        logging.debug(f"show_translation called with text='{text}', target_lang='{target_lang}', provider='{provider}'")
         
         # Clean up old running workers by disconnecting signals to avoid updates
         for worker in list(self.active_workers):
@@ -220,11 +223,11 @@ class TranslationPopup(QFrame):
             self.raise_()
             return
 
-        cache_key = (cleaned, target_lang)
+        cache_key = (cleaned, target_lang, provider)
 
         # 1. Check L1 Memory Cache
         if cache_key in self._memory_cache:
-            logging.info(f"Translation cache hit (L1 memory) for: '{cleaned}' -> '{target_lang}'")
+            logging.info(f"Translation cache hit (L1 memory) for: '{cleaned}' -> '{target_lang}' ({provider})")
             self.original_label.setText(text)
             self.show()
             self.raise_()
@@ -254,7 +257,7 @@ class TranslationPopup(QFrame):
         self.show()
         self.raise_()
 
-        worker = TranslationWorker(text, target_lang)
+        worker = TranslationWorker(text, target_lang, provider)
         
         # Create safe wrappers for connection
         def on_success(orig, trans, w=worker):
