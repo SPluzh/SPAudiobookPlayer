@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "Usar uma única cor para todas as linhas de aninhamento em vez de cores diferentes para cada nível",
     "nesting_lines_color_label": "Cor das linhas de aninhamento:",
     "nesting_lines_color_tooltip": "Escolha a cor para as linhas de aninhamento (padrão #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "Atalhos de Reprodução",
+    "category_global": "Teclas de Mídia Globais (em segundo plano)",
+    "toggle_pause": "Reproduzir / Pausar",
+    "prev_file": "Ficheiro Anterior",
+    "next_file": "Ficheiro Seguinte",
+    "seek_backward": "Retroceder 10s",
+    "seek_forward": "Avançar 10s",
+    "seek_backward_60": "Retroceder 60s",
+    "seek_forward_60": "Avançar 60s",
+    "speed_up": "Aumentar Velocidade (0.1x)",
+    "speed_down": "Diminuir Velocidade (0.1x)",
+    "volume_up": "Volume +5%",
+    "volume_down": "Volume -5%",
+    "global_play_pause": "Reproduzir / Pausar",
+    "global_pause": "Pausar",
+    "global_forward_10": "Avançar 10s",
+    "global_rewind_10": "Retroceder 10s",
+    "keys": {
+      "space": "Espaço",
+      "shift": "Shift"
+    }
   }
 }

@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "所有嵌套线使用单一颜色，而不是每层使用不同颜色",
     "nesting_lines_color_label": "嵌套线颜色:",
     "nesting_lines_color_tooltip": "选择嵌套线的颜色（默认 #808080）"
+  },
+  "hotkeys": {
+    "category_playback": "播放快捷键",
+    "category_global": "全局媒体键 (后台)",
+    "toggle_pause": "播放 / 暂停",
+    "prev_file": "上一个文件",
+    "next_file": "下一个文件",
+    "seek_backward": "快退 10 秒",
+    "seek_forward": "快进 10 秒",
+    "seek_backward_60": "快退 60 秒",
+    "seek_forward_60": "快进 60 秒",
+    "speed_up": "加速 (0.1x)",
+    "speed_down": "减速 (0.1x)",
+    "volume_up": "音量 +5%",
+    "volume_down": "音量 -5%",
+    "global_play_pause": "播放 / 暂停",
+    "global_pause": "暂停",
+    "global_forward_10": "快进 10 秒",
+    "global_rewind_10": "快退 10 秒",
+    "keys": {
+      "space": "空格键",
+      "shift": "Shift"
+    }
   }
 }

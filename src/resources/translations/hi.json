@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "प्रत्येक स्तर के लिए अलग-अलग रंगों के बजाय सभी नेस्टिंग लाइनों के लिए एकल रंग का उपयोग करें",
     "nesting_lines_color_label": "नेस्टिंग लाइन का रंग:",
     "nesting_lines_color_tooltip": "नेस्टिंग लाइनों के लिए रंग चुनें (डिफ़ॉल्ट #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "प्लेबैक शॉर्टकट",
+    "category_global": "ग्लोबल मीडिया कुंजियाँ (पृष्ठभूमि में)",
+    "toggle_pause": "चलाएं / रोकें",
+    "prev_file": "पिछली फ़ाइल",
+    "next_file": "अगली फ़ाइल",
+    "seek_backward": "10 सेकंड पीछे",
+    "seek_forward": "10 सेकंड आगे",
+    "seek_backward_60": "60 सेकंड पीछे",
+    "seek_forward_60": "60 सेकंड आगे",
+    "speed_up": "गति बढ़ाएं (0.1x)",
+    "speed_down": "गति कम करें (0.1x)",
+    "volume_up": "आवाज़ +5%",
+    "volume_down": "आवाज़ -5%",
+    "global_play_pause": "चलाएं / रोकें",
+    "global_pause": "रोकें",
+    "global_forward_10": "10 सेकंड आगे",
+    "global_rewind_10": "10 सेकंड पीछे",
+    "keys": {
+      "space": "स्पेस",
+      "shift": "Shift"
+    }
   }
 }

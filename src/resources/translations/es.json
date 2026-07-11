@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "Usar un solo color para todas las líneas de anidación en lugar de colores diferentes para cada nivel",
     "nesting_lines_color_label": "Color de líneas de anidación:",
     "nesting_lines_color_tooltip": "Elija el color para las líneas de anidación (predeterminado #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "Atajos de reproducción",
+    "category_global": "Teclas de medios globales (en segundo plano)",
+    "toggle_pause": "Reproducir / Pausar",
+    "prev_file": "Archivo anterior",
+    "next_file": "Archivo siguiente",
+    "seek_backward": "Retroceder 10s",
+    "seek_forward": "Adelantar 10s",
+    "seek_backward_60": "Retroceder 60s",
+    "seek_forward_60": "Adelantar 60s",
+    "speed_up": "Aumentar velocidad (0.1x)",
+    "speed_down": "Disminuir velocidad (0.1x)",
+    "volume_up": "Volumen +5%",
+    "volume_down": "Volumen -5%",
+    "global_play_pause": "Reproducir / Pausar",
+    "global_pause": "Pausar",
+    "global_forward_10": "Adelantar 10s",
+    "global_rewind_10": "Retroceder 10s",
+    "keys": {
+      "space": "Espacio",
+      "shift": "Shift"
+    }
   }
 }

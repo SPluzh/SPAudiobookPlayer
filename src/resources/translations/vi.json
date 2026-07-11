@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "Sử dụng một màu duy nhất cho tất cả các đường lồng nhau thay vì các màu khác nhau cho mỗi cấp độ",
     "nesting_lines_color_label": "Màu đường lồng nhau:",
     "nesting_lines_color_tooltip": "Chọn màu cho các đường lồng nhau (mặc định #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "Phím tắt Phát lại",
+    "category_global": "Phím đa phương tiện toàn cục (chạy ngầm)",
+    "toggle_pause": "Phát / Tạm dừng",
+    "prev_file": "Tệp trước",
+    "next_file": "Tệp tiếp theo",
+    "seek_backward": "Tua lại 10 giây",
+    "seek_forward": "Tua đi 10 giây",
+    "seek_backward_60": "Tua lại 60 giây",
+    "seek_forward_60": "Tua đi 60 giây",
+    "speed_up": "Tăng tốc (0.1x)",
+    "speed_down": "Giảm tốc (0.1x)",
+    "volume_up": "Âm lượng +5%",
+    "volume_down": "Âm lượng -5%",
+    "global_play_pause": "Phát / Tạm dừng",
+    "global_pause": "Tạm dừng",
+    "global_forward_10": "Tua đi 10 giây",
+    "global_rewind_10": "Tua lại 10 giây",
+    "keys": {
+      "space": "Dấu cách",
+      "shift": "Shift"
+    }
   }
 }

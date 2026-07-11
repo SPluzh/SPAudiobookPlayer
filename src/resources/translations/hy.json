@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "Օգտագործել մեկ գույն բոլոր ներդրման գծերի համար՝ յուրաքանչյուր մակարդակի համար տարբեր գույների փոխարեն",
     "nesting_lines_color_label": "Ներդրման գծերի գույնը.",
     "nesting_lines_color_tooltip": "Ընտրեք ներդրման գծերի գույնը (լռելյայն #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "Նվագարկման դյուրանցումներ",
+    "category_global": "Համընդհանուր մեդիա ստեղներ (հետին պլանում)",
+    "toggle_pause": "Նվագարկել / Դադարեցնել",
+    "prev_file": "Նախորդ ֆայլը",
+    "next_file": "Հաջորդ ֆայլը",
+    "seek_backward": "Հետ պտտել 10 վրկ",
+    "seek_forward": "Առաջ պտտել 10 վրկ",
+    "seek_backward_60": "Հետ պտտել 60 վրկ",
+    "seek_forward_60": "Առաջ պտտել 60 վրկ",
+    "speed_up": "Արագացնել (0.1x)",
+    "speed_down": "Դանդաղեցնել (0.1x)",
+    "volume_up": "Ձայնը +5%",
+    "volume_down": "Ձայնը -5%",
+    "global_play_pause": "Նվագարկել / Դադարեցնել",
+    "global_pause": "Դադար",
+    "global_forward_10": "Առաջ պտտել 10 վրկ",
+    "global_rewind_10": "Հետ պտտել 10 վրկ",
+    "keys": {
+      "space": "Բացատ",
+      "shift": "Shift"
+    }
   }
 }

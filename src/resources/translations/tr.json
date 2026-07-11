@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "Her seviye için farklı renkler yerine tüm iç içe geçmiş çizgiler için tek bir renk kullanın",
     "nesting_lines_color_label": "İç İçe Geçmiş Çizgi Rengi:",
     "nesting_lines_color_tooltip": "İç içe geçmiş çizgiler için renk seçin (varsayılan #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "Oynatma Kısayolları",
+    "category_global": "Genel Medya Tuşları (arka planda)",
+    "toggle_pause": "Oynat / Duraklat",
+    "prev_file": "Önceki Dosya",
+    "next_file": "Sonraki Dosya",
+    "seek_backward": "10 sn Geri Al",
+    "seek_forward": "10 sn İleri Al",
+    "seek_backward_60": "60 sn Geri Al",
+    "seek_forward_60": "60 sn İleri Al",
+    "speed_up": "Hızı Artır (0.1x)",
+    "speed_down": "Hızı Azalt (0.1x)",
+    "volume_up": "Ses +5%",
+    "volume_down": "Ses -5%",
+    "global_play_pause": "Oynat / Duraklat",
+    "global_pause": "Duraklat",
+    "global_forward_10": "10 sn İleri Al",
+    "global_rewind_10": "10 sn Geri Al",
+    "keys": {
+      "space": "Boşluk",
+      "shift": "Shift"
+    }
   }
 }

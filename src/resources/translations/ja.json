@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "階層ごとに異なる色を使用する代わりに、すべてのネストラインに単一の色を使用します",
     "nesting_lines_color_label": "ネストラインの色:",
     "nesting_lines_color_tooltip": "ネストラインの色を選択します（デフォルト #808080）"
+  },
+  "hotkeys": {
+    "category_playback": "再生ショートカット",
+    "category_global": "グローバルメディアキー (バックグラウンド)",
+    "toggle_pause": "再生 / 一時停止",
+    "prev_file": "前のファイル",
+    "next_file": "次のファイル",
+    "seek_backward": "10秒戻す",
+    "seek_forward": "10秒進める",
+    "seek_backward_60": "60秒戻す",
+    "seek_forward_60": "60秒進める",
+    "speed_up": "速度を上げる (0.1x)",
+    "speed_down": "速度を下げる (0.1x)",
+    "volume_up": "音量 +5%",
+    "volume_down": "音量 -5%",
+    "global_play_pause": "再生 / 一時停止",
+    "global_pause": "一時停止",
+    "global_forward_10": "10秒進める",
+    "global_rewind_10": "10秒戻す",
+    "keys": {
+      "space": "スペース",
+      "shift": "Shift"
+    }
   }
 }

@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "Verwenden Sie eine einzige Farbe für alle Verschachtelungslinien anstelle von unterschiedlichen Farben für jede Ebene",
     "nesting_lines_color_label": "Farbe der Verschachtelungslinien:",
     "nesting_lines_color_tooltip": "Wählen Sie die Farbe für Verschachtelungslinien (Standard #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "Wiedergabe-Tastenkombinationen",
+    "category_global": "Globale Medientasten (im Hintergrund)",
+    "toggle_pause": "Wiedergabe / Pause",
+    "prev_file": "Vorherige Datei",
+    "next_file": "Nächste Datei",
+    "seek_backward": "10s zurückspulen",
+    "seek_forward": "10s vorspulen",
+    "seek_backward_60": "60s zurückspulen",
+    "seek_forward_60": "60s vorspulen",
+    "speed_up": "Schneller (0.1x)",
+    "speed_down": "Langsamer (0.1x)",
+    "volume_up": "Lautstärke +5%",
+    "volume_down": "Lautstärke -5%",
+    "global_play_pause": "Wiedergabe / Pause",
+    "global_pause": "Pause",
+    "global_forward_10": "10s vorspulen",
+    "global_rewind_10": "10s zurückspulen",
+    "keys": {
+      "space": "Leertaste",
+      "shift": "Shift"
+    }
   }
 }

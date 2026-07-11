@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "각 단계별로 다른 색상을 사용하는 대신 모든 중첩 선에 단일 색상을 사용합니다",
     "nesting_lines_color_label": "중첩 선 색상:",
     "nesting_lines_color_tooltip": "중첩 선의 색상을 선택합니다 (기본값 #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "재생 단축키",
+    "category_global": "글로벌 미디어 키 (백그라운드)",
+    "toggle_pause": "재생 / 일시 중지",
+    "prev_file": "이전 파일",
+    "next_file": "다음 파일",
+    "seek_backward": "10초 되감기",
+    "seek_forward": "10초 빨리 감기",
+    "seek_backward_60": "60초 되감기",
+    "seek_forward_60": "60초 빨리 감기",
+    "speed_up": "속도 올림 (0.1x)",
+    "speed_down": "속도 내림 (0.1x)",
+    "volume_up": "볼륨 +5%",
+    "volume_down": "볼륨 -5%",
+    "global_play_pause": "재생 / 일시 중지",
+    "global_pause": "일시 중지",
+    "global_forward_10": "10초 빨리 감기",
+    "global_rewind_10": "10초 되감기",
+    "keys": {
+      "space": "스페이스",
+      "shift": "Shift"
+    }
   }
 }

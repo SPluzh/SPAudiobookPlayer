@@ -76,7 +76,7 @@ def is_naturally_identical(key, value):
         "ffprobe", "jpg", "jpeg", "png", "webp", "bmp", "vad", "rnnoise", "cue", "m3u", "m3u8", "id3",
         "ar", "ds", "rg", "lv", "st", "preset", "audiobooks", "volume", "pitch", "ns", "tags", "menu", "kbps",
         "color", "error", "pause", "database", "path", "bitrate", "april", "september", "november", "retro", "streaming", "default",
-        "cover", "parsing", "update", "ffmpeg", "version", "august"
+        "cover", "parsing", "update", "ffmpeg", "version", "august", "shift"
     }
     
     cleaned = value.lower()

@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "استخدم لونًا واحدًا لجميع خطوط التداخل بدلاً من ألوان مختلفة لكل مستوى",
     "nesting_lines_color_label": "لون خطوط التداخل:",
     "nesting_lines_color_tooltip": "اختر لونًا لخطوط التداخل (الافتراضي #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "اختصارات التشغيل",
+    "category_global": "مفاتيح الوسائط العامة (في الخلفية)",
+    "toggle_pause": "تشغيل / إيقاف مؤقت",
+    "prev_file": "الملف السابق",
+    "next_file": "الملف التالي",
+    "seek_backward": "إرجاع 10 ثوان",
+    "seek_forward": "تقديم 10 ثوان",
+    "seek_backward_60": "إرجاع 60 ثانية",
+    "seek_forward_60": "تقديم 60 ثانية",
+    "speed_up": "تسريع (0.1x)",
+    "speed_down": "تبطيء (0.1x)",
+    "volume_up": "زيادة الصوت +5%",
+    "volume_down": "خفض الصوت -5%",
+    "global_play_pause": "تشغيل / إإيقاف مؤقت",
+    "global_pause": "إيقاف مؤقت",
+    "global_forward_10": "تقديم 10 ثوان",
+    "global_rewind_10": "إرجاع 10 ثوان",
+    "keys": {
+      "space": "مسافة",
+      "shift": "Shift"
+    }
   }
 }

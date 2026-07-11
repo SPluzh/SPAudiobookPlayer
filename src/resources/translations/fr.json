@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "Utiliser une seule couleur pour toutes les lignes d'imbrication au lieu de couleurs différentes pour chaque niveau",
     "nesting_lines_color_label": "Couleur des lignes d'imbrication :",
     "nesting_lines_color_tooltip": "Choisissez la couleur des lignes d'imbrication (par défaut #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "Raccourcis de lecture",
+    "category_global": "Touches multimédias globales (en arrière-plan)",
+    "toggle_pause": "Lecture / Pause",
+    "prev_file": "Fichier précédent",
+    "next_file": "Fichier suivant",
+    "seek_backward": "Reculer de 10s",
+    "seek_forward": "Avancer de 10s",
+    "seek_backward_60": "Reculer de 60s",
+    "seek_forward_60": "Avancer de 60s",
+    "speed_up": "Accélérer (0.1x)",
+    "speed_down": "Ralentir (0.1x)",
+    "volume_up": "Volume +5%",
+    "volume_down": "Volume -5%",
+    "global_play_pause": "Lecture / Pause",
+    "global_pause": "Pause",
+    "global_forward_10": "Avancer de 10s",
+    "global_rewind_10": "Reculer de 10s",
+    "keys": {
+      "space": "Espace",
+      "shift": "Shift"
+    }
   }
 }

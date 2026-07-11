@@ -613,5 +613,28 @@
     "nesting_lines_single_color_tooltip": "ใช้สีเดียวสำหรับเส้นซ้อนทั้งหมดแทนที่จะใช้สีต่างกันสำหรับแต่ละระดับ",
     "nesting_lines_color_label": "สีของเส้นซ้อน:",
     "nesting_lines_color_tooltip": "เลือกสีสำหรับเส้นซ้อน (ค่าเริ่มต้น #808080)"
+  },
+  "hotkeys": {
+    "category_playback": "ปุ่มลัดการเล่น",
+    "category_global": "ปุ่มสื่อส่วนกลาง (ในพื้นหลัง)",
+    "toggle_pause": "เล่น / หยุดชั่วคราว",
+    "prev_file": "ไฟล์ก่อนหน้า",
+    "next_file": "ไฟล์ถัดไป",
+    "seek_backward": "ย้อนกลับ 10 วินาที",
+    "seek_forward": "ไปข้างหน้า 10 วินาที",
+    "seek_backward_60": "ย้อนกลับ 60 วินาที",
+    "seek_forward_60": "ไปข้างหน้า 60 วินาที",
+    "speed_up": "เพิ่มความเร็ว (0.1x)",
+    "speed_down": "ลดความเร็ว (0.1x)",
+    "volume_up": "เพิ่มระดับเสียง +5%",
+    "volume_down": "ลดระดับเสียง -5%",
+    "global_play_pause": "เล่น / หยุดชั่วคราว",
+    "global_pause": "หยุดชั่วคราว",
+    "global_forward_10": "ไปข้างหน้า 10 วินาที",
+    "global_rewind_10": "ย้อนกลับ 10 วินาที",
+    "keys": {
+      "space": "สเปซบาร์",
+      "shift": "Shift"
+    }
   }
 }
