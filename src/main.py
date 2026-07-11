@@ -154,6 +154,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_status_triangle = True
         self.show_statusbar = True
         self.show_subtitles = False
+        self.subtitle_autoscroll = True
         
         # Book info settings
         self.show_info_progress = True
@@ -439,6 +440,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.subtitle_panel.translation_on_hover_changed.connect(
             self.on_subtitle_translation_on_hover_changed
         )
+        self.player_widget.subtitle_panel.autoscroll_changed.connect(
+            self.on_subtitle_autoscroll_changed
+        )
 
         # Set initial states
         self.player_widget.id3_btn.setChecked(self.show_id3)
@@ -458,6 +462,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.subtitle_panel.font_size = self.subtitle_font_size
         self.player_widget.subtitle_panel.translation_on_hover = (
             self.subtitle_translation_on_hover
+        )
+        self.player_widget.subtitle_panel.autoscroll = (
+            self.subtitle_autoscroll
         )
 
         # Set initial values for sliders
@@ -1101,6 +1108,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.subtitle_translation_on_hover = config.getboolean(
             "Player", "subtitle_translation_on_hover", fallback=True
         )
+        self.subtitle_autoscroll = config.getboolean(
+            "Player", "subtitle_autoscroll", fallback=True
+        )
 
         # Audio Settings (Unified in [Audio])
         self.deesser_enabled = config.getboolean(
@@ -1294,6 +1304,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "show_subtitles": "False",
             "subtitle_font_size": "15",
             "subtitle_translation_on_hover": "True",
+            "subtitle_autoscroll": "True",
         }
         config["Library"] = {
             "show_folders": "False",
@@ -1444,6 +1455,9 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Player"]["subtitle_font_size"] = str(self.subtitle_font_size)
         config["Player"]["subtitle_translation_on_hover"] = str(
             self.subtitle_translation_on_hover
+        )
+        config["Player"]["subtitle_autoscroll"] = str(
+            self.subtitle_autoscroll
         )
 
         if "Audio" not in config:
@@ -1709,6 +1723,11 @@ class AudiobookPlayerWindow(QMainWindow):
     def on_subtitle_translation_on_hover_changed(self, enabled: bool):
         """Update and persist the translation-on-hover preference"""
         self.subtitle_translation_on_hover = enabled
+        self.save_settings()
+
+    def on_subtitle_autoscroll_changed(self, enabled: bool):
+        """Update and persist the subtitle auto-scroll preference"""
+        self.subtitle_autoscroll = enabled
         self.save_settings()
 
     def on_auto_rewind_state_toggled(self, state: bool):

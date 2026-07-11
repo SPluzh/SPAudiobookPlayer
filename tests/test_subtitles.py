@@ -206,3 +206,60 @@ def test_subtitle_translation_toggle():
     assert panel.btn_translation_toggle.isChecked() is True
     assert panel.browser.translation_on_hover is True
     assert emitted_states == [False, True]
+
+def test_subtitle_autoscroll():
+    """Verify that autoscroll attribute, toggle button, and signals work correctly"""
+    panel = SubtitlePanel()
+    
+    # Check default state
+    assert panel.autoscroll is True
+    assert panel.btn_autoscroll_toggle.isChecked() is True
+    
+    # Listen to signal
+    emitted_states = []
+    panel.autoscroll_changed.connect(emitted_states.append)
+    
+    # Simulate clicking toggle button to turn off autoscroll
+    panel.btn_autoscroll_toggle.click()
+    assert panel.autoscroll is False
+    assert panel.btn_autoscroll_toggle.isChecked() is False
+    assert emitted_states == [False]
+    
+    # Toggle it back on
+    panel.btn_autoscroll_toggle.click()
+    assert panel.autoscroll is True
+    assert panel.btn_autoscroll_toggle.isChecked() is True
+    assert emitted_states == [False, True]
+
+def test_subtitle_autoscroll_hover_field():
+    """Verify that autoscroll is automatically disabled when the user hovers over the subtitles field and restored when they leave it"""
+    panel = SubtitlePanel()
+    
+    # Case 1: Translation is enabled
+    panel.autoscroll = True
+    panel.translation_on_hover = True
+    
+    emitted_states = []
+    panel.autoscroll_changed.connect(emitted_states.append)
+    
+    # Simulate mouse entering the subtitles field
+    panel._on_browser_entered()
+    assert panel.autoscroll is False
+    assert panel.btn_autoscroll_toggle.isChecked() is False
+    assert emitted_states == [False]
+    
+    # Simulate mouse leaving the subtitles field
+    panel._on_browser_left()
+    assert panel.autoscroll is True
+    assert panel.btn_autoscroll_toggle.isChecked() is True
+    assert emitted_states == [False, True]
+    
+    # Case 2: Translation is disabled -> entering should NOT turn off autoscroll
+    panel.autoscroll = True
+    panel.translation_on_hover = False
+    emitted_states.clear()
+    
+    panel._on_browser_entered()
+    assert panel.autoscroll is True
+    assert panel.btn_autoscroll_toggle.isChecked() is True
+    assert len(emitted_states) == 0

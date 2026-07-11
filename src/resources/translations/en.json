@@ -183,7 +183,8 @@
     "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})",
     "zoom_in": "Increase subtitle size",
     "zoom_out": "Decrease subtitle size",
-    "translation_on_hover": "Toggle translation on hover"
+    "translation_on_hover": "Toggle translation on hover",
+    "autoscroll": "Toggle auto-scroll"
   },
   "status": {
     "load_library": "📚 Load audiobook library",

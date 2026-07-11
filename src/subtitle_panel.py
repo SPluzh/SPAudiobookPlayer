@@ -96,6 +96,8 @@ class InteractiveSubBrowser(QTextBrowser):
     wordHovered = pyqtSignal(str, QPoint)      # (word, global_pos)
     selectionSelected = pyqtSignal(str, QPoint) # (text, global_pos)
     hoverCleared = pyqtSignal()
+    mouseEntered = pyqtSignal()
+    mouseLeft = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -234,6 +236,14 @@ class InteractiveSubBrowser(QTextBrowser):
             import logging
             logging.error(f"Error in mouseReleaseEvent: {e}", exc_info=True)
 
+    def enterEvent(self, event):
+        try:
+            self.mouseEntered.emit()
+            super().enterEvent(event)
+        except Exception as e:
+            import logging
+            logging.error(f"Error in enterEvent: {e}", exc_info=True)
+
     def leaveEvent(self, event):
         try:
             self.hover_timer.stop()
@@ -242,6 +252,7 @@ class InteractiveSubBrowser(QTextBrowser):
                 cursor.clearSelection()
                 self.setTextCursor(cursor)
             self.clear_highlight()
+            self.mouseLeft.emit()
             super().leaveEvent(event)
         except Exception as e:
             import logging
@@ -252,6 +263,7 @@ class SubtitlePanel(QWidget):
     """Subtitle panel with active line highlighting and auto-scrolling"""
     font_size_changed = pyqtSignal(int)
     translation_on_hover_changed = pyqtSignal(bool)
+    autoscroll_changed = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -260,14 +272,19 @@ class SubtitlePanel(QWidget):
         self._current_idx: int = -1
         self._font_size: int = 15
         self._translation_on_hover: bool = True
+        self._autoscroll: bool = True
+        self._autoscroll_suspended: bool = False
         self._setup_ui()
         self.translation_on_hover = True
+        self.autoscroll = True
         
         # Instantiate Translation Popup
         self.translation_popup = TranslationPopup(self)
         self.browser.wordHovered.connect(self._on_word_hovered)
         self.browser.selectionSelected.connect(self._on_selection_selected)
         self.browser.hoverCleared.connect(self._on_hover_cleared)
+        self.browser.mouseEntered.connect(self._on_browser_entered)
+        self.browser.mouseLeft.connect(self._on_browser_left)
 
     def _setup_ui(self):
         lay = QVBoxLayout(self)
@@ -300,6 +317,14 @@ class SubtitlePanel(QWidget):
         self.btn_translation_toggle.clicked.connect(self._on_translation_toggle_clicked)
         controls_layout.addWidget(self.btn_translation_toggle)
 
+        self.btn_autoscroll_toggle = QPushButton()
+        self.btn_autoscroll_toggle.setFixedWidth(24)
+        self.btn_autoscroll_toggle.setCheckable(True)
+        self.btn_autoscroll_toggle.setObjectName("subAutoscrollToggleBtn")
+        self.btn_autoscroll_toggle.setIcon(get_icon("chevrons-down"))
+        self.btn_autoscroll_toggle.clicked.connect(self._on_autoscroll_toggle_clicked)
+        controls_layout.addWidget(self.btn_autoscroll_toggle)
+
         lay.addLayout(controls_layout)
 
         # Use the interactive browser class instead of standard QTextBrowser
@@ -322,6 +347,18 @@ class SubtitlePanel(QWidget):
 
     def _on_hover_cleared(self):
         self.translation_popup.hide_timer.start(500)
+
+    def _on_browser_entered(self):
+        if self.translation_on_hover and self.autoscroll:
+            self._autoscroll_suspended = True
+            self.autoscroll = False
+            self.autoscroll_changed.emit(False)
+
+    def _on_browser_left(self):
+        if self._autoscroll_suspended:
+            self._autoscroll_suspended = False
+            self.autoscroll = True
+            self.autoscroll_changed.emit(True)
 
     @property
     def font_size(self) -> int:
@@ -348,6 +385,22 @@ class SubtitlePanel(QWidget):
         self.translation_on_hover = checked
         self.translation_on_hover_changed.emit(checked)
 
+    @property
+    def autoscroll(self) -> bool:
+        return self._autoscroll
+
+    @autoscroll.setter
+    def autoscroll(self, enabled: bool):
+        self._autoscroll = enabled
+        self.btn_autoscroll_toggle.setChecked(enabled)
+        if enabled and self._current_idx >= 0:
+            self._scroll_to_current()
+
+    def _on_autoscroll_toggle_clicked(self, checked: bool):
+        self._autoscroll_suspended = False
+        self.autoscroll = checked
+        self.autoscroll_changed.emit(checked)
+
     def decrease_font_size(self):
         new_size = max(10, self._font_size - 1)
         if new_size != self._font_size:
@@ -364,7 +417,8 @@ class SubtitlePanel(QWidget):
         """Update tooltips for control buttons on language change"""
         self.btn_zoom_in.setToolTip(tr("player.zoom_in"))
         self.btn_zoom_out.setToolTip(tr("player.zoom_out"))
-        self.btn_translation_toggle.setToolTip(tr("player.translation_on_hover", "Translation on hover"))
+        self.btn_translation_toggle.setToolTip(tr("player.translation_on_hover", "Toggle translation on hover"))
+        self.btn_autoscroll_toggle.setToolTip(tr("player.autoscroll", "Toggle auto-scroll"))
 
     # -- Public API ---------------------------------------------
 
@@ -411,6 +465,29 @@ class SubtitlePanel(QWidget):
                 lo = mid + 1
         return result
 
+    def _scroll_to_current(self):
+        """Scroll browser to center the active subtitle entry"""
+        if self._current_idx < 0 or not self._entries:
+            return
+            
+        entry = self._entries[self._current_idx]
+        block = None
+        first_line = entry.text.split('\n')[0].strip()
+        if first_line:
+            cursor = self.browser.document().find(first_line)
+            if not cursor.isNull():
+                block = cursor.block()
+        
+        if not block or not block.isValid():
+            block = self.browser.document().findBlockByNumber(self._current_idx)
+            
+        if block and block.isValid():
+            rect = self.browser.document().documentLayout().blockBoundingRect(block)
+            view_h = self.browser.viewport().height()
+            sb = self.browser.verticalScrollBar()
+            target_scroll = int(rect.top() + rect.height() / 2.0 - view_h / 2.0)
+            sb.setValue(max(sb.minimum(), min(sb.maximum(), target_scroll)))
+
     def _render(self):
         """Render HTML with current line highlighting and scroll to it"""
         parts = []
@@ -427,25 +504,14 @@ body {{ margin: 6px; }}
 p {{ margin: 2px 0; padding: 2px 6px; border-radius: 3px; line-height: 1.5; color: #a0a0a0; font-size: {self._font_size}px; }}
 p.active {{ color: #ffffff; font-weight: 600; }}
 </style>"""
+        
+        sb = self.browser.verticalScrollBar()
+        scroll_val = sb.value()
+        
         self.browser.setHtml(
             f'<html><head>{css}</head><body>{"".join(parts)}</body></html>'
         )
-        if self._current_idx >= 0:
-            entry = self._entries[self._current_idx]
-            
-            block = None
-            first_line = entry.text.split('\n')[0].strip()
-            if first_line:
-                cursor = self.browser.document().find(first_line)
-                if not cursor.isNull():
-                    block = cursor.block()
-            
-            if not block or not block.isValid():
-                block = self.browser.document().findBlockByNumber(self._current_idx)
-                
-            if block and block.isValid():
-                rect = self.browser.document().documentLayout().blockBoundingRect(block)
-                view_h = self.browser.viewport().height()
-                sb = self.browser.verticalScrollBar()
-                target_scroll = int(rect.top() + rect.height() / 2.0 - view_h / 2.0)
-                sb.setValue(max(sb.minimum(), min(sb.maximum(), target_scroll)))
+        if self._autoscroll:
+            self._scroll_to_current()
+        else:
+            sb.setValue(scroll_val)

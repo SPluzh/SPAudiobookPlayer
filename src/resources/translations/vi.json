@@ -183,7 +183,8 @@
     "show_subtitles": "Hiển thị bảng phụ đề",
     "zoom_in": "Tăng kích thước phụ đề",
     "zoom_out": "Giảm kích thước phụ đề",
-    "translation_on_hover": "Bật/tắt dịch khi di chuột"
+    "translation_on_hover": "Bật/tắt dịch khi di chuột",
+    "autoscroll": "Bật/tắt cuộn tự động"
   },
   "status": {
     "load_library": "📚 Tải thư viện sách nói",

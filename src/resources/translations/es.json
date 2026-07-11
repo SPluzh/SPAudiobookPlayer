@@ -165,7 +165,8 @@
     "show_subtitles": "Mostrar panel de subtítulos",
     "zoom_in": "Aumentar tamaño de subtítulos",
     "zoom_out": "Disminuir tamaño de subtítulos",
-    "translation_on_hover": "Activar/desactivar la traducción al pasar el cursor"
+    "translation_on_hover": "Activar/desactivar la traducción al pasar el cursor",
+    "autoscroll": "Alternar desplazamiento automático"
   },
   "status": {
     "load_library": "📚 Cargar biblioteca de audiolibros",

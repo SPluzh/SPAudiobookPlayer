@@ -165,7 +165,8 @@
     "show_subtitles": "Untertitel-Panel anzeigen",
     "zoom_in": "Untertitel vergrößern",
     "zoom_out": "Untertitel verkleinern",
-    "translation_on_hover": "Übersetzung beim Hovern umschalten"
+    "translation_on_hover": "Übersetzung beim Hovern umschalten",
+    "autoscroll": "Automatisches Scrollen umschalten"
   },
   "status": {
     "load_library": "📚 Hörbuch-Bibliothek laden",

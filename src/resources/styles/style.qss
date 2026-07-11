@@ -75,7 +75,7 @@ QPushButton#playBtn {
 }
 
 /* ID3 & Subtitles Toggle Buttons & Subtitle Zoom Buttons */
-QPushButton#id3Btn, QPushButton#subtitlesBtn, QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslationToggleBtn {
+QPushButton#id3Btn, QPushButton#subtitlesBtn, QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslationToggleBtn, QPushButton#subAutoscrollToggleBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
@@ -90,17 +90,17 @@ QPushButton#id3Btn, QPushButton#subtitlesBtn {
     margin-top: 2px;
 }
 
-QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslationToggleBtn {
+QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslationToggleBtn, QPushButton#subAutoscrollToggleBtn {
     margin-top: 0px;
 }
 
-QPushButton#id3Btn:hover, QPushButton#subtitlesBtn:hover, QPushButton#subSizeMinusBtn:hover, QPushButton#subSizePlusBtn:hover, QPushButton#subTranslationToggleBtn:hover {
+QPushButton#id3Btn:hover, QPushButton#subtitlesBtn:hover, QPushButton#subSizeMinusBtn:hover, QPushButton#subSizePlusBtn:hover, QPushButton#subTranslationToggleBtn:hover, QPushButton#subAutoscrollToggleBtn:hover {
     background-color: @accent;
     border-color: @accent;
     color: @text-bright;
 }
 
-QPushButton#id3Btn:checked, QPushButton#subtitlesBtn:checked, QPushButton#subTranslationToggleBtn:checked {
+QPushButton#id3Btn:checked, QPushButton#subtitlesBtn:checked, QPushButton#subTranslationToggleBtn:checked, QPushButton#subAutoscrollToggleBtn:checked {
     background-color: @accent;
     border-color: @accent;
     font-weight: bold;

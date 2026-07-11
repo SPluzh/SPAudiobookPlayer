@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - **Subtitles**: Added interactive word translation on hover and selection with a translation popup, plus a toggle button next to subtitle zoom controls to enable/disable hover translation (with settings persistence).
 - **Subtitles**: Added a splitter between the subtitles panel and the track list, allowing users to dynamically adjust their heights or fully collapse either panel.
 - **Subtitles**: Added font size zoom controls (+/- buttons) to the subtitle panel with customizable text size and settings persistence.
+- **Subtitles**: Added an auto-scroll toggle button to enable or disable automatic scrolling to the active subtitle block (with settings persistence), automatically suspending auto-scroll when the cursor enters the subtitle browser field (if hover translation is active) and restoring it when the cursor leaves.
 
 ## [1.8.1]
 - **UI**: Redesigned the hotkeys and global media keys sections in the About dialog to display shortcuts in a polished, grid-based keyboard key layout.

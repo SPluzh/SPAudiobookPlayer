@@ -165,7 +165,8 @@
     "show_subtitles": "显示字幕面板",
     "zoom_in": "增大字幕大小",
     "zoom_out": "减小字幕大小",
-    "translation_on_hover": "切换悬停翻译"
+    "translation_on_hover": "切换悬停翻译",
+    "autoscroll": "切换自动滚动"
   },
   "status": {
     "load_library": "📚 加载有声书库",
