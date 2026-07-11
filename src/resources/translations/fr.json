@@ -160,7 +160,9 @@
     "restoring_position": "⏩ Restauration de la position...",
     "seeking": "⏩ Recherche de position... (tentative {attempt})",
     "stream_ready": "▶ Flux prêt",
-    "connecting_retry": "❌ Échec de la connexion. Nouvelle tentative... (tentative {attempt} sur {max_attempts})"
+    "connecting_retry": "❌ Échec de la connexion. Nouvelle tentative... (tentative {attempt} sur {max_attempts})",
+    "btn_subtitles": "Sous",
+    "show_subtitles": "Afficher le panneau des sous-titres"
   },
   "status": {
     "load_library": "📚 Chargement de la bibliothèque",

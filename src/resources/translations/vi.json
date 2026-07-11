@@ -178,7 +178,9 @@
     "restoring_position": "⏩ Đang khôi phục vị trí...",
     "seeking": "⏩ Đang tìm vị trí... (thử lần {attempt})",
     "stream_ready": "▶ Luồng phát đã sẵn sàng",
-    "connecting_retry": "❌ Kết nối thất bại. Đang thử lại... (lần thử {attempt} trên {max_attempts})"
+    "connecting_retry": "❌ Kết nối thất bại. Đang thử lại... (lần thử {attempt} trên {max_attempts})",
+    "btn_subtitles": "Phụ",
+    "show_subtitles": "Hiển thị bảng phụ đề"
   },
   "status": {
     "load_library": "📚 Tải thư viện sách nói",

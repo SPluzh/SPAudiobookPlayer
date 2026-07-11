@@ -160,7 +160,9 @@
     "restoring_position": "⏩ Restaurando posição...",
     "seeking": "⏩ Buscando posição... (tentativa {attempt})",
     "stream_ready": "▶ Transmissão pronta",
-    "connecting_retry": "❌ Falha na conexão. Tentando novamente... (tentativa {attempt} de {max_attempts})"
+    "connecting_retry": "❌ Falha na conexão. Tentando novamente... (tentativa {attempt} de {max_attempts})",
+    "btn_subtitles": "Leg",
+    "show_subtitles": "Mostrar painel de legendas"
   },
   "status": {
     "load_library": "📚 Carregar biblioteca de audiolivros",

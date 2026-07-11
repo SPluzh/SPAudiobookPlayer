@@ -160,7 +160,9 @@
     "restoring_position": "⏩ 再生位置を復元しています...",
     "seeking": "⏩ 再生位置を探しています... (試行 {attempt})",
     "stream_ready": "▶ ストリーム準備完了",
-    "connecting_retry": "❌ 接続に失敗しました。再試行中... (試行 {attempt} / {max_attempts})"
+    "connecting_retry": "❌ 接続に失敗しました。再試行中... (試行 {attempt} / {max_attempts})",
+    "btn_subtitles": "字幕",
+    "show_subtitles": "字幕パネルを表示"
   },
   "status": {
     "load_library": "📚 ライブラリを読み込み中",

@@ -178,7 +178,9 @@
     "restoring_position": "⏩ Memulihkan posisi...",
     "seeking": "⏩ Mencari posisi... (percobaan {attempt})",
     "stream_ready": "▶ Aliran siap",
-    "connecting_retry": "❌ Koneksi gagal. Mencoba kembali... (percobaan {attempt} dari {max_attempts})"
+    "connecting_retry": "❌ Koneksi gagal. Mencoba kembali... (percobaan {attempt} dari {max_attempts})",
+    "btn_subtitles": "Sub",
+    "show_subtitles": "Tampilkan panel subtitle"
   },
   "status": {
     "load_library": "📚 Muat perpustakaan audiobook",

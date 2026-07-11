@@ -160,7 +160,9 @@
     "restoring_position": "⏩ 재생 위치를 복구하는 중...",
     "seeking": "⏩ 재생 위치를 찾는 중... ({attempt}차 시도)",
     "stream_ready": "▶ 스트림 준비 완료",
-    "connecting_retry": "❌ 연결 실패. 재시도 중... ({max_attempts} 중 {attempt}차 시도)"
+    "connecting_retry": "❌ 연결 실패. 재시도 중... ({max_attempts} 중 {attempt}차 시도)",
+    "btn_subtitles": "자막",
+    "show_subtitles": "자막 패널 표시"
   },
   "status": {
     "load_library": "📚 오디오북 라이브러리 불러오기",

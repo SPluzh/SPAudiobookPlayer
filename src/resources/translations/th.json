@@ -178,7 +178,9 @@
     "restoring_position": "⏩ กำลังกู้คืนตำแหน่ง...",
     "seeking": "⏩ กำลังค้นหาตำแหน่ง... (พยายามครั้งที่ {attempt})",
     "stream_ready": "▶ สตรีมพร้อมใช้งาน",
-    "connecting_retry": "❌ เชื่อมต่อล้มเหลว กำลังลองใหม่... (พยายามครั้งที่ {attempt} จาก {max_attempts})"
+    "connecting_retry": "❌ เชื่อมต่อล้มเหลว กำลังลองใหม่... (พยายามครั้งที่ {attempt} จาก {max_attempts})",
+    "btn_subtitles": "ซับ",
+    "show_subtitles": "แสดงแผงคำบรรยาย"
   },
   "status": {
     "load_library": "📚 กำลังโหลดคลังหนังสือเสียง",

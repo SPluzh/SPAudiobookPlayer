@@ -178,7 +178,9 @@
     "restoring_position": "⏩ Դիրքի վերականգնում...",
     "seeking": "⏩ Դիրքի որոնում... (փորձ {attempt})",
     "stream_ready": "▶ Հոսքը պատրաստ է",
-    "connecting_retry": "❌ Միացման սխալ: Կրկին փորձ... (փորձ {attempt}-ը {max_attempts}-ից)"
+    "connecting_retry": "❌ Միացման սխալ: Կրկին փորձ... (փորձ {attempt}-ը {max_attempts}-ից)",
+    "btn_subtitles": "Ենթ",
+    "show_subtitles": "Ցուցադրել ենթագրերի վահանակը"
   },
   "status": {
     "load_library": "📚 Բեռնել աուդիոգրքերի գրադարանը",

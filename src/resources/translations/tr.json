@@ -160,7 +160,9 @@
     "restoring_position": "⏩ Konum geri yükleniyor...",
     "seeking": "⏩ Konum aranıyor... (deneme {attempt})",
     "stream_ready": "▶ Akış hazır",
-    "connecting_retry": "❌ Bağlantı başarısız. Yeniden deneniyor... (deneme {attempt} / {max_attempts})"
+    "connecting_retry": "❌ Bağlantı başarısız. Yeniden deneniyor... (deneme {attempt} / {max_attempts})",
+    "btn_subtitles": "Alt",
+    "show_subtitles": "Altyazı panelini göster"
   },
   "status": {
     "load_library": "📚 Sesli kitap kütüphanesini yükle",

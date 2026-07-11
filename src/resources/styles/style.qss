@@ -74,8 +74,8 @@ QPushButton#playBtn {
     /* min-width removed to allow stretching */
 }
 
-/* ID3 Toggle Button */
-QPushButton#id3Btn {
+/* ID3 & Subtitles Toggle Buttons */
+QPushButton#id3Btn, QPushButton#subtitlesBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
@@ -87,13 +87,13 @@ QPushButton#id3Btn {
     border-radius: 3px;
 }
 
-QPushButton#id3Btn:hover {
+QPushButton#id3Btn:hover, QPushButton#subtitlesBtn:hover {
     background-color: @accent;
     border-color: @accent;
     color: @text-bright;
 }
 
-QPushButton#id3Btn:checked {
+QPushButton#id3Btn:checked, QPushButton#subtitlesBtn:checked {
     background-color: @accent;
     border-color: @accent;
     font-weight: bold;
@@ -449,6 +449,13 @@ QLineEdit:disabled, QTextEdit:disabled {
     background-color: @bg-disabled;
     color: @text-disabled;
     border-color: @bg-disabled;
+}
+
+QTextBrowser#subtitleText,
+QTextBrowser#subtitleText:focus,
+QTextBrowser#subtitleText:hover {
+    background-color: @bg-dark;
+    border: none;
 }
 
 
@@ -1651,4 +1658,24 @@ QSlider.hue-slider::handle:horizontal:hover {
 /* Theme proxies */
 #tile_background {
     color: @bg-main;
+}
+
+/* ============================================================
+   SUBTITLES SYSTEM
+   ============================================================ */
+
+QWidget#subtitlePanel {
+    background-color: @bg-dark;
+    border-top: 1px solid @border;
+    border-bottom: 1px solid @border;
+}
+
+QTextBrowser#subtitleBrowser {
+    background-color: @bg-dark;
+    border: none;
+    color: @text-disabled;
+    font-size: 15px;
+    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    line-height: 1.6;
+    padding: 10px;
 }

@@ -12,6 +12,7 @@ from PyQt6.QtGui import QPainter, QPen, QColor, QPaintEvent
 from bass_player import BassPlayer
 from database import DatabaseManager
 from translations import tr, trf
+from subtitle_panel import SubtitlePanel
 
 from utils import get_icon, format_time, format_time_short
 from visualizer import VisualizerButton
@@ -109,14 +110,15 @@ class PlaybackController:
         files = self.db.get_audiobook_files(audiobook_id)
         self.files_list = []
         
-        for file_path, file_name, duration, track_num, tag_title, start_offset, is_url in files:
+        for file_path, file_name, duration, track_num, tag_title, start_offset, is_url, srt_path in files:
             self.files_list.append({
                 'path': file_path,
                 'name': file_name,
                 'tag_title': tag_title or '',
                 'duration': duration or 0,
                 'start_offset': start_offset or 0,
-                'is_url': bool(is_url)
+                'is_url': bool(is_url),
+                'srt_path': srt_path or ''
             })
         
         # Clear any lingering status from a previous book or show loading for URLs
@@ -714,6 +716,7 @@ class PlayerWidget(QWidget):
     volume_boost_level_changed_signal = pyqtSignal(float)
     bookmarks_clicked = pyqtSignal()
     add_bookmark_clicked = pyqtSignal()
+    subtitles_toggled_signal = pyqtSignal(bool)
     
     def __init__(self):
         """Initialize widget state and prepare basic icon properties"""
@@ -771,6 +774,15 @@ class PlayerWidget(QWidget):
         self.id3_btn.toggled.connect(self.on_id3_toggled)
         btns_row.addWidget(self.id3_btn)
         
+        # Subtitles Toggle
+        self.subtitles_btn = QPushButton(tr("player.btn_subtitles"))
+        self.subtitles_btn.setCheckable(True)
+        self.subtitles_btn.setFixedWidth(40)
+        self.subtitles_btn.setObjectName("subtitlesBtn")
+        self.subtitles_btn.setToolTip(tr("player.show_subtitles"))
+        self.subtitles_btn.toggled.connect(self._on_subtitles_toggled)
+        btns_row.addWidget(self.subtitles_btn)
+        
         # Auto-rewind Toggle
         self.auto_rewind_btn = QPushButton(tr("player.btn_autorewind"))
         self.auto_rewind_btn.setCheckable(True)
@@ -780,10 +792,14 @@ class PlayerWidget(QWidget):
         self.auto_rewind_btn.toggled.connect(self.on_auto_rewind_toggled)
         btns_row.addWidget(self.auto_rewind_btn)
 
-        # Bookmarks layout to group list and add button flush together and prevent overlap on resize
-        bookmarks_layout = QHBoxLayout()
+        # Bookmarks container widget to group list and add button flush together and prevent overlap on resize
+        bookmarks_container = QWidget()
+        bookmarks_container.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        bookmarks_container.setFixedWidth(60)
+        bookmarks_layout = QHBoxLayout(bookmarks_container)
         bookmarks_layout.setSpacing(0)
         bookmarks_layout.setContentsMargins(0, 0, 0, 0)
+        bookmarks_layout.setSizeConstraint(QHBoxLayout.SizeConstraint.SetFixedSize)
 
         # Bookmarks Button
         self.bookmarks_btn = QPushButton(tr("bookmarks.button_label"))
@@ -803,7 +819,7 @@ class PlayerWidget(QWidget):
         self.add_bookmark_btn.clicked.connect(self.add_bookmark_clicked)
         bookmarks_layout.addWidget(self.add_bookmark_btn)
 
-        btns_row.addLayout(bookmarks_layout)
+        btns_row.addWidget(bookmarks_container)
 
         btns_row.addStretch()
         
@@ -1134,6 +1150,11 @@ class PlayerWidget(QWidget):
         player_layout.addLayout(total_box)
         layout.addWidget(player_frame)
         
+        # Subtitle Panel (between player_frame and file_list)
+        self.subtitle_panel = SubtitlePanel()
+        self.subtitle_panel.setVisible(False)
+        layout.addWidget(self.subtitle_panel)
+        
         self.file_list = QListWidget()
         self.file_list.setObjectName("fileList")
         self.file_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
@@ -1288,6 +1309,11 @@ class PlayerWidget(QWidget):
         else:
             self.time_left_label.setText(tr("player.time_left_unknown"))
     
+    def _on_subtitles_toggled(self, checked: bool):
+        """Show/hide the subtitle panel"""
+        self.subtitle_panel.setVisible(checked)
+        self.subtitles_toggled_signal.emit(checked)
+        
     def on_id3_toggled(self, checked):
         self.show_id3 = checked
         if hasattr(self, 'last_files_list') and self.last_files_list:
@@ -1532,6 +1558,10 @@ class PlayerWidget(QWidget):
         # Buttons
         self.id3_btn.setText(tr("player.btn_id3"))
         self.id3_btn.setToolTip(tr("player.show_id3"))
+        
+        if hasattr(self, 'subtitles_btn') and self.subtitles_btn:
+            self.subtitles_btn.setText(tr("player.btn_subtitles"))
+            self.subtitles_btn.setToolTip(tr("player.show_subtitles"))
         
         self.bookmarks_btn.setText(tr("bookmarks.button_label"))
         self.bookmarks_btn.setToolTip(tr("bookmarks.list_title"))

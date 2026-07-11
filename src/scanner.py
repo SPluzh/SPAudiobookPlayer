@@ -207,6 +207,25 @@ class AudiobookScanner:
 
 
     @staticmethod
+    def _find_srt_for_file(audio_path: Path, library_root: Path) -> str:
+        """Find .srt file for the audio file. Returns path relative to library root or empty string."""
+        try:
+            candidates = [
+                audio_path.with_suffix('.srt'),
+                audio_path.parent / 'subtitles' / audio_path.with_suffix('.srt').name,
+                audio_path.parent / 'subtitles' / f'{audio_path.parent.name}.srt',
+            ]
+            for c in candidates:
+                if c.exists():
+                    try:
+                        return str(c.relative_to(library_root))
+                    except ValueError:
+                        return str(c)
+        except Exception:
+            pass
+        return ''
+
+    @staticmethod
     def _fix_encoding(text):
         """Correct text encoding issues (e.g., CP1251 read as Latin-1)"""
         if not text or not isinstance(text, str):
@@ -1199,6 +1218,9 @@ class AudiobookScanner:
         c.execute("DELETE FROM audiobook_files WHERE audiobook_id = ?", (book_id,))
         files_batch = []
         for idx, entry in enumerate(entries, 1):
+            srt_path = ''
+            if not entry['is_url']:
+                srt_path = self._find_srt_for_file(Path(entry['path']), root)
             files_batch.append((
                 book_id,
                 entry['path'] if entry['is_url'] else str(Path(entry['path']).relative_to(root)),
@@ -1208,14 +1230,15 @@ class AudiobookScanner:
                 0.0,
                 entry['title'],
                 '', '', '', '',
-                1 if entry['is_url'] else 0
+                1 if entry['is_url'] else 0,
+                srt_path
             ))
 
         c.executemany("""
             INSERT INTO audiobook_files
             (audiobook_id, file_path, file_name, track_number, duration,
-             start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment, is_url)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+             start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment, is_url, srt_path)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, files_batch)
 
         # Log summary
@@ -3034,6 +3057,7 @@ class AudiobookScanner:
                 for i, (f, info) in enumerate(zip(files, file_analyses), 1):
                     f_tags = self._extract_file_tags(f)
                     file_duration = info['duration']
+                    srt_path = self._find_srt_for_file(f, root)
                     
                     # Check for chapters
                     chapters = []
@@ -3058,7 +3082,8 @@ class AudiobookScanner:
                                 f_tags['author'],
                                 f_tags['album'],
                                 f_tags['genre'],
-                                f_tags['comment']
+                                f_tags['comment'],
+                                srt_path
                             ))
                             virtual_file_index += 1
                     else:
@@ -3078,7 +3103,8 @@ class AudiobookScanner:
                             f_tags['author'],
                             f_tags['album'],
                             f_tags['genre'],
-                            f_tags['comment']
+                            f_tags['comment'],
+                            srt_path
                         ))
                         if not is_merged and f_tags['track'] is not None:
                             virtual_file_index = max(virtual_file_index, f_tags['track'] + 1)
@@ -3090,8 +3116,8 @@ class AudiobookScanner:
                     c.executemany("""
                         INSERT INTO audiobook_files
                         (audiobook_id, file_path, file_name, track_number, duration,
-                         start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment, srt_path)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, files_batch)
 
                 # Update the file_count in audiobooks table
@@ -3480,6 +3506,7 @@ class AudiobookScanner:
         
         files_batch = []
         virtual_file_index = 1
+        srt_path = self._find_srt_for_file(file_path, root)
         
         if chapters:
             for chap in chapters:
@@ -3494,7 +3521,8 @@ class AudiobookScanner:
                     t_author,
                     tags.get('album', ''),
                     tags.get('genre', ''),
-                    tags.get('comment', '')
+                    tags.get('comment', ''),
+                    srt_path
                 ))
                 virtual_file_index += 1
         else:
@@ -3509,15 +3537,16 @@ class AudiobookScanner:
                 t_author,
                 tags.get('album', ''),
                 tags.get('genre', ''),
-                tags.get('comment', '')
+                tags.get('comment', ''),
+                srt_path
             ))
 
         if files_batch:
             c.executemany("""
                 INSERT INTO audiobook_files
                 (audiobook_id, file_path, file_name, track_number, duration,
-                    start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    start_offset, tag_title, tag_artist, tag_album, tag_genre, tag_comment, srt_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, files_batch)
 
         # Update file_count

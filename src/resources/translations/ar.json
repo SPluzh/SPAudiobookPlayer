@@ -160,7 +160,9 @@
     "restoring_position": "⏩ جاري استعادة الموضع...",
     "seeking": "⏩ جاري البحث عن الموضع... (المحاولة {attempt})",
     "stream_ready": "▶ البث جاهز",
-    "connecting_retry": "❌ فشل الاتصال. جاري إعادة المحاولة... (المحاولة {attempt} من {max_attempts})"
+    "connecting_retry": "❌ فشل الاتصال. جاري إعادة المحاولة... (المحاولة {attempt} من {max_attempts})",
+    "btn_subtitles": "ترج",
+    "show_subtitles": "إظهار لوحة الترجمة"
   },
   "status": {
     "load_library": "📚 تحميل مكتبة الكتب الصوتية",

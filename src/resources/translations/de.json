@@ -160,7 +160,9 @@
     "restoring_position": "⏩ Position wird wiederhergestellt...",
     "seeking": "⏩ Position wird gesucht... (Versuch {attempt})",
     "stream_ready": "▶ Stream bereit",
-    "connecting_retry": "❌ Verbindung fehlgeschlagen. Erneuter Versuch... (Versuch {attempt} von {max_attempts})"
+    "connecting_retry": "❌ Verbindung fehlgeschlagen. Erneuter Versuch... (Versuch {attempt} von {max_attempts})",
+    "btn_subtitles": "Unt",
+    "show_subtitles": "Untertitel-Panel anzeigen"
   },
   "status": {
     "load_library": "📚 Hörbuch-Bibliothek laden",

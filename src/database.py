@@ -82,6 +82,7 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 tag_genre TEXT,
                 tag_comment TEXT,
                 is_url INTEGER DEFAULT 0,
+                srt_path TEXT DEFAULT '',
                 FOREIGN KEY(audiobook_id) REFERENCES audiobooks(id)
                     ON DELETE CASCADE
             )
@@ -247,6 +248,12 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         # Migration: add is_url column to audiobook_files
         try:
             c.execute("ALTER TABLE audiobook_files ADD COLUMN is_url INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
+        # Migration: add srt_path column to audiobook_files
+        try:
+            c.execute("ALTER TABLE audiobook_files ADD COLUMN srt_path TEXT DEFAULT ''")
         except sqlite3.OperationalError:
             pass
 
@@ -816,7 +823,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT file_path, file_name, duration, track_number, tag_title, start_offset,
-                       COALESCE(is_url, 0) as is_url
+                       COALESCE(is_url, 0) as is_url, COALESCE(srt_path, '') as srt_path
                 FROM audiobook_files WHERE audiobook_id = ?
                 ORDER BY track_number, start_offset, file_name
             ''', (audiobook_id,))

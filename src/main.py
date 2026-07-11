@@ -153,6 +153,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_detailed_info = True
         self.show_status_triangle = True
         self.show_statusbar = True
+        self.show_subtitles = False
         
         # Book info settings
         self.show_info_progress = True
@@ -254,7 +255,7 @@ class AudiobookPlayerWindow(QMainWindow):
             # Fix potential "creeping" issues from previous bugs where coordinates became negative or zero
             safe_x = max(0, self.window_x)
             safe_y = max(30, self.window_y)  # Ensure title bar is likely visible
-            safe_width = max(450, self.window_width)
+            safe_width = max(550, self.window_width)
             safe_height = max(450, self.window_height)
             self.setGeometry(safe_x, safe_y, safe_width, safe_height)
 
@@ -383,7 +384,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Playback Controls Component
         self.player_widget = PlayerWidget()
-        self.player_widget.setMinimumWidth(443)
+        self.player_widget.setMinimumWidth(490)
         self.player_widget.id3_btn.setChecked(self.show_id3)
         self.player_widget.on_id3_toggled(self.show_id3)
 
@@ -443,6 +444,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.volume_boost_btn.setChecked(self.volume_boost_enabled)
         self.player_widget.set_volume_boost_level_value(self.volume_boost_level)
         self.player_widget.play_btn.visualizer_enabled = self.show_visualizer
+        self.player_widget.subtitles_btn.setChecked(self.show_subtitles)
+        self.player_widget._on_subtitles_toggled(self.show_subtitles)
 
         # Set initial values for sliders
         self.player_widget.set_vad_threshold_value(self.vad_threshold)
@@ -879,6 +882,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.file_selected.connect(self.on_file_selected)
         self.player_widget.bookmarks_clicked.connect(self.show_bookmarks)
         self.player_widget.add_bookmark_clicked.connect(self.add_bookmark)
+        self.player_widget.subtitles_toggled_signal.connect(self.on_subtitles_state_toggled)
 
     def show_bookmarks(self):
         """Open the bookmarks manager dialog"""
@@ -988,13 +992,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.normal_splitter_state = config.get(
             "Display", "normal_splitter_state", fallback=None
         )
-        self.normal_min_width = config.getint(
-            "Display", "normal_min_width", fallback=450
-        )
+        self.normal_min_width = max(750, config.getint(
+            "Display", "normal_min_width", fallback=750
+        ))
         self.normal_min_height = config.getint(
             "Display", "normal_min_height", fallback=450
         )
-        self.minimal_width = config.getint("Display", "minimal_width", fallback=450)
+        self.minimal_width = max(550, config.getint("Display", "minimal_width", fallback=550))
         self.minimal_height = config.getint("Display", "minimal_height", fallback=270)
         self.current_theme = config.get("Display", "theme", fallback="dark")
         self.accent_color = config.get("Appearance", "accent_color", fallback="")
@@ -1074,6 +1078,9 @@ class AudiobookPlayerWindow(QMainWindow):
         )
         self.show_statusbar = config.getboolean(
             "Display", "show_statusbar", fallback=True
+        )
+        self.show_subtitles = config.getboolean(
+            "Player", "show_subtitles", fallback=False
         )
 
         # Audio Settings (Unified in [Audio])
@@ -1248,9 +1255,9 @@ class AudiobookPlayerWindow(QMainWindow):
             "window_height": "800",
             "window_x": "100",
             "window_y": "100",
-            "normal_min_width": "650",
+            "normal_min_width": "750",
             "normal_min_height": "450",
-            "minimal_width": "450",
+            "minimal_width": "550",
             "minimal_height": "270",
             "language": "en",
             "show_statusbar": "False",
@@ -1411,6 +1418,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Player"]["auto_rewind"] = str(self.auto_rewind)
         config["Player"]["auto_check_updates"] = str(self.auto_check_updates)
         config["Player"]["show_visualizer"] = str(self.show_visualizer)
+        config["Player"]["show_subtitles"] = str(self.show_subtitles)
 
         if "Audio" not in config:
             config["Audio"] = {}
@@ -1610,6 +1618,57 @@ class AudiobookPlayerWindow(QMainWindow):
             self.db_manager.update_audiobook_id3_state(
                 self.playback_controller.current_audiobook_id, state
             )
+
+    def on_subtitles_state_toggled(self, checked: bool):
+        """Update and persist the subtitles visibility preference"""
+        self.show_subtitles = checked
+        self.save_settings()
+        if checked:
+            self._load_subtitles_for_current_file()
+
+    def _load_subtitles_for_current_file(self):
+        """Load SRT subtitles for the current file if available, otherwise clear the panel"""
+        if not hasattr(self.player_widget, 'subtitle_panel'):
+            return
+
+        controller = self.playback_controller
+        if not controller.current_audiobook_id or controller.current_file_index < 0 or controller.current_file_index >= len(controller.files_list):
+            self.player_widget.subtitle_panel.clear()
+            return
+
+        file_info = controller.files_list[controller.current_file_index]
+        srt_rel_path = file_info.get('srt_path', '')
+        
+        # If relative path is empty, try to see if there's any fallback SRT next to the audio file in filesystem
+        audio_path_str = file_info.get('path', '')
+        
+        srt_abs_path = None
+        if srt_rel_path:
+            # Resolve relative to library root
+            if controller.library_root:
+                srt_abs_path = controller.library_root / srt_rel_path
+            else:
+                srt_abs_path = Path(srt_rel_path)
+        elif audio_path_str and not file_info.get('is_url', False):
+            # Fallback path finding on filesystem
+            audio_path = Path(audio_path_str)
+            if not audio_path.is_absolute() and controller.library_root:
+                audio_path = controller.library_root / audio_path
+            # Check same directory .srt
+            candidates = [
+                audio_path.with_suffix('.srt'),
+                audio_path.parent / 'subtitles' / audio_path.with_suffix('.srt').name,
+                audio_path.parent / 'subtitles' / f'{audio_path.parent.name}.srt',
+            ]
+            for c in candidates:
+                if c.exists():
+                    srt_abs_path = c
+                    break
+
+        if srt_abs_path and srt_abs_path.exists():
+            self.player_widget.subtitle_panel.load_srt(srt_abs_path)
+        else:
+            self.player_widget.subtitle_panel.clear()
 
     def on_auto_rewind_state_toggled(self, state: bool):
         """Update and persist the auto-rewind preference"""
@@ -1848,6 +1907,9 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Update bookmark markers on progress bar
         self.update_progress_bar_markers()
+        
+        # Load subtitles for current audiobook segment
+        self._load_subtitles_for_current_file()
 
     def unload_active_book(self, save_progress: bool = True):
         """Stop playback, save current progress (optional), and completely unload the active audiobook"""
@@ -1865,6 +1927,10 @@ class AudiobookPlayerWindow(QMainWindow):
             self.playback_controller.files_list = []
             self.playback_controller.saved_file_index = 0
             self.playback_controller.saved_position = 0
+
+            # Clear active subtitles
+            if hasattr(self.player_widget, 'subtitle_panel'):
+                self.player_widget.subtitle_panel.clear()
 
             # Synchronize UI components to the empty state
             self.update_ui_for_audiobook()
@@ -1950,6 +2016,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.player_widget.highlight_current_file(
                 self.playback_controller.current_file_index
             )
+            self._load_subtitles_for_current_file()
         else:
             self.statusBar().showMessage(tr("status.audiobook_complete"))
         self.save_last_session()
@@ -1961,6 +2028,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.player_widget.highlight_current_file(
                 self.playback_controller.current_file_index
             )
+            self._load_subtitles_for_current_file()
             self.save_last_session()
             self.refresh_audiobook_in_tree()
 
@@ -1982,6 +2050,7 @@ class AudiobookPlayerWindow(QMainWindow):
         """Handle manual file selection from the track list, initiating playback for the chosen segment"""
         self.playback_controller.play_file_at_index(index)
         self.player_widget.highlight_current_file(index)
+        self._load_subtitles_for_current_file()
         self.save_last_session()
         self.refresh_audiobook_in_tree()
 
@@ -2102,6 +2171,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.update_file_progress(
             pos - start_offset, chapter_duration, self.player.speed_pos / 10.0
         )
+
+        # Synchronize Subtitles position
+        if self.show_subtitles and hasattr(self.player_widget, 'subtitle_panel'):
+            self.player_widget.subtitle_panel.update_position(pos - start_offset)
 
         # Synchronize aggregate audiobook progress indicators
         total_pos = self.playback_controller.get_current_position()

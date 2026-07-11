@@ -50,7 +50,8 @@ def _create_test_schema(conn):
             start_offset REAL DEFAULT 0,
             tag_title TEXT, tag_artist TEXT, tag_album TEXT,
             tag_genre TEXT, tag_comment TEXT,
-            is_url INTEGER DEFAULT 0
+            is_url INTEGER DEFAULT 0,
+            srt_path TEXT
         );
         CREATE TABLE audiobook_covers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
