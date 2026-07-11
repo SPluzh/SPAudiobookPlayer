@@ -471,22 +471,13 @@ class SubtitlePanel(QWidget):
             return
             
         entry = self._entries[self._current_idx]
-        block = None
-        first_line = entry.text.split('\n')[0].strip()
-        if first_line:
-            cursor = self.browser.document().find(first_line)
-            if not cursor.isNull():
-                block = cursor.block()
+        self.browser.scrollToAnchor(f"s{entry.index}")
         
-        if not block or not block.isValid():
-            block = self.browser.document().findBlockByNumber(self._current_idx)
-            
-        if block and block.isValid():
-            rect = self.browser.document().documentLayout().blockBoundingRect(block)
-            view_h = self.browser.viewport().height()
-            sb = self.browser.verticalScrollBar()
-            target_scroll = int(rect.top() + rect.height() / 2.0 - view_h / 2.0)
-            sb.setValue(max(sb.minimum(), min(sb.maximum(), target_scroll)))
+        # Center the anchored item
+        sb = self.browser.verticalScrollBar()
+        view_h = self.browser.viewport().height()
+        line_h = int(self._font_size * 1.5)
+        sb.setValue(max(sb.minimum(), min(sb.maximum(), sb.value() - view_h // 2 + line_h // 2)))
 
     def _render(self):
         """Render HTML with current line highlighting and scroll to it"""
@@ -512,6 +503,6 @@ p.active {{ color: #ffffff; font-weight: 600; }}
             f'<html><head>{css}</head><body>{"".join(parts)}</body></html>'
         )
         if self._autoscroll:
-            self._scroll_to_current()
+            QTimer.singleShot(0, self._scroll_to_current)
         else:
             sb.setValue(scroll_val)
