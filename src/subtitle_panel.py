@@ -2,8 +2,9 @@ import re
 from dataclasses import dataclass
 from typing import List, Optional
 from pathlib import Path
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextBrowser
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextBrowser
+from PyQt6.QtCore import Qt, pyqtSignal
+from translations import tr
 
 
 @dataclass
@@ -89,24 +90,75 @@ def find_srt_for_audio(audio_abs_path: str) -> Optional[str]:
 
 class SubtitlePanel(QWidget):
     """Subtitle panel with active line highlighting and auto-scrolling"""
+    font_size_changed = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("subtitlePanel")
         self._entries: List[SRTEntry] = []
         self._current_idx: int = -1
+        self._font_size: int = 15
         self._setup_ui()
 
     def _setup_ui(self):
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 4, 0, 0)
+        lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
+
+        # Controls row above the subtitles
+        controls_layout = QHBoxLayout()
+        controls_layout.setContentsMargins(6, 0, 6, 6)
+        controls_layout.setSpacing(6)
+        controls_layout.addStretch()
+
+        self.btn_zoom_out = QPushButton("-")
+        self.btn_zoom_out.setFixedWidth(24)
+        self.btn_zoom_out.setObjectName("subSizeMinusBtn")
+        self.btn_zoom_out.clicked.connect(self.decrease_font_size)
+        controls_layout.addWidget(self.btn_zoom_out)
+
+        self.btn_zoom_in = QPushButton("+")
+        self.btn_zoom_in.setFixedWidth(24)
+        self.btn_zoom_in.setObjectName("subSizePlusBtn")
+        self.btn_zoom_in.clicked.connect(self.increase_font_size)
+        controls_layout.addWidget(self.btn_zoom_in)
+
+        lay.addLayout(controls_layout)
+
         self.browser = QTextBrowser()
         self.browser.setObjectName("subtitleText")
         self.browser.setReadOnly(True)
         self.browser.setOpenLinks(False)
         self.browser.setMinimumHeight(100)
         lay.addWidget(self.browser)
+
+        self.update_texts()
+
+    @property
+    def font_size(self) -> int:
+        return self._font_size
+
+    @font_size.setter
+    def font_size(self, size: int):
+        self._font_size = max(10, min(size, 40))
+        self._render()
+
+    def decrease_font_size(self):
+        new_size = max(10, self._font_size - 1)
+        if new_size != self._font_size:
+            self.font_size = new_size
+            self.font_size_changed.emit(self._font_size)
+
+    def increase_font_size(self):
+        new_size = min(40, self._font_size + 1)
+        if new_size != self._font_size:
+            self.font_size = new_size
+            self.font_size_changed.emit(self._font_size)
+
+    def update_texts(self):
+        """Update tooltips for control buttons on language change"""
+        self.btn_zoom_in.setToolTip(tr("player.zoom_in"))
+        self.btn_zoom_out.setToolTip(tr("player.zoom_out"))
 
     # -- Public API ---------------------------------------------
 
@@ -164,10 +216,10 @@ class SubtitlePanel(QWidget):
             cls = ' class="active"' if i == self._current_idx else ''
             parts.append(f'<p id="s{e.index}"{cls}>{safe}</p>')
 
-        css = """<style>
-body { margin: 6px; }
-p { margin: 2px 0; padding: 2px 6px; border-radius: 3px; line-height: 1.5; color: #a0a0a0; }
-p.active { color: #ffffff; font-weight: 600; }
+        css = f"""<style>
+body {{ margin: 6px; }}
+p {{ margin: 2px 0; padding: 2px 6px; border-radius: 3px; line-height: 1.5; color: #a0a0a0; font-size: {self._font_size}px; }}
+p.active {{ color: #ffffff; font-weight: 600; }}
 </style>"""
         self.browser.setHtml(
             f'<html><head>{css}</head><body>{"".join(parts)}</body></html>'

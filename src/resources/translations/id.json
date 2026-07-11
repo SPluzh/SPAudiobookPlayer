@@ -180,7 +180,9 @@
     "stream_ready": "▶ Aliran siap",
     "connecting_retry": "❌ Koneksi gagal. Mencoba kembali... (percobaan {attempt} dari {max_attempts})",
     "btn_subtitles": "Sub",
-    "show_subtitles": "Tampilkan panel subtitle"
+    "show_subtitles": "Tampilkan panel subtitle",
+    "zoom_in": "Perbesar ukuran subtitle",
+    "zoom_out": "Perkecil ukuran subtitle"
   },
   "status": {
     "load_library": "📚 Muat perpustakaan audiobook",

@@ -180,7 +180,9 @@
     "stream_ready": "▶ สตรีมพร้อมใช้งาน",
     "connecting_retry": "❌ เชื่อมต่อล้มเหลว กำลังลองใหม่... (พยายามครั้งที่ {attempt} จาก {max_attempts})",
     "btn_subtitles": "ซับ",
-    "show_subtitles": "แสดงแผงคำบรรยาย"
+    "show_subtitles": "แสดงแผงคำบรรยาย",
+    "zoom_in": "เพิ่มขนาดคำบรรยาย",
+    "zoom_out": "ลดขนาดคำบรรยาย"
   },
   "status": {
     "load_library": "📚 กำลังโหลดคลังหนังสือเสียง",

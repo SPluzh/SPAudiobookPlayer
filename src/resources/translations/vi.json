@@ -180,7 +180,9 @@
     "stream_ready": "▶ Luồng phát đã sẵn sàng",
     "connecting_retry": "❌ Kết nối thất bại. Đang thử lại... (lần thử {attempt} trên {max_attempts})",
     "btn_subtitles": "Phụ",
-    "show_subtitles": "Hiển thị bảng phụ đề"
+    "show_subtitles": "Hiển thị bảng phụ đề",
+    "zoom_in": "Tăng kích thước phụ đề",
+    "zoom_out": "Giảm kích thước phụ đề"
   },
   "status": {
     "load_library": "📚 Tải thư viện sách nói",

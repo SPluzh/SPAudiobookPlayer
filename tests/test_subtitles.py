@@ -145,3 +145,37 @@ def test_scanner_subtitle_auto_detection(mock_scanner, temp_dir):
     finally:
         mock_scanner._extract_metadata = original_extract
         mock_scanner._analyze_file_fast = original_analyze
+
+def test_subtitle_font_size_zoom():
+    """Verify font size increase/decrease, clamping, and signal emission on SubtitlePanel"""
+    panel = SubtitlePanel()
+    
+    # Check default font size
+    assert panel.font_size == 15
+    
+    # Test setting font size
+    panel.font_size = 20
+    assert panel.font_size == 20
+    
+    # Test signal emission on font size change
+    emitted_sizes = []
+    panel.font_size_changed.connect(emitted_sizes.append)
+    
+    # Increase font size (zoom in button)
+    panel.increase_font_size()
+    assert panel.font_size == 21
+    assert emitted_sizes == [21]
+    
+    # Decrease font size (zoom out button)
+    panel.decrease_font_size()
+    assert panel.font_size == 20
+    assert emitted_sizes == [21, 20]
+    
+    # Test clamping limits (10 to 40)
+    panel.font_size = 40
+    panel.increase_font_size()
+    assert panel.font_size == 40  # should not exceed 40
+    
+    panel.font_size = 10
+    panel.decrease_font_size()
+    assert panel.font_size == 10  # should not go below 10

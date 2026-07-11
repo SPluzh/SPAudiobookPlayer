@@ -162,7 +162,9 @@
     "stream_ready": "▶ Akış hazır",
     "connecting_retry": "❌ Bağlantı başarısız. Yeniden deneniyor... (deneme {attempt} / {max_attempts})",
     "btn_subtitles": "Alt",
-    "show_subtitles": "Altyazı panelini göster"
+    "show_subtitles": "Altyazı panelini göster",
+    "zoom_in": "Altyazı boyutunu artır",
+    "zoom_out": "Altyazı boyutunu azalt"
   },
   "status": {
     "load_library": "📚 Sesli kitap kütüphanesini yükle",

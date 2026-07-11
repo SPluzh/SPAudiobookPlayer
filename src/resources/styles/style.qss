@@ -74,8 +74,8 @@ QPushButton#playBtn {
     /* min-width removed to allow stretching */
 }
 
-/* ID3 & Subtitles Toggle Buttons */
-QPushButton#id3Btn, QPushButton#subtitlesBtn {
+/* ID3 & Subtitles Toggle Buttons & Subtitle Zoom Buttons */
+QPushButton#id3Btn, QPushButton#subtitlesBtn, QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
@@ -83,11 +83,18 @@ QPushButton#id3Btn, QPushButton#subtitlesBtn {
     font-weight: 500;
     font-size: 11px;
     min-height: 18px;
-    margin-top: 2px;
     border-radius: 3px;
 }
 
-QPushButton#id3Btn:hover, QPushButton#subtitlesBtn:hover {
+QPushButton#id3Btn, QPushButton#subtitlesBtn {
+    margin-top: 2px;
+}
+
+QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn {
+    margin-top: 0px;
+}
+
+QPushButton#id3Btn:hover, QPushButton#subtitlesBtn:hover, QPushButton#subSizeMinusBtn:hover, QPushButton#subSizePlusBtn:hover {
     background-color: @accent;
     border-color: @accent;
     color: @text-bright;

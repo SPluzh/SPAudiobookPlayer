@@ -1656,3 +1656,6 @@ class PlayerWidget(QWidget):
              # Update pitch label unit "st"
              semitones = self.pitch_slider.value() / 10.0
              self.pitch_val_label.setText(f"{semitones:+.1f} {tr('player.pitch_label')}")
+
+        if hasattr(self, 'subtitle_panel') and self.subtitle_panel:
+             self.subtitle_panel.update_texts()

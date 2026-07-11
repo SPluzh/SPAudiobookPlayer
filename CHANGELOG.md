@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.8.2]
 - **Subtitles**: Added support for synchronized subtitles (SRT) with automatic scanning, real-time highlighting, auto-scrolling, and a toggle button.
 - **Subtitles**: Added a splitter between the subtitles panel and the track list, allowing users to dynamically adjust their heights or fully collapse either panel.
+- **Subtitles**: Added font size zoom controls (+/- buttons) to the subtitle panel with customizable text size and settings persistence.
 
 ## [1.8.1]
 - **UI**: Redesigned the hotkeys and global media keys sections in the About dialog to display shortcuts in a polished, grid-based keyboard key layout.

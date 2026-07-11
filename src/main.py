@@ -430,6 +430,12 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.compressor_preset_changed_signal.connect(
             self.on_compressor_preset_changed
         )
+        self.player_widget.subtitles_toggled_signal.connect(
+            self.on_subtitles_toggled
+        )
+        self.player_widget.subtitle_panel.font_size_changed.connect(
+            self.on_subtitle_font_size_changed
+        )
 
         # Set initial states
         self.player_widget.id3_btn.setChecked(self.show_id3)
@@ -446,6 +452,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.play_btn.visualizer_enabled = self.show_visualizer
         self.player_widget.subtitles_btn.setChecked(self.show_subtitles)
         self.player_widget._on_subtitles_toggled(self.show_subtitles)
+        self.player_widget.subtitle_panel.font_size = self.subtitle_font_size
 
         # Set initial values for sliders
         self.player_widget.set_vad_threshold_value(self.vad_threshold)
@@ -1082,6 +1089,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_subtitles = config.getboolean(
             "Player", "show_subtitles", fallback=False
         )
+        self.subtitle_font_size = config.getint(
+            "Player", "subtitle_font_size", fallback=15
+        )
 
         # Audio Settings (Unified in [Audio])
         self.deesser_enabled = config.getboolean(
@@ -1272,6 +1282,8 @@ class AudiobookPlayerWindow(QMainWindow):
             "deesser_enabled": "False",
             "compressor_enabled": "False",
             "show_visualizer": "True",
+            "show_subtitles": "False",
+            "subtitle_font_size": "15",
         }
         config["Library"] = {
             "show_folders": "False",
@@ -1419,6 +1431,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Player"]["auto_check_updates"] = str(self.auto_check_updates)
         config["Player"]["show_visualizer"] = str(self.show_visualizer)
         config["Player"]["show_subtitles"] = str(self.show_subtitles)
+        config["Player"]["subtitle_font_size"] = str(self.subtitle_font_size)
 
         if "Audio" not in config:
             config["Audio"] = {}
@@ -1669,6 +1682,16 @@ class AudiobookPlayerWindow(QMainWindow):
             self.player_widget.subtitle_panel.load_srt(srt_abs_path)
         else:
             self.player_widget.subtitle_panel.clear()
+
+    def on_subtitles_toggled(self, checked: bool):
+        """Update and persist the subtitles visibility preference"""
+        self.show_subtitles = checked
+        self.save_settings()
+
+    def on_subtitle_font_size_changed(self, size: int):
+        """Update and persist the subtitle font size preference"""
+        self.subtitle_font_size = size
+        self.save_settings()
 
     def on_auto_rewind_state_toggled(self, state: bool):
         """Update and persist the auto-rewind preference"""

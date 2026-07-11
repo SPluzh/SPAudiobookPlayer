@@ -162,7 +162,9 @@
     "stream_ready": "▶ Transmisión lista",
     "connecting_retry": "❌ Error de conexión. Reintentando... (intento {attempt} de {max_attempts})",
     "btn_subtitles": "Sub",
-    "show_subtitles": "Mostrar panel de subtítulos"
+    "show_subtitles": "Mostrar panel de subtítulos",
+    "zoom_in": "Aumentar tamaño de subtítulos",
+    "zoom_out": "Disminuir tamaño de subtítulos"
   },
   "status": {
     "load_library": "📚 Cargar biblioteca de audiolibros",

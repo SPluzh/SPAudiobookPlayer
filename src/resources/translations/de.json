@@ -162,7 +162,9 @@
     "stream_ready": "▶ Stream bereit",
     "connecting_retry": "❌ Verbindung fehlgeschlagen. Erneuter Versuch... (Versuch {attempt} von {max_attempts})",
     "btn_subtitles": "Unt",
-    "show_subtitles": "Untertitel-Panel anzeigen"
+    "show_subtitles": "Untertitel-Panel anzeigen",
+    "zoom_in": "Untertitel vergrößern",
+    "zoom_out": "Untertitel verkleinern"
   },
   "status": {
     "load_library": "📚 Hörbuch-Bibliothek laden",

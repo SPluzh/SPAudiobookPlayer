@@ -180,7 +180,9 @@
     "restoring_position": "⏩ Восстановление позиции...",
     "seeking": "⏩ Поиск позиции... (попытка {attempt})",
     "stream_ready": "▶ Поток готов",
-    "connecting_retry": "❌ Ошибка подключения. Повтор... (попытка {attempt} из {max_attempts})"
+    "connecting_retry": "❌ Ошибка подключения. Повтор... (попытка {attempt} из {max_attempts})",
+    "zoom_in": "Увеличить размер субтитров",
+    "zoom_out": "Уменьшить размер субтитров"
   },
   "status": {
     "load_library": "📚 Загрузите библиотеку аудиокниг",

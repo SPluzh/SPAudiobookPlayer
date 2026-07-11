@@ -162,7 +162,9 @@
     "stream_ready": "▶ البث جاهز",
     "connecting_retry": "❌ فشل الاتصال. جاري إعادة المحاولة... (المحاولة {attempt} من {max_attempts})",
     "btn_subtitles": "ترج",
-    "show_subtitles": "إظهار لوحة الترجمة"
+    "show_subtitles": "إظهار لوحة الترجمة",
+    "zoom_in": "تكبير حجم الترجمة",
+    "zoom_out": "تصغير حجم الترجمة"
   },
   "status": {
     "load_library": "📚 تحميل مكتبة الكتب الصوتية",

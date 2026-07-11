@@ -162,7 +162,9 @@
     "stream_ready": "▶ स्ट्रीम तैयार है",
     "connecting_retry": "❌ कनेक्शन विफल। पुनः प्रयास किया जा रहा है... ({max_attempts} में से प्रयास {attempt})",
     "btn_subtitles": "उप",
-    "show_subtitles": "उपशीर्षक पैनल दिखाएं"
+    "show_subtitles": "उपशीर्षक पैनल दिखाएं",
+    "zoom_in": "उपशीर्षक का आकार बढ़ाएं",
+    "zoom_out": "उपशीर्षक का आकार घटाएं"
   },
   "status": {
     "load_library": "📚 ऑडियोबुक लाइब्रेरी लोड करें",

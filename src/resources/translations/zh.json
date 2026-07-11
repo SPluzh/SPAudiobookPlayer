@@ -162,7 +162,9 @@
     "stream_ready": "▶ 流就绪",
     "connecting_retry": "❌ 连接失败。正在重试... (第 {attempt} 次尝试，共 {max_attempts} 次)",
     "btn_subtitles": "字幕",
-    "show_subtitles": "显示字幕面板"
+    "show_subtitles": "显示字幕面板",
+    "zoom_in": "增大字幕大小",
+    "zoom_out": "减小字幕大小"
   },
   "status": {
     "load_library": "📚 加载有声书库",

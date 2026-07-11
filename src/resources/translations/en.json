@@ -180,7 +180,9 @@
     "restoring_position": "⏩ Restoring position...",
     "seeking": "⏩ Seeking position... (attempt {attempt})",
     "stream_ready": "▶ Stream ready",
-    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})"
+    "connecting_retry": "❌ Connection failed. Retrying... (attempt {attempt} of {max_attempts})",
+    "zoom_in": "Increase subtitle size",
+    "zoom_out": "Decrease subtitle size"
   },
   "status": {
     "load_library": "📚 Load audiobook library",

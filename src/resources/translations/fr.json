@@ -162,7 +162,9 @@
     "stream_ready": "▶ Flux prêt",
     "connecting_retry": "❌ Échec de la connexion. Nouvelle tentative... (tentative {attempt} sur {max_attempts})",
     "btn_subtitles": "Sous",
-    "show_subtitles": "Afficher le panneau des sous-titres"
+    "show_subtitles": "Afficher le panneau des sous-titres",
+    "zoom_in": "Augmenter la taille des sous-titres",
+    "zoom_out": "Diminuer la taille des sous-titres"
   },
   "status": {
     "load_library": "📚 Chargement de la bibliothèque",
