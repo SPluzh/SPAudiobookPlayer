@@ -2,14 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.3]
+- **Library**: Added new "With cover", "With author", and "With narrator" filters.
+- **Library**: Added support for selecting multiple filters simultaneously.
+- **Library**: Added a "Reset all" option to clear all active filters at once.
+
 ## [1.8.2]
-- **Settings**: Added translation settings allowing users to specify the target language for subtitle translation, listing all 100+ supported translation languages.
-- **Subtitles**: Fixed an issue where the subtitle panel scrolled to the wrong position on repeated phrases by switching to unique anchor-based scrolling.
-- **Subtitles**: Added support for synchronized subtitles (SRT) with automatic scanning, real-time highlighting, auto-scrolling, and a toggle button.
-- **Subtitles**: Added interactive word translation on hover and selection with a translation popup, plus a toggle button next to subtitle zoom controls to enable/disable hover translation (with settings persistence).
-- **Subtitles**: Added a splitter between the subtitles panel and the track list, allowing users to dynamically adjust their heights or fully collapse either panel.
-- **Subtitles**: Added font size zoom controls (+/- buttons) to the subtitle panel with customizable text size and settings persistence.
-- **Subtitles**: Added an auto-scroll toggle button to enable or disable automatic scrolling to the active subtitle block (with settings persistence), automatically suspending auto-scroll when the cursor enters the subtitle browser field (if hover translation is active) and restoring it when the cursor leaves.
+- **Subtitles**: Added support for SRT subtitles with automatic scanning, highlighting, and auto-scrolling.
+- **Subtitles**: Added a splitter to adjust or collapse the height of the subtitles panel.
+- **Subtitles**: Added zoom controls (+/-) to customize subtitle font size.
+- **Subtitles**: Added auto-scroll option for subtitles that automatically pauses when hovering over words to translate.
+- **Subtitles**: Added word translation on hover and selection with a custom popup window.
+- **Settings**: Added option to choose target language for subtitle translation (100+ languages supported).
 
 ## [1.8.1]
 - **UI**: Redesigned the hotkeys and global media keys sections in the About dialog to display shortcuts in a polished, grid-based keyboard key layout.

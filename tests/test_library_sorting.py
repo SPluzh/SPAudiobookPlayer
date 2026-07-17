@@ -728,6 +728,72 @@ def test_library_metadata_filtering():
         assert "path/4" in items
         assert "path/1" not in items
 
+        # --- Test 4: Has cover filter active ---
+        widget.current_meta_filter = "has_cover"
+        widget.is_meta_filter_active = True
+        widget.load_audiobooks(use_cache=True)
+
+        root = widget.tree.invisibleRootItem()
+        items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+        # Book 1, 3, 4, 5 have covers (mock pathlib.Path.exists returns True)
+        assert "path/1" in items
+        assert "path/3" in items
+        assert "path/4" in items
+        assert "path/5" in items
+        assert "path/2" not in items
+
+        # --- Test 5: Has author filter active ---
+        widget.current_meta_filter = "has_author"
+        widget.is_meta_filter_active = True
+        widget.load_audiobooks(use_cache=True)
+
+        root = widget.tree.invisibleRootItem()
+        items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+        # Book 1, 2, 4 have valid authors
+        assert "path/1" in items
+        assert "path/2" in items
+        assert "path/4" in items
+        assert "path/3" not in items
+        assert "path/5" not in items
+
+        # --- Test 6: Has narrator filter active ---
+        widget.current_meta_filter = "has_narrator"
+        widget.is_meta_filter_active = True
+        widget.load_audiobooks(use_cache=True)
+
+        root = widget.tree.invisibleRootItem()
+        items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+        # Book 1, 2, 3, 5 have valid narrators
+        assert "path/1" in items
+        assert "path/2" in items
+        assert "path/3" in items
+        assert "path/5" in items
+        assert "path/4" not in items
+
+        # --- Test 7: Combined filters (has_cover AND no_author) ---
+        widget.current_meta_filters = {"has_cover", "no_author"}
+        widget.is_meta_filter_active = True
+        widget.load_audiobooks(use_cache=False)
+
+        root = widget.tree.invisibleRootItem()
+        items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+        # Book 3 (has cover, no author) and Book 5 (has cover, unknown Russian author) should be listed
+        assert "path/3" in items
+        assert "path/5" in items
+        assert "path/1" not in items
+        assert "path/2" not in items
+        assert "path/4" not in items
+
+        # --- Test 8: Reset all filters ---
+        widget._reset_all_meta_filters()
+        assert not widget.is_meta_filter_active
+        assert len(widget.current_meta_filters) == 0
+        widget.load_audiobooks(use_cache=False)
+        root = widget.tree.invisibleRootItem()
+        items = [root.child(i).data(0, Qt.ItemDataRole.UserRole) for i in range(root.childCount())]
+        # All books should be returned
+        assert len(items) == 5
+
 
 def test_library_language_filtering():
     # Ensure QApplication is initialized

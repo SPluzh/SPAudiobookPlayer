@@ -594,6 +594,7 @@ class LibraryWidget(QWidget):
         self.is_tag_filter_active = self.config.get("tag_filter_active", False)
         self.is_favorites_filter_active = self.config.get("favorites_active", False)
         self.is_meta_filter_active = self.config.get("meta_filter_active", False)
+        self.current_meta_filters = set()
         self.current_meta_filter = self.config.get("current_meta_filter", "no_cover")
         self.sort_orders = self.config.get("sort_orders", {
             "all": "asc",
@@ -621,6 +622,14 @@ class LibraryWidget(QWidget):
         self.setup_ui()
         self.load_icons()
         self.set_tile_view_active(self.is_tile_view)
+
+    @property
+    def current_meta_filter(self) -> str:
+        return ",".join(sorted(self.current_meta_filters))
+
+    @current_meta_filter.setter
+    def current_meta_filter(self, value: str):
+        self.current_meta_filters = {f.strip() for f in value.split(",") if f.strip()}
 
     @property
     def sort_order(self):
@@ -2929,7 +2938,7 @@ class LibraryWidget(QWidget):
         self.load_audiobooks(use_cache=True)
 
     def show_meta_filter_menu(self):
-        """Display a popup menu to select the active metadata filter"""
+        """Display a popup menu to select the active metadata filter(s)"""
         from translations import get_language
         lang = get_language()
         
@@ -2951,17 +2960,45 @@ class LibraryWidget(QWidget):
                 return ru_translations.get(key, default)
             return default
 
-        menu = QMenu(self)
+        class KeepOpenMenu(QMenu):
+            def mouseReleaseEvent(self, event):
+                pos = event.position().toPoint() if hasattr(event, "position") else event.pos()
+                action = self.actionAt(pos)
+                if action and action.isCheckable():
+                    action.trigger()
+                    event.accept()
+                else:
+                    super().mouseReleaseEvent(event)
+
+        menu = KeepOpenMenu(self)
         menu.setObjectName("metaFilterMenu")
         
-        options = [
+        # Reset all filters option at the very top
+        translated_reset = tr("library.filter_reset_all")
+        if translated_reset == "library.filter_reset_all":
+            translated_reset = "Reset all"
+        
+        act_reset = menu.addAction(translated_reset)
+        act_reset.triggered.connect(self._reset_all_meta_filters)
+        
+        menu.addSeparator()
+        
+        options_no = [
             ("no_cover", "library.filter_no_cover"),
             ("no_author", "library.filter_no_author"),
             ("no_narrator", "library.filter_no_narrator")
         ]
         
-        current = self.current_meta_filter
-        for filter_key, loc_key in options:
+        options_has = [
+            ("has_cover", "library.filter_has_cover"),
+            ("has_author", "library.filter_has_author"),
+            ("has_narrator", "library.filter_has_narrator")
+        ]
+        
+        action_map = {}
+        
+        # "Without" filters
+        for filter_key, loc_key in options_no:
             translated = tr(loc_key)
             if translated == loc_key:
                 fallbacks = {
@@ -2973,8 +3010,28 @@ class LibraryWidget(QWidget):
                 
             action = menu.addAction(translated)
             action.setCheckable(True)
-            action.setChecked(filter_key == current)
-            action.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+            action.setChecked(filter_key in self.current_meta_filters)
+            action_map[action] = filter_key
+            action.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
+            
+        menu.addSeparator()
+
+        # "With" filters (separated)
+        for filter_key, loc_key in options_has:
+            translated = tr(loc_key)
+            if translated == loc_key:
+                fallbacks = {
+                    "library.filter_has_cover": "With cover",
+                    "library.filter_has_author": "With author",
+                    "library.filter_has_narrator": "With narrator"
+                }
+                translated = fallbacks.get(loc_key, loc_key)
+                
+            action = menu.addAction(translated)
+            action.setCheckable(True)
+            action.setChecked(filter_key in self.current_meta_filters)
+            action_map[action] = filter_key
+            action.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
             
         menu.addSeparator()
 
@@ -2991,8 +3048,9 @@ class LibraryWidget(QWidget):
         for filter_key, key_tr, default_val in duration_options:
             act = duration_menu.addAction(tr_local(key_tr, default_val))
             act.setCheckable(True)
-            act.setChecked(filter_key == current)
-            act.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+            act.setChecked(filter_key in self.current_meta_filters)
+            action_map[act] = filter_key
+            act.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
 
         # Size Submenu
         size_menu = menu.addMenu(tr_local("library.filter_size_title", "Size"))
@@ -3006,8 +3064,9 @@ class LibraryWidget(QWidget):
         for filter_key, key_tr, default_val in size_options:
             act = size_menu.addAction(tr_local(key_tr, default_val))
             act.setCheckable(True)
-            act.setChecked(filter_key == current)
-            act.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+            act.setChecked(filter_key in self.current_meta_filters)
+            action_map[act] = filter_key
+            act.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
 
         # Progress Submenu
         progress_menu = menu.addMenu(tr_local("library.filter_progress_title", "Playback Progress"))
@@ -3022,8 +3081,9 @@ class LibraryWidget(QWidget):
         for filter_key, key_tr, default_val in progress_options:
             act = progress_menu.addAction(tr_local(key_tr, default_val))
             act.setCheckable(True)
-            act.setChecked(filter_key == current)
-            act.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+            act.setChecked(filter_key in self.current_meta_filters)
+            action_map[act] = filter_key
+            act.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
 
         menu.addSeparator()
         
@@ -3033,8 +3093,9 @@ class LibraryWidget(QWidget):
             translated_none = "Without Language"
         act_none = menu.addAction(translated_none)
         act_none.setCheckable(True)
-        act_none.setChecked(current == "lang:none")
-        act_none.triggered.connect(lambda checked: self._on_meta_filter_selected("lang:none"))
+        act_none.setChecked("lang:none" in self.current_meta_filters)
+        action_map[act_none] = "lang:none"
+        act_none.triggered.connect(lambda checked: self._toggle_meta_filter("lang:none", action_map))
         
         # List of unique languages
         langs = self.get_available_languages()
@@ -3043,28 +3104,85 @@ class LibraryWidget(QWidget):
                 filter_key = f"lang:{lang_val}"
                 action = menu.addAction(lang_val)
                 action.setCheckable(True)
-                action.setChecked(filter_key == current)
-                action.triggered.connect(lambda checked, fk=filter_key: self._on_meta_filter_selected(fk))
+                action.setChecked(filter_key in self.current_meta_filters)
+                action_map[action] = filter_key
+                action.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
             
         global_pos = self.btn_meta_filter_arrow.mapToGlobal(QPoint(0, self.btn_meta_filter_arrow.height()))
         menu.exec(global_pos)
 
+    def _reset_all_meta_filters(self):
+        self.current_meta_filters.clear()
+        self.is_meta_filter_active = False
+        if hasattr(self, "btn_meta_filter"):
+            self.btn_meta_filter.setChecked(False)
+        self.load_audiobooks(use_cache=True)
+
     def _on_meta_filter_selected(self, filter_key):
         self.current_meta_filter = filter_key
-        self.is_meta_filter_active = True
+        self.is_meta_filter_active = bool(self.current_meta_filters)
         if hasattr(self, "btn_meta_filter"):
-            self.btn_meta_filter.setChecked(True)
+            self.btn_meta_filter.setChecked(self.is_meta_filter_active)
+        self.load_audiobooks(use_cache=True)
+
+    def _toggle_meta_filter(self, filter_key, action_map):
+        groups = [
+            {"no_cover", "has_cover"},
+            {"no_author", "has_author"},
+            {"no_narrator", "has_narrator"},
+            {"duration:short", "duration:medium", "duration:long"},
+            {"size:small", "size:large"},
+            {"progress:almost", "progress:just_started", "progress:never_opened"},
+        ]
+        
+        if filter_key.startswith("lang:"):
+            lang_keys = {k for k in self.current_meta_filters if k.startswith("lang:")}
+            self.current_meta_filters.difference_update(lang_keys)
+            if filter_key not in lang_keys:
+                self.current_meta_filters.add(filter_key)
+        else:
+            group = None
+            for g in groups:
+                if filter_key in g:
+                    group = g
+                    break
+            
+            if group:
+                if filter_key in self.current_meta_filters:
+                    self.current_meta_filters.remove(filter_key)
+                else:
+                    self.current_meta_filters.difference_update(group)
+                    self.current_meta_filters.add(filter_key)
+            else:
+                if filter_key in self.current_meta_filters:
+                    self.current_meta_filters.remove(filter_key)
+                else:
+                    self.current_meta_filters.add(filter_key)
+
+        for act, fk in action_map.items():
+            act.setChecked(fk in self.current_meta_filters)
+
+        self.is_meta_filter_active = bool(self.current_meta_filters)
+        if hasattr(self, "btn_meta_filter"):
+            self.btn_meta_filter.setChecked(self.is_meta_filter_active)
+
         self.load_audiobooks(use_cache=True)
 
     def _matches_meta_filter(self, item_data) -> bool:
         """Check if an item matches the active metadata/language filter requirements"""
-        if not self.is_meta_filter_active:
+        if not self.is_meta_filter_active or not self.current_meta_filters:
             return True
             
         if item_data.get("is_folder"):
             return True
             
-        if self.current_meta_filter == "no_cover":
+        for filter_key in self.current_meta_filters:
+            if not self._matches_single_filter(item_data, filter_key):
+                return False
+        return True
+
+    def _matches_single_filter(self, item_data, filter_key) -> bool:
+        if filter_key in ("no_cover", "has_cover"):
             cover_p_str = item_data.get("cached_cover_path") or item_data.get("cover_path")
             has_cover = False
             if cover_p_str:
@@ -3076,9 +3194,9 @@ class LibraryWidget(QWidget):
                         has_cover = True
                 except Exception:
                     pass
-            return not has_cover
+            return has_cover if filter_key == "has_cover" else not has_cover
             
-        elif self.current_meta_filter == "no_author":
+        elif filter_key in ("no_author", "has_author"):
             author = item_data.get("author")
             is_empty_author = (
                 not author
@@ -3087,60 +3205,60 @@ class LibraryWidget(QWidget):
                 or author.strip() == "(неизвестный автор)"
                 or author.strip() == tr("scanner.unknown_author")
             )
-            return is_empty_author
+            return not is_empty_author if filter_key == "has_author" else is_empty_author
             
-        elif self.current_meta_filter == "no_narrator":
+        elif filter_key in ("no_narrator", "has_narrator"):
             narrator = item_data.get("narrator")
             is_empty_narrator = (
                 not narrator
                 or not narrator.strip()
                 or narrator.strip().lower() in ("(unknown narrator)", "(неизвестный чтец)", "(без чтеца)")
             )
-            return is_empty_narrator
+            return not is_empty_narrator if filter_key == "has_narrator" else is_empty_narrator
 
-        elif self.current_meta_filter == "duration:short":
+        elif filter_key == "duration:short":
             duration = item_data.get("duration") or 0.0
             return duration < 3 * 3600
             
-        elif self.current_meta_filter == "duration:medium":
+        elif filter_key == "duration:medium":
             duration = item_data.get("duration") or 0.0
             return 3 * 3600 <= duration < 10 * 3600
             
-        elif self.current_meta_filter == "duration:long":
+        elif filter_key == "duration:long":
             duration = item_data.get("duration") or 0.0
             return duration >= 10 * 3600
             
-        elif self.current_meta_filter == "size:small":
+        elif filter_key == "size:small":
             total_size = item_data.get("total_size") or 0
             return total_size < 100 * 1024 * 1024
             
-        elif self.current_meta_filter == "size:large":
+        elif filter_key == "size:large":
             total_size = item_data.get("total_size") or 0
             return total_size > 1024 * 1024 * 1024
             
-        elif self.current_meta_filter == "progress:almost":
+        elif filter_key == "progress:almost":
             prog = item_data.get("progress_percent") or 0
             is_completed = item_data.get("is_completed")
             return prog > 80 and not is_completed
             
-        elif self.current_meta_filter == "progress:just_started":
+        elif filter_key == "progress:just_started":
             prog = item_data.get("progress_percent") or 0
             is_started = item_data.get("is_started")
             is_completed = item_data.get("is_completed")
             return prog < 10 and is_started and not is_completed
             
-        elif self.current_meta_filter == "progress:never_opened":
+        elif filter_key == "progress:never_opened":
             is_started = item_data.get("is_started")
             listened = item_data.get("listened_duration") or 0.0
             prog = item_data.get("progress_percent") or 0
             return not is_started and listened == 0.0 and prog == 0
 
-        elif self.current_meta_filter == "lang:none":
+        elif filter_key == "lang:none":
             lang = item_data.get("language")
             return not (lang and lang.strip())
 
-        elif self.current_meta_filter.startswith("lang:"):
-            target_lang = self.current_meta_filter[5:]
+        elif filter_key.startswith("lang:"):
+            target_lang = filter_key[5:]
             lang = item_data.get("language")
             if not lang or not lang.strip():
                 return False
