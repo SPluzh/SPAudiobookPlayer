@@ -1749,7 +1749,7 @@ class VirtualTileCanvas(QWidget):
         self.update_layout()
         self.update()
 
-    def refresh_tile(self, path):
+    def refresh_tile(self, path, cover_changed=None):
         found_book = None
         for block in self.blocks:
             if block["type"] == "books":
@@ -1761,6 +1761,7 @@ class VirtualTileCanvas(QWidget):
                     break
 
         if found_book and found_book.get("tree_item"):
+            old_cover_path = found_book.get("cover_path")
             new_data = self._extract_book_data(found_book["tree_item"])
             found_book.update(new_data)
             physical_size = int(
@@ -1768,8 +1769,13 @@ class VirtualTileCanvas(QWidget):
                 * 1.5
                 * self.devicePixelRatioF()
             )
-            if found_book.get("cover_path"):
-                cover_p = Path(found_book["cover_path"])
+            new_cover_path = found_book.get("cover_path")
+            should_clear_cover = cover_changed
+            if should_clear_cover is None:
+                should_clear_cover = (new_cover_path != old_cover_path)
+
+            if should_clear_cover and new_cover_path:
+                cover_p = Path(new_cover_path)
                 if (
                     not cover_p.is_absolute()
                     and self.tile_flow_widget.config.get("default_path")
@@ -3403,8 +3409,8 @@ class TileFlowWidget(QScrollArea):
     def update_texts(self):
         self.canvas.update_texts()
 
-    def refresh_tile(self, path):
-        self.canvas.refresh_tile(path)
+    def refresh_tile(self, path, cover_changed=None):
+        self.canvas.refresh_tile(path, cover_changed=cover_changed)
 
     def on_tile_play_clicked(self, path):
         self.parent_library.tree.play_button_clicked.emit(path)

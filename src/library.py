@@ -2700,14 +2700,18 @@ class LibraryWidget(QWidget):
             if not cover_p_str:
                 cover_p_str = data.get("cover_path")
 
+            old_cover_p_str = item.data(0, Qt.ItemDataRole.UserRole + 5)
+            cover_is_changed = (cover_p_str != old_cover_p_str)
+
             if cover_p_str:
                 cover_p = Path(cover_p_str)
                 if not cover_p.is_absolute() and self.config.get("default_path"):
                     cover_p = Path(self.config.get("default_path")) / cover_p
 
                 from utils import load_icon
-                # Clear LRU cache of load_icon to force reload of the potentially updated/overwritten image
-                load_icon.cache_clear()
+                # Only clear LRU cache if cover path actually changed
+                if cover_is_changed:
+                    load_icon.cache_clear()
                 cover_icon = load_icon(
                     cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
                 )
@@ -2720,7 +2724,7 @@ class LibraryWidget(QWidget):
             )
             self.tree.viewport().update()
             if self.is_tile_view and hasattr(self, "tile_view"):
-                self.tile_view.refresh_tile(audiobook_path)
+                self.tile_view.refresh_tile(audiobook_path, cover_changed=cover_is_changed)
 
     def update_item_progress(
         self, audiobook_path: str, listened_duration: float, progress_percent: int
@@ -2736,7 +2740,7 @@ class LibraryWidget(QWidget):
             item.setData(0, Qt.ItemDataRole.UserRole + 2, tuple(new_data))
             self.tree.viewport().update()
             if self.is_tile_view and hasattr(self, "tile_view"):
-                self.tile_view.refresh_tile(audiobook_path)
+                self.tile_view.refresh_tile(audiobook_path, cover_changed=False)
 
     def update_cache_item_status(self, path: str, is_started: bool, is_completed: bool):
         if not self.cached_library_data:

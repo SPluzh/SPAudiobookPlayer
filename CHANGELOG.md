@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.4]
+- **UI**: Fixed an issue where audiobook covers in grid view would briefly reset or flicker to the default image during playback.
+
 ## [1.8.3]
 - **Library**: Added new "With cover", "With author", and "With narrator" filters.
 - **Library**: Added support for selecting multiple filters simultaneously.
