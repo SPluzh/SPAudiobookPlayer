@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE 지원 (챕터 마커 및 메타데이터)\n+ M3U, M3U8 (재생목록, 네트워크 포함)",
         "supported_covers_title": "지원되는 커버 형식:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "지원되는 자막 형식:",
+        "subtitles_list": "SRT (.srt)\n자막 파일은 오디오 파일 옆이나 subtitles/ 폴더에 배치합니다",
         "close": "닫기",
         "hotkeys_title": "단축키:",
         "hotkeys_list": "스페이스 — 재생 / 일시정지\n[ 및 ] — 이전 / 다음 파일\n왼쪽 / 오른쪽 — 10초 되감기 / 앞으로\nShift + 왼쪽 / 오른쪽 — 60초 되감기 / 앞으로\n위 / 아래 — 재생 속도 (±0.1x)\nShift + 위 / 아래 — 볼륨 (±5%)",

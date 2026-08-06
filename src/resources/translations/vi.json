@@ -442,6 +442,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Hỗ trợ .CUE (dấu chương và siêu dữ liệu)\n+ M3U, M3U8 (danh sách phát, bao gồm mạng)",
         "supported_covers_title": "Định dạng ảnh bìa được hỗ trợ:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "Định dạng phụ đề được hỗ trợ:",
+        "subtitles_list": "SRT (.srt)\nTệp phụ đề được đặt cạnh tệp âm thanh hoặc trong thư mục subtitles/",
         "hotkeys_title": "Phím tắt:",
         "hotkeys_list": "Space — Phát / Tạm dừng\n[ và ] — Tập trước / tiếp theo\nTrái / Phải — Lùi / Tiến 10 giây\nShift + Trái / Phải — Lùi / Tiến 60 giây\nLên / Xuống — Tốc độ phát (±0.1x)\nShift + Lên / Xuống — Âm lượng (±5%)",
         "global_hotkeys_title": "Phím phương tiện toàn cục (chạy ngầm):",

@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE समर्थन (अध्याय मार्कर और मेटाडेटा)\n+ M3U, M3U8 (प्लेलिस्ट, नेटवर्क सहित)",
         "supported_covers_title": "समर्थित कवर प्रारूप:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "समर्थित उपशीर्षक प्रारूप:",
+        "subtitles_list": "SRT (.srt)\nउपशीर्षक फ़ाइलें ऑडियो फ़ाइलों के पास या subtitles/ फ़ोल्डर में रखी जाती हैं",
         "close": "बंद करें",
         "hotkeys_title": "हॉटकीज़:",
         "hotkeys_list": "स्पेस — चलाएं / रोकें\n[ और ] — पिछली / अगली फ़ाइल\nबाएं / दाएं — 10 सेकंड पीछे / आगे\nShift + बाएं / दाएं — 60 सेकंड पीछे / आगे\nऊपर / नीचे — प्लेबैक गति (±0.1x)\nShift + ऊपर / नीचे — वॉल्यूम (±5%)",

@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE-Unterstützung (Kapitelmarkierungen und Metadaten)\n+ M3U, M3U8 (Playlists, inkl. Netzwerk)",
         "supported_covers_title": "Unterstützte Cover-Formate:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "Unterstützte Untertitel-Formate:",
+        "subtitles_list": "SRT (.srt)\nUntertiteldateien werden neben den Audiodateien oder im Ordner subtitles/ abgelegt",
         "close": "Schließen",
         "hotkeys_title": "Tastenkombinationen:",
         "hotkeys_list": "Leertaste — Abspielen / Pause\n[ und ] — Vorherige / Nächste Datei\nLinks / Rechts — 10 Sekunden zurück / vor\nShift + Links / Rechts — 60 Sekunden zurück / vor\nAuf / Ab — Wiedergabegeschwindigkeit (±0.1x)\nShift + Auf / Ab — Lautstärke (±5%)",

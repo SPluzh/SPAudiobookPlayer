@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ دعم .CUE (علامات الفصول والبيانات الوصفية)\n+ M3U, M3U8 (قوائم التشغيل، بما في ذلك الشبكة)",
         "supported_covers_title": "تنسيقات الأغلفة المدعومة:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "صيغ الترجمة المدعومة:",
+        "subtitles_list": "SRT (.srt)\nتوضع ملفات الترجمة بجوار ملفات الصوت أو في مجلد subtitles/",
         "close": "إغلاق",
         "hotkeys_title": "مفاتيح الاختصار:",
         "hotkeys_list": "مسافة — تشغيل / إيقاف مؤقت\n[ و ] — الملف السابق / التالي\nيسار / يمين — إرجاع / تقديم 10 ثوانٍ\nShift + يسار / يمين — إرجاع / تقديم 60 ثانية\nأعلى / أسفل — سرعة التشغيل (±0.1x)\nShift + أعلى / أسفل — مستوى الصوت (±5%)",

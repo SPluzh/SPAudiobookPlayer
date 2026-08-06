@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Soporte .CUE (marcadores de capítulos y metadatos)\n+ M3U, M3U8 (listas de reproducción, incl. red)",
         "supported_covers_title": "Formatos de portada soportados:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "Formatos de subtítulos admitidos:",
+        "subtitles_list": "SRT (.srt)\nLos archivos de subtítulos se colocan junto a los archivos de audio o en la carpeta subtitles/",
         "close": "Cerrar",
         "hotkeys_title": "Teclas de acceso rápido:",
         "hotkeys_list": "Espacio — Reproducir / Pausar\n[ y ] — Archivo anterior / siguiente\nIzquierda / Derecha — Rebobinar / Avanzar 10s\nShift + Izquierda / Derecha — Rebobinar / Avanzar 60s\nArriba / Abajo — Velocidad de reproducción (±0.1x)\nShift + Arriba / Abajo — Volumen (±5%)",

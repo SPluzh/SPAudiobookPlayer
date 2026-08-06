@@ -60,7 +60,7 @@ class AboutDialog(QDialog):
         self.container.setObjectName("aboutContainer")
 
         container_layout = QVBoxLayout(self.container)
-        container_layout.setSpacing(15)
+        container_layout.setSpacing(10)
 
         # Title with version
         version_text = self.get_app_version()
@@ -132,7 +132,7 @@ class AboutDialog(QDialog):
 
         # Left Column: Supported Formats & Hotkeys
         left_column = QVBoxLayout()
-        left_column.setSpacing(10)
+        left_column.setSpacing(4)
         left_column.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Supported Formats
@@ -145,7 +145,7 @@ class AboutDialog(QDialog):
         formats_content.setWordWrap(True)
         left_column.addWidget(formats_content)
 
-        left_column.addSpacing(5)
+        left_column.addSpacing(2)
 
         # Supported Cover Formats
         covers_title = QLabel(tr("about.supported_covers_title"))
@@ -157,7 +157,19 @@ class AboutDialog(QDialog):
         covers_content.setWordWrap(True)
         left_column.addWidget(covers_content)
 
-        left_column.addSpacing(5)
+        left_column.addSpacing(2)
+
+        # Supported Subtitles
+        subtitles_title = QLabel(tr("about.supported_subtitles_title"))
+        subtitles_title.setObjectName("aboutSectionTitle")
+        left_column.addWidget(subtitles_title)
+
+        subtitles_content = QLabel(tr("about.subtitles_list"))
+        subtitles_content.setObjectName("aboutSectionContent")
+        subtitles_content.setWordWrap(True)
+        left_column.addWidget(subtitles_content)
+
+        left_column.addSpacing(2)
 
         # Hotkeys
         categories = [
@@ -186,7 +198,7 @@ class AboutDialog(QDialog):
         hotkeys_grid = QGridLayout()
         hotkeys_grid.setContentsMargins(0, 0, 0, 0)
         hotkeys_grid.setHorizontalSpacing(10)
-        hotkeys_grid.setVerticalSpacing(4)
+        hotkeys_grid.setVerticalSpacing(2)
         hotkeys_grid.setColumnStretch(0, 0)
         hotkeys_grid.setColumnStretch(1, 0)
         hotkeys_grid.setColumnStretch(2, 1)
@@ -203,7 +215,7 @@ class AboutDialog(QDialog):
             category_label.setObjectName("hotkeyCategoryTitle")
             category_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             if row > 0:
-                category_label.setStyleSheet("margin-top: 10px;")
+                category_label.setStyleSheet("margin-top: 4px;")
             hotkeys_grid.addWidget(category_label, row, 0, 1, 3)
             row += 1
 
@@ -230,7 +242,7 @@ class AboutDialog(QDialog):
 
         # Right Column: Recommended Library Structure
         right_column = QVBoxLayout()
-        right_column.setSpacing(10)
+        right_column.setSpacing(4)
         right_column.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Library Hierarchy
@@ -252,7 +264,7 @@ class AboutDialog(QDialog):
 
         container_layout.addLayout(columns_layout)
 
-        container_layout.addSpacing(15)
+        container_layout.addSpacing(10)
 
         # Close Button
         close_btn = QPushButton(tr("about.close"))

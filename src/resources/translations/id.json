@@ -442,6 +442,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Dukungan .CUE (penanda bab dan metadata)\n+ M3U, M3U8 (daftar putar, termasuk jaringan)",
         "supported_covers_title": "Format sampul yang didukung:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "Format subtitle yang didukung:",
+        "subtitles_list": "SRT (.srt)\nBerkas subtitle diletakkan di samping berkas audio atau di dalam folder subtitles/",
         "hotkeys_title": "Tombol Cepat:",
         "hotkeys_list": "Space — Putar / Jeda\n[ dan ] — File Sebelumnya / Berikutnya\nKiri / Kanan — Mundur / Maju 10s\nShift + Kiri / Kanan — Mundur / Maju 60s\nAtas / Bawah — Kecepatan Putar (±0.1x)\nShift + Atas / Bawah — Volume (±5%)",
         "global_hotkeys_title": "Tombol Media Global (di latar belakang):",

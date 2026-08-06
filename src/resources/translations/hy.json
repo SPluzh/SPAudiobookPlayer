@@ -442,6 +442,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE աջակցում (գլուխների նշիչներ և մետատվյալներ)\n+ M3U, M3U8 (նվագացուցակներ, ներառյալ ցանցային)",
         "supported_covers_title": "Աջակցվող կազմերի ձևաչափերը՝",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "Ենթագրերի աջակցվող ձևաչափեր:",
+        "subtitles_list": "SRT (.srt)\nԵնթագրերի ֆայլերը տեղադրվում են աուդիոֆայլերի կողքին կամ subtitles/ թղթապանակում",
         "hotkeys_title": "Տաք ստեղնաշարային համակցումներ՝",
         "hotkeys_list": "Space — Նվագարկում / Դադար\n[ և ] — Նախորդ / Հաջորդ ֆայլը\nLeft / Right — 10վ հետ / առաջ\nShift + Left / Right — 60վ հետ / առաջ\nUp / Down — Նվագարկման արագություն (±0.1x)\nShift + Up / Down — Ձայնի ուժգնություն (±5%)",
         "global_hotkeys_title": "Գլոբալ մեդիա ստեղներ (ֆոնային ռեժիմում)՝",

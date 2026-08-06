@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE desteği (bölüm işaretleri ve meta veriler)\n+ M3U, M3U8 (oynatma listeleri, ağ dahil)",
         "supported_covers_title": "Desteklenen kapak biçimleri:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "Desteklenen altyazı biçimleri:",
+        "subtitles_list": "SRT (.srt)\nAltyazı dosyaları ses dosyalarının yanına veya subtitles/ klasörüne yerleştirilir",
         "hotkeys_title": "Kisayol Tuslari:",
         "hotkeys_list": "Bosluk — Oynat / Duraklat\n[ ve ] — Önceki / Sonraki Dosya\nSol / Sag — 10sn Geri / Ileri\nShift + Sol / Sag — 60sn Geri / Ileri\nYukari / Asagi — Oynatma Hizi (±0.1x)\nShift + Yukari / Asagi — Ses Seviyesi (±5%)",
         "global_hotkeys_title": "Genel Medya Tuşları (arka planda):",

@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ Support .CUE (marqueurs de chapitre et métadonnées)\n+ M3U, M3U8 (listes de lecture, y compris réseau)",
         "supported_covers_title": "Formats de couverture pris en charge :",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "Formats de sous-titres pris en charge :",
+        "subtitles_list": "SRT (.srt)\nFichiers de sous-titres placés à côté des fichiers audio ou dans le dossier subtitles/",
         "close": "Fermer",
         "hotkeys_title": "Raccourcis clavier:",
         "hotkeys_list": "Espace — Lecture / Pause\n[ et ] — Fichier Précédent / Suivant\nGauche / Droite — Reculer / Avancer 10s\nShift + Gauche / Droite — Reculer / Avancer 60s\nHaut / Bas — Vitesse de lecture (±0.1x)\nShift + Haut / Bas — Volume (±5%)",

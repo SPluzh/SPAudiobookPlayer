@@ -442,6 +442,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ รองรับ .CUE (มาร์กเกอร์บทและเมตาเดตา)\n+ M3U, M3U8 (เพลย์ลิสต์ รวมถึงเครือข่าย)",
         "supported_covers_title": "รูปแบบปกที่รองรับ:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "รูปแบบคำบรรยายที่รองรับ:",
+        "subtitles_list": "SRT (.srt)\nไฟล์คำบรรยายวางไว้ข้างไฟล์เสียงหรือในโฟลเดอร์ subtitles/",
         "hotkeys_title": "ปุ่มลัด:",
         "hotkeys_list": "Space — เล่น / หยุดชั่วคราว\n[ และ ] — ไฟล์ก่อนหน้า / ถัดไป\nซ้าย / ขวา — ย้อนกลับ / ไปข้างหน้า 10 วินาที\nShift + ซ้าย / ขวา — ย้อนกลับ / ไปข้างหน้า 60 วินาที\nขึ้น / ลง — ความเร็วในการเล่น (±0.1x)\nShift + ขึ้น / ลง — ระดับเสียง (±5%)",
         "global_hotkeys_title": "ปุ่มสื่อส่วนกลาง (ในพื้นหลัง):",

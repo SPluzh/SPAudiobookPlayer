@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE 支持 (章节标记和元数据)\n+ M3U, M3U8 (播放列表，包括网络)",
         "supported_covers_title": "支持的封面格式：",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "支持的字幕格式：",
+        "subtitles_list": "SRT (.srt)\n字幕文件存放在音频文件旁或 subtitles/ 文件夹中",
         "close": "关闭",
         "hotkeys_title": "快捷键:",
         "hotkeys_list": "空格 — 播放 / 暂停\n[ 和 ] — 上一个 / 下一个文件\n左 / 右 — 后退 / 前进 10秒\nShift + 左 / 右 — 后退 / 前进 60秒\n上 / 下 — 播放速度 (±0.1x)\nShift + 上 / 下 — 音量 (±5%)",

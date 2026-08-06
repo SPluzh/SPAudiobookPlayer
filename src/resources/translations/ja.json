@@ -424,6 +424,8 @@
         "formats_list": "MP3, M4B, M4A, MP4, AAC, FLAC, APE, OPUS, OGG, WAV, WMA\n+ .CUE サポート (チャプターマーカーとメタデータ)\n+ M3U, M3U8 (プレイリスト、ネットワークを含む)",
         "supported_covers_title": "サポートされているカバー形式:",
         "covers_list": "JPG, JPEG, PNG, WEBP, BMP",
+        "supported_subtitles_title": "サポートされている字幕フォーマット:",
+        "subtitles_list": "SRT (.srt)\n字幕ファイルは音声ファイルの横または subtitles/ フォルダ内に配置します",
         "close": "閉じる",
         "hotkeys_title": "ホットキー:",
         "hotkeys_list": "スペース — 再生 / 一時停止\n[ と ] — 前/次のファイル\n左 / 右 — 10秒 巻き戻し/早送り\nShift + 左 / 右 — 60秒 巻き戻し/早送り\n上 / 下 — 再生速度 (±0.1x)\nShift + 上 / 下 — 音量 (±5%)",
