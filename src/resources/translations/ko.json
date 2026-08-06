@@ -170,7 +170,8 @@
         "zoom_in": "자막 크기 키우기",
         "zoom_out": "자막 크기 줄이기",
         "translation_on_hover": "마우스 오버 시 번역 토글",
-        "autoscroll": "자동 스크롤 토글"
+        "autoscroll": "자동 스크롤 토글",
+        "no_subtitles_hint": "자막을 찾을 수 없습니다. 오디오북 파일 옆에 .srt 자막 파일을 놓으세요."
     },
     "status": {
         "load_library": "📚 오디오북 라이브러리 불러오기",

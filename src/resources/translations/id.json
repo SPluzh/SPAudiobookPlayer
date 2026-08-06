@@ -188,7 +188,8 @@
         "zoom_in": "Perbesar ukuran subtitle",
         "zoom_out": "Perkecil ukuran subtitle",
         "translation_on_hover": "Aktifkan/nonaktifkan terjemahan saat diarahkan",
-        "autoscroll": "Aktifkan/nonaktifkan gulir otomatis"
+        "autoscroll": "Aktifkan/nonaktifkan gulir otomatis",
+        "no_subtitles_hint": "Subtitle tidak ditemukan. Letakkan berkas subtitle .srt di samping berkas buku audio."
     },
     "status": {
         "load_library": "📚 Muat perpustakaan audiobook",

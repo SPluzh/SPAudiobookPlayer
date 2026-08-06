@@ -170,7 +170,8 @@
         "zoom_in": "Augmenter la taille des sous-titres",
         "zoom_out": "Diminuer la taille des sous-titres",
         "translation_on_hover": "Activer/désactiver la traduction au survol",
-        "autoscroll": "Activer/désactiver le défilement automatique"
+        "autoscroll": "Activer/désactiver le défilement automatique",
+        "no_subtitles_hint": "Sous-titres introuvables. Placez les fichiers de sous-titres .srt à côté des fichiers du livre audio."
     },
     "status": {
         "load_library": "📚 Chargement de la bibliothèque",

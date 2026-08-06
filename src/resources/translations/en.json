@@ -188,7 +188,8 @@
         "zoom_in": "Increase subtitle size",
         "zoom_out": "Decrease subtitle size",
         "translation_on_hover": "Toggle translation on hover",
-        "autoscroll": "Toggle auto-scroll"
+        "autoscroll": "Toggle auto-scroll",
+        "no_subtitles_hint": "Subtitles not found. Place .srt subtitle files next to the audiobook files."
     },
     "status": {
         "load_library": "📚 Load audiobook library",

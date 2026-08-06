@@ -170,7 +170,8 @@
         "zoom_in": "增大字幕大小",
         "zoom_out": "减小字幕大小",
         "translation_on_hover": "切换悬停翻译",
-        "autoscroll": "切换自动滚动"
+        "autoscroll": "切换自动滚动",
+        "no_subtitles_hint": "未找到字幕。请将 .srt 字幕文件放置在有声书文件旁边。"
     },
     "status": {
         "load_library": "📚 加载有声书库",

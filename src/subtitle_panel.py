@@ -421,14 +421,48 @@ class SubtitlePanel(QWidget):
         self.btn_zoom_out.setToolTip(tr("player.zoom_out"))
         self.btn_translation_toggle.setToolTip(tr("player.translation_on_hover", "Toggle translation on hover"))
         self.btn_autoscroll_toggle.setToolTip(tr("player.autoscroll", "Toggle auto-scroll"))
+        if getattr(self, '_showing_notice', False):
+            self.show_no_subtitles_notice()
 
     # -- Public API ---------------------------------------------
+
+    def show_no_subtitles_notice(self):
+        """Display a placeholder notice when no subtitles are available for the current book"""
+        self._entries = []
+        self._current_idx = -1
+        self._showing_notice = True
+        msg = tr("player.no_subtitles_hint")
+        css = f"""<style>
+body {{
+    margin: 0;
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}}
+.no-sub-box {{
+    text-align: center;
+    color: #888888;
+    font-size: {self._font_size}px;
+    line-height: 1.5;
+    padding: 16px;
+    border: 1px dashed #444444;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.03);
+}}
+</style>"""
+        self.browser.setHtml(
+            f'<html><head>{css}</head><body><div class="no-sub-box">{msg}</div></body></html>'
+        )
 
     def load_srt(self, srt_path: str) -> bool:
         """Load SRT file. Returns True on success."""
         entries = parse_srt(srt_path)
         if not entries:
+            self.show_no_subtitles_notice()
             return False
+        self._showing_notice = False
         self._entries = entries
         self._current_idx = -1
         self._render()
@@ -438,6 +472,7 @@ class SubtitlePanel(QWidget):
         """Clear subtitles"""
         self._entries = []
         self._current_idx = -1
+        self._showing_notice = False
         self.browser.clear()
 
     def update_position(self, position_sec: float):

@@ -1753,9 +1753,10 @@ class AudiobookPlayerWindow(QMainWindow):
                     break
 
         if srt_abs_path and srt_abs_path.exists():
-            self.player_widget.subtitle_panel.load_srt(srt_abs_path)
+            if not self.player_widget.subtitle_panel.load_srt(srt_abs_path):
+                self.player_widget.subtitle_panel.show_no_subtitles_notice()
         else:
-            self.player_widget.subtitle_panel.clear()
+            self.player_widget.subtitle_panel.show_no_subtitles_notice()
 
     def on_subtitles_toggled(self, checked: bool):
         """Update and persist the subtitles visibility preference"""

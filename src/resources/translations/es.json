@@ -170,7 +170,8 @@
         "zoom_in": "Aumentar tamaño de subtítulos",
         "zoom_out": "Disminuir tamaño de subtítulos",
         "translation_on_hover": "Activar/desactivar la traducción al pasar el cursor",
-        "autoscroll": "Alternar desplazamiento automático"
+        "autoscroll": "Alternar desplazamiento automático",
+        "no_subtitles_hint": "Subtítulos no encontrados. Coloque los archivos de subtítulos .srt junto a los archivos del audiolibro."
     },
     "status": {
         "load_library": "📚 Cargar biblioteca de audiolibros",

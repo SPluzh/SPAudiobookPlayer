@@ -170,7 +170,8 @@
         "zoom_in": "Altyazı boyutunu artır",
         "zoom_out": "Altyazı boyutunu azalt",
         "translation_on_hover": "Üzerine gelindiğinde çeviriyi aç/kapat",
-        "autoscroll": "Otomatik kaydırmayı aç/kapat"
+        "autoscroll": "Otomatik kaydırmayı aç/kapat",
+        "no_subtitles_hint": "Altyazı bulunamadı. .srt altyazı dosyalarını sesli kitap dosyalarının yanına koyun."
     },
     "status": {
         "load_library": "📚 Sesli kitap kütüphanesini yükle",

@@ -170,7 +170,8 @@
         "zoom_in": "Aumentar tamanho da legenda",
         "zoom_out": "Diminuir tamanho da legenda",
         "translation_on_hover": "Ativar/desativar tradução ao passar o mouse",
-        "autoscroll": "Alternar rolagem automática"
+        "autoscroll": "Alternar rolagem automática",
+        "no_subtitles_hint": "Legendas não encontradas. Coloque os arquivos de legenda .srt ao lado dos arquivos do livro falado."
     },
     "status": {
         "load_library": "📚 Carregar biblioteca de audiolivros",

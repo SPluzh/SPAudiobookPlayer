@@ -188,7 +188,8 @@
         "zoom_in": "Tăng kích thước phụ đề",
         "zoom_out": "Giảm kích thước phụ đề",
         "translation_on_hover": "Bật/tắt dịch khi di chuột",
-        "autoscroll": "Bật/tắt cuộn tự động"
+        "autoscroll": "Bật/tắt cuộn tự động",
+        "no_subtitles_hint": "Không tìm thấy phụ đề. Hãy đặt các tệp phụ đề .srt bên cạnh các tệp sách nói."
     },
     "status": {
         "load_library": "📚 Tải thư viện sách nói",
