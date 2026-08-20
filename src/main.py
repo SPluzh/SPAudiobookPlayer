@@ -316,7 +316,7 @@ class AudiobookPlayerWindow(QMainWindow):
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding="utf-8")
 
-        lang_code = config.get("Display", "language", fallback="ru")
+        lang_code = config.get("Display", "language", fallback="en")
 
         # Verify language code exists in available languages
         available_codes = [lang[0] for lang in get_available_languages()]
@@ -1137,10 +1137,10 @@ class AudiobookPlayerWindow(QMainWindow):
             "Player", "subtitle_autoscroll", fallback=True
         )
         self.subtitle_target_lang = config.get(
-            "Player", "subtitle_target_lang", fallback="ru"
+            "Player", "subtitle_target_lang", fallback="en"
         )
         self.subtitle_translation_provider = config.get(
-            "Player", "subtitle_translation_provider", fallback="google"
+            "Player", "subtitle_translation_provider", fallback="freedict"
         )
 
         # Audio Settings (Unified in [Audio])
@@ -1336,8 +1336,8 @@ class AudiobookPlayerWindow(QMainWindow):
             "subtitle_font_size": "15",
             "subtitle_translation_on_hover": "True",
             "subtitle_autoscroll": "True",
-            "subtitle_target_lang": "ru",
-            "subtitle_translation_provider": "google",
+            "subtitle_target_lang": "en",
+            "subtitle_translation_provider": "freedict",
         }
         config["Library"] = {
             "show_folders": "False",

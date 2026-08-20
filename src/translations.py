@@ -13,7 +13,7 @@ class TranslationManager:
     _instance = None
     _translations: Dict[str, Dict[str, str]] = {}
     _language_names: Dict[str, str] = {}
-    _current_language = Language.RUSSIAN
+    _current_language = Language.ENGLISH
     
     def __new__(cls):
         """Create or return the singleton instance"""

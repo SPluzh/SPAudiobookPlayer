@@ -341,18 +341,62 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
         c.execute("CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_listening_stats(listen_date)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_daily_stats_audiobook ON daily_listening_stats(audiobook_id)")
         
-        # Subtitle translation cache table
+        # Subtitle translation cache table with provider support
         c.execute("""
             CREATE TABLE IF NOT EXISTS translations_cache (
                 original_text TEXT NOT NULL,
                 target_lang TEXT NOT NULL,
+                provider TEXT NOT NULL DEFAULT 'google',
                 translation TEXT NOT NULL,
                 parts_of_speech_json TEXT,
                 synonyms_json TEXT,
+                phonetic TEXT DEFAULT '',
+                audio_url TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (original_text, target_lang)
+                PRIMARY KEY (original_text, target_lang, provider)
             )
         """)
+
+        # Migration: ensure provider column exists in translations_cache
+        try:
+            c.execute("PRAGMA table_info(translations_cache)")
+            cols = [r[1] for r in c.fetchall()]
+            if 'provider' not in cols:
+                c.execute("""
+                    CREATE TABLE translations_cache_new (
+                        original_text TEXT NOT NULL,
+                        target_lang TEXT NOT NULL,
+                        provider TEXT NOT NULL DEFAULT 'google',
+                        translation TEXT NOT NULL,
+                        parts_of_speech_json TEXT,
+                        synonyms_json TEXT,
+                        phonetic TEXT DEFAULT '',
+                        audio_url TEXT DEFAULT '',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (original_text, target_lang, provider)
+                    )
+                """)
+                c.execute("""
+                    INSERT OR IGNORE INTO translations_cache_new 
+                    (original_text, target_lang, provider, translation, parts_of_speech_json, synonyms_json, created_at)
+                    SELECT original_text, target_lang, 'google', translation, parts_of_speech_json, synonyms_json, created_at
+                    FROM translations_cache
+                """)
+                c.execute("DROP TABLE translations_cache")
+                c.execute("ALTER TABLE translations_cache_new RENAME TO translations_cache")
+            else:
+                if 'phonetic' not in cols:
+                    try:
+                        c.execute("ALTER TABLE translations_cache ADD COLUMN phonetic TEXT DEFAULT ''")
+                    except sqlite3.OperationalError:
+                        pass
+                if 'audio_url' not in cols:
+                    try:
+                        c.execute("ALTER TABLE translations_cache ADD COLUMN audio_url TEXT DEFAULT ''")
+                    except sqlite3.OperationalError:
+                        pass
+        except Exception as e:
+            print(f"Migration error for translations_cache: {e}")
 
         # Dictionary table
         c.execute("""
@@ -2168,8 +2212,8 @@ class DatabaseManager:
             conn.close()
 
     # ===================== TRANSLATIONS CACHE =====================
-    def get_cached_translation(self, text: str, target_lang: str) -> Optional[dict]:
-        """Retrieves a cached translation from the database."""
+    def get_cached_translation(self, text: str, target_lang: str, provider: str = "freedict") -> Optional[dict]:
+        """Retrieves a cached translation from the database for a specific provider."""
         import json
         cleaned = text.strip()
         conn = sqlite3.connect(self.db_file)
@@ -2177,39 +2221,48 @@ class DatabaseManager:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute(
-                "SELECT translation, parts_of_speech_json, synonyms_json FROM translations_cache WHERE original_text = ? AND target_lang = ?",
-                (cleaned, target_lang)
+                "SELECT translation, parts_of_speech_json, synonyms_json, phonetic, audio_url FROM translations_cache WHERE original_text = ? AND target_lang = ? AND provider = ?",
+                (cleaned, target_lang, provider)
             )
             row = c.fetchone()
             if row:
-                return {
+                res = {
                     "translation": row["translation"],
                     "parts_of_speech": json.loads(row["parts_of_speech_json"]) if row["parts_of_speech_json"] else {},
-                    "synonyms": json.loads(row["synonyms_json"]) if row["synonyms_json"] else {}
+                    "synonyms": json.loads(row["synonyms_json"]) if row["synonyms_json"] else {},
+                    "provider": provider
                 }
+                keys = row.keys()
+                if "phonetic" in keys and row["phonetic"]:
+                    res["phonetic"] = row["phonetic"]
+                if "audio_url" in keys and row["audio_url"]:
+                    res["audio_url"] = row["audio_url"]
+                return res
         except Exception as e:
             print(f"Error reading translation cache: {e}")
         finally:
             conn.close()
         return None
 
-    def save_cached_translation(self, text: str, target_lang: str, result_dict: dict):
-        """Saves a translation result to the database cache."""
+    def save_cached_translation(self, text: str, target_lang: str, result_dict: dict, provider: str = "freedict"):
+        """Saves a translation result to the database cache for a specific provider."""
         import json
         cleaned = text.strip()
         translation = result_dict.get("translation", "")
         parts_of_speech_json = json.dumps(result_dict.get("parts_of_speech", {}))
         synonyms_json = json.dumps(result_dict.get("synonyms", {}))
+        phonetic = result_dict.get("phonetic", "")
+        audio_url = result_dict.get("audio_url", "")
         conn = sqlite3.connect(self.db_file)
         try:
             c = conn.cursor()
             c.execute(
                 """
                 INSERT OR REPLACE INTO translations_cache 
-                (original_text, target_lang, translation, parts_of_speech_json, synonyms_json)
-                VALUES (?, ?, ?, ?, ?)
+                (original_text, target_lang, provider, translation, parts_of_speech_json, synonyms_json, phonetic, audio_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (cleaned, target_lang, translation, parts_of_speech_json, synonyms_json)
+                (cleaned, target_lang, provider, translation, parts_of_speech_json, synonyms_json, phonetic, audio_url)
             )
             conn.commit()
         except Exception as e:

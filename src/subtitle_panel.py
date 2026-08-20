@@ -274,8 +274,8 @@ class SubtitlePanel(QWidget):
         self._translation_on_hover: bool = True
         self._autoscroll: bool = True
         self._autoscroll_suspended: bool = False
-        self.translation_target_lang: str = "ru"
-        self.translation_provider: str = "google"
+        self.translation_target_lang: str = "en"
+        self.translation_provider: str = "freedict"
         self._setup_ui()
         self.translation_on_hover = True
         self.autoscroll = True

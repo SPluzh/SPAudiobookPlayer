@@ -20,21 +20,79 @@ class TranslationWorker(QThread):
     finished = pyqtSignal(str, dict)  # (original, translation_details)
     error = pyqtSignal(str)
 
-    def __init__(self, text, target_lang="ru", provider="google"):
+    def __init__(self, text, target_lang="en", provider="freedict"):
         super().__init__()
         self.text = text
         self.target_lang = target_lang
         self.provider = provider
 
     def run(self):
-        try:
-            cleaned = self.text.strip()
-            if not cleaned:
-                self.finished.emit(self.text, {"translation": ""})
-                return
+        cleaned = self.text.strip()
+        if not cleaned:
+            self.finished.emit(self.text, {"translation": ""})
+            return
 
-            import ssl
-            context = ssl._create_unverified_context()
+        import ssl
+        context = ssl._create_unverified_context()
+
+        try:
+            if self.provider in ("freedict", "free_dictionary"):
+                url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{urllib.parse.quote(cleaned)}"
+                req = urllib.request.Request(
+                    url,
+                    headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                )
+                with urllib.request.urlopen(req, timeout=5, context=context) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                    if data and isinstance(data, list) and len(data) > 0:
+                        entry = data[0]
+                        phonetic = entry.get("phonetic", "")
+                        audio_url = ""
+                        phonetics = entry.get("phonetics", [])
+                        for ph in phonetics:
+                            if not phonetic and ph.get("text"):
+                                phonetic = ph.get("text")
+                            if not audio_url and ph.get("audio"):
+                                audio_url = ph.get("audio")
+
+                        parts_of_speech = {}
+                        synonyms_dict = {}
+                        first_def = ""
+
+                        meanings = entry.get("meanings", [])
+                        for meaning in meanings:
+                            pos = meaning.get("partOfSpeech", "general")
+                            defs = []
+                            for d in meaning.get("definitions", []):
+                                def_text = d.get("definition", "")
+                                if def_text:
+                                    if not first_def:
+                                        first_def = def_text
+                                    example = d.get("example")
+                                    if example:
+                                        defs.append(f"{def_text} <i>(e.g., \"{example}\")</i>")
+                                    else:
+                                        defs.append(def_text)
+                            if defs:
+                                parts_of_speech[pos] = defs
+
+                            syn_list = meaning.get("synonyms", [])
+                            if syn_list:
+                                synonyms_dict[pos] = syn_list
+
+                        translation_text = first_def if first_def else cleaned
+                        result = {
+                            "translation": translation_text,
+                            "parts_of_speech": parts_of_speech,
+                            "synonyms": synonyms_dict,
+                            "phonetic": phonetic,
+                            "audio_url": audio_url,
+                            "provider": "freedict"
+                        }
+                        self.finished.emit(cleaned, result)
+                    else:
+                        self.error.emit(tr_def("translator.no_definitions", "No definitions found", "Определения не найдены"))
+                return
 
             # Default to google
             url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={self.target_lang}&dt=t&dt=bd&dt=ss&q={urllib.parse.quote(cleaned)}"
@@ -71,11 +129,29 @@ class TranslationWorker(QThread):
                     result = {
                         "translation": translated,
                         "parts_of_speech": parts_of_speech,
-                        "synonyms": synonyms
+                        "synonyms": synonyms,
+                        "provider": "google"
                     }
                     self.finished.emit(cleaned, result)
                 else:
-                    self.error.emit("Empty response from translation API")
+                    self.error.emit(tr_def("translator.empty_response", "Empty response from translation API", "Пустой ответ от сервиса перевода"))
+        except urllib.error.HTTPError as e:
+            logging.error(f"HTTPError {e.code} for provider {self.provider}: {e}")
+            if e.code == 404:
+                msg = tr_def("translator.word_not_found", "Word not found in dictionary", "Слово не найдено в словаре")
+            elif e.code == 502:
+                msg = tr_def("translator.bad_gateway", "Server unavailable (502 Bad Gateway)", "Сервер недоступен (502 Bad Gateway)")
+            elif e.code in (500, 503, 504):
+                msg = tr_def("translator.server_error", f"Server error ({e.code})", f"Ошибка сервера ({e.code})")
+            elif e.code == 429:
+                msg = tr_def("translator.too_many_requests", "Too many requests (429)", "Слишком много запросов (429)")
+            else:
+                msg = tr_def("translator.http_error", f"HTTP Error {e.code}", f"Ошибка HTTP {e.code}")
+            self.error.emit(msg)
+        except urllib.error.URLError as e:
+            logging.error(f"URLError for provider {self.provider}: {e}")
+            msg = tr_def("translator.network_error", "Network connection error", "Ошибка сетевого соединения")
+            self.error.emit(msg)
         except Exception as e:
             logging.error(f"Translation error: {e}")
             self.error.emit(str(e))
@@ -192,7 +268,7 @@ class TranslationPopup(QFrame):
             p = p.parent()
         return None
 
-    def show_translation(self, text, target_lang="ru", provider="google", anchor_pos=QPoint()):
+    def show_translation(self, text, target_lang="en", provider="freedict", anchor_pos=QPoint()):
         """Starts asynchronous translation and positions the popup above anchor_pos."""
         logging.debug(f"show_translation called with text='{text}', target_lang='{target_lang}', provider='{provider}'")
         
@@ -237,9 +313,9 @@ class TranslationPopup(QFrame):
         # 2. Check L2 Database Cache
         db = self._get_db()
         if db:
-            cached_result = db.get_cached_translation(cleaned, target_lang)
+            cached_result = db.get_cached_translation(cleaned, target_lang, provider)
             if cached_result:
-                logging.info(f"Translation cache hit (L2 database) for: '{cleaned}' -> '{target_lang}'")
+                logging.info(f"Translation cache hit (L2 database) for: '{cleaned}' -> '{target_lang}' ({provider})")
                 self._memory_cache[cache_key] = cached_result
                 self.original_label.setText(text)
                 self.show()
@@ -271,7 +347,7 @@ class TranslationPopup(QFrame):
             self._memory_cache[cache_key] = trans
             db_inst = self._get_db()
             if db_inst:
-                db_inst.save_cached_translation(cleaned, target_lang, trans)
+                db_inst.save_cached_translation(cleaned, target_lang, trans, provider=provider)
 
             self._on_translation_success(orig, trans)
             
@@ -292,15 +368,23 @@ class TranslationPopup(QFrame):
         translation = result_dict.get("translation", "")
         parts_of_speech = result_dict.get("parts_of_speech", {})
         synonyms = result_dict.get("synonyms", {})
+        phonetic = result_dict.get("phonetic", "")
+        self.current_audio_url = result_dict.get("audio_url", "")
         
         # Build HTML content
-        html = f"<div style='color: #FFD700; font-weight: bold;'>{translation}</div>"
+        html = ""
+        if phonetic:
+            html += f"<div style='color: #a0a0a0; font-size: 9pt; font-style: italic; margin-bottom: 2px;'>[{phonetic.strip('[]/')}]</div>"
+        html += f"<div style='color: #FFD700; font-weight: bold;'>{translation}</div>"
         
-        # 1. Parts of Speech translations
+        # 1. Parts of Speech translations / definitions
         pos_lines = []
         for pos_name, words in parts_of_speech.items():
             translated_pos = tr_def(f"translator.{pos_name}", pos_name.capitalize(), pos_name.capitalize())
-            word_list_str = ", ".join(words[:5])
+            if isinstance(words, list):
+                word_list_str = "<br/>".join(words[:4])
+            else:
+                word_list_str = str(words)
             pos_lines.append(
                 f"<tr>"
                 f"<td style='color: #888888; font-weight: bold; padding-right: 8px; vertical-align: top; font-size: 9.5pt;'>{translated_pos}:</td>"
@@ -316,7 +400,8 @@ class TranslationPopup(QFrame):
         # 2. Synonyms
         all_synonyms = []
         for pos_name, syn_list in synonyms.items():
-            all_synonyms.extend(syn_list)
+            if isinstance(syn_list, list):
+                all_synonyms.extend(syn_list)
             
         # Remove duplicates while maintaining order
         seen = set()
@@ -366,7 +451,7 @@ class TranslationPopup(QFrame):
         self.raise_()
 
     def _on_translation_error(self, err_msg):
-        self.translation_label.setText("Translation failed")
+        self.translation_label.setText(f"<div style='color: #ff6b6b;'>{err_msg if err_msg else 'Translation failed'}</div>")
         self.current_original = None
         self.current_translation = None
         self.dict_btn.hide()

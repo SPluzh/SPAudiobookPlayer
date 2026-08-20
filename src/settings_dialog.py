@@ -118,7 +118,7 @@ class SettingsDialog(QDialog):
     subtitle_translation_provider_changed = pyqtSignal(str) # Translation provider updated
     closed = pyqtSignal()              # Dialog closed
     
-    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None, auto_check=True, opus_workers=0, subtitle_target_lang="ru", subtitle_translation_provider="google"):
+    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None, auto_check=True, opus_workers=0, subtitle_target_lang="en", subtitle_translation_provider="freedict"):
         """Initialize settings dialog with current configuration values"""
         super().__init__(parent)
         self.setWindowTitle(tr("settings.title"))
@@ -208,6 +208,7 @@ class SettingsDialog(QDialog):
         
         self.provider_combo = QComboBox()
         self.provider_combo.addItem("Google", "google")
+        self.provider_combo.addItem("Free Dictionary", "freedict")
         self.provider_combo.setCurrentIndex(self.provider_combo.findData(self.subtitle_translation_provider))
         self.provider_combo.setToolTip(tr("settings.translation_provider_tooltip"))
         

@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.5]
+- **Subtitles**: Added Free Dictionary as the default translation source with word definitions, pronunciations, and improved server error handling.
+
 ## [1.8.4]
 - **UI**: Fixed an issue where audiobook covers in grid view would briefly reset or flicker to the default image during playback.
 
