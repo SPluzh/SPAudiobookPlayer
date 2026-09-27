@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.6]
+- **UI**: Reduced the minimal window width in compact mode to 490px to match the player width in the full window.
+- **Subtitles**: In minimal mode, enabling subtitles now automatically doubles the window height to comfortably fit subtitle text and restores it when turned off.
+
 ## [1.8.5]
 - **Subtitles**: Added Free Dictionary as the default translation source with word definitions, pronunciations, and improved server error handling.
 

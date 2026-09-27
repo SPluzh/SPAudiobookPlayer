@@ -258,7 +258,7 @@ class AudiobookPlayerWindow(QMainWindow):
             # Fix potential "creeping" issues from previous bugs where coordinates became negative or zero
             safe_x = max(0, self.window_x)
             safe_y = max(30, self.window_y)  # Ensure title bar is likely visible
-            safe_width = max(550, self.window_width)
+            safe_width = max(490, self.window_width)
             safe_height = max(450, self.window_height)
             self.setGeometry(safe_x, safe_y, safe_width, safe_height)
 
@@ -277,8 +277,9 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Apply final size constraints and force minimal dimension if active
         if getattr(self, "minimal_interface", False):
-            self.setMinimumSize(self.minimal_width, self.minimal_height)
-            self.resize(self.minimal_width, self.minimal_height)
+            mh = self.get_minimal_height()
+            self.setMinimumSize(self.minimal_width, mh)
+            self.resize(self.minimal_width, mh)
         else:
             self.setMinimumSize(self.normal_min_width, self.normal_min_height)
 
@@ -434,7 +435,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.on_compressor_preset_changed
         )
         self.player_widget.subtitles_toggled_signal.connect(
-            self.on_subtitles_toggled
+            self.on_subtitles_state_toggled
         )
         self.player_widget.subtitle_panel.font_size_changed.connect(
             self.on_subtitle_font_size_changed
@@ -499,12 +500,15 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.set_pitch_value(self.pitch_value)
 
         self.splitter.addWidget(self.player_widget)
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 0)
 
         main_layout.addWidget(self.splitter, 1)
 
         # Apply Minimal Interface state
         if getattr(self, "minimal_interface", False):
-            self.setMinimumSize(self.minimal_width, self.minimal_height)
+            mh = self.get_minimal_height()
+            self.setMinimumSize(self.minimal_width, mh)
             self.library_widget.hide()
             self.player_widget.file_list.hide()
         else:
@@ -742,6 +746,13 @@ class AudiobookPlayerWindow(QMainWindow):
                         self.library_widget.tile_view.canvas.update()
         self.save_settings()
 
+    def get_minimal_height(self) -> int:
+        """Calculate the minimum window height for minimal interface mode based on statusbar and subtitle visibility"""
+        base_h = self.minimal_height if self.show_statusbar else 245
+        if self.show_subtitles:
+            return base_h * 2
+        return base_h
+
     def toggle_minimal_interface(self, enabled: bool):
         """Toggle visibility of library and playlist for a minimized interface, resizing window accordingly"""
         self.minimal_interface = enabled
@@ -756,7 +767,7 @@ class AudiobookPlayerWindow(QMainWindow):
                     self.splitter.saveState().toHex().data().decode()
                 )
 
-            mh = 245 if not self.show_statusbar else self.minimal_height
+            mh = self.get_minimal_height()
             self.setMinimumSize(self.minimal_width, mh)
 
             # Hide widgets
@@ -814,7 +825,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_statusbar = enabled
         self.statusBar().setVisible(enabled)
         if getattr(self, "minimal_interface", False):
-            h = 270 if enabled else 245
+            h = self.get_minimal_height()
             self.setMinimumSize(self.minimal_width, h)
             self.resize(self.minimal_width, h)
         self.save_settings()
@@ -925,7 +936,6 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.file_selected.connect(self.on_file_selected)
         self.player_widget.bookmarks_clicked.connect(self.show_bookmarks)
         self.player_widget.add_bookmark_clicked.connect(self.add_bookmark)
-        self.player_widget.subtitles_toggled_signal.connect(self.on_subtitles_state_toggled)
 
     def show_bookmarks(self):
         """Open the bookmarks manager dialog"""
@@ -1035,13 +1045,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.normal_splitter_state = config.get(
             "Display", "normal_splitter_state", fallback=None
         )
-        self.normal_min_width = max(750, config.getint(
-            "Display", "normal_min_width", fallback=750
+        self.normal_min_width = max(700, config.getint(
+            "Display", "normal_min_width", fallback=700
         ))
         self.normal_min_height = config.getint(
             "Display", "normal_min_height", fallback=450
         )
-        self.minimal_width = max(550, config.getint("Display", "minimal_width", fallback=550))
+        self.minimal_width = max(490, config.getint("Display", "minimal_width", fallback=490))
         self.minimal_height = config.getint("Display", "minimal_height", fallback=270)
         self.current_theme = config.get("Display", "theme", fallback="dark")
         self.accent_color = config.get("Appearance", "accent_color", fallback="")
@@ -1315,9 +1325,9 @@ class AudiobookPlayerWindow(QMainWindow):
             "window_height": "800",
             "window_x": "100",
             "window_y": "100",
-            "normal_min_width": "750",
+            "normal_min_width": "700",
             "normal_min_height": "450",
-            "minimal_width": "550",
+            "minimal_width": "490",
             "minimal_height": "270",
             "language": "en",
             "show_statusbar": "False",
@@ -1712,6 +1722,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.save_settings()
         if checked:
             self._load_subtitles_for_current_file()
+        if getattr(self, "minimal_interface", False):
+            h = self.get_minimal_height()
+            self.setMinimumSize(self.minimal_width, h)
+            self.resize(self.minimal_width, h)
 
     def _load_subtitles_for_current_file(self):
         """Load SRT subtitles for the current file if available, otherwise clear the panel"""
@@ -1760,8 +1774,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def on_subtitles_toggled(self, checked: bool):
         """Update and persist the subtitles visibility preference"""
-        self.show_subtitles = checked
-        self.save_settings()
+        self.on_subtitles_state_toggled(checked)
 
     def on_subtitle_font_size_changed(self, size: int):
         """Update and persist the subtitle font size preference"""
