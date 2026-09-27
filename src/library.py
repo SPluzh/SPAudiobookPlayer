@@ -2948,9 +2948,11 @@ class LibraryWidget(QWidget):
         
         def tr_local(key, default):
             ru_translations = {
+                "library.filter_metadata_title": "Метаданные",
                 "library.filter_duration_title": "Длительность",
                 "library.filter_size_title": "Размер",
                 "library.filter_progress_title": "Прогресс воспроизведения",
+                "library.filter_language_title": "Язык",
                 "duration:short": "Короткие (< 3 ч)",
                 "duration:medium": "Средние (3–10 ч)",
                 "duration:long": "Длинные (> 10 ч)",
@@ -3001,6 +3003,11 @@ class LibraryWidget(QWidget):
         
         action_map = {}
         
+        # Metadata Submenu
+        meta_menu = KeepOpenMenu(tr_local("library.filter_metadata_title", "Metadata"), menu)
+        meta_menu.setObjectName("metadataFilterSubMenu")
+        menu.addMenu(meta_menu)
+
         # "Without" filters
         for filter_key, loc_key in options_no:
             translated = tr(loc_key)
@@ -3012,13 +3019,13 @@ class LibraryWidget(QWidget):
                 }
                 translated = fallbacks.get(loc_key, loc_key)
                 
-            action = menu.addAction(translated)
+            action = meta_menu.addAction(translated)
             action.setCheckable(True)
             action.setChecked(filter_key in self.current_meta_filters)
             action_map[action] = filter_key
             action.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
             
-        menu.addSeparator()
+        meta_menu.addSeparator()
 
         # "With" filters (separated)
         for filter_key, loc_key in options_has:
@@ -3031,17 +3038,16 @@ class LibraryWidget(QWidget):
                 }
                 translated = fallbacks.get(loc_key, loc_key)
                 
-            action = menu.addAction(translated)
+            action = meta_menu.addAction(translated)
             action.setCheckable(True)
             action.setChecked(filter_key in self.current_meta_filters)
             action_map[action] = filter_key
             action.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
-            
-        menu.addSeparator()
 
         # Duration Submenu
-        duration_menu = menu.addMenu(tr_local("library.filter_duration_title", "Duration"))
+        duration_menu = KeepOpenMenu(tr_local("library.filter_duration_title", "Duration"), menu)
         duration_menu.setObjectName("durationFilterSubMenu")
+        menu.addMenu(duration_menu)
         
         duration_options = [
             ("duration:short", "duration:short", "Short (< 3 hrs)"),
@@ -3057,8 +3063,9 @@ class LibraryWidget(QWidget):
             act.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
 
         # Size Submenu
-        size_menu = menu.addMenu(tr_local("library.filter_size_title", "Size"))
+        size_menu = KeepOpenMenu(tr_local("library.filter_size_title", "Size"), menu)
         size_menu.setObjectName("sizeFilterSubMenu")
+        menu.addMenu(size_menu)
         
         size_options = [
             ("size:small", "size:small", "Small (< 100 MB)"),
@@ -3073,8 +3080,9 @@ class LibraryWidget(QWidget):
             act.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
 
         # Progress Submenu
-        progress_menu = menu.addMenu(tr_local("library.filter_progress_title", "Playback Progress"))
+        progress_menu = KeepOpenMenu(tr_local("library.filter_progress_title", "Playback Progress"), menu)
         progress_menu.setObjectName("progressFilterSubMenu")
+        menu.addMenu(progress_menu)
         
         progress_options = [
             ("progress:almost", "progress:almost", "Almost completed (> 80%)"),
@@ -3089,13 +3097,19 @@ class LibraryWidget(QWidget):
             action_map[act] = filter_key
             act.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
 
-        menu.addSeparator()
+        # Language Submenu
+        lang_title = tr_local("library.filter_language_title", tr("library.sort_by_language"))
+        if lang_title == "library.sort_by_language":
+            lang_title = "Language"
+        lang_menu = KeepOpenMenu(lang_title, menu)
+        lang_menu.setObjectName("languageFilterSubMenu")
+        menu.addMenu(lang_menu)
         
         # "Without language" option
         translated_none = tr("library.language_none")
         if translated_none == "library.language_none":
             translated_none = "Without Language"
-        act_none = menu.addAction(translated_none)
+        act_none = lang_menu.addAction(translated_none)
         act_none.setCheckable(True)
         act_none.setChecked("lang:none" in self.current_meta_filters)
         action_map[act_none] = "lang:none"
@@ -3104,9 +3118,10 @@ class LibraryWidget(QWidget):
         # List of unique languages
         langs = self.get_available_languages()
         if langs:
+            lang_menu.addSeparator()
             for lang_val in langs:
                 filter_key = f"lang:{lang_val}"
-                action = menu.addAction(lang_val)
+                action = lang_menu.addAction(lang_val)
                 action.setCheckable(True)
                 action.setChecked(filter_key in self.current_meta_filters)
                 action_map[action] = filter_key

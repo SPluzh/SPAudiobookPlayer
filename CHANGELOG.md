@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.7]
+- **Library**: Moved metadata presence/absence filters and book language filters into dedicated submenus in the filter dropdown menu.
+
 ## [1.8.6]
 - **UI**: Reduced the minimal window width in compact mode to 490px to match the player width in the full window.
 - **Subtitles**: In minimal mode, enabling subtitles now automatically doubles the window height to comfortably fit subtitle text and restores it when turned off.
