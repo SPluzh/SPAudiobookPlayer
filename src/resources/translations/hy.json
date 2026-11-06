@@ -127,7 +127,9 @@
         "filter_has_cover": "Կազմով",
         "filter_has_author": "Հեղինակով",
         "filter_has_narrator": "Ընթերցողով",
-        "filter_reset_all": "Մաքրել բոլորը"
+        "filter_reset_all": "Մաքրել բոլորը",
+        "filter_menu_sources": "Աղբյուրներ",
+        "sources_all": "Բոլոր աղբյուրները"
     },
     "player": {
         "volume": "Ձայնի ուժգնություն",
@@ -254,7 +256,14 @@
         "translation_group": "Ենթագրերի թարգմանություն",
         "translation_lang_label": "Թարգմանության լեզու․",
         "translation_provider_label": "Թարգմանիչ․",
-        "translation_provider_tooltip": "Թարգմանիչ՝ ենթագրերի վրա պահելիս բառերի կամ ընտրության թարգմանության համար"
+        "translation_provider_tooltip": "Թարգմանիչ՝ ենթագրերի վրա պահելիս բառերի կամ ընտրության թարգմանության համար",
+        "add_path": "Ավելացնել ուղի",
+        "edit_path": "Խմբագրել ուղին",
+        "remove_path": "Հեռացնել ուղին",
+        "confirm": "Հաստատում",
+        "remove_path_confirm": "Հեռացնե՞լ ընտրված ուղին ցանկից:",
+        "path_valid": "Ուղին գտնվել է: {path}",
+        "path_invalid": "Ուղին գոյություն չունի: {path}"
     },
     "dialog": {
         "restart_title": "Լեզվի փոփոխություն",

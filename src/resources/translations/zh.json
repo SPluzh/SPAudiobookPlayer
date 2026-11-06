@@ -109,7 +109,9 @@
         "filter_has_cover": "有封面",
         "filter_has_author": "有作者",
         "filter_has_narrator": "有朗读者",
-        "filter_reset_all": "重置全部"
+        "filter_reset_all": "重置全部",
+        "filter_menu_sources": "来源",
+        "sources_all": "所有来源"
     },
     "player": {
         "volume": "音量",
@@ -236,7 +238,14 @@
         "translation_group": "字幕翻译",
         "translation_lang_label": "翻译语言:",
         "translation_provider_label": "翻译服务商:",
-        "translation_provider_tooltip": "鼠标悬停在字幕上时翻译单词/选区的内容"
+        "translation_provider_tooltip": "鼠标悬停在字幕上时翻译单词/选区的内容",
+        "add_path": "添加路径",
+        "edit_path": "编辑路径",
+        "remove_path": "删除路径",
+        "confirm": "确认",
+        "remove_path_confirm": "是否从列表中删除选定路径？",
+        "path_valid": "找到路径: {path}",
+        "path_invalid": "路径不存在: {path}"
     },
     "dialog": {
         "restart_title": "更改语言",

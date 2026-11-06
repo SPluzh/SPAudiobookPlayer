@@ -109,7 +109,9 @@
         "filter_has_cover": "カバーあり",
         "filter_has_author": "著者あり",
         "filter_has_narrator": "ナレーターあり",
-        "filter_reset_all": "すべてリセット"
+        "filter_reset_all": "すべてリセット",
+        "filter_menu_sources": "ソース",
+        "sources_all": "すべてのソース"
     },
     "player": {
         "volume": "音量",
@@ -236,7 +238,14 @@
         "translation_group": "字幕翻訳",
         "translation_lang_label": "翻訳言語:",
         "translation_provider_label": "翻訳プロバイダー:",
-        "translation_provider_tooltip": "字幕上でホバーした単語や選択範囲を翻訳するプロバイダー"
+        "translation_provider_tooltip": "字幕上でホバーした単語や選択範囲を翻訳するプロバイダー",
+        "add_path": "パスを追加",
+        "edit_path": "パスを編集",
+        "remove_path": "パスを削除",
+        "confirm": "確認",
+        "remove_path_confirm": "選択したパスをリストから削除しますか？",
+        "path_valid": "パスが見つかりました: {path}",
+        "path_invalid": "パスが存在しません: {path}"
     },
     "dialog": {
         "restart_title": "言語の変更",

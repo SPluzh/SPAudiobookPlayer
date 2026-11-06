@@ -109,7 +109,9 @@
         "filter_has_cover": "Con portada",
         "filter_has_author": "Con autor",
         "filter_has_narrator": "Con narrador",
-        "filter_reset_all": "Restablecer todo"
+        "filter_reset_all": "Restablecer todo",
+        "filter_menu_sources": "Fuentes",
+        "sources_all": "Todas las fuentes"
     },
     "player": {
         "volume": "Volumen",
@@ -236,7 +238,14 @@
         "translation_group": "Traducción de subtítulos",
         "translation_lang_label": "Idioma de traducción:",
         "translation_provider_label": "Proveedor de traducción:",
-        "translation_provider_tooltip": "Proveedor para traducir palabras/selecciones al pasar el cursor sobre los subtítulos"
+        "translation_provider_tooltip": "Proveedor para traducir palabras/selecciones al pasar el cursor sobre los subtítulos",
+        "add_path": "Añadir ruta",
+        "edit_path": "Editar ruta",
+        "remove_path": "Eliminar ruta",
+        "confirm": "Confirmación",
+        "remove_path_confirm": "¿Eliminar la ruta seleccionada de la lista?",
+        "path_valid": "Ruta encontrada: {path}",
+        "path_invalid": "La ruta no existe: {path}"
     },
     "dialog": {
         "restart_title": "Cambio de idioma",

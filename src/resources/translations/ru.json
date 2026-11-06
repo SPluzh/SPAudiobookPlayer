@@ -127,7 +127,9 @@
         "filter_has_cover": "С обложкой",
         "filter_has_author": "С автором",
         "filter_has_narrator": "С чтецом",
-        "filter_reset_all": "Сбросить все"
+        "filter_reset_all": "Сбросить все",
+        "filter_menu_sources": "Источники",
+        "sources_all": "Все источники"
     },
     "player": {
         "volume": "Громкость",
@@ -254,7 +256,14 @@
         "translation_group": "Перевод субтитров",
         "translation_lang_label": "Язык перевода:",
         "translation_provider_label": "Провайдер перевода:",
-        "translation_provider_tooltip": "Провайдер для перевода слов/выделений при наведении на субтитры"
+        "translation_provider_tooltip": "Провайдер для перевода слов/выделений при наведении на субтитры",
+        "add_path": "Добавить путь",
+        "edit_path": "Изменить путь",
+        "remove_path": "Удалить путь",
+        "confirm": "Подтверждение",
+        "remove_path_confirm": "Удалить выбранный путь из списка?",
+        "path_valid": "Путь найден: {path}",
+        "path_invalid": "Путь не существует: {path}"
     },
     "dialog": {
         "restart_title": "Изменение языка",

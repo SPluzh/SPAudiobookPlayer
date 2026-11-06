@@ -109,7 +109,9 @@
         "filter_has_cover": "Com capa",
         "filter_has_author": "Com autor",
         "filter_has_narrator": "Com narrador",
-        "filter_reset_all": "Redefinir tudo"
+        "filter_reset_all": "Redefinir tudo",
+        "filter_menu_sources": "Fontes",
+        "sources_all": "Todas as fontes"
     },
     "player": {
         "volume": "Volume",
@@ -236,7 +238,14 @@
         "translation_group": "Tradução de legendas",
         "translation_lang_label": "Idioma de tradução:",
         "translation_provider_label": "Provedor de tradução:",
-        "translation_provider_tooltip": "Provedor para traduzir palavras/seleções ao passar o cursor sobre as legendas"
+        "translation_provider_tooltip": "Provedor para traduzir palavras/seleções ao passar o cursor sobre as legendas",
+        "add_path": "Adicionar caminho",
+        "edit_path": "Editar caminho",
+        "remove_path": "Remover caminho",
+        "confirm": "Confirmação",
+        "remove_path_confirm": "Remover o caminho selecionado da lista?",
+        "path_valid": "Caminho encontrado: {path}",
+        "path_invalid": "Caminho não existe: {path}"
     },
     "dialog": {
         "restart_title": "Alteração de Idioma",

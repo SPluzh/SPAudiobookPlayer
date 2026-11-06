@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.8]
+- **Library**: Added multi-folder library support with checkboxes to enable or disable sources.
+- **Library**: Added a "Sources" filter submenu to view books from specific folders.
+- **Settings**: Moved subtitle translation settings below Opus conversion for a cleaner layout.
+- **Scanner**: Rescanning now processes all sources sequentially in a single window.
+
 ## [1.8.7]
 - **Library**: Moved metadata presence/absence filters and book language filters into dedicated submenus in the filter dropdown menu.
 

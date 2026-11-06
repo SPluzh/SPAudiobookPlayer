@@ -109,7 +109,9 @@
         "filter_has_cover": "कवर के साथ",
         "filter_has_author": "लेखक के साथ",
         "filter_has_narrator": "वाचक के साथ",
-        "filter_reset_all": "सभी रीसेट करें"
+        "filter_reset_all": "सभी रीसेट करें",
+        "filter_menu_sources": "स्रोत",
+        "sources_all": "सभी स्रोत"
     },
     "player": {
         "volume": "वॉल्यूम",
@@ -236,7 +238,14 @@
         "translation_group": "उपशीर्षक अनुवाद",
         "translation_lang_label": "अनुवाद भाषा:",
         "translation_provider_label": "अनुवाद प्रदाता:",
-        "translation_provider_tooltip": "उपशीर्षक पर होवर करने पर शब्दों/चयन के अनुवाद के लिए प्रदाता"
+        "translation_provider_tooltip": "उपशीर्षक पर होवर करने पर शब्दों/चयन के अनुवाद के लिए प्रदाता",
+        "add_path": "पथ जोड़ें",
+        "edit_path": "पथ संपादित करें",
+        "remove_path": "पथ हटाएं",
+        "confirm": "पुष्टि",
+        "remove_path_confirm": "क्या चयनित पथ को सूची से हटाना है?",
+        "path_valid": "पथ मिला: {path}",
+        "path_invalid": "पथ मौजूद नहीं है: {path}"
     },
     "dialog": {
         "restart_title": "भाषा परिवर्तन",

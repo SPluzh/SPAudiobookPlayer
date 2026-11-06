@@ -109,7 +109,9 @@
         "filter_has_cover": "Avec couverture",
         "filter_has_author": "Avec auteur",
         "filter_has_narrator": "Avec narrateur",
-        "filter_reset_all": "Tout réinitialiser"
+        "filter_reset_all": "Tout réinitialiser",
+        "filter_menu_sources": "Dossiers sources",
+        "sources_all": "Toutes les sources"
     },
     "player": {
         "volume": "Volume",
@@ -236,7 +238,14 @@
         "translation_group": "Traduction des sous-titres",
         "translation_lang_label": "Langue de traduction :",
         "translation_provider_label": "Fournisseur de traduction :",
-        "translation_provider_tooltip": "Fournisseur pour traduire les mots/sélections au survol des sous-titres"
+        "translation_provider_tooltip": "Fournisseur pour traduire les mots/sélections au survol des sous-titres",
+        "add_path": "Ajouter un chemin",
+        "edit_path": "Modifier le chemin",
+        "remove_path": "Supprimer le chemin",
+        "confirm": "Demande de confirmation",
+        "remove_path_confirm": "Supprimer le chemin sélectionné de la liste ?",
+        "path_valid": "Chemin trouvé : {path}",
+        "path_invalid": "Le chemin n'existe pas : {path}"
     },
     "dialog": {
         "restart_title": "Changement de langue",

@@ -612,15 +612,15 @@ class MetadataEditDialog(QDialog):
             # Fetch the audiobook path and selected cover path from DB
             conn = sqlite3.connect(self.db.db_file)
             cursor = conn.cursor()
-            cursor.execute("SELECT path, parent_path, cached_cover_path, is_playlist FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+            cursor.execute("SELECT path, parent_path, cached_cover_path, is_playlist, root_path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
             row = cursor.fetchone()
             
             if row:
-                relative_path, parent_path, current_cached_cover, is_playlist = row[0], row[1], row[2], row[3]
+                relative_path, parent_path, current_cached_cover, is_playlist, book_root = row[0], row[1], row[2], row[3], row[4]
                 
                 # Reconstruct the absolute path of the audiobook
-                library_root = ""
-                if self.parent() and hasattr(self.parent(), 'config') and self.parent().config:
+                library_root = book_root or ""
+                if not library_root and self.parent() and hasattr(self.parent(), 'config') and self.parent().config:
                     library_root = self.parent().config.get("default_path", "")
                 
                 if not library_root:
@@ -680,14 +680,14 @@ class MetadataEditDialog(QDialog):
             import sqlite3
             conn = sqlite3.connect(self.db.db_file)
             cursor = conn.cursor()
-            cursor.execute("SELECT path, is_playlist FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+            cursor.execute("SELECT path, is_playlist, root_path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
             row = cursor.fetchone()
             conn.close()
             
             if row:
-                relative_path, is_playlist = row[0], row[1]
-                library_root = ""
-                if self.parent() and hasattr(self.parent(), 'config') and self.parent().config:
+                relative_path, is_playlist, book_root = row[0], row[1], row[2]
+                library_root = book_root or ""
+                if not library_root and self.parent() and hasattr(self.parent(), 'config') and self.parent().config:
                     library_root = self.parent().config.get("default_path", "")
                 
                 if not library_root:

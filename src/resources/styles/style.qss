@@ -476,46 +476,46 @@ QCheckBox {
     background-color: transparent;
 }
 
-QCheckBox::indicator, QListWidget::indicator {
+QCheckBox::indicator, QListWidget::indicator, QTreeWidget::indicator {
     border-radius: 3px;
 }
 
-QCheckBox::indicator:unchecked, QListWidget::indicator:unchecked {
+QCheckBox::indicator:unchecked, QListWidget::indicator:unchecked, QTreeWidget::indicator:unchecked {
     width: 16px;
     height: 16px;
     border: 1px solid @border;
     background-color: @bg-dark;
 }
 
-QCheckBox::indicator:unchecked:hover, QListWidget::indicator:unchecked:hover {
+QCheckBox::indicator:unchecked:hover, QListWidget::indicator:unchecked:hover, QTreeWidget::indicator:unchecked:hover {
     width: 16px;
     height: 16px;
     border: 1px solid @accent;
     background-color: @bg-hover;
 }
 
-QCheckBox::indicator:checked, QListWidget::indicator:checked {
+QCheckBox::indicator:checked, QListWidget::indicator:checked, QTreeWidget::indicator:checked {
     width: 16px;
     height: 16px;
     border: 1px solid @border;
     background-color: qradialgradient(cx:0.5, cy:0.5, radius:0.40, fx:0.5, fy:0.5, stop:0 @text-bright, stop:0.40 @text-bright, stop:0.41 @bg-dark, stop:1 @bg-dark);
 }
 
-QCheckBox::indicator:checked:hover, QListWidget::indicator:checked:hover {
+QCheckBox::indicator:checked:hover, QListWidget::indicator:checked:hover, QTreeWidget::indicator:checked:hover {
     width: 16px;
     height: 16px;
     border: 1px solid @accent;
     background-color: qradialgradient(cx:0.5, cy:0.5, radius:0.40, fx:0.5, fy:0.5, stop:0 @text-bright, stop:0.40 @text-bright, stop:0.41 @bg-hover, stop:1 @bg-hover);
 }
 
-QCheckBox::indicator:unchecked:disabled, QListWidget::indicator:unchecked:disabled {
+QCheckBox::indicator:unchecked:disabled, QListWidget::indicator:unchecked:disabled, QTreeWidget::indicator:unchecked:disabled {
     width: 16px;
     height: 16px;
     border: 1px solid @text-disabled;
     background-color: @bg-disabled;
 }
 
-QCheckBox::indicator:checked:disabled, QListWidget::indicator:checked:disabled {
+QCheckBox::indicator:checked:disabled, QListWidget::indicator:checked:disabled, QTreeWidget::indicator:checked:disabled {
     width: 16px;
     height: 16px;
     border: 1px solid @text-disabled;
@@ -682,6 +682,20 @@ QTreeWidget::item[playing="true"] {
 QTreeWidget#bookTree, QTreeWidget#bookTree:focus, QTreeWidget#bookTree:enabled, QTreeWidget#bookTree:disabled {
     border: none !important;
 }
+
+QTreeWidget#pathsList::item:selected:active,
+QTreeWidget#pathsList::item:selected:!active {
+    background-color: @accent;
+    color: @text-bright;
+    border-radius: 3px;
+}
+
+QTreeWidget#pathsList::item:selected:hover {
+    background-color: @accent-light;
+    color: @text-bright;
+    border-radius: 3px;
+}
+
 
 
 /* ============================================================

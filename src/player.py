@@ -26,6 +26,7 @@ class PlaybackController:
         self.player = player
         self.db = db_manager
         self.library_root: Optional[Path] = None
+        self.current_book_root: Optional[Path] = None
         self.listening_tracker = None  # Will be set by main.py
         
         # Playback state
@@ -136,14 +137,26 @@ class PlaybackController:
             self.current_file_index = max(0, min(saved_file_index or 0, len(self.files_list) - 1))
             self.calculate_global_position()
             
-            # Resolve path relative to library root
+            # Determine root path of current audiobook
+            book_root = None
+            if hasattr(self.db, "get_item_root_path"):
+                res = self.db.get_item_root_path(path=audiobook_path, audiobook_id=audiobook_id)
+                if isinstance(res, (str, Path)) and str(res).strip():
+                    book_root = str(res)
+            if book_root:
+                self.current_book_root = Path(book_root)
+            else:
+                self.current_book_root = self.library_root
+
+            # Resolve path relative to active root
             file_info = self.files_list[self.current_file_index]
             rel_file_path = file_info['path']
             is_url = file_info.get('is_url', False)
+            active_root = self.current_book_root or self.library_root
             if is_url:
                 abs_file_path = rel_file_path
-            elif self.library_root:
-                abs_file_path = str(self.library_root / rel_file_path)
+            elif active_root:
+                abs_file_path = str(active_root / rel_file_path)
             else:
                 abs_file_path = rel_file_path
 
@@ -365,10 +378,11 @@ class PlaybackController:
         is_url = file_info.get('is_url', False)
         
         # Resolve absolute file path
+        active_root = getattr(self, "current_book_root", None) or self.library_root
         if is_url:
             abs_file_path = file_info['path']
-        elif self.library_root:
-            abs_file_path = str(self.library_root / file_info['path'])
+        elif active_root:
+            abs_file_path = str(active_root / file_info['path'])
         else:
             abs_file_path = file_info['path']
 

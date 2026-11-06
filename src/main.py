@@ -359,6 +359,10 @@ class AudiobookPlayerWindow(QMainWindow):
                 "default_cover_file": self.default_cover_file,
                 "folder_cover_file": self.folder_cover_file,
                 "default_path": self.default_path,
+                "library_paths": getattr(self, "library_paths", [self.default_path] if self.default_path else []),
+                "excluded_library_paths": getattr(self, "excluded_library_paths", []),
+                "source_filter_active": getattr(self, "source_filter_active", False),
+                "selected_sources": getattr(self, "selected_sources", set()),
                 "ffprobe_path": self.ffprobe_path,
                 "tag_filter_active": self.tag_filter_active,
                 "tag_filter_ids": self.tag_filter_ids,
@@ -879,14 +883,14 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def open_library_folder(self):
         """Open the current library folder in the system's default file manager"""
-        path = self.default_path
+        path = None
+        if hasattr(self, "playback_controller"):
+            active_root = getattr(self.playback_controller, "current_book_root", None) or self.playback_controller.library_root
+            if active_root:
+                path = str(active_root)
         if not path:
-            # Try to get from controller if default_path is not set but controller has root
-            if (
-                hasattr(self, "playback_controller")
-                and self.playback_controller.library_root
-            ):
-                path = str(self.playback_controller.library_root)
+            active_paths = self.get_active_library_paths()
+            path = active_paths[0] if active_paths else self.default_path
 
         if path and os.path.isdir(path):
             QDesktopServices.openUrl(QUrl.fromLocalFile(path))
@@ -1025,6 +1029,13 @@ class AudiobookPlayerWindow(QMainWindow):
             self.save_last_session()
             self.refresh_audiobook_in_tree()
 
+    def get_active_library_paths(self) -> List[str]:
+        """Return all non-excluded library paths"""
+        if not hasattr(self, "library_paths") or not self.library_paths:
+            return [self.default_path] if getattr(self, "default_path", None) else []
+        excluded = {os.path.normcase(os.path.normpath(p)) for p in getattr(self, "excluded_library_paths", [])}
+        return [p for p in self.library_paths if os.path.normcase(os.path.normpath(p)) not in excluded]
+
     def load_settings(self):
         """Retrieve and initialize application state (paths, window geometry, styles) from the 'settings.ini' file"""
         if not self.config_file.exists():
@@ -1069,7 +1080,21 @@ class AudiobookPlayerWindow(QMainWindow):
         set_icon_stroke_width(self.icon_thickness)
 
         # Filesystem Path Configurations
-        self.default_path = config.get("Paths", "default_path", fallback="")
+        raw_paths = config.get("Paths", "paths", fallback="")
+        raw_excluded = config.get("Paths", "excluded_paths", fallback="")
+        self.library_paths = [os.path.normpath(p.strip()) for p in raw_paths.split(";") if p.strip()]
+        self.excluded_library_paths = [os.path.normpath(p.strip()) for p in raw_excluded.split(";") if p.strip()]
+        default_path_raw = config.get("Paths", "default_path", fallback="")
+        if not self.library_paths and default_path_raw:
+            self.library_paths = [os.path.normpath(default_path_raw.strip())]
+
+        active_paths = self.get_active_library_paths()
+        if active_paths:
+            self.default_path = active_paths[0]
+        elif self.library_paths:
+            self.default_path = self.library_paths[0]
+        else:
+            self.default_path = ""
         ff_path_str = config.get(
             "Paths",
             "ffprobe_path",
@@ -1215,6 +1240,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_mono_enabled(self.mono_enabled)
         self.player.set_volume_boost(self.volume_boost_enabled)
         self.player.set_volume_boost_level(self.volume_boost_level)
+        self.source_filter_active = config.getboolean("Library", "source_filter_active", fallback=False)
+        raw_selected_sources = config.get("Library", "selected_sources", fallback="")
+        self.selected_sources = {p.strip() for p in raw_selected_sources.split(";") if p.strip()}
         self.show_folders = config.getboolean("Library", "show_folders", fallback=False)
         self.library_tile_view = config.getboolean("Library", "tile_view", fallback=False)
         self.remember_filter_folders = config.getboolean(
@@ -1305,6 +1333,8 @@ class AudiobookPlayerWindow(QMainWindow):
         config = configparser.ConfigParser()
         config["Paths"] = {
             "default_path": "",
+            "paths": "",
+            "excluded_paths": "",
             "ffprobe_path": "resources/bin/ffprobe.exe",
             "ffmpeg_path": "resources/bin/ffmpeg.exe",
             "covers_dir": "data/extracted_covers",
@@ -1468,7 +1498,10 @@ class AudiobookPlayerWindow(QMainWindow):
         # Filesystem Path Configs
         if "Paths" not in config:
             config["Paths"] = {}
-        config["Paths"]["default_path"] = self.default_path
+        config["Paths"]["paths"] = ";".join(getattr(self, "library_paths", []))
+        config["Paths"]["excluded_paths"] = ";".join(getattr(self, "excluded_library_paths", []))
+        active_paths = self.get_active_library_paths()
+        config["Paths"]["default_path"] = active_paths[0] if active_paths else (self.library_paths[0] if getattr(self, "library_paths", None) else "")
         config["Paths"]["default_cover_file"] = self.default_cover_file
         config["Paths"]["folder_cover_file"] = self.folder_cover_file
 
@@ -1544,6 +1577,8 @@ class AudiobookPlayerWindow(QMainWindow):
             self.show_folders = self.library_widget.show_folders
             self.library_tile_view = self.library_widget.is_tile_view
 
+        config["Library"]["source_filter_active"] = str(getattr(self.library_widget, "is_source_filter_active", False)) if hasattr(self, "library_widget") else str(getattr(self, "source_filter_active", False))
+        config["Library"]["selected_sources"] = ";".join(getattr(self.library_widget, "selected_sources", set())) if hasattr(self, "library_widget") else ";".join(getattr(self, "selected_sources", set()))
         config["Library"]["remember_filter_folders"] = str(self.remember_filter_folders)
         config["Library"]["show_folders"] = str(self.show_folders)
         config["Library"]["tile_view"] = str(self.library_tile_view)
@@ -1744,17 +1779,18 @@ class AudiobookPlayerWindow(QMainWindow):
         audio_path_str = file_info.get('path', '')
         
         srt_abs_path = None
+        active_root = getattr(controller, "current_book_root", None) or controller.library_root
         if srt_rel_path:
-            # Resolve relative to library root
-            if controller.library_root:
-                srt_abs_path = controller.library_root / srt_rel_path
+            # Resolve relative to active root
+            if active_root:
+                srt_abs_path = active_root / srt_rel_path
             else:
                 srt_abs_path = Path(srt_rel_path)
         elif audio_path_str and not file_info.get('is_url', False):
             # Fallback path finding on filesystem
             audio_path = Path(audio_path_str)
-            if not audio_path.is_absolute() and controller.library_root:
-                audio_path = controller.library_root / audio_path
+            if not audio_path.is_absolute() and active_root:
+                audio_path = active_root / audio_path
             # Check same directory .srt
             candidates = [
                 audio_path.with_suffix('.srt'),
@@ -2424,8 +2460,15 @@ class AudiobookPlayerWindow(QMainWindow):
         """Initiate a comprehensive scan of the configured media directory with progress feedback via a dialog"""
         if isinstance(target_path, bool):
             target_path = ""
-        if not self.default_path:
+        active_paths = self.get_active_library_paths()
+        if not active_paths:
             QMessageBox.warning(self, tr("settings.title"), tr("settings.specify_path"))
+            return
+
+        # Prevent opening multiple scan dialogs simultaneously
+        if hasattr(self, "_scan_dialog") and self._scan_dialog and self._scan_dialog.isVisible():
+            self._scan_dialog.raise_()
+            self._scan_dialog.activateWindow()
             return
 
         def start_scanning_process():
@@ -2433,6 +2476,7 @@ class AudiobookPlayerWindow(QMainWindow):
             self.apply_blur()
 
             dialog = ScanProgressDialog(self)
+            self._scan_dialog = dialog
 
             # Refresh the library view and status bar metrics upon scan completion
             def on_finished():
@@ -2442,11 +2486,12 @@ class AudiobookPlayerWindow(QMainWindow):
                     trf("status.library_count", count=total_count)
                 )
                 self.remove_blur()
+                self._scan_dialog = None
 
             dialog.finished.connect(on_finished)
             dialog.show()
             subfolder_path = target_path if target_path else None
-            dialog.start_scan(self.default_path, self.ffprobe_path, subfolder_path=subfolder_path, force_rescan=force_rescan)
+            dialog.start_scan(active_paths, self.ffprobe_path, subfolder_path=subfolder_path, force_rescan=force_rescan)
 
         start_scanning_process()
 
@@ -2801,46 +2846,47 @@ class AudiobookPlayerWindow(QMainWindow):
 
         dialog = SettingsDialog(
             self,
-            self.default_path,
+            self.library_paths if getattr(self, "library_paths", None) else self.default_path,
             self.ffprobe_path,
             db_manager=self.db_manager,
             auto_check=self.auto_check_updates,
             opus_workers=self.opus_workers,
             subtitle_target_lang=self.subtitle_target_lang,
             subtitle_translation_provider=self.subtitle_translation_provider,
+            excluded_paths=getattr(self, "excluded_library_paths", None),
         )
 
-        def on_path_saved(new_path):
-            """Commit new root path and initiate a library refresh if the configuration has changed"""
-            if new_path != self.default_path:
-                self.default_path = new_path
-                self.save_settings()
-                # Synchronize root path in the playback controller
-                if hasattr(self, "playback_controller"):
-                    self.playback_controller.library_root = Path(new_path)
+        def on_paths_saved(all_paths, excluded_paths):
+            self.library_paths = all_paths
+            self.excluded_library_paths = excluded_paths
+            active = self.get_active_library_paths()
+            primary = active[0] if active else (all_paths[0] if all_paths else "")
+            self.default_path = primary
+            if hasattr(self, "playback_controller"):
+                self.playback_controller.library_root = Path(primary) if primary else None
+            if hasattr(self, "library_widget"):
+                self.library_widget.config["default_path"] = primary
+                self.library_widget.config["library_paths"] = all_paths
+                self.library_widget.config["excluded_library_paths"] = excluded_paths
+                self.library_widget.load_audiobooks()
+            self.save_settings()
+            self.statusBar().showMessage(tr("status.path_saved"))
 
-                # Update library widget config
-                if hasattr(self, "library_widget"):
-                    self.library_widget.config["default_path"] = new_path
-                    self.library_widget.load_audiobooks()
-
-                print(f"DEBUG: Path saved in main.py. New path: {new_path}")
-                self.statusBar().showMessage(tr("status.path_saved"))
-
-        def on_scan_requested(new_path, force_rescan):
-            """Apply the new path and immediately trigger a directory scan"""
-            if new_path != self.default_path:
-                self.default_path = new_path
-                self.save_settings()
-                if hasattr(self, "playback_controller"):
-                    self.playback_controller.library_root = Path(new_path)
-
-                # Update library widget config
-                if hasattr(self, "library_widget"):
-                    self.library_widget.config["default_path"] = new_path
-
-            print(f"DEBUG: Scan requested. Updating library config path to: {new_path}, force_rescan: {force_rescan}")
+        def on_scan_paths_requested(all_paths, excluded_paths, force_rescan):
+            self.library_paths = all_paths
+            self.excluded_library_paths = excluded_paths
+            active = self.get_active_library_paths()
+            primary = active[0] if active else (all_paths[0] if all_paths else "")
+            self.default_path = primary
+            if hasattr(self, "playback_controller"):
+                self.playback_controller.library_root = Path(primary) if primary else None
+            if hasattr(self, "library_widget"):
+                self.library_widget.config["default_path"] = primary
+                self.library_widget.config["library_paths"] = all_paths
+                self.library_widget.config["excluded_library_paths"] = excluded_paths
+            self.save_settings()
             self.rescan_directory(force_rescan=force_rescan)
+
 
         conversion_performed = False
 
@@ -2869,8 +2915,8 @@ class AudiobookPlayerWindow(QMainWindow):
             self.player_widget.subtitle_panel.translation_provider = provider
 
         # Connect signals
-        dialog.path_saved.connect(on_path_saved)
-        dialog.scan_requested.connect(on_scan_requested)
+        dialog.paths_saved.connect(on_paths_saved)
+        dialog.scan_paths_requested.connect(on_scan_paths_requested)
         dialog.data_reset_requested.connect(self.perform_full_reset)
         dialog.opus_convert_requested.connect(on_conversion_complete)
         dialog.auto_update_toggled.connect(on_auto_update_toggled)
@@ -2951,10 +2997,16 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def on_delete_requested(self, audiobook_id: int, rel_path: str, delete_from_disk: bool = False):
         """Coordinate the comprehensive removal of an audiobook from the filesystem, database, and UI"""
-        if not self.default_path:
+        book_root = None
+        if hasattr(self.db_manager, "get_item_root_path"):
+            res = self.db_manager.get_item_root_path(path=rel_path, audiobook_id=audiobook_id)
+            if isinstance(res, (str, Path)) and str(res).strip():
+                book_root = str(res)
+        root_to_use = book_root or self.default_path
+        if not root_to_use:
             return
 
-        abs_path = Path(self.default_path) / rel_path
+        abs_path = Path(root_to_use) / rel_path
 
         # 1. Terminate active playback if the target book is currently loaded
         if self.playback_controller.current_audiobook_id == audiobook_id:

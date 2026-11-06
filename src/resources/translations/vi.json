@@ -127,7 +127,9 @@
         "filter_has_cover": "Có bìa",
         "filter_has_author": "Có tác giả",
         "filter_has_narrator": "Có người đọc",
-        "filter_reset_all": "Đặt lại tất cả"
+        "filter_reset_all": "Đặt lại tất cả",
+        "filter_menu_sources": "Nguồn",
+        "sources_all": "Tất cả nguồn"
     },
     "player": {
         "volume": "Âm lượng",
@@ -254,7 +256,14 @@
         "translation_group": "Dịch phụ đề",
         "translation_lang_label": "Ngôn ngữ dịch:",
         "translation_provider_label": "Nhà cung cấp dịch thuật:",
-        "translation_provider_tooltip": "Nhà cung cấp dịch các từ/lựa chọn khi di chuột qua phụ đề"
+        "translation_provider_tooltip": "Nhà cung cấp dịch các từ/lựa chọn khi di chuột qua phụ đề",
+        "add_path": "Thêm đường dẫn",
+        "edit_path": "Sửa đường dẫn",
+        "remove_path": "Xóa đường dẫn",
+        "confirm": "Xác nhận",
+        "remove_path_confirm": "Xóa đường dẫn đã chọn khỏi danh sách?",
+        "path_valid": "Đã tìm thấy đường dẫn: {path}",
+        "path_invalid": "Đường dẫn không tồn tại: {path}"
     },
     "dialog": {
         "restart_title": "Thay đổi ngôn ngữ",

@@ -127,7 +127,9 @@
         "filter_has_cover": "Dengan sampul",
         "filter_has_author": "Dengan penulis",
         "filter_has_narrator": "Dengan narator",
-        "filter_reset_all": "Atur ulang semua"
+        "filter_reset_all": "Atur ulang semua",
+        "filter_menu_sources": "Sumber",
+        "sources_all": "Semua Sumber"
     },
     "player": {
         "volume": "Volume",
@@ -254,7 +256,14 @@
         "translation_group": "Terjemahan Subtitel",
         "translation_lang_label": "Bahasa Terjemahan:",
         "translation_provider_label": "Penyedia Terjemahan:",
-        "translation_provider_tooltip": "Penyedia terjemahan kata/pilihan saat mengarahkan kursor ke subtitel"
+        "translation_provider_tooltip": "Penyedia terjemahan kata/pilihan saat mengarahkan kursor ke subtitel",
+        "add_path": "Tambah Jalur",
+        "edit_path": "Edit Jalur",
+        "remove_path": "Hapus Jalur",
+        "confirm": "Konfirmasi",
+        "remove_path_confirm": "Hapus jalur yang dipilih dari daftar?",
+        "path_valid": "Jalur ditemukan: {path}",
+        "path_invalid": "Jalur tidak ada: {path}"
     },
     "dialog": {
         "restart_title": "Perubahan Bahasa",

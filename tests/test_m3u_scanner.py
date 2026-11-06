@@ -17,6 +17,7 @@ def _create_test_schema(conn):
             year_written TEXT,
             year_recorded TEXT,
             content_hash TEXT,
+            root_path TEXT,
             file_count INTEGER DEFAULT 0,
             duration REAL DEFAULT 0,
             is_folder INTEGER DEFAULT 0,

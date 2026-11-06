@@ -62,7 +62,8 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
                 language TEXT,
                 year_written TEXT,
                 year_recorded TEXT,
-                content_hash TEXT
+                content_hash TEXT,
+                root_path TEXT
             )
         """)
         
@@ -265,6 +266,40 @@ def init_database(db_file: Path, log_func: Callable[[str], None] = print):
 
         # Index for content_hash
         c.execute("CREATE INDEX IF NOT EXISTS idx_content_hash ON audiobooks(content_hash)")
+
+        # Migration: add root_path column to audiobooks
+        try:
+            c.execute("ALTER TABLE audiobooks ADD COLUMN root_path TEXT")
+            if log_func:
+                log_func("scanner.db_added_root_path")
+        except sqlite3.OperationalError:
+            pass
+
+        # Auto-backfill empty root_path for existing records from settings.ini
+        try:
+            c.execute("SELECT COUNT(*) FROM audiobooks WHERE root_path IS NULL OR root_path = ''")
+            row = c.fetchone()
+            if row and row[0] > 0:
+                from utils import get_base_path
+                settings_file = get_base_path() / "resources" / "settings.ini"
+                fallback_root = ""
+                if settings_file.exists():
+                    import configparser
+                    cfg = configparser.ConfigParser()
+                    cfg.read(settings_file, encoding="utf-8")
+                    fallback_root = cfg.get("Paths", "default_path", fallback="")
+                    if not fallback_root:
+                        raw_paths = cfg.get("Paths", "paths", fallback="")
+                        if raw_paths:
+                            fallback_root = raw_paths.split(";")[0].strip()
+                if fallback_root:
+                    c.execute(
+                        "UPDATE audiobooks SET root_path = ? WHERE root_path IS NULL OR root_path = ''",
+                        (os.path.normpath(fallback_root),)
+                    )
+        except Exception as e:
+            print(f"Error backfilling root_path: {e}")
+
 
         # Table: audiobook_covers
         c.execute("""
@@ -549,7 +584,7 @@ class DatabaseManager:
 
     def clear_all_data(self):
         """Completely clear all database tables"""
-        if not self.db_file.exists():
+        if not self.db_file or not Path(self.db_file).exists():
             return
             
         conn = sqlite3.connect(self.db_file)
@@ -574,7 +609,7 @@ class DatabaseManager:
     
     def load_audiobooks_from_db(self, filter_type: str = 'all') -> Dict:
         """Load audiobooks from database with specified filter"""
-        if not self.db_file.exists():
+        if not self.db_file or not Path(self.db_file).exists():
             return {}
         
         conn = sqlite3.connect(self.db_file)
@@ -587,7 +622,8 @@ class DatabaseManager:
                 is_started, is_completed, is_available, is_expanded, last_updated,
                 codec, bitrate_min, bitrate_max, bitrate_mode, container,
                 time_added, time_started, time_finished, is_favorite, is_merged, description, total_size,
-                COALESCE(is_playlist, 0) as is_playlist, id, language, year_written, year_recorded
+                COALESCE(is_playlist, 0) as is_playlist, id, language, year_written, year_recorded,
+                root_path
             '''
             
             columns_with_prefix = '''
@@ -596,7 +632,8 @@ class DatabaseManager:
                 p.is_started, p.is_completed, p.is_available, p.is_expanded, p.last_updated,
                 p.codec, p.bitrate_min, p.bitrate_max, p.bitrate_mode, p.container,
                 p.time_added, p.time_started, p.time_finished, p.is_favorite, p.is_merged, p.description, p.total_size,
-                COALESCE(p.is_playlist, 0) as is_playlist, p.id, p.language, p.year_written, p.year_recorded
+                COALESCE(p.is_playlist, 0) as is_playlist, p.id, p.language, p.year_written, p.year_recorded,
+                p.root_path
             '''
             
             if filter_type == 'all':
@@ -671,7 +708,7 @@ class DatabaseManager:
                 is_started, is_completed, is_available, is_expanded, last_updated, \
                 codec, bitrate_min, bitrate_max, bitrate_mode, container, \
                 time_added, time_started, time_finished, is_favorite, is_merged, description, total_size, \
-                is_playlist, audiobook_id, language, year_written, year_recorded = row
+                is_playlist, audiobook_id, language, year_written, year_recorded, root_path = row
                 
                 data_by_parent.setdefault(parent_path, []).append({
                     'path': path,
@@ -707,7 +744,8 @@ class DatabaseManager:
                     'id': audiobook_id,
                     'language': language,
                     'year_written': year_written,
-                    'year_recorded': year_recorded
+                    'year_recorded': year_recorded,
+                    'root_path': os.path.normpath(root_path) if root_path else ''
                 })
             
             return data_by_parent
@@ -1052,7 +1090,7 @@ class DatabaseManager:
     
     def get_audiobook_count(self) -> int:
         """Get total number of audiobooks in the library"""
-        if not self.db_file.exists():
+        if not self.db_file or not Path(self.db_file).exists():
             return 0
             
         conn = sqlite3.connect(self.db_file)
@@ -1077,7 +1115,7 @@ class DatabaseManager:
                        codec, bitrate_min, bitrate_max, bitrate_mode, container,
                        time_added, time_started, time_finished, is_favorite, description,
                        cover_path, cached_cover_path, total_size, COALESCE(is_playlist, 0) as is_playlist,
-                       language, year_written, year_recorded
+                       language, year_written, year_recorded, root_path
                 FROM audiobooks 
                 WHERE path = ? AND is_folder = 0
             ''', (path,))
@@ -1110,7 +1148,8 @@ class DatabaseManager:
                     'is_playlist': bool(row[22]),
                     'language': row[23],
                     'year_written': row[24],
-                    'year_recorded': row[25]
+                    'year_recorded': row[25],
+                    'root_path': os.path.normpath(row[26]) if row[26] else ''
                 }
             return None
         except sqlite3.Error as e:
@@ -1332,7 +1371,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT author, title, narrator, tag_author, tag_title, tag_narrator, tag_year,
-                       language, year_written, year_recorded
+                       language, year_written, year_recorded, root_path
                 FROM audiobooks 
                 WHERE id = ?
             ''', (audiobook_id,))
@@ -1349,7 +1388,8 @@ class DatabaseManager:
                     'tag_year': row[6],
                     'language': row[7],
                     'year_written': row[8],
-                    'year_recorded': row[9]
+                    'year_recorded': row[9],
+                    'root_path': os.path.normpath(row[10]) if (len(row) > 10 and row[10]) else ''
                 }
             return None
         except sqlite3.Error as e:
@@ -1500,7 +1540,7 @@ class DatabaseManager:
 
     def _get_unique_merged_values(self, col1: str, col2: str) -> List[str]:
         """Helper to get unique non-empty values from two columns"""
-        if not self.db_file.exists():
+        if not self.db_file or not Path(self.db_file).exists():
             return []
             
         conn = sqlite3.connect(self.db_file)
@@ -2336,3 +2376,87 @@ class DatabaseManager:
 
 
 
+
+
+    def get_item_root_path(self, path: Optional[str] = None, audiobook_id: Optional[int] = None) -> Optional[str]:
+        """Get root_path of an audiobook or folder by path or ID"""
+        if not self.db_file or not Path(self.db_file).exists():
+            return None
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            if audiobook_id is not None:
+                cursor.execute("SELECT root_path FROM audiobooks WHERE id = ?", (audiobook_id,))
+            elif path is not None:
+                cursor.execute("SELECT root_path FROM audiobooks WHERE path = ?", (path,))
+            else:
+                return None
+            row = cursor.fetchone()
+            if row and row[0]:
+                return os.path.normpath(row[0])
+            return None
+        except sqlite3.Error as e:
+            print(f"Database error in get_item_root_path: {e}")
+            return None
+        finally:
+            conn.close()
+
+    def resolve_item_path(self, rel_path: str, audiobook_id: Optional[int] = None, fallback_roots: Optional[List[str]] = None) -> Path:
+        """Resolve relative audiobook path to absolute Path using its stored root_path or fallback roots"""
+        p = Path(rel_path)
+        if p.is_absolute():
+            return p
+        root_path = self.get_item_root_path(path=rel_path, audiobook_id=audiobook_id)
+        if isinstance(root_path, str) and root_path.strip():
+            return Path(root_path) / rel_path
+        if fallback_roots:
+            for r in fallback_roots:
+                if r:
+                    cand = Path(r) / rel_path
+                    if cand.exists():
+                        return cand
+            if fallback_roots[0]:
+                return Path(fallback_roots[0]) / rel_path
+        return p
+
+    def delete_audiobooks_by_root(self, root_path: str):
+        """Permanently delete audiobooks associated with a specific root path"""
+        if not self.db_file or not Path(self.db_file).exists() or not root_path:
+            return
+        norm_root = os.path.normpath(root_path)
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON")
+            cursor.execute(
+                "DELETE FROM audiobooks WHERE root_path = ? OR root_path = ? OR root_path = ?",
+                (norm_root, norm_root.replace('\\', '/'), norm_root.replace('/', '\\'))
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Database error in delete_audiobooks_by_root: {e}")
+        finally:
+            conn.close()
+
+    def get_available_roots(self) -> List[str]:
+        """Return list of distinct non-empty root_paths for available audiobooks"""
+        if not self.db_file or not Path(self.db_file).exists():
+            return []
+        conn = sqlite3.connect(self.db_file)
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT DISTINCT root_path FROM audiobooks WHERE is_available = 1 AND root_path IS NOT NULL AND root_path != ''"
+            )
+            roots = []
+            for row in cursor.fetchall():
+                if row[0]:
+                    norm = os.path.normpath(row[0])
+                    if norm not in roots:
+                        roots.append(norm)
+            return roots
+        except sqlite3.Error as e:
+            print(f"Database error in get_available_roots: {e}")
+            return []
+        finally:
+            conn.close()

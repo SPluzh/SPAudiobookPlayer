@@ -109,7 +109,9 @@
         "filter_has_cover": "Kapaklı",
         "filter_has_author": "Yazarlı",
         "filter_has_narrator": "Seslendirenli",
-        "filter_reset_all": "Hepsini sıfırla"
+        "filter_reset_all": "Hepsini sıfırla",
+        "filter_menu_sources": "Kaynaklar",
+        "sources_all": "Tüm Kaynaklar"
     },
     "player": {
         "volume": "Ses",
@@ -236,7 +238,14 @@
         "translation_group": "Altyazı Çevirisi",
         "translation_lang_label": "Çeviri Dili:",
         "translation_provider_label": "Çeviri Sağlayıcısı:",
-        "translation_provider_tooltip": "Altyazıların üzerine gelindiğinde kelimeleri/seçimleri çeviren sağlayıcı"
+        "translation_provider_tooltip": "Altyazıların üzerine gelindiğinde kelimeleri/seçimleri çeviren sağlayıcı",
+        "add_path": "Yol Ekle",
+        "edit_path": "Yolu Düzenle",
+        "remove_path": "Yolu Kaldır",
+        "confirm": "Onay",
+        "remove_path_confirm": "Seçilen yol listeden kaldırılsın mı?",
+        "path_valid": "Yol bulundu: {path}",
+        "path_invalid": "Yol mevcut değil: {path}"
     },
     "dialog": {
         "restart_title": "Dil Değişikliği",

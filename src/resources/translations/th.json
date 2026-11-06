@@ -127,7 +127,9 @@
         "filter_has_cover": "มีหน้าปก",
         "filter_has_author": "มีผู้แต่ง",
         "filter_has_narrator": "มีผู้บรรยาย",
-        "filter_reset_all": "รีเซ็ตทั้งหมด"
+        "filter_reset_all": "รีเซ็ตทั้งหมด",
+        "filter_menu_sources": "แหล่งที่มา",
+        "sources_all": "แหล่งที่มาทั้งหมด"
     },
     "player": {
         "volume": "ระดับเสียง",
@@ -254,7 +256,14 @@
         "translation_group": "การแปลซับไตเติล",
         "translation_lang_label": "ภาษาแปล:",
         "translation_provider_label": "ผู้ให้บริการแปล:",
-        "translation_provider_tooltip": "ผู้ให้บริการแปลคำศัพท์/ส่วนที่เลือกเมื่อชี้เมาส์ที่ซับไตเติล"
+        "translation_provider_tooltip": "ผู้ให้บริการแปลคำศัพท์/ส่วนที่เลือกเมื่อชี้เมาส์ที่ซับไตเติล",
+        "add_path": "เพิ่มเส้นทาง",
+        "edit_path": "แก้ไขเส้นทาง",
+        "remove_path": "ลบเส้นทาง",
+        "confirm": "การยืนยัน",
+        "remove_path_confirm": "ลบเส้นทางที่เลือกออกจากรายการหรือไม่?",
+        "path_valid": "พบเส้นทาง: {path}",
+        "path_invalid": "ไม่มีเส้นทาง: {path}"
     },
     "dialog": {
         "restart_title": "การเปลี่ยนภาษา",

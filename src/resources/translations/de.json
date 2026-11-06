@@ -109,7 +109,9 @@
         "filter_has_cover": "Mit Cover",
         "filter_has_author": "Mit Autor",
         "filter_has_narrator": "Mit Sprecher",
-        "filter_reset_all": "Alle zurücksetzen"
+        "filter_reset_all": "Alle zurücksetzen",
+        "filter_menu_sources": "Quellen",
+        "sources_all": "Alle Quellen"
     },
     "player": {
         "volume": "Lautstärke",
@@ -236,7 +238,14 @@
         "translation_group": "Untertitelübersetzung",
         "translation_lang_label": "Übersetzungssprache:",
         "translation_provider_label": "Übersetzungsanbieter:",
-        "translation_provider_tooltip": "Anbieter für das Übersetzen von Wörtern/Auswahlen beim Zeigen auf Untertitel"
+        "translation_provider_tooltip": "Anbieter für das Übersetzen von Wörtern/Auswahlen beim Zeigen auf Untertitel",
+        "add_path": "Pfad hinzufügen",
+        "edit_path": "Pfad bearbeiten",
+        "remove_path": "Pfad entfernen",
+        "confirm": "Bestätigung",
+        "remove_path_confirm": "Ausgewählten Pfad aus der Liste entfernen?",
+        "path_valid": "Pfad gefunden: {path}",
+        "path_invalid": "Pfad existiert nicht: {path}"
     },
     "dialog": {
         "restart_title": "Sprachänderung",

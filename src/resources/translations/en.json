@@ -127,7 +127,9 @@
         "filter_has_cover": "With cover",
         "filter_has_author": "With author",
         "filter_has_narrator": "With narrator",
-        "filter_reset_all": "Reset all"
+        "filter_reset_all": "Reset all",
+        "filter_menu_sources": "Sources",
+        "sources_all": "All Sources"
     },
     "player": {
         "volume": "Volume",
@@ -254,7 +256,14 @@
         "translation_group": "Subtitle Translation",
         "translation_lang_label": "Translation Language:",
         "translation_provider_label": "Translation Provider:",
-        "translation_provider_tooltip": "Provider for translating words/selections on hover in subtitles"
+        "translation_provider_tooltip": "Provider for translating words/selections on hover in subtitles",
+        "add_path": "Add Path",
+        "edit_path": "Edit Path",
+        "remove_path": "Remove Path",
+        "confirm": "Confirmation",
+        "remove_path_confirm": "Remove selected path from list?",
+        "path_valid": "Path found: {path}",
+        "path_invalid": "Path does not exist: {path}"
     },
     "dialog": {
         "restart_title": "Language Change",

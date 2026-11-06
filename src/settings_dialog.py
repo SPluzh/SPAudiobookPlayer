@@ -1,12 +1,14 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QGroupBox, QHBoxLayout, QLineEdit, QPushButton,
     QLabel, QFileDialog, QSizePolicy, QTextEdit, QProgressBar, QMessageBox,
-    QCheckBox, QComboBox
+    QCheckBox, QComboBox, QTreeWidget, QTreeWidgetItem
 )
-from PyQt6.QtCore import pyqtSignal, QThread
+from PyQt6.QtCore import pyqtSignal, QThread, Qt
 from PyQt6.QtGui import QFont, QTextCursor
 import sys
+import os
 import configparser
+from typing import Union, List, Optional, Tuple
 from pathlib import Path
 import update_ffmpeg
 from translations import tr, trf, get_all_translation_languages
@@ -108,29 +110,55 @@ class SettingsDialog(QDialog):
     """Dialogue for configuring application settings"""
     
     # Signals
-    path_saved = pyqtSignal(str)       # Library path was updated
-    scan_requested = pyqtSignal(str, bool)   # Scan process triggered with specific path and force_rescan flag
-    data_reset_requested = pyqtSignal()# Request to wipe all local database and covers
-    opus_convert_requested = pyqtSignal() # Request to open Opus conversion dialog
-    auto_update_toggled = pyqtSignal(bool) # Auto-update check toggled
-    opus_workers_changed = pyqtSignal(int) # Number of parallel encoding threads updated
+    path_saved = pyqtSignal(str)                   # Library primary path was updated (backward-compat)
+    paths_saved = pyqtSignal(list, list)           # (all_paths, excluded_paths)
+    scan_requested = pyqtSignal(str, bool)         # Scan triggered for primary path (backward-compat)
+    scan_paths_requested = pyqtSignal(list, list, bool) # Scan triggered: (all_paths, excluded_paths, force_rescan)
+    data_reset_requested = pyqtSignal()            # Request to wipe all local database and covers
+    opus_convert_requested = pyqtSignal()          # Request to open Opus conversion dialog
+    auto_update_toggled = pyqtSignal(bool)         # Auto-update check toggled
+    opus_workers_changed = pyqtSignal(int)         # Number of parallel encoding threads updated
     subtitle_target_lang_changed = pyqtSignal(str) # Target translation language updated
     subtitle_translation_provider_changed = pyqtSignal(str) # Translation provider updated
-    closed = pyqtSignal()              # Dialog closed
+    closed = pyqtSignal()                          # Dialog closed
     
-    def __init__(self, parent=None, current_path="", ffprobe_path=None, db_manager=None, auto_check=True, opus_workers=0, subtitle_target_lang="en", subtitle_translation_provider="freedict"):
+    def __init__(
+        self,
+        parent=None,
+        current_path: Union[str, List[str]] = "",
+        ffprobe_path=None,
+        db_manager=None,
+        auto_check: bool = True,
+        opus_workers: int = 0,
+        subtitle_target_lang: str = "en",
+        subtitle_translation_provider: str = "freedict",
+        excluded_paths: Optional[List[str]] = None,
+    ):
         """Initialize settings dialog with current configuration values"""
         super().__init__(parent)
         self.setWindowTitle(tr("settings.title"))
-        self.setMinimumSize(720, 300)
-        self.current_path = current_path
+        self.setMinimumSize(760, 440)
+        
+        # Parse current_path
+        if isinstance(current_path, list):
+            self.library_paths = [str(p).strip() for p in current_path if str(p).strip()]
+        elif isinstance(current_path, str) and current_path.strip():
+            self.library_paths = [p.strip() for p in current_path.split(";") if p.strip()]
+        else:
+            self.library_paths = []
+            
+        self.excluded_paths = [str(p).strip() for p in excluded_paths] if excluded_paths else []
+        self._deleted_paths: List[str] = []
+        
+        self.current_path = self.library_paths[0] if self.library_paths else ""
         self.ffprobe_path = ffprobe_path
         self.db_manager = db_manager
         self.auto_check = auto_check
         self.opus_workers = opus_workers
         self.subtitle_target_lang = subtitle_target_lang
         self.subtitle_translation_provider = subtitle_translation_provider
-        self.settings_path_edit = None
+        
+        self.pathslist = None
         self.auto_update_checkbox = None
         self.init_ui()
     
@@ -144,23 +172,59 @@ class SettingsDialog(QDialog):
         left_layout = QVBoxLayout()
         left_layout.setSpacing(20)
 
-        # Library Path Configuration
+        # Library Path Configuration (Multi-Source List)
         path_group = QGroupBox(tr("settings.library_path_group"))
         path_layout = QVBoxLayout(path_group)
         
-        path_edit_layout = QHBoxLayout()
-        self.settings_path_edit = QLineEdit(self.current_path)
-        self.settings_path_edit.setPlaceholderText(tr("settings.library_path_placeholder"))
-        path_edit_layout.addWidget(self.settings_path_edit, 1)
-        
-        browse_btn = QPushButton(tr("settings.browse"))
-        browse_btn.setObjectName("browseBtn")
-        browse_btn.setIcon(get_icon("context_open_folder"))
-        browse_btn.clicked.connect(self.browse_directory)
-        path_edit_layout.addWidget(browse_btn)
-        
-        path_layout.addLayout(path_edit_layout)
+        self.pathslist = QTreeWidget()
+        self.pathslist.setObjectName("pathsList")
+        self.pathslist.setHeaderHidden(True)
+        self.pathslist.setIndentation(0)
+        self.pathslist.setMinimumHeight(110)
+        self.pathslist.setMaximumHeight(160)
+        self.pathslist.itemChanged.connect(self.on_path_checked)
+        path_layout.addWidget(self.pathslist)
+
+        buttons_layout = QHBoxLayout()
+        self.add_path_btn = QPushButton(tr("settings.add_path"))
+        self.add_path_btn.setObjectName("addPathBtn")
+        self.add_path_btn.setIcon(get_icon("add"))
+        self.add_path_btn.clicked.connect(self.add_path)
+        buttons_layout.addWidget(self.add_path_btn)
+
+        self.edit_path_btn = QPushButton(tr("settings.edit_path"))
+        self.edit_path_btn.setObjectName("editPathBtn")
+        self.edit_path_btn.setIcon(get_icon("edit"))
+        self.edit_path_btn.clicked.connect(self.edit_path)
+        buttons_layout.addWidget(self.edit_path_btn)
+
+        self.remove_path_btn = QPushButton(tr("settings.remove_path"))
+        self.remove_path_btn.setObjectName("removePathBtn")
+        self.remove_path_btn.setIcon(get_icon("delete"))
+        self.remove_path_btn.clicked.connect(self.remove_path)
+        buttons_layout.addWidget(self.remove_path_btn)
+
+        path_layout.addLayout(buttons_layout)
         left_layout.addWidget(path_group)
+
+        # Populate paths list
+        self.pathslist.blockSignals(True)
+        for p in self.library_paths:
+            item = QTreeWidgetItem([p])
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            norm_excluded = {os.path.normcase(os.path.normpath(ep)) for ep in self.excluded_paths}
+            if os.path.normcase(os.path.normpath(p)) in norm_excluded:
+                item.setCheckState(0, Qt.CheckState.Unchecked)
+                font = item.font(0)
+                font.setStrikeOut(True)
+                item.setFont(0, font)
+            else:
+                item.setCheckState(0, Qt.CheckState.Checked)
+            self.pathslist.addTopLevelItem(item)
+            self._validate_path(item)
+        if self.pathslist.topLevelItemCount() > 0:
+            self.pathslist.setCurrentItem(self.pathslist.topLevelItem(0))
+        self.pathslist.blockSignals(False)
 
         # Library Scan Group
         scan_group = QGroupBox(tr("settings.scan_group"))
@@ -182,42 +246,6 @@ class SettingsDialog(QDialog):
         scan_layout.addWidget(scan_info)
         
         left_layout.addWidget(scan_group)
-
-        # Subtitle Translation Settings Group
-        translation_group = QGroupBox(tr("settings.translation_group"))
-        translation_layout = QVBoxLayout(translation_group)
-
-        # Subtitle Target Language selection
-        lang_layout = QHBoxLayout()
-        self.lang_lbl = QLabel(tr("settings.translation_lang_label"))
-        
-        self.lang_combo = QComboBox()
-        # Populate with available languages
-        for code, name in get_all_translation_languages():
-            self.lang_combo.addItem(name, code)
-        self.lang_combo.setCurrentIndex(self.lang_combo.findData(self.subtitle_target_lang))
-        
-        lang_layout.addWidget(self.lang_lbl)
-        lang_layout.addWidget(self.lang_combo)
-        lang_layout.addStretch()
-        translation_layout.addLayout(lang_layout)
-
-        # Subtitle Translation Provider selection
-        provider_layout = QHBoxLayout()
-        self.provider_lbl = QLabel(tr("settings.translation_provider_label"))
-        
-        self.provider_combo = QComboBox()
-        self.provider_combo.addItem("Google", "google")
-        self.provider_combo.addItem("Free Dictionary", "freedict")
-        self.provider_combo.setCurrentIndex(self.provider_combo.findData(self.subtitle_translation_provider))
-        self.provider_combo.setToolTip(tr("settings.translation_provider_tooltip"))
-        
-        provider_layout.addWidget(self.provider_lbl)
-        provider_layout.addWidget(self.provider_combo)
-        provider_layout.addStretch()
-        translation_layout.addLayout(provider_layout)
-
-        left_layout.addWidget(translation_group)
         left_layout.addStretch()
         
         content_layout.addLayout(left_layout, 3)
@@ -306,9 +334,46 @@ class SettingsDialog(QDialog):
         
         opus_layout.addStretch()
         right_layout.addWidget(opus_group)
+
+        # Subtitle Translation Settings Group
+        translation_group = QGroupBox(tr("settings.translation_group"))
+        translation_layout = QVBoxLayout(translation_group)
+
+        # Subtitle Target Language selection
+        lang_layout = QHBoxLayout()
+        self.lang_lbl = QLabel(tr("settings.translation_lang_label"))
+        
+        self.lang_combo = QComboBox()
+        # Populate with available languages
+        for code, name in get_all_translation_languages():
+            self.lang_combo.addItem(name, code)
+        self.lang_combo.setCurrentIndex(self.lang_combo.findData(self.subtitle_target_lang))
+        
+        lang_layout.addWidget(self.lang_lbl)
+        lang_layout.addWidget(self.lang_combo)
+        lang_layout.addStretch()
+        translation_layout.addLayout(lang_layout)
+
+        # Subtitle Translation Provider selection
+        provider_layout = QHBoxLayout()
+        self.provider_lbl = QLabel(tr("settings.translation_provider_label"))
+        
+        self.provider_combo = QComboBox()
+        self.provider_combo.addItem("Google", "google")
+        self.provider_combo.addItem("Free Dictionary", "freedict")
+        self.provider_combo.setCurrentIndex(self.provider_combo.findData(self.subtitle_translation_provider))
+        self.provider_combo.setToolTip(tr("settings.translation_provider_tooltip"))
+        
+        provider_layout.addWidget(self.provider_lbl)
+        provider_layout.addWidget(self.provider_combo)
+        provider_layout.addStretch()
+        translation_layout.addLayout(provider_layout)
+
+        translation_layout.addStretch()
+        right_layout.addWidget(translation_group)
         
         right_layout.addStretch()
-        content_layout.addLayout(right_layout, 1)
+        content_layout.addLayout(right_layout, 2)
         
         main_layout.addLayout(content_layout)
 
@@ -325,26 +390,117 @@ class SettingsDialog(QDialog):
             QSizePolicy.Policy.Fixed
         )
         main_layout.addWidget(save_button)
-    
-    def get_path(self):
-        """Return the trimmed current library path from the input field"""
-        return self.settings_path_edit.text().strip()
-    
-    def browse_directory(self):
-        """Open a directory browser and update the path input if a directory is selected"""
-        directory = QFileDialog.getExistingDirectory(
-            self, 
-            tr("settings.choose_directory"), 
-            self.settings_path_edit.text()
-        )
+
+    def _validate_path(self, item: QTreeWidgetItem):
+        """Check if path exists on disk and assign corresponding icon and tooltip"""
+        path = item.text(0)
+        if os.path.exists(path):
+            item.setIcon(0, get_icon("check"))
+            item.setToolTip(0, trf("settings.path_valid", path=path))
+        else:
+            item.setIcon(0, get_icon("fail"))
+            item.setToolTip(0, trf("settings.path_invalid", path=path))
+
+    def on_path_checked(self, item: QTreeWidgetItem, column: int):
+        """Update font strikeout when path active state changes"""
+        font = item.font(0)
+        is_unchecked = (item.checkState(0) == Qt.CheckState.Unchecked)
+        font.setStrikeOut(is_unchecked)
+        item.setFont(0, font)
+
+    def add_path(self):
+        """Open directory chooser and add a new path to the list"""
+        directory = QFileDialog.getExistingDirectory(self, tr("settings.choose_directory"))
         if directory:
-            self.settings_path_edit.setText(directory)
-    
+            norm = os.path.normpath(directory)
+            for i in range(self.pathslist.topLevelItemCount()):
+                if os.path.normpath(self.pathslist.topLevelItem(i).text(0)) == norm:
+                    return
+            item = QTreeWidgetItem([norm])
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(0, Qt.CheckState.Checked)
+            self.pathslist.addTopLevelItem(item)
+            self._validate_path(item)
+            self.pathslist.setCurrentItem(item)
+            if hasattr(self, "_deleted_paths") and norm in self._deleted_paths:
+                self._deleted_paths.remove(norm)
+
+    def edit_path(self):
+        """Edit currently selected path"""
+        current = self.pathslist.currentItem()
+        if not current:
+            return
+        old_path = current.text(0)
+        directory = QFileDialog.getExistingDirectory(self, tr("settings.choose_directory"), old_path)
+        if directory:
+            norm = os.path.normpath(directory)
+            if norm != os.path.normpath(old_path):
+                for i in range(self.pathslist.topLevelItemCount()):
+                    if os.path.normpath(self.pathslist.topLevelItem(i).text(0)) == norm:
+                        return
+                if not hasattr(self, "_deleted_paths"):
+                    self._deleted_paths = []
+                if os.path.normpath(old_path) not in self._deleted_paths:
+                    self._deleted_paths.append(os.path.normpath(old_path))
+                current.setText(0, norm)
+                self._validate_path(current)
+
+    def remove_path(self):
+        """Prompt and remove selected path from list"""
+        current = self.pathslist.currentItem()
+        if not current:
+            return
+        reply = QMessageBox.question(
+            self,
+            tr("settings.confirm"),
+            tr("settings.remove_path_confirm"),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            path_to_remove = current.text(0)
+            norm = os.path.normpath(path_to_remove)
+            if not hasattr(self, "_deleted_paths"):
+                self._deleted_paths = []
+            if norm not in self._deleted_paths:
+                self._deleted_paths.append(norm)
+            index = self.pathslist.indexOfTopLevelItem(current)
+            self.pathslist.takeTopLevelItem(index)
+
+    def _collect_paths_from_ui(self) -> Tuple[List[str], List[str], str]:
+        """Collect all paths, excluded paths, and primary path from the tree widget"""
+        all_paths = []
+        excluded_paths = []
+        for i in range(self.pathslist.topLevelItemCount()):
+            item = self.pathslist.topLevelItem(i)
+            p = item.text(0)
+            all_paths.append(p)
+            if item.checkState(0) == Qt.CheckState.Unchecked:
+                excluded_paths.append(p)
+        active_paths = [p for p in all_paths if p not in excluded_paths]
+        primary_path = active_paths[0] if active_paths else (all_paths[0] if all_paths else "")
+        if hasattr(self, "_deleted_paths") and self._deleted_paths and self.db_manager:
+            for p in self._deleted_paths:
+                if hasattr(self.db_manager, "delete_audiobooks_by_root"):
+                    self.db_manager.delete_audiobooks_by_root(p)
+            self._deleted_paths.clear()
+        return all_paths, excluded_paths, primary_path
+
+    def get_path(self) -> str:
+        """Return primary active library path"""
+        _, _, primary_path = self._collect_paths_from_ui()
+        return primary_path
+
+    def browse_directory(self):
+        """Backward-compatible directory browser triggering add_path"""
+        self.add_path()
+
     def on_save(self):
-        """Emit save signal with the current path and accept the dialog"""
-        new_path = self.get_path()
-        if new_path:
-            self.path_saved.emit(new_path)
+        """Emit save signals with updated paths and configurations and accept dialog"""
+        all_paths, excluded_paths, primary_path = self._collect_paths_from_ui()
+        self.paths_saved.emit(all_paths, excluded_paths)
+        if primary_path:
+            self.path_saved.emit(primary_path)
             
         # Emit auto-update toggled signal
         self.auto_update_toggled.emit(self.auto_update_checkbox.isChecked())
@@ -357,18 +513,23 @@ class SettingsDialog(QDialog):
         self.subtitle_translation_provider_changed.emit(self.provider_combo.currentData())
         
         self.accept()
-    
+
     def on_scan_requested(self):
-        """Emit scan requested signal with the current path"""
-        new_path = self.get_path()
-        if new_path:
-            self.scan_requested.emit(new_path, self.force_rescan_checkbox.isChecked())
- 
+        """Emit scan requested signal with the active paths"""
+        all_paths, excluded_paths, primary_path = self._collect_paths_from_ui()
+        active_paths = [p for p in all_paths if p not in excluded_paths]
+        if not active_paths:
+            QMessageBox.warning(self, tr("settings.title"), tr("settings.specify_path"))
+            return
+        force = self.force_rescan_checkbox.isChecked()
+        self.scan_paths_requested.emit(all_paths, excluded_paths, force)
+        self.scan_requested.emit(primary_path, force)
+
     def update_ffprobe_status(self):
         """Check for ffprobe presence and update the button label accordingly"""
         ffprobe_exe = self.ffprobe_path
         
-        if ffprobe_exe.exists():
+        if ffprobe_exe and ffprobe_exe.exists():
             self.update_btn.setText(tr("ffmpeg_updater.settings_btn_installed"))
             self.update_btn.setIcon(get_icon("check"))
         else:

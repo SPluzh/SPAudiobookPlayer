@@ -285,9 +285,15 @@ class ScannerThread(QThread):
     finished_scan = pyqtSignal(int)  # Number of audiobooks found signal
 
     def __init__(self, root_path, ffprobe_path=None, subfolder_path=None, force_rescan=False):
-        """Initialize the scanner thread with target path and optional ffprobe path"""
+        """Initialize the scanner thread with target path(s) and optional ffprobe path"""
         super().__init__()
-        self.root_path = root_path
+        if isinstance(root_path, list):
+            self.root_paths = [os.path.normpath(str(p)) for p in root_path if p]
+        elif root_path:
+            self.root_paths = [os.path.normpath(str(root_path))]
+        else:
+            self.root_paths = []
+        self.root_path = self.root_paths[0] if self.root_paths else ""
         self.ffprobe_path = ffprobe_path
         self.subfolder_path = subfolder_path
         self.force_rescan = force_rescan
@@ -329,11 +335,51 @@ class ScannerThread(QThread):
             scanner = AudiobookScanner(
                 "settings.ini"
             )  # AudiobookScanner handles resources/ internally
-            count = scanner.scan_directory(self.root_path, subfolder_path=self.subfolder_path, force_rescan=self.force_rescan)
+            
+            total_count = 0
+            if self.subfolder_path:
+                sub_p = Path(self.subfolder_path)
+                target_root = None
+                for r in self.root_paths:
+                    rp = Path(r)
+                    if sub_p.is_absolute():
+                        try:
+                            sub_p.relative_to(rp)
+                            target_root = r
+                            break
+                        except ValueError:
+                            pass
+                    else:
+                        if (rp / sub_p).exists():
+                            target_root = r
+                            break
+                target_root = target_root or (self.root_paths[0] if self.root_paths else "")
+                if target_root:
+                    total_count = scanner.scan_directory(
+                        target_root,
+                        subfolder_path=self.subfolder_path,
+                        verbose=True,
+                        force_rescan=self.force_rescan,
+                        clear_covers_cache=True,
+                    )
+            else:
+                for idx, path in enumerate(self.root_paths):
+                    if len(self.root_paths) > 1:
+                        print("\n" + "=" * 70)
+                        print(f"[{idx + 1}/{len(self.root_paths)}] {path}")
+                        print("=" * 70 + "\n")
+                    count = scanner.scan_directory(
+                        path,
+                        subfolder_path=None,
+                        verbose=True,
+                        force_rescan=self.force_rescan,
+                        clear_covers_cache=(idx == 0),
+                    )
+                    total_count += count
 
             # Restore stdout
             sys.stdout = old_stdout
-            self.finished_scan.emit(count)
+            self.finished_scan.emit(total_count)
         except Exception as e:
             print(f"Scanner error: {e}")
             self.finished_scan.emit(0)
@@ -595,6 +641,13 @@ class LibraryWidget(QWidget):
         self.is_favorites_filter_active = self.config.get("favorites_active", False)
         self.is_meta_filter_active = self.config.get("meta_filter_active", False)
         self.current_meta_filters = set()
+        self.selected_sources = set()
+        raw_sources = self.config.get("selected_sources", "")
+        if isinstance(raw_sources, str) and raw_sources.strip():
+            self.selected_sources = {p.strip() for p in raw_sources.split(";") if p.strip()}
+        elif isinstance(raw_sources, (list, set)):
+            self.selected_sources = {str(p).strip() for p in raw_sources if str(p).strip()}
+        self.is_source_filter_active = self.config.get("source_filter_active", False)
         self.current_meta_filter = self.config.get("current_meta_filter", "no_cover")
         self.sort_orders = self.config.get("sort_orders", {
             "all": "asc",
@@ -1341,6 +1394,9 @@ class LibraryWidget(QWidget):
         # Pre-fetch all tags logic
         all_tags = self.db.get_all_audiobook_tags()
 
+        excluded_paths = self.config.get("excluded_library_paths") or self.config.get("excluded_paths", [])
+        norm_excluded = {os.path.normcase(os.path.normpath(p)) for p in excluded_paths} if excluded_paths else set()
+
         # Optimize tree population by disabling repaints and sorting
         self.tree.setUpdatesEnabled(False)
         self.tree.blockSignals(True)
@@ -1354,6 +1410,12 @@ class LibraryWidget(QWidget):
                     for item_data in items:
                         if item_data["is_folder"]:
                             continue
+
+                        # Check excluded library sources
+                        if norm_excluded:
+                            item_root = item_data.get("root_path") or self.config.get("default_path", "")
+                            if item_root and os.path.normcase(os.path.normpath(item_root)) in norm_excluded:
+                                continue
 
                         # Attach tags
                         item_tags = all_tags.get(item_data["id"], [])
@@ -1417,6 +1479,12 @@ class LibraryWidget(QWidget):
                     for parent_path, items in self.cached_library_data.items():
                         filtered_items = []
                         for item_data in items:
+                            # Check excluded library sources
+                            if norm_excluded and not item_data.get("is_folder"):
+                                item_root = item_data.get("root_path") or self.config.get("default_path", "")
+                                if item_root and os.path.normcase(os.path.normpath(item_root)) in norm_excluded:
+                                    continue
+
                             # Attach tags logic
                             if not item_data["is_folder"] and "id" in item_data:
                                 item_data["tags"] = all_tags.get(item_data["id"], [])
@@ -1563,7 +1631,7 @@ class LibraryWidget(QWidget):
         item.setData(
             0,
             Qt.ItemDataRole.UserRole + 3,
-            (data["is_started"], data["is_completed"], data["is_favorite"]),
+            (data.get("is_started", False), data.get("is_completed", False), data.get("is_favorite", False)),
         )
 
         # Fetch and scale the audiobook cover
@@ -1577,8 +1645,8 @@ class LibraryWidget(QWidget):
         if cover_p_str:
             cover_p = Path(cover_p_str)
             # For relative paths (legacy or uncached), resolve them against the library's root directory
-            if not cover_p.is_absolute() and self.config.get("default_path"):
-                cover_p = Path(self.config.get("default_path")) / cover_p
+            if not cover_p.is_absolute():
+                cover_p = self._resolve_item_abs_path(cover_p_str, data)
 
             cover_icon = load_icon(
                 cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
@@ -2056,7 +2124,7 @@ class LibraryWidget(QWidget):
         # Resolve to absolute paths
         abs_paths = []
         for p in paths_to_convert:
-            abs_p = Path(p) if Path(p).is_absolute() else library_root / p
+            abs_p = self._resolve_item_abs_path(p)
             exists = abs_p.exists()
             print(f"[DEBUG] Checking path: {p} -> Absolute: {abs_p} (exists: {exists})")
             if exists:
@@ -2533,18 +2601,24 @@ class LibraryWidget(QWidget):
                 trf("status.library_count", count=total_count)
             )
 
+    def _resolve_item_abs_path(self, rel_path: str, item_data: Optional[dict] = None) -> Path:
+        """Resolve relative audiobook path to absolute Path using item's root_path or library configuration"""
+        p = Path(rel_path)
+        if p.is_absolute():
+            return p
+        if item_data and item_data.get("root_path"):
+            return Path(item_data["root_path"]) / rel_path
+        if hasattr(self.db, "resolve_item_path"):
+            fallback_roots = self.config.get("library_paths") or ([self.config.get("default_path")] if self.config.get("default_path") else [])
+            return self.db.resolve_item_path(rel_path, fallback_roots=fallback_roots)
+        default_path = self.config.get("default_path", "")
+        return Path(default_path) / rel_path if default_path else p
+
     def open_folder(self, path: str):
         if not path:
             return
         try:
-            default_path = self.config.get("default_path", "")
-            print(f"DEBUG: Opening folder. Config default_path: {default_path}")
-
-            if default_path:
-                abs_path = Path(default_path) / path
-            else:
-                abs_path = Path(path)
-
+            abs_path = self._resolve_item_abs_path(path)
             print(f"DEBUG: Target path: {abs_path}")
             if abs_path.exists() and abs_path.is_file():
                 folder_path = abs_path.parent
@@ -2580,10 +2654,9 @@ class LibraryWidget(QWidget):
         else:
             paths_to_copy = [clicked_path]
 
-        library_root = Path(self.config.get("default_path", ""))
         resolved_paths = []
         for p in paths_to_copy:
-            abs_p = Path(p) if Path(p).is_absolute() else library_root / p
+            abs_p = self._resolve_item_abs_path(p)
             resolved_paths.append(str(abs_p.resolve()))
 
         # Join paths with a newline
@@ -2705,8 +2778,8 @@ class LibraryWidget(QWidget):
 
             if cover_p_str:
                 cover_p = Path(cover_p_str)
-                if not cover_p.is_absolute() and self.config.get("default_path"):
-                    cover_p = Path(self.config.get("default_path")) / cover_p
+                if not cover_p.is_absolute():
+                    cover_p = self._resolve_item_abs_path(cover_p_str, data)
 
                 from utils import load_icon
                 # Only clear LRU cache if cover path actually changed
@@ -3127,19 +3200,90 @@ class LibraryWidget(QWidget):
                 action_map[action] = filter_key
                 action.triggered.connect(lambda checked, fk=filter_key: self._toggle_meta_filter(fk, action_map))
             
+        # Sources Submenu
+        sources_menu = KeepOpenMenu(tr("library.filter_menu_sources"), menu)
+        sources_menu.setObjectName("sourcesFilterSubMenu")
+        sources_menu.setIcon(get_icon("context_open_folder"))
+        menu.addMenu(sources_menu)
+
+        act_all_sources = sources_menu.addAction(tr("library.sources_all"))
+        act_all_sources.triggered.connect(self._reset_source_filters)
+        sources_menu.addSeparator()
+
+        configured_roots = self.config.get("library_paths", [])
+        if not configured_roots and self.config.get("default_path"):
+            configured_roots = [self.config.get("default_path")]
+        db_roots = self.db.get_available_roots() if hasattr(self.db, "get_available_roots") else []
+
+        excluded_paths = self.config.get("excluded_library_paths") or self.config.get("excluded_paths", [])
+        norm_excluded = {os.path.normcase(os.path.normpath(p)) for p in excluded_paths} if excluded_paths else set()
+
+        active_roots = []
+        for r in list(configured_roots) + list(db_roots):
+            if not r:
+                continue
+            norm_r = os.path.normpath(str(r))
+            if os.path.normcase(norm_r) not in norm_excluded:
+                if norm_r not in active_roots:
+                    active_roots.append(norm_r)
+
+        root_counts = {}
+        if self.cached_library_data:
+            for parent_path, items in self.cached_library_data.items():
+                for item in items:
+                    if not item.get("is_folder"):
+                        r = item.get("root_path") or self.config.get("default_path", "")
+                        if r:
+                            nr = os.path.normpath(r)
+                            root_counts[nr] = root_counts.get(nr, 0) + 1
+
+        norm_selected = {os.path.normcase(os.path.normpath(s)) for s in self.selected_sources}
+        for r in active_roots:
+            r_name = Path(r).name or r
+            cnt = root_counts.get(r, 0)
+            label = f"{r_name} ({r}) [{cnt}]"
+            action = sources_menu.addAction(label)
+            action.setCheckable(True)
+            action.setChecked(os.path.normcase(r) in norm_selected)
+            action.triggered.connect(lambda checked, src=r: self._toggle_source_filter(src))
+
         global_pos = self.btn_meta_filter_arrow.mapToGlobal(QPoint(0, self.btn_meta_filter_arrow.height()))
         menu.exec(global_pos)
 
+    def _has_any_meta_criteria(self) -> bool:
+        return bool(self.current_meta_filters) or bool(self.selected_sources)
+
     def _reset_all_meta_filters(self):
         self.current_meta_filters.clear()
+        self.selected_sources.clear()
         self.is_meta_filter_active = False
         if hasattr(self, "btn_meta_filter"):
             self.btn_meta_filter.setChecked(False)
         self.load_audiobooks(use_cache=True)
 
+    def _reset_source_filters(self):
+        self.selected_sources.clear()
+        self.is_meta_filter_active = self._has_any_meta_criteria()
+        if hasattr(self, "btn_meta_filter"):
+            self.btn_meta_filter.setChecked(self.is_meta_filter_active)
+        self.load_audiobooks(use_cache=True)
+
+    def _toggle_source_filter(self, source_path: str):
+        norm = os.path.normpath(source_path)
+        norm_map = {os.path.normcase(os.path.normpath(s)): s for s in self.selected_sources}
+        key = os.path.normcase(norm)
+        if key in norm_map:
+            self.selected_sources.remove(norm_map[key])
+        else:
+            self.selected_sources.add(norm)
+        self.is_meta_filter_active = self._has_any_meta_criteria()
+        if hasattr(self, "btn_meta_filter"):
+            self.btn_meta_filter.setChecked(self.is_meta_filter_active)
+        self.load_audiobooks(use_cache=True)
+
     def _on_meta_filter_selected(self, filter_key):
         self.current_meta_filter = filter_key
-        self.is_meta_filter_active = bool(self.current_meta_filters)
+        self.is_meta_filter_active = self._has_any_meta_criteria()
         if hasattr(self, "btn_meta_filter"):
             self.btn_meta_filter.setChecked(self.is_meta_filter_active)
         self.load_audiobooks(use_cache=True)
@@ -3181,23 +3325,31 @@ class LibraryWidget(QWidget):
         for act, fk in action_map.items():
             act.setChecked(fk in self.current_meta_filters)
 
-        self.is_meta_filter_active = bool(self.current_meta_filters)
+        self.is_meta_filter_active = self._has_any_meta_criteria()
         if hasattr(self, "btn_meta_filter"):
             self.btn_meta_filter.setChecked(self.is_meta_filter_active)
 
         self.load_audiobooks(use_cache=True)
 
     def _matches_meta_filter(self, item_data) -> bool:
-        """Check if an item matches the active metadata/language filter requirements"""
-        if not self.is_meta_filter_active or not self.current_meta_filters:
+        """Check if an item matches the active metadata/language/source filter requirements"""
+        if not self.is_meta_filter_active:
             return True
             
         if item_data.get("is_folder"):
             return True
-            
-        for filter_key in self.current_meta_filters:
-            if not self._matches_single_filter(item_data, filter_key):
+
+        if self.selected_sources:
+            item_root = item_data.get("root_path") or self.config.get("default_path", "")
+            norm_item_root = os.path.normcase(os.path.normpath(item_root)) if item_root else ""
+            norm_selected = {os.path.normcase(os.path.normpath(s)) for s in self.selected_sources}
+            if norm_item_root not in norm_selected:
                 return False
+
+        if self.current_meta_filters:
+            for filter_key in self.current_meta_filters:
+                if not self._matches_single_filter(item_data, filter_key):
+                    return False
         return True
 
     def _matches_single_filter(self, item_data, filter_key) -> bool:
@@ -3207,8 +3359,8 @@ class LibraryWidget(QWidget):
             if cover_p_str:
                 try:
                     cover_p = Path(cover_p_str)
-                    if not cover_p.is_absolute() and self.config.get("default_path"):
-                        cover_p = Path(self.config.get("default_path")) / cover_p
+                    if not cover_p.is_absolute():
+                        cover_p = self._resolve_item_abs_path(cover_p_str, item_data)
                     if cover_p.exists():
                         has_cover = True
                 except Exception:
