@@ -20,7 +20,7 @@ class TranslationWorker(QThread):
     finished = pyqtSignal(str, dict)  # (original, translation_details)
     error = pyqtSignal(str)
 
-    def __init__(self, text, target_lang="en", provider="freedict"):
+    def __init__(self, text, target_lang="en", provider="google"):
         super().__init__()
         self.text = text
         self.target_lang = target_lang
@@ -268,7 +268,7 @@ class TranslationPopup(QFrame):
             p = p.parent()
         return None
 
-    def show_translation(self, text, target_lang="en", provider="freedict", anchor_pos=QPoint()):
+    def show_translation(self, text, target_lang="en", provider="google", anchor_pos=QPoint()):
         """Starts asynchronous translation and positions the popup above anchor_pos."""
         logging.debug(f"show_translation called with text='{text}', target_lang='{target_lang}', provider='{provider}'")
         

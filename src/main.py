@@ -1175,7 +1175,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "Player", "subtitle_target_lang", fallback="en"
         )
         self.subtitle_translation_provider = config.get(
-            "Player", "subtitle_translation_provider", fallback="freedict"
+            "Player", "subtitle_translation_provider", fallback="google"
         )
 
         # Audio Settings (Unified in [Audio])
@@ -1377,7 +1377,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "subtitle_translation_on_hover": "True",
             "subtitle_autoscroll": "True",
             "subtitle_target_lang": "en",
-            "subtitle_translation_provider": "freedict",
+            "subtitle_translation_provider": "google",
         }
         config["Library"] = {
             "show_folders": "False",

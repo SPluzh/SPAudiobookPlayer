@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.10]
+- **Settings**: Expanded library paths list in the settings dialog to utilize all available vertical height.
+- **Subtitles**: Set Google as the default translation provider for subtitles.
+
 ## [1.8.9]
 - **UI**: Added vertical separators in the library filter bar to visually organize view modes, filter tools, and playback status tabs.
 

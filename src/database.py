@@ -2252,7 +2252,7 @@ class DatabaseManager:
             conn.close()
 
     # ===================== TRANSLATIONS CACHE =====================
-    def get_cached_translation(self, text: str, target_lang: str, provider: str = "freedict") -> Optional[dict]:
+    def get_cached_translation(self, text: str, target_lang: str, provider: str = "google") -> Optional[dict]:
         """Retrieves a cached translation from the database for a specific provider."""
         import json
         cleaned = text.strip()
@@ -2284,7 +2284,7 @@ class DatabaseManager:
             conn.close()
         return None
 
-    def save_cached_translation(self, text: str, target_lang: str, result_dict: dict, provider: str = "freedict"):
+    def save_cached_translation(self, text: str, target_lang: str, result_dict: dict, provider: str = "google"):
         """Saves a translation result to the database cache for a specific provider."""
         import json
         cleaned = text.strip()

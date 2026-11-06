@@ -131,7 +131,7 @@ class SettingsDialog(QDialog):
         auto_check: bool = True,
         opus_workers: int = 0,
         subtitle_target_lang: str = "en",
-        subtitle_translation_provider: str = "freedict",
+        subtitle_translation_provider: str = "google",
         excluded_paths: Optional[List[str]] = None,
     ):
         """Initialize settings dialog with current configuration values"""
@@ -174,6 +174,7 @@ class SettingsDialog(QDialog):
 
         # Library Path Configuration (Multi-Source List)
         path_group = QGroupBox(tr("settings.library_path_group"))
+        path_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         path_layout = QVBoxLayout(path_group)
         
         self.pathslist = QTreeWidget()
@@ -181,9 +182,9 @@ class SettingsDialog(QDialog):
         self.pathslist.setHeaderHidden(True)
         self.pathslist.setIndentation(0)
         self.pathslist.setMinimumHeight(110)
-        self.pathslist.setMaximumHeight(160)
+        self.pathslist.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.pathslist.itemChanged.connect(self.on_path_checked)
-        path_layout.addWidget(self.pathslist)
+        path_layout.addWidget(self.pathslist, 1)
 
         buttons_layout = QHBoxLayout()
         self.add_path_btn = QPushButton(tr("settings.add_path"))
@@ -205,7 +206,7 @@ class SettingsDialog(QDialog):
         buttons_layout.addWidget(self.remove_path_btn)
 
         path_layout.addLayout(buttons_layout)
-        left_layout.addWidget(path_group)
+        left_layout.addWidget(path_group, 1)
 
         # Populate paths list
         self.pathslist.blockSignals(True)
@@ -245,8 +246,7 @@ class SettingsDialog(QDialog):
         scan_info.setWordWrap(True)
         scan_layout.addWidget(scan_info)
         
-        left_layout.addWidget(scan_group)
-        left_layout.addStretch()
+        left_layout.addWidget(scan_group, 0)
         
         content_layout.addLayout(left_layout, 3)
 

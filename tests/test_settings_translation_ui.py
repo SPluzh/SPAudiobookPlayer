@@ -53,3 +53,14 @@ def test_settings_dialog_translation():
     dialog.on_save()
     assert emitted_lang == "fr"
     assert emitted_provider == "google"
+
+
+
+def test_settings_dialog_default_translation_provider():
+    app = QApplication.instance() or QApplication([])
+    dialog = SettingsDialog(
+        None,
+        current_path="C:/DummyLibrary",
+        ffprobe_path=Path("dummy_ffprobe"),
+    )
+    assert dialog.provider_combo.currentData() == "google"
