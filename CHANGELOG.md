@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.9]
+- **UI**: Added vertical separators in the library filter bar to visually organize view modes, filter tools, and playback status tabs.
+
 ## [1.8.8]
 - **Library**: Added multi-folder library support with checkboxes to enable or disable sources.
 - **Library**: Added a "Sources" filter submenu to view books from specific folders.

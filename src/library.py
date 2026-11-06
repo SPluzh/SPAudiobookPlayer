@@ -732,6 +732,13 @@ class LibraryWidget(QWidget):
         self.btn_tile_view.clicked.connect(self.on_tile_view_toggled)
         filter_layout.addWidget(self.btn_tile_view)
 
+        # Vertical separator after Tile View toggle
+        self.tile_view_separator = QFrame()
+        self.tile_view_separator.setObjectName("filterSeparator")
+        self.tile_view_separator.setFrameShape(QFrame.Shape.VLine)
+        self.tile_view_separator.setFrameShadow(QFrame.Shadow.Plain)
+        filter_layout.addWidget(self.tile_view_separator)
+
         # Mass Selection Sub-Layout (flush group)
         mass_layout = QHBoxLayout()
         mass_layout.setSpacing(0)
@@ -827,7 +834,12 @@ class LibraryWidget(QWidget):
 
         filter_layout.addLayout(tag_filter_layout)
 
-        filter_layout.addSpacing(5)
+        # Vertical separator between tag filter and status filter buttons
+        self.filter_separator = QFrame()
+        self.filter_separator.setObjectName("filterSeparator")
+        self.filter_separator.setFrameShape(QFrame.Shape.VLine)
+        self.filter_separator.setFrameShadow(QFrame.Shadow.Plain)
+        filter_layout.addWidget(self.filter_separator)
 
         self.filter_group = QButtonGroup(self)
         self.filter_group.setExclusive(True)

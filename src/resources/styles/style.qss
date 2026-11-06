@@ -941,6 +941,14 @@ QFrame#separator {
     min-height: 2px;
 }
 
+QFrame#filterSeparator {
+    background-color: @border;
+    max-width: 1px;
+    min-width: 1px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
 /* ============================================================
    MENU
    ============================================================ */
