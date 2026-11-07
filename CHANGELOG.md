@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.11]
+- **Scanner**: Fixed a crash when scanning M3U playlists on mapped network drives (NAS/SMB) with UNC paths.
+- **Scanner**: Improved error handling so invalid or missing playlist entries are skipped with a warning without aborting the entire library scan.
+
 ## [1.8.10]
 - **Settings**: Expanded library paths list in the settings dialog to utilize all available vertical height.
 - **Subtitles**: Set Google as the default translation provider for subtitles.

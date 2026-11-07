@@ -207,6 +207,18 @@ class AudiobookScanner:
 
 
     @staticmethod
+    def _safe_relative_path(target_path: Path | str, root: Path) -> str:
+        """Return path relative to root, handling mapped drives vs UNC paths, with fallback to absolute path."""
+        p = Path(target_path)
+        try:
+            return str(p.relative_to(root))
+        except ValueError:
+            try:
+                return str(p.resolve().relative_to(root.resolve()))
+            except Exception:
+                return str(p)
+
+    @staticmethod
     def _find_srt_for_file(audio_path: Path, library_root: Path) -> str:
         """Find .srt file for the audio file. Returns path relative to library root or empty string."""
         try:
@@ -217,10 +229,7 @@ class AudiobookScanner:
             ]
             for c in candidates:
                 if c.exists():
-                    try:
-                        return str(c.relative_to(library_root))
-                    except ValueError:
-                        return str(c)
+                    return AudiobookScanner._safe_relative_path(c, library_root)
         except Exception:
             pass
         return ''
@@ -810,19 +819,24 @@ class AudiobookScanner:
                     current_title = ''
                     current_duration = -1
                     continue
-                p_obj = Path(file_path)
-                if not p_obj.is_absolute():
-                    resolved = (m3u_path.parent / p_obj).resolve()
-                else:
-                    resolved = p_obj
-                
-                if resolved.exists() and resolved.suffix.lower() in self.audio_extensions:
-                    entries.append({
-                        'path': str(resolved),
-                        'title': current_title or resolved.name,
-                        'duration': current_duration if current_duration > 0 else 0.0,
-                        'is_url': False
-                    })
+                try:
+                    p_obj = Path(file_path)
+                    if not p_obj.is_absolute():
+                        resolved = Path(os.path.abspath(m3u_path.parent / p_obj))
+                    else:
+                        resolved = Path(os.path.normpath(str(p_obj)))
+                    
+                    if resolved.exists() and resolved.suffix.lower() in self.audio_extensions:
+                        entries.append({
+                            'path': str(resolved),
+                            'title': current_title or resolved.name,
+                            'duration': current_duration if current_duration > 0 else 0.0,
+                            'is_url': False
+                        })
+                    else:
+                        self._log_warn(f"Invalid or missing playlist entry in '{m3u_path.name}': {file_path}", indent=3)
+                except Exception as e:
+                    self._log_warn(f"Invalid playlist path in '{m3u_path.name}': {file_path} ({e})", indent=3)
             current_title = ''
             current_duration = -1
 
@@ -975,7 +989,7 @@ class AudiobookScanner:
             return
 
         self._log_info(self.tr("scanner.m3u_files_loaded", count=len(entries)), indent=2)
-        rel_m3u = str(m3u_path.relative_to(root))
+        rel_m3u = self._safe_relative_path(m3u_path, root)
 
         f_author, f_title, f_narrator = self._parse_audiobook_name(name)
 
@@ -1223,7 +1237,7 @@ class AudiobookScanner:
                 srt_path = self._find_srt_for_file(Path(entry['path']), root)
             files_batch.append((
                 book_id,
-                entry['path'] if entry['is_url'] else str(Path(entry['path']).relative_to(root)),
+                entry['path'] if entry['is_url'] else self._safe_relative_path(entry['path'], root),
                 Path(entry['path']).name if not entry['is_url'] else entry['title'],
                 idx,
                 entry['duration'],
@@ -1285,32 +1299,41 @@ class AudiobookScanner:
         if save_as_folder:
             m3u_file = m3u_files[0]
             parent = str(rel_folder.parent) if str(rel_folder.parent) != '.' else ''
-            self._save_playlist_as_book(
-                m3u_path=m3u_file,
-                book_path=str(rel_folder),
-                parent_path=parent,
-                name=folder.name,
-                root=root,
-                conn=conn,
-                verbose=verbose,
-                force_rescan=force_rescan
-            )
-            if parent:
-                save_folder_callback(parent)
-        else:
-            for m3u_file in m3u_files:
-                rel_m3u = m3u_file.relative_to(root)
+            try:
                 self._save_playlist_as_book(
                     m3u_path=m3u_file,
-                    book_path=str(rel_m3u),
-                    parent_path=str(rel_folder),
-                    name=m3u_file.stem,
+                    book_path=str(rel_folder),
+                    parent_path=parent,
+                    name=folder.name,
                     root=root,
                     conn=conn,
                     verbose=verbose,
                     force_rescan=force_rescan
                 )
-            save_folder_callback(str(rel_folder))
+                if parent:
+                    save_folder_callback(parent)
+            except Exception as e:
+                self._log_error(f"Error processing playlist '{m3u_file.name}': {e}", indent=2)
+        else:
+            saved_any = False
+            for m3u_file in m3u_files:
+                try:
+                    rel_m3u = self._safe_relative_path(m3u_file, root)
+                    self._save_playlist_as_book(
+                        m3u_path=m3u_file,
+                        book_path=str(rel_m3u),
+                        parent_path=str(rel_folder),
+                        name=m3u_file.stem,
+                        root=root,
+                        conn=conn,
+                        verbose=verbose,
+                        force_rescan=force_rescan
+                    )
+                    saved_any = True
+                except Exception as e:
+                    self._log_error(f"Error processing playlist '{m3u_file.name}': {e}", indent=2)
+            if saved_any:
+                save_folder_callback(str(rel_folder))
 
     def _get_cached_analysis(self, file_path: Path, conn) -> dict | None:
         """Check cache and return metadata if file hasn't changed"""
@@ -3157,7 +3180,10 @@ class AudiobookScanner:
                     progress_text = self.tr("scanner.processing_item", current=global_idx, total=total_items, name=f.name)
                     self._log(f"\r{percent}% | {progress_text}", end="")
                     
-                    self._process_standalone_file(f, root, conn, verbose=verbose, force_rescan=force_rescan)
+                    try:
+                        self._process_standalone_file(f, root, conn, verbose=verbose, force_rescan=force_rescan)
+                    except Exception as e:
+                        self._log_error(f"Error processing file '{f.name}': {e}", indent=2)
             else:
                 self._log_info(self.tr("scanner.standalone_found", count=0))
 
@@ -3170,17 +3196,20 @@ class AudiobookScanner:
                     progress_text = self.tr("scanner.processing_item", current=global_idx, total=total_items, name=m3u_file.name)
                     self._log(f"\r{percent}% | {progress_text}", end="")
                     
-                    rel_m3u = m3u_file.relative_to(root)
-                    self._save_playlist_as_book(
-                        m3u_path=m3u_file,
-                        book_path=str(rel_m3u),
-                        parent_path='',
-                        name=m3u_file.stem,
-                        root=root,
-                        conn=conn,
-                        verbose=verbose,
-                        force_rescan=force_rescan
-                    )
+                    try:
+                        rel_m3u = self._safe_relative_path(m3u_file, root)
+                        self._save_playlist_as_book(
+                            m3u_path=m3u_file,
+                            book_path=str(rel_m3u),
+                            parent_path='',
+                            name=m3u_file.stem,
+                            root=root,
+                            conn=conn,
+                            verbose=verbose,
+                            force_rescan=force_rescan
+                        )
+                    except Exception as e:
+                        self._log_error(f"Error processing playlist '{m3u_file.name}': {e}", indent=2)
 
             # Get total processed count from db
             c.execute("SELECT COUNT(*) FROM audiobooks WHERE is_folder = 0 AND is_available = 1")

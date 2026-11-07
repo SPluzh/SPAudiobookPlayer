@@ -1081,3 +1081,125 @@ class TestCoverForcedUpdateOnRescan:
             mock_scanner._extract_metadata = original_extract
             mock_scanner._analyze_file_fast = original_analyze
 
+
+class TestM3UNetworkAndUNCPaths:
+    """Tests for M3U playlists with mapped network drives, UNC paths, external paths, and error resilience"""
+
+    def test_safe_relative_path_mapped_drive_vs_unc(self, monkeypatch):
+        from pathlib import Path
+        import os
+
+        root = Path(r"W:\\")
+        unc_entry = Path(r"\\NAS\share\Audiobooks\Book\track01.mp3")
+
+        # Simulate Windows Path.resolve() resolving both W:\ and \\NAS\share to \\NAS\share
+        def fake_resolve(self, strict=False):
+            s = str(self)
+            if s.upper().startswith("W:"):
+                rest = s[2:].lstrip("\\/")
+                return Path(r"\\NAS\share") / rest if rest else Path(r"\\NAS\share")
+            return self
+
+        monkeypatch.setattr(Path, "resolve", fake_resolve)
+
+        rel = AudiobookScanner._safe_relative_path(unc_entry, root)
+        assert rel == os.path.normpath(r"Audiobooks\Book\track01.mp3")
+
+    def test_safe_relative_path_outside_root_fallback(self, temp_dir):
+        from pathlib import Path
+
+        root = temp_dir / "library"
+        root.mkdir()
+        outside_file = temp_dir / "other_folder" / "track01.mp3"
+
+        rel = AudiobookScanner._safe_relative_path(outside_file, root)
+        assert rel == str(outside_file)
+
+    def test_parse_m3u_does_not_expand_mapped_drive_to_unc(self, mock_scanner, temp_dir, monkeypatch):
+        from pathlib import Path
+
+        book_dir = temp_dir / "Book"
+        book_dir.mkdir()
+        track = book_dir / "track01.mp3"
+        track.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        m3u_file = book_dir / "playlist.m3u"
+        m3u_file.write_text("track01.mp3\n", encoding="utf-8")
+
+        # Even if Path.resolve() would turn the path into a UNC path, _parse_m3u_file should keep the parent's drive prefix
+        def poisoned_resolve(self, strict=False):
+            raise RuntimeError("Path.resolve() should not be called for relative M3U paths")
+
+        monkeypatch.setattr(Path, "resolve", poisoned_resolve)
+
+        entries = mock_scanner._parse_m3u_file(m3u_file)
+        assert len(entries) == 1
+        assert entries[0]["path"] == str(track)
+        assert entries[0]["path"].startswith(str(temp_dir))
+
+    def test_m3u_with_unc_paths_and_invalid_entries_continues_scan(self, mock_scanner, temp_dir, monkeypatch):
+        from pathlib import Path
+        import sqlite3
+
+        # Book 1: playlist with an entry that resolves to UNC path + an invalid entry
+        book1_dir = temp_dir / "_play"
+        book1_dir.mkdir()
+        track1 = book1_dir / "track01.mp3"
+        track1.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        m3u_1 = book1_dir / "_play.m3u"
+        m3u_1.write_text("track01.mp3\nmissing_file.mp3\n", encoding="utf-8")
+
+        # Book 2: normal audiobook folder to verify scan continues
+        book2_dir = temp_dir / "Second Book"
+        book2_dir.mkdir()
+        track2 = book2_dir / "01.mp3"
+        track2.write_bytes(b"\xFF\xFB" + b"\x00" * 100)
+
+        original_extract = mock_scanner._extract_metadata
+        original_analyze = mock_scanner._analyze_file_fast
+        mock_scanner._extract_metadata = lambda dir, files: {'author': 'Auth', 'title': dir.name, 'narrator': ''}
+        mock_scanner._analyze_file_fast = lambda path, verbose=False: {'duration': 15.0, 'bitrate': 128000, 'codec': 'mp3', 'container': 'mp3', 'is_vbr': False}
+
+        # Simulate _parse_m3u_file returning a UNC path while root is a mapped drive (temp_dir)
+        unc_prefix = r"\\NAS\share"
+        orig_parse_m3u = mock_scanner._parse_m3u_file
+
+        def mock_parse_m3u(m3u_path):
+            entries = orig_parse_m3u(m3u_path)
+            # Replace temp_dir prefix with UNC prefix in returned entry path to simulate UNC in M3U
+            for e in entries:
+                rel_part = Path(e["path"]).relative_to(temp_dir)
+                e["path"] = f"{unc_prefix}\\{rel_part}"
+            return entries
+
+        monkeypatch.setattr(mock_scanner, "_parse_m3u_file", mock_parse_m3u)
+
+        orig_resolve = Path.resolve
+
+        def fake_resolve(self, strict=False):
+            s = str(self)
+            if s.startswith(unc_prefix):
+                rel_part = s[len(unc_prefix):].lstrip("\\/")
+                return orig_resolve(temp_dir / rel_part)
+            return orig_resolve(self)
+
+        monkeypatch.setattr(Path, "resolve", fake_resolve)
+
+        try:
+            count = mock_scanner.scan_directory(str(temp_dir))
+            assert count == 2
+
+            conn = sqlite3.connect(mock_scanner.db_file)
+            c = conn.cursor()
+            c.execute("SELECT file_path FROM audiobook_files ORDER BY file_path")
+            file_paths = [r[0] for r in c.fetchall()]
+            conn.close()
+
+            assert str(Path("_play") / "track01.mp3") in file_paths
+            assert str(Path("Second Book") / "01.mp3") in file_paths
+        finally:
+            mock_scanner._extract_metadata = original_extract
+            mock_scanner._analyze_file_fast = original_analyze
+
+
