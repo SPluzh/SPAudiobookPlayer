@@ -1106,37 +1106,28 @@ class LibraryWidget(QWidget):
         if hasattr(self, "btn_sort_field") and self.btn_sort_field:
             self.btn_sort_field.setIcon(get_icon("chevron-down"))
 
-        # Rebuild tree using existing cache so we re-render items with the new icons
+        # Update standard icons in the existing tree items without rebuilding the whole database/tree
         if hasattr(self, "tree") and self.tree and self.tree.topLevelItemCount() > 0:
-            # Save selected path
-            selected_path = None
-            selected_items = self.tree.selectedItems()
-            if selected_items:
-                selected_path = selected_items[0].data(0, Qt.ItemDataRole.UserRole)
+            def update_item_icon(item):
+                role = item.data(0, Qt.ItemDataRole.UserRole + 1)
+                if role == "folder":
+                    item.setIcon(0, self.folder_icon)
+                elif role == "audiobook":
+                    cover_p_str = item.data(0, Qt.ItemDataRole.UserRole + 5)
+                    if not cover_p_str and self.default_audiobook_icon:
+                        item.setIcon(0, self.default_audiobook_icon)
+                for i in range(item.childCount()):
+                    update_item_icon(item.child(i))
 
-            # Rebuild tree using cache
-            self.load_audiobooks(use_cache=True)
+            root = self.tree.invisibleRootItem()
+            if root:
+                for i in range(root.childCount()):
+                    update_item_icon(root.child(i))
 
-            # Restore selected item
-            if selected_path:
-                def select_item(item):
-                    if item.data(0, Qt.ItemDataRole.UserRole) == selected_path:
-                        self.tree.setCurrentItem(item)
-                        return True
-                    for i in range(item.childCount()):
-                        if select_item(item.child(i)):
-                            return True
-                    return False
+            self.tree.viewport().update()
 
-                root = self.tree.invisibleRootItem()
-                if root:
-                    for i in range(root.childCount()):
-                        if select_item(root.child(i)):
-                            break
-
-            # Restore scroll position
-            if scroll_val is not None:
-                self.tree.verticalScrollBar().setValue(scroll_val)
+            if hasattr(self, "tile_view") and self.tile_view:
+                self.tile_view.update()
 
     def on_tag_filter_toggled(self, checked):
         """Toggle tag filtering on/off"""

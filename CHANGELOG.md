@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.8.12]
 - **Appearance**: Fixed an issue where changing the Accent Color in Window Settings reset the Secondary BG color and other custom theme colors during live preview.
+- **Performance**: Optimized appearance live preview and theme changes for large book libraries by avoiding full library tree rebuilds, skipping redundant SVG icon cache clears, and eliminating unnecessary layout recalculations.
 
 ## [1.8.11]
 - **Scanner**: Fixed a crash when scanning M3U playlists on mapped network drives (NAS/SMB) with UNC paths.

@@ -24,12 +24,16 @@ ICON_STROKE_WIDTH = 2.0
 def set_icon_color(color_hex: str):
     """Set the global icon color and clear cache if needed"""
     global ICON_COLOR
+    if ICON_COLOR == color_hex:
+        return
     ICON_COLOR = color_hex
     get_colored_svg_pixmap.cache_clear()
 
 def set_icon_stroke_width(width: float):
     """Set the global icon stroke width and clear cache if needed"""
     global ICON_STROKE_WIDTH
+    if abs(ICON_STROKE_WIDTH - width) < 1e-4:
+        return
     ICON_STROKE_WIDTH = width
     get_colored_svg_pixmap.cache_clear()
 

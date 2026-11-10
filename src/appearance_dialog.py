@@ -836,6 +836,7 @@ class AppearanceDialog(QDialog):
     def on_thickness_slider_changed(self, value):
         self.current_icon_thickness = value / 10.0
         self.thickness_value_label.setText(f"{self.current_icon_thickness:.1f} px")
+        self.reload_icons()
         self.emit_preview()
 
     def update_ui_from_icon_thickness(self, thickness: float):
@@ -862,7 +863,6 @@ class AppearanceDialog(QDialog):
             self.current_cover_progress,
             self.current_icon_thickness
         )
-        self.reload_icons()
 
     def reload_icons(self):
         """Update SVG icons in the dialog when icon color or thickness changes"""
@@ -1120,6 +1120,7 @@ class AppearanceDialog(QDialog):
         else:
             self.current_icon_color = color_before
         self.update_ui_from_icon_color(self.current_icon_color)
+        self.reload_icons()
         self.emit_preview()
             
     def select_icon_color_preview(self, color: QColor):
@@ -1127,6 +1128,7 @@ class AppearanceDialog(QDialog):
         color_hex = color.name().upper()
         self.current_icon_color = color_hex
         self.update_ui_from_icon_color(color_hex)
+        self.reload_icons()
         self.emit_preview()
 
     def choose_cover_progress_color(self):
@@ -1349,6 +1351,7 @@ class AppearanceDialog(QDialog):
             if color.isValid():
                 self.current_icon_color = text.upper()
                 self.update_ui_from_icon_color(self.current_icon_color)
+                self.reload_icons()
                 self.emit_preview()
 
     def on_cover_progress_color_hex_changed(self, text: str):
@@ -1469,6 +1472,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_status_completed(self.default_status_completed)
         self.update_ui_from_nesting_lines_color(self.default_nesting_lines_color)
         self.update_ui_from_icon_thickness(self.default_icon_thickness)
+        self.reload_icons()
         
         # Reset info line settings to True
         self.current_show_detailed_info = True
@@ -1570,6 +1574,7 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_status_completed(self.original_status_completed)
         self.update_ui_from_nesting_lines_color(self.original_nesting_lines_color)
         self.update_ui_from_icon_thickness(self.original_icon_thickness)
+        self.reload_icons()
  
         self.current_show_detailed_info = self.original_show_detailed_info
         self.current_show_info_progress = self.original_show_info_progress

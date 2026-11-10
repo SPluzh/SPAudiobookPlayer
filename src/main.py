@@ -2621,9 +2621,17 @@ class AudiobookPlayerWindow(QMainWindow):
                                  cover_progress_hex: str = "", icon_thickness: float = 2.0):
         """Apply temporary accent, window background, secondary background, font, border, icon color, and cover progress color overrides for live previewing"""
         try:
-            set_icon_color(icon_hex or "#cccccc")
-            set_icon_stroke_width(icon_thickness)
-            self.reload_icons()
+            target_icon_color = icon_hex or "#cccccc"
+            icons_changed = (
+                getattr(self, "_last_preview_icon_color", None) != target_icon_color or
+                getattr(self, "_last_preview_icon_thickness", None) != icon_thickness
+            )
+            if icons_changed:
+                self._last_preview_icon_color = target_icon_color
+                self._last_preview_icon_thickness = icon_thickness
+                set_icon_color(target_icon_color)
+                set_icon_stroke_width(icon_thickness)
+                self.reload_icons()
             
             from styles import StyleManager
             overrides = self._build_style_overrides(
@@ -2640,9 +2648,23 @@ class AudiobookPlayerWindow(QMainWindow):
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
             
             # Apply temporary settings if previewing
+            layout_changed = False
             if hasattr(self, "appearance_dialog") and self.appearance_dialog:
                 settings = self.appearance_dialog.get_info_settings()
                 if self.delegate:
+                    if (
+                        self.delegate.show_detailed_info != settings["show_detailed_info"] or
+                        self.delegate.show_info_progress != settings["show_info_progress"] or
+                        self.delegate.show_info_file_count != settings["show_info_file_count"] or
+                        self.delegate.show_info_duration != settings["show_info_duration"] or
+                        self.delegate.show_info_size != settings["show_info_size"] or
+                        self.delegate.show_info_technical != settings["show_info_technical"] or
+                        self.delegate.show_info_year_written != settings["show_info_year_written"] or
+                        self.delegate.show_info_year_recorded != settings["show_info_year_recorded"] or
+                        self.delegate.show_info_language != settings["show_info_language"] or
+                        self.delegate.info_order != settings.get("info_order", self.delegate.info_order)
+                    ):
+                        layout_changed = True
                     self.delegate.show_detailed_info = settings["show_detailed_info"]
                     self.delegate.show_info_progress = settings["show_info_progress"]
                     self.delegate.show_info_file_count = settings["show_info_file_count"]
@@ -2664,18 +2686,23 @@ class AudiobookPlayerWindow(QMainWindow):
                 
                 # Nesting lines & status triangle
                 if self.delegate:
+                    if self.delegate.show_nesting_lines != interface_settings["show_nesting_lines"]:
+                        layout_changed = True
                     self.delegate.show_nesting_lines = interface_settings["show_nesting_lines"]
                     self.delegate.nesting_lines_single_color = interface_settings["nesting_lines_single_color"]
                     self.delegate.nesting_lines_color = interface_settings["nesting_lines_color"]
                     self.delegate.show_status_triangle = interface_settings["show_status_triangle"]
                 if hasattr(self, "library_widget") and self.library_widget:
+                    if self.library_widget.show_nesting_lines != interface_settings["show_nesting_lines"]:
+                        layout_changed = True
                     self.library_widget.show_nesting_lines = interface_settings["show_nesting_lines"]
                     self.library_widget.nesting_lines_single_color = interface_settings["nesting_lines_single_color"]
                     self.library_widget.nesting_lines_color = interface_settings["nesting_lines_color"]
                     self.library_widget.show_status_triangle = interface_settings["show_status_triangle"]
                     if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
                         if hasattr(self.library_widget.tile_view, "canvas") and self.library_widget.tile_view.canvas:
-                            self.library_widget.tile_view.canvas.update_layout()
+                            if layout_changed:
+                                self.library_widget.tile_view.canvas.update_layout()
                             self.library_widget.tile_view.canvas.update()
                 
                 # Status bar
@@ -2695,7 +2722,8 @@ class AudiobookPlayerWindow(QMainWindow):
             self.update()
             if hasattr(self, "library_widget") and self.library_widget:
                 if hasattr(self.library_widget, "tree"):
-                    self.library_widget.tree.doItemsLayout()
+                    if layout_changed:
+                        self.library_widget.tree.doItemsLayout()
                     self.library_widget.tree.viewport().update()
         except Exception as e:
             print(f"Error applying appearance preview: {e}")

@@ -22,6 +22,8 @@ DARK_STYLE = STYLE_CONTENT
 class StyleManager:
     """Manager for application-wide visual styles and themes"""
     
+    _raw_qss_cache = {}
+    _applied_qss = None
     _proxy_widgets = {}
     _property_cache = {}
     _monitored_objects = [
@@ -148,8 +150,14 @@ class StyleManager:
     @staticmethod
     def get_style(path: Path, overrides: dict = None) -> str:
         """Read stylesheet content from the specified file path and process variables"""
-        if path.exists():
-            content = path.read_text(encoding="utf-8")
+        path_str = str(path)
+        if path_str not in StyleManager._raw_qss_cache:
+            if path.exists():
+                StyleManager._raw_qss_cache[path_str] = path.read_text(encoding="utf-8")
+            else:
+                StyleManager._raw_qss_cache[path_str] = ""
+        content = StyleManager._raw_qss_cache[path_str]
+        if content:
             return StyleManager._process_qss(content, overrides)
         return ""
 
@@ -159,15 +167,23 @@ class StyleManager:
         path = StyleManager.get_theme_path(theme)
         qss = StyleManager.get_style(path, overrides)
         if qss:
-            app.setStyleSheet(qss)
+            if StyleManager._applied_qss != qss:
+                StyleManager._applied_qss = qss
+                app.setStyleSheet(qss)
 
     @staticmethod
     def get_default_vars(theme: str = "dark") -> dict:
         """Parse default variable values from QSS comments without applying style."""
         path = StyleManager.get_theme_path(theme)
-        if not path.exists():
+        path_str = str(path)
+        if path_str not in StyleManager._raw_qss_cache:
+            if path.exists():
+                StyleManager._raw_qss_cache[path_str] = path.read_text(encoding="utf-8")
+            else:
+                StyleManager._raw_qss_cache[path_str] = ""
+        content = StyleManager._raw_qss_cache[path_str]
+        if not content:
             return {}
-        content = path.read_text(encoding="utf-8")
         var_pattern = re.compile(r'/\*\s*@([\w-]+):\s*([^;*]+?)\s*\*/')
         return {k: v.strip() for k, v in var_pattern.findall(content)}
 
