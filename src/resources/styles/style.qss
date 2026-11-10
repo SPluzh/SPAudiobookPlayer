@@ -590,6 +590,15 @@ QListWidget::item:selected:hover {
 }
 
 /* --- Custom active/inactive selection override for #infoListWidget --- */
+QListWidget#infoListWidget {
+    padding: 2px;
+}
+
+QListWidget#infoListWidget::item {
+    padding: 2px 4px;
+    border: none;
+}
+
 QListWidget#infoListWidget::item:selected:active {
     background-color: @accent;
     color: @text-bright;
@@ -941,6 +950,14 @@ QFrame#separator {
     min-height: 2px;
 }
 
+QFrame#appearanceGridSeparator {
+    background-color: @border;
+    max-height: 1px;
+    min-height: 1px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
 QFrame#filterSeparator {
     background-color: @border;
     max-width: 1px;
@@ -1034,7 +1051,13 @@ QLineEdit#coverProgressHexInput,
 QLineEdit#statusNewHexInput,
 QLineEdit#statusStartedHexInput,
 QLineEdit#statusCompletedHexInput,
-QLineEdit#nestingLinesHexInput {
+QLineEdit#nestingLinesHexInput,
+QLineEdit#gridBadgeTextHexInput,
+QLineEdit#gridBadgeBgHexInput,
+QLineEdit#gridLangTextHexInput,
+QLineEdit#gridLangBgHexInput,
+QLineEdit#gridDurationTextHexInput,
+QLineEdit#gridDurationBgHexInput {
     padding: 2px 4px;
 }
 

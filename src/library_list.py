@@ -185,7 +185,7 @@ class MultiLineDelegate(QStyledItemDelegate):
         self.show_info_technical = True
         self.show_info_year_written = True
         self.show_info_year_recorded = True
-        self.show_info_language = True
+        self.show_info_language = False
         self.info_order = "progress,file_count,duration,size,technical,year_written,year_recorded,language"
 
         # UI state for interaction

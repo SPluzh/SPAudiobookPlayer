@@ -171,12 +171,22 @@ class AppearanceDialog(QDialog):
                  current_cover_progress="", default_cover_progress="",
                  show_detailed_info=True,
                  show_info_progress=True, show_info_file_count=True, show_info_duration=True, show_info_size=True,
-                 show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=True,
-                 show_visualizer=True, show_nesting_lines=True, show_status_triangle=True, show_statusbar=True,
+                 show_info_technical=True, show_info_year_written=True, show_info_year_recorded=True, show_info_language=False,
+                 show_visualizer=True, show_nesting_lines=True, show_status_triangle=True, show_statusbar=False,
                  remember_filter_folders=True,
                  info_order="progress,file_count,duration,size,technical,year_written,year_recorded,language",
                  default_info_order="progress,file_count,duration,size,technical,year_written,year_recorded,language",
-                 nesting_lines_single_color=False, nesting_lines_color="", default_nesting_lines_color="#808080"):
+                 nesting_lines_single_color=True, nesting_lines_color="", default_nesting_lines_color="#808080",
+                 current_grid_show_language=False, default_grid_show_language=False,
+                 current_grid_badge_text_color="", default_grid_badge_text_color="#FFFFFF",
+                 current_grid_badge_font_size=10, default_grid_badge_font_size=10,
+                 current_grid_badge_bg_color="", default_grid_badge_bg_color="#000000",
+                 current_grid_lang_text_color=None, default_grid_lang_text_color=None,
+                 current_grid_lang_font_size=None, default_grid_lang_font_size=None,
+                 current_grid_lang_bg_color=None, default_grid_lang_bg_color=None,
+                 current_grid_duration_text_color=None, default_grid_duration_text_color=None,
+                 current_grid_duration_font_size=None, default_grid_duration_font_size=None,
+                 current_grid_duration_bg_color=None, default_grid_duration_bg_color=None):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
@@ -292,6 +302,64 @@ class AppearanceDialog(QDialog):
         
         self.original_remember_filter_folders = remember_filter_folders
         self.current_remember_filter_folders = remember_filter_folders
+        
+        # Resolve badge settings (shared for language and duration badges)
+        if not current_grid_badge_text_color:
+            current_grid_badge_text_color = current_grid_duration_text_color or current_grid_lang_text_color or ""
+        if default_grid_badge_text_color == "#FFFFFF":
+            default_grid_badge_text_color = default_grid_duration_text_color or default_grid_lang_text_color or "#FFFFFF"
+
+        if current_grid_badge_font_size == 10 and current_grid_duration_font_size is not None:
+            current_grid_badge_font_size = current_grid_duration_font_size
+        elif current_grid_badge_font_size == 10 and current_grid_lang_font_size is not None:
+            current_grid_badge_font_size = current_grid_lang_font_size
+        if default_grid_badge_font_size == 10 and default_grid_duration_font_size is not None:
+            default_grid_badge_font_size = default_grid_duration_font_size
+        elif default_grid_badge_font_size == 10 and default_grid_lang_font_size is not None:
+            default_grid_badge_font_size = default_grid_lang_font_size
+
+        if not current_grid_badge_bg_color:
+            current_grid_badge_bg_color = current_grid_duration_bg_color or current_grid_lang_bg_color or ""
+        if default_grid_badge_bg_color == "#000000":
+            default_grid_badge_bg_color = default_grid_duration_bg_color or default_grid_lang_bg_color or "#000000"
+
+        # Grid view settings states
+        self.original_grid_show_language = current_grid_show_language
+        self.default_grid_show_language = default_grid_show_language
+        self.current_grid_show_language = current_grid_show_language
+
+        self.original_grid_badge_text_color = current_grid_badge_text_color
+        self.default_grid_badge_text_color = default_grid_badge_text_color
+        self.current_grid_badge_text_color = current_grid_badge_text_color or default_grid_badge_text_color
+
+        self.original_grid_badge_font_size = current_grid_badge_font_size
+        self.default_grid_badge_font_size = default_grid_badge_font_size
+        self.current_grid_badge_font_size = current_grid_badge_font_size
+
+        self.original_grid_badge_bg_color = current_grid_badge_bg_color
+        self.default_grid_badge_bg_color = default_grid_badge_bg_color
+        self.current_grid_badge_bg_color = current_grid_badge_bg_color or default_grid_badge_bg_color
+
+        # Backward compatibility aliases
+        self.original_grid_lang_text_color = self.original_grid_badge_text_color
+        self.default_grid_lang_text_color = self.default_grid_badge_text_color
+        self.current_grid_lang_text_color = self.current_grid_badge_text_color
+        self.original_grid_lang_font_size = self.original_grid_badge_font_size
+        self.default_grid_lang_font_size = self.default_grid_badge_font_size
+        self.current_grid_lang_font_size = self.current_grid_badge_font_size
+        self.original_grid_lang_bg_color = self.original_grid_badge_bg_color
+        self.default_grid_lang_bg_color = self.default_grid_badge_bg_color
+        self.current_grid_lang_bg_color = self.current_grid_badge_bg_color
+
+        self.original_grid_duration_text_color = self.original_grid_badge_text_color
+        self.default_grid_duration_text_color = self.default_grid_badge_text_color
+        self.current_grid_duration_text_color = self.current_grid_badge_text_color
+        self.original_grid_duration_font_size = self.original_grid_badge_font_size
+        self.default_grid_duration_font_size = self.default_grid_badge_font_size
+        self.current_grid_duration_font_size = self.current_grid_badge_font_size
+        self.original_grid_duration_bg_color = self.original_grid_badge_bg_color
+        self.default_grid_duration_bg_color = self.default_grid_badge_bg_color
+        self.current_grid_duration_bg_color = self.current_grid_badge_bg_color
         
 
         
@@ -535,19 +603,21 @@ class AppearanceDialog(QDialog):
         
         left_layout.addWidget(group_colors)
         
-        # ------------------ GROUP 2: LIBRARY LIST SETTINGS ------------------
-        group_info = QGroupBox(tr("appearance.tab_info", "Library List Settings"))
+        # ------------------ GROUP 2: LIBRARY SETTINGS ------------------
+        group_info = QGroupBox(tr("appearance.tab_info", "Library Settings"))
         info_layout = QVBoxLayout(group_info)
-        info_layout.setSpacing(8)
-        info_layout.setContentsMargins(8, 12, 8, 8)
+        info_layout.setSpacing(4)
+        info_layout.setContentsMargins(8, 8, 8, 8)
         
-        # Library List View checkboxes (nesting lines, status triangle, remember filter folders)
+        # Library View checkboxes
+        self.chk_remember_filter_folders = QCheckBox(tr("menu.remember_filter_folders", "Remember Folder View"))
+        self.chk_remember_filter_folders.setToolTip(tr("appearance.remember_filter_folders_tooltip"))
+        info_layout.addWidget(self.chk_remember_filter_folders)
+
         self.chk_status_triangle = QCheckBox(tr("menu.show_status_triangle", "Show Status Triangle"))
         self.chk_status_triangle.setToolTip(tr("appearance.status_triangle_tooltip"))
         self.chk_nesting_lines = QCheckBox(tr("menu.show_nesting_lines", "Show Nesting Lines"))
         self.chk_nesting_lines.setToolTip(tr("appearance.nesting_lines_tooltip"))
-        self.chk_remember_filter_folders = QCheckBox(tr("menu.remember_filter_folders", "Remember Folder View"))
-        self.chk_remember_filter_folders.setToolTip(tr("appearance.remember_filter_folders_tooltip"))
         
         info_layout.addWidget(self.chk_status_triangle)
 
@@ -555,8 +625,8 @@ class AppearanceDialog(QDialog):
         self.status_colors_widget = QWidget()
         status_colors_grid = QGridLayout(self.status_colors_widget)
         status_colors_grid.setHorizontalSpacing(8)
-        status_colors_grid.setVerticalSpacing(8)
-        status_colors_grid.setContentsMargins(15, 0, 0, 4)
+        status_colors_grid.setVerticalSpacing(4)
+        status_colors_grid.setContentsMargins(15, 0, 0, 2)
         
         # New Status Row
         status_new_label = QLabel(tr("appearance.status_new_label", "New Status Color:"))
@@ -631,12 +701,12 @@ class AppearanceDialog(QDialog):
         status_colors_grid.setColumnStretch(3, 1)
         info_layout.addWidget(self.status_colors_widget)
 
-        # Cover Progress Color Row (below status triangle settings)
+        # Cover Progress Color Row (immediately below Finished Status Color)
         self.cover_progress_widget = QWidget()
         cover_progress_grid = QGridLayout(self.cover_progress_widget)
         cover_progress_grid.setHorizontalSpacing(8)
-        cover_progress_grid.setVerticalSpacing(8)
-        cover_progress_grid.setContentsMargins(0, 0, 0, 4)
+        cover_progress_grid.setVerticalSpacing(4)
+        cover_progress_grid.setContentsMargins(0, 0, 0, 2)
         
         cover_progress_label = QLabel(tr("appearance.cover_progress_label", "Cover Progress Color:"))
         cover_progress_tooltip = tr("appearance.cover_progress_tooltip", "Color of the progress bar shown on book covers")
@@ -665,14 +735,52 @@ class AppearanceDialog(QDialog):
         cover_progress_grid.setColumnStretch(3, 1)
         info_layout.addWidget(self.cover_progress_widget)
 
+        info_layout.addWidget(self.chk_nesting_lines)
+        
+        self.chk_single_nesting_color = QCheckBox(tr("appearance.nesting_lines_single_color", "Draw nesting lines with one color"))
+        self.chk_single_nesting_color.setToolTip(tr("appearance.nesting_lines_single_color_tooltip"))
+        info_layout.addWidget(self.chk_single_nesting_color)
+        
+        self.nesting_colors_widget = QWidget()
+        nesting_colors_grid = QGridLayout(self.nesting_colors_widget)
+        nesting_colors_grid.setHorizontalSpacing(8)
+        nesting_colors_grid.setVerticalSpacing(4)
+        nesting_colors_grid.setContentsMargins(15, 0, 0, 2)
+        
+        nesting_color_label = QLabel(tr("appearance.nesting_lines_color_label", "Nesting Lines Color:"))
+        nesting_color_tooltip = tr("appearance.nesting_lines_color_tooltip")
+        nesting_color_label.setToolTip(nesting_color_tooltip)
+        nesting_colors_grid.addWidget(nesting_color_label, 0, 0)
+        
+        self.nesting_lines_color_btn = QPushButton()
+        self.nesting_lines_color_btn.setFixedSize(field_height, field_height)
+        self.nesting_lines_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.nesting_lines_color_btn.setToolTip(nesting_color_tooltip)
+        self.nesting_lines_color_btn.clicked.connect(self.choose_nesting_lines_color)
+        nesting_colors_grid.addWidget(self.nesting_lines_color_btn, 0, 1)
+        
+        self.nesting_lines_hex_input = QLineEdit()
+        self.nesting_lines_hex_input.setObjectName("nestingLinesHexInput")
+        self.nesting_lines_hex_input.setMaxLength(7)
+        self.nesting_lines_hex_input.setFixedWidth(80)
+        self.nesting_lines_hex_input.setFixedHeight(field_height)
+        self.nesting_lines_hex_input.setValidator(validator)
+        self.nesting_lines_hex_input.setToolTip(nesting_color_tooltip)
+        self.nesting_lines_hex_input.textChanged.connect(self.on_nesting_lines_hex_changed)
+        nesting_colors_grid.addWidget(self.nesting_lines_hex_input, 0, 2)
+        
+        nesting_colors_grid.addItem(QSpacerItem(1, 1, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum), 0, 3)
+        nesting_colors_grid.setColumnStretch(3, 1)
+        info_layout.addWidget(self.nesting_colors_widget)
+
         # Book Info Line Settings Section
-        self.chk_show_detailed_info = QCheckBox(tr("appearance.show_detailed_info"))
+        self.chk_show_detailed_info = QCheckBox(tr("appearance.show_detailed_info", "Show Detailed Info (List View)"))
         self.chk_show_detailed_info.setToolTip(tr("appearance.show_detailed_info_tooltip"))
         self.chk_show_detailed_info.setStyleSheet("margin-bottom: 2px;")
         info_layout.addWidget(self.chk_show_detailed_info)
         
         checkbox_layout = QVBoxLayout()
-        checkbox_layout.setSpacing(6)
+        checkbox_layout.setSpacing(4)
         checkbox_layout.setContentsMargins(15, 0, 0, 0)
         
 
@@ -709,46 +817,111 @@ class AppearanceDialog(QDialog):
         
         info_layout.addLayout(checkbox_layout)
 
-        info_layout.addWidget(self.chk_nesting_lines)
-        
-        self.chk_single_nesting_color = QCheckBox(tr("appearance.nesting_lines_single_color", "Draw nesting lines with one color"))
-        self.chk_single_nesting_color.setToolTip(tr("appearance.nesting_lines_single_color_tooltip"))
-        info_layout.addWidget(self.chk_single_nesting_color)
-        
-        self.nesting_colors_widget = QWidget()
-        nesting_colors_grid = QGridLayout(self.nesting_colors_widget)
-        nesting_colors_grid.setHorizontalSpacing(8)
-        nesting_colors_grid.setVerticalSpacing(8)
-        nesting_colors_grid.setContentsMargins(15, 0, 0, 4)
-        
-        nesting_color_label = QLabel(tr("appearance.nesting_lines_color_label", "Nesting Lines Color:"))
-        nesting_color_tooltip = tr("appearance.nesting_lines_color_tooltip")
-        nesting_color_label.setToolTip(nesting_color_tooltip)
-        nesting_colors_grid.addWidget(nesting_color_label, 0, 0)
-        
-        self.nesting_lines_color_btn = QPushButton()
-        self.nesting_lines_color_btn.setFixedSize(field_height, field_height)
-        self.nesting_lines_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.nesting_lines_color_btn.setToolTip(nesting_color_tooltip)
-        self.nesting_lines_color_btn.clicked.connect(self.choose_nesting_lines_color)
-        nesting_colors_grid.addWidget(self.nesting_lines_color_btn, 0, 1)
-        
-        self.nesting_lines_hex_input = QLineEdit()
-        self.nesting_lines_hex_input.setObjectName("nestingLinesHexInput")
-        self.nesting_lines_hex_input.setMaxLength(7)
-        self.nesting_lines_hex_input.setFixedWidth(80)
-        self.nesting_lines_hex_input.setFixedHeight(field_height)
-        self.nesting_lines_hex_input.setValidator(validator)
-        self.nesting_lines_hex_input.setToolTip(nesting_color_tooltip)
-        self.nesting_lines_hex_input.textChanged.connect(self.on_nesting_lines_hex_changed)
-        nesting_colors_grid.addWidget(self.nesting_lines_hex_input, 0, 2)
-        
-        nesting_colors_grid.addItem(QSpacerItem(1, 1, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum), 0, 3)
-        nesting_colors_grid.setColumnStretch(3, 1)
-        info_layout.addWidget(self.nesting_colors_widget)
+        # Horizontal separator below List View detailed info
+        grid_sep = QFrame()
+        grid_sep.setFrameShape(QFrame.Shape.HLine)
+        grid_sep.setFrameShadow(QFrame.Shadow.Sunken)
+        grid_sep.setObjectName("appearanceGridSeparator")
+        info_layout.addSpacing(2)
+        info_layout.addWidget(grid_sep)
+        info_layout.addSpacing(2)
 
-        info_layout.addWidget(self.chk_remember_filter_folders)
-        
+        # ------------------ GRID VIEW SETTINGS ------------------
+        self.chk_grid_show_language = QCheckBox(tr("appearance.grid_show_language", "Show Book Language (Grid View)"))
+        self.chk_grid_show_language.setToolTip(tr("appearance.grid_show_language_tooltip"))
+        self.chk_grid_show_language.stateChanged.connect(self.on_grid_checkbox_changed)
+        info_layout.addWidget(self.chk_grid_show_language)
+
+        grid_opts_widget = QWidget()
+        grid_opts_layout = QGridLayout(grid_opts_widget)
+        grid_opts_layout.setHorizontalSpacing(8)
+        grid_opts_layout.setVerticalSpacing(4)
+        grid_opts_layout.setContentsMargins(0, 0, 0, 0)
+
+        # 1. Badge Text Color
+        self.grid_badge_text_label = QLabel(tr("appearance.grid_badge_text_label"))
+        badge_text_tooltip = tr("appearance.grid_badge_text_tooltip")
+        self.grid_badge_text_label.setToolTip(badge_text_tooltip)
+        grid_opts_layout.addWidget(self.grid_badge_text_label, 0, 0)
+
+        self.grid_badge_text_color_btn = QPushButton()
+        self.grid_badge_text_color_btn.setFixedSize(field_height, field_height)
+        self.grid_badge_text_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.grid_badge_text_color_btn.setToolTip(badge_text_tooltip)
+        self.grid_badge_text_color_btn.clicked.connect(self.choose_grid_badge_text_color)
+        grid_opts_layout.addWidget(self.grid_badge_text_color_btn, 0, 1)
+
+        self.grid_badge_text_hex_input = QLineEdit()
+        self.grid_badge_text_hex_input.setObjectName("gridBadgeTextHexInput")
+        self.grid_badge_text_hex_input.setMaxLength(7)
+        self.grid_badge_text_hex_input.setFixedWidth(80)
+        self.grid_badge_text_hex_input.setFixedHeight(field_height)
+        self.grid_badge_text_hex_input.setValidator(validator)
+        self.grid_badge_text_hex_input.setToolTip(badge_text_tooltip)
+        self.grid_badge_text_hex_input.textChanged.connect(self.on_grid_badge_text_hex_changed)
+        grid_opts_layout.addWidget(self.grid_badge_text_hex_input, 0, 2)
+
+        # 2. Badge Text Size
+        self.grid_badge_size_title_label = QLabel(tr("appearance.grid_badge_size_label"))
+        badge_size_tooltip = tr("appearance.grid_badge_size_tooltip")
+        self.grid_badge_size_title_label.setToolTip(badge_size_tooltip)
+        grid_opts_layout.addWidget(self.grid_badge_size_title_label, 1, 0)
+
+        self.grid_badge_size_slider = QSlider(Qt.Orientation.Horizontal)
+        self.grid_badge_size_slider.setObjectName("gridBadgeSizeSlider")
+        self.grid_badge_size_slider.setRange(7, 20)
+        self.grid_badge_size_slider.setToolTip(badge_size_tooltip)
+        self.grid_badge_size_slider.valueChanged.connect(self.on_grid_badge_size_changed)
+        grid_opts_layout.addWidget(self.grid_badge_size_slider, 1, 1, 1, 3)
+
+        self.grid_badge_size_label = QLabel()
+        self.grid_badge_size_label.setFixedWidth(50)
+        self.grid_badge_size_label.setToolTip(badge_size_tooltip)
+        grid_opts_layout.addWidget(self.grid_badge_size_label, 1, 4)
+
+        # 3. Badge Background Color
+        self.grid_badge_bg_label = QLabel(tr("appearance.grid_badge_bg_label"))
+        badge_bg_tooltip = tr("appearance.grid_badge_bg_tooltip")
+        self.grid_badge_bg_label.setToolTip(badge_bg_tooltip)
+        grid_opts_layout.addWidget(self.grid_badge_bg_label, 2, 0)
+
+        self.grid_badge_bg_color_btn = QPushButton()
+        self.grid_badge_bg_color_btn.setFixedSize(field_height, field_height)
+        self.grid_badge_bg_color_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.grid_badge_bg_color_btn.setToolTip(badge_bg_tooltip)
+        self.grid_badge_bg_color_btn.clicked.connect(self.choose_grid_badge_bg_color)
+        grid_opts_layout.addWidget(self.grid_badge_bg_color_btn, 2, 1)
+
+        self.grid_badge_bg_hex_input = QLineEdit()
+        self.grid_badge_bg_hex_input.setObjectName("gridBadgeBgHexInput")
+        self.grid_badge_bg_hex_input.setMaxLength(7)
+        self.grid_badge_bg_hex_input.setFixedWidth(80)
+        self.grid_badge_bg_hex_input.setFixedHeight(field_height)
+        self.grid_badge_bg_hex_input.setValidator(validator)
+        self.grid_badge_bg_hex_input.setToolTip(badge_bg_tooltip)
+        self.grid_badge_bg_hex_input.textChanged.connect(self.on_grid_badge_bg_hex_changed)
+        grid_opts_layout.addWidget(self.grid_badge_bg_hex_input, 2, 2)
+
+        grid_opts_layout.setColumnStretch(3, 1)
+
+        # Aliases for backward compatibility in tests and external code
+        self.grid_lang_text_color_btn = self.grid_badge_text_color_btn
+        self.grid_lang_text_hex_input = self.grid_badge_text_hex_input
+        self.grid_lang_size_slider = self.grid_badge_size_slider
+        self.grid_lang_size_label = self.grid_badge_size_label
+        self.grid_lang_bg_color_btn = self.grid_badge_bg_color_btn
+        self.grid_lang_bg_hex_input = self.grid_badge_bg_hex_input
+
+        self.grid_duration_text_color_btn = self.grid_badge_text_color_btn
+        self.grid_duration_text_hex_input = self.grid_badge_text_hex_input
+        self.grid_duration_size_slider = self.grid_badge_size_slider
+        self.grid_duration_size_label = self.grid_badge_size_label
+        self.grid_duration_bg_color_btn = self.grid_badge_bg_color_btn
+        self.grid_duration_bg_hex_input = self.grid_badge_bg_hex_input
+
+        self.grid_lang_controls = []
+        info_layout.addWidget(grid_opts_widget)
+
         self.chk_status_triangle.stateChanged.connect(self.on_interface_checkbox_changed)
         self.chk_nesting_lines.stateChanged.connect(self.on_interface_checkbox_changed)
         self.chk_single_nesting_color.stateChanged.connect(self.on_interface_checkbox_changed)
@@ -814,7 +987,8 @@ class AppearanceDialog(QDialog):
             self.accent_color_btn, self.window_color_btn, self.bg_dark_color_btn,
             self.text_color_btn, self.border_color_btn, self.icon_color_btn,
             self.status_new_color_btn, self.status_started_color_btn, self.status_completed_color_btn,
-            self.cover_progress_color_btn, self.nesting_lines_color_btn
+            self.cover_progress_color_btn, self.nesting_lines_color_btn,
+            self.grid_badge_text_color_btn, self.grid_badge_bg_color_btn
         ]:
             btn.setProperty("class", "color-btn")
             
@@ -830,6 +1004,10 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_status_started(self.current_status_started)
         self.update_ui_from_status_completed(self.current_status_completed)
         self.update_ui_from_nesting_lines_color(self.current_nesting_lines_color)
+        self.chk_grid_show_language.setChecked(self.current_grid_show_language)
+        self.update_ui_from_grid_badge_text_color(self.current_grid_badge_text_color)
+        self.update_ui_from_grid_badge_bg_color(self.current_grid_badge_bg_color)
+        self.update_ui_from_grid_badge_font_size(self.current_grid_badge_font_size)
         self.update_checkboxes_ui()
         self.update_ui_from_icon_thickness(self.current_icon_thickness)
         
@@ -894,6 +1072,10 @@ class AppearanceDialog(QDialog):
             ("status_started_color_btn", self.current_status_started),
             ("status_completed_color_btn", self.current_status_completed),
             ("nesting_lines_color_btn", self.current_nesting_lines_color),
+            ("grid_lang_text_color_btn", self.current_grid_lang_text_color),
+            ("grid_lang_bg_color_btn", self.current_grid_lang_bg_color),
+            ("grid_duration_text_color_btn", self.current_grid_duration_text_color),
+            ("grid_duration_bg_color_btn", self.current_grid_duration_bg_color),
         ]
         for attr, color_hex in buttons:
             btn = getattr(self, attr, None)
@@ -930,12 +1112,45 @@ class AppearanceDialog(QDialog):
             self.current_status_completed = color_hex
         elif btn == getattr(self, "nesting_lines_color_btn", None):
             self.current_nesting_lines_color = color_hex
+        elif btn == getattr(self, "grid_lang_text_color_btn", None):
+            self.current_grid_lang_text_color = color_hex
+        elif btn == getattr(self, "grid_lang_bg_color_btn", None):
+            self.current_grid_lang_bg_color = color_hex
+        elif btn == getattr(self, "grid_duration_text_color_btn", None):
+            self.current_grid_duration_text_color = color_hex
+        elif btn == getattr(self, "grid_duration_bg_color_btn", None):
+            self.current_grid_duration_bg_color = color_hex
 
         self.update_color_button_stylesheets()
 
     def update_ui_from_nesting_lines_color(self, color_hex: str):
         """Synchronize custom nesting lines color button background and hex input"""
         self.update_color_button(self.nesting_lines_color_btn, self.nesting_lines_hex_input, color_hex)
+
+    def update_ui_from_grid_badge_text_color(self, color_hex: str):
+        """Synchronize custom grid badge text color button background and hex input"""
+        self.update_color_button(self.grid_badge_text_color_btn, self.grid_badge_text_hex_input, color_hex)
+
+    def update_ui_from_grid_badge_bg_color(self, color_hex: str):
+        """Synchronize custom grid badge background color button background and hex input"""
+        self.update_color_button(self.grid_badge_bg_color_btn, self.grid_badge_bg_hex_input, color_hex)
+
+    def update_ui_from_grid_badge_font_size(self, size: int):
+        """Synchronize grid badge font size slider and value label"""
+        self.updating_ui = True
+        try:
+            self.grid_badge_size_slider.setValue(size)
+            self.grid_badge_size_label.setText(f"{size} px")
+        finally:
+            self.updating_ui = False
+
+    # Aliases for backward compatibility
+    update_ui_from_grid_lang_text_color = update_ui_from_grid_badge_text_color
+    update_ui_from_grid_lang_bg_color = update_ui_from_grid_badge_bg_color
+    update_ui_from_grid_duration_text_color = update_ui_from_grid_badge_text_color
+    update_ui_from_grid_duration_bg_color = update_ui_from_grid_badge_bg_color
+    update_ui_from_grid_lang_font_size = update_ui_from_grid_badge_font_size
+    update_ui_from_grid_duration_font_size = update_ui_from_grid_badge_font_size
 
     def update_ui_from_icon_color(self, color_hex: str):
         """Synchronize custom icon color button background and hex input"""
@@ -1244,6 +1459,61 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_nesting_lines_color(color_hex)
         self.emit_preview()
 
+    def choose_grid_badge_text_color(self):
+        """Open custom compact color picker dialog for grid badge text color and preview changes live"""
+        color_before = self.current_grid_badge_text_color
+        dialog = ColorPickerDialog(self, QColor(self.current_grid_badge_text_color or "#FFFFFF"))
+        dialog.colorChanged.connect(self.select_grid_badge_text_color_preview)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.current_grid_badge_text_color = dialog.color.name().upper()
+        else:
+            self.current_grid_badge_text_color = color_before
+        self.current_grid_lang_text_color = self.current_grid_badge_text_color
+        self.current_grid_duration_text_color = self.current_grid_badge_text_color
+        self.update_ui_from_grid_badge_text_color(self.current_grid_badge_text_color)
+        self.emit_preview()
+
+    def select_grid_badge_text_color_preview(self, color: QColor):
+        """Update grid badge text color preview from dialog changes"""
+        color_hex = color.name().upper()
+        self.current_grid_badge_text_color = color_hex
+        self.current_grid_lang_text_color = color_hex
+        self.current_grid_duration_text_color = color_hex
+        self.update_ui_from_grid_badge_text_color(color_hex)
+        self.emit_preview()
+
+    def choose_grid_badge_bg_color(self):
+        """Open custom compact color picker dialog for grid badge background color and preview changes live"""
+        color_before = self.current_grid_badge_bg_color
+        dialog = ColorPickerDialog(self, QColor(self.current_grid_badge_bg_color or "#000000"))
+        dialog.colorChanged.connect(self.select_grid_badge_bg_color_preview)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.current_grid_badge_bg_color = dialog.color.name().upper()
+        else:
+            self.current_grid_badge_bg_color = color_before
+        self.current_grid_lang_bg_color = self.current_grid_badge_bg_color
+        self.current_grid_duration_bg_color = self.current_grid_badge_bg_color
+        self.update_ui_from_grid_badge_bg_color(self.current_grid_badge_bg_color)
+        self.emit_preview()
+
+    def select_grid_badge_bg_color_preview(self, color: QColor):
+        """Update grid badge background color preview from dialog changes"""
+        color_hex = color.name().upper()
+        self.current_grid_badge_bg_color = color_hex
+        self.current_grid_lang_bg_color = color_hex
+        self.current_grid_duration_bg_color = color_hex
+        self.update_ui_from_grid_badge_bg_color(color_hex)
+        self.emit_preview()
+
+    choose_grid_lang_text_color = choose_grid_badge_text_color
+    select_grid_lang_text_color_preview = select_grid_badge_text_color_preview
+    choose_grid_lang_bg_color = choose_grid_badge_bg_color
+    select_grid_lang_bg_color_preview = select_grid_badge_bg_color_preview
+    choose_grid_duration_text_color = choose_grid_badge_text_color
+    select_grid_duration_text_color_preview = select_grid_badge_text_color_preview
+    choose_grid_duration_bg_color = choose_grid_badge_bg_color
+    select_grid_duration_bg_color_preview = select_grid_badge_bg_color_preview
+
     def on_accent_hex_changed(self, text: str):
         """Update accent picker button and emit preview from Accent Hex input box"""
         if self.updating_ui:
@@ -1443,6 +1713,69 @@ class AppearanceDialog(QDialog):
                 self.current_nesting_lines_color = text.upper()
                 self.update_ui_from_nesting_lines_color(self.current_nesting_lines_color)
                 self.emit_preview()
+
+    def on_grid_badge_text_hex_changed(self, text: str):
+        """Update grid badge text color and emit preview"""
+        if self.updating_ui:
+            return
+        if not text.startswith("#"):
+            self.updating_ui = True
+            text = "#" + text.replace("#", "")
+            self.grid_badge_text_hex_input.setText(text)
+            self.updating_ui = False
+        if len(text) == 7:
+            color = QColor(text)
+            if color.isValid():
+                self.current_grid_badge_text_color = text.upper()
+                self.current_grid_lang_text_color = self.current_grid_badge_text_color
+                self.current_grid_duration_text_color = self.current_grid_badge_text_color
+                self.update_ui_from_grid_badge_text_color(self.current_grid_badge_text_color)
+                self.emit_preview()
+
+    def on_grid_badge_bg_hex_changed(self, text: str):
+        """Update grid badge bg color and emit preview"""
+        if self.updating_ui:
+            return
+        if not text.startswith("#"):
+            self.updating_ui = True
+            text = "#" + text.replace("#", "")
+            self.grid_badge_bg_hex_input.setText(text)
+            self.updating_ui = False
+        if len(text) == 7:
+            color = QColor(text)
+            if color.isValid():
+                self.current_grid_badge_bg_color = text.upper()
+                self.current_grid_lang_bg_color = self.current_grid_badge_bg_color
+                self.current_grid_duration_bg_color = self.current_grid_badge_bg_color
+                self.update_ui_from_grid_badge_bg_color(self.current_grid_badge_bg_color)
+                self.emit_preview()
+
+    def on_grid_badge_size_changed(self, value: int):
+        """Update grid badge font size and emit preview"""
+        self.current_grid_badge_font_size = value
+        self.current_grid_lang_font_size = value
+        self.current_grid_duration_font_size = value
+        self.grid_badge_size_label.setText(f"{value} px")
+        self.emit_preview()
+
+    on_grid_lang_text_hex_changed = on_grid_badge_text_hex_changed
+    on_grid_lang_bg_hex_changed = on_grid_badge_bg_hex_changed
+    on_grid_duration_text_hex_changed = on_grid_badge_text_hex_changed
+    on_grid_duration_bg_hex_changed = on_grid_badge_bg_hex_changed
+    on_grid_lang_size_changed = on_grid_badge_size_changed
+    on_grid_duration_size_changed = on_grid_badge_size_changed
+
+    def update_grid_language_controls_state(self):
+        """Enable or disable language badge customization controls based on checkbox"""
+        pass
+
+    def on_grid_checkbox_changed(self):
+        """Update grid show language setting and emit preview"""
+        if self.updating_ui:
+            return
+        self.current_grid_show_language = self.chk_grid_show_language.isChecked()
+        self.update_grid_language_controls_state()
+        self.emit_preview()
                 
     def reset_to_default(self):
         """Reset current colors and thickness to theme default values"""
@@ -1457,7 +1790,7 @@ class AppearanceDialog(QDialog):
         self.current_status_completed = self.default_status_completed
         self.current_icon_thickness = self.default_icon_thickness
         self.current_cover_progress = self.default_cover_progress
-        self.current_nesting_lines_single_color = False
+        self.current_nesting_lines_single_color = True
         self.current_nesting_lines_color = self.default_nesting_lines_color
         
         self.update_ui_from_accent(self.default_accent)
@@ -1483,15 +1816,32 @@ class AppearanceDialog(QDialog):
         self.current_show_info_technical = True
         self.current_show_info_year_written = True
         self.current_show_info_year_recorded = True
-        self.current_show_info_language = True
+        self.current_show_info_language = False
         
         # Reset interface settings to default
         self.current_show_visualizer = True
         self.current_show_nesting_lines = True
         self.current_show_status_triangle = True
-        self.current_show_statusbar = True
+        self.current_show_statusbar = False
         self.current_remember_filter_folders = True
         
+        # Reset grid settings to default
+        self.current_grid_show_language = self.default_grid_show_language
+        self.current_grid_badge_text_color = self.default_grid_badge_text_color
+        self.current_grid_badge_font_size = self.default_grid_badge_font_size
+        self.current_grid_badge_bg_color = self.default_grid_badge_bg_color
+        self.current_grid_lang_text_color = self.default_grid_badge_text_color
+        self.current_grid_lang_font_size = self.default_grid_badge_font_size
+        self.current_grid_lang_bg_color = self.default_grid_badge_bg_color
+        self.current_grid_duration_text_color = self.default_grid_badge_text_color
+        self.current_grid_duration_font_size = self.default_grid_badge_font_size
+        self.current_grid_duration_bg_color = self.default_grid_badge_bg_color
+
+        self.chk_grid_show_language.setChecked(self.default_grid_show_language)
+        self.update_ui_from_grid_badge_text_color(self.default_grid_badge_text_color)
+        self.update_ui_from_grid_badge_bg_color(self.default_grid_badge_bg_color)
+        self.update_ui_from_grid_badge_font_size(self.default_grid_badge_font_size)
+
         self.update_checkboxes_ui()
         
         self.emit_preview()
@@ -1593,6 +1943,23 @@ class AppearanceDialog(QDialog):
         self.current_show_statusbar = self.original_show_statusbar
         self.current_remember_filter_folders = self.original_remember_filter_folders
         
+        # Revert grid settings
+        self.current_grid_show_language = self.original_grid_show_language
+        self.current_grid_badge_text_color = self.original_grid_badge_text_color or self.default_grid_badge_text_color
+        self.current_grid_badge_font_size = self.original_grid_badge_font_size
+        self.current_grid_badge_bg_color = self.original_grid_badge_bg_color or self.default_grid_badge_bg_color
+        self.current_grid_lang_text_color = self.current_grid_badge_text_color
+        self.current_grid_lang_font_size = self.current_grid_badge_font_size
+        self.current_grid_lang_bg_color = self.current_grid_badge_bg_color
+        self.current_grid_duration_text_color = self.current_grid_badge_text_color
+        self.current_grid_duration_font_size = self.current_grid_badge_font_size
+        self.current_grid_duration_bg_color = self.current_grid_badge_bg_color
+
+        self.chk_grid_show_language.setChecked(self.original_grid_show_language)
+        self.update_ui_from_grid_badge_text_color(self.current_grid_badge_text_color)
+        self.update_ui_from_grid_badge_bg_color(self.current_grid_badge_bg_color)
+        self.update_ui_from_grid_badge_font_size(self.current_grid_badge_font_size)
+
         self.update_checkboxes_ui()
  
         self.emit_preview()
@@ -1644,7 +2011,7 @@ class AppearanceDialog(QDialog):
                 row_h = 24
             h += row_h
         h += self.info_list_widget.frameWidth() * 2 + 4
-        self.info_list_widget.setFixedHeight(max(h, 200))
+        self.info_list_widget.setFixedHeight(max(h, 150))
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -1739,6 +2106,9 @@ class AppearanceDialog(QDialog):
             # Enable/disable nesting lines single color customization
             self.chk_single_nesting_color.setEnabled(self.current_show_nesting_lines)
             self.nesting_colors_widget.setEnabled(self.current_show_nesting_lines and self.current_nesting_lines_single_color)
+            
+            # Enable/disable grid language customization
+            self.update_grid_language_controls_state()
         finally:
             self.updating_ui = old_updating
 
@@ -1805,4 +2175,19 @@ class AppearanceDialog(QDialog):
             "show_status_triangle": self.current_show_status_triangle,
             "show_statusbar": self.current_show_statusbar,
             "remember_filter_folders": self.current_remember_filter_folders
+        }
+
+    def get_grid_settings(self) -> dict:
+        """Get the current settings for grid view badges"""
+        return {
+            "grid_show_language": self.current_grid_show_language,
+            "grid_badge_text_color": self.current_grid_badge_text_color,
+            "grid_badge_font_size": self.current_grid_badge_font_size,
+            "grid_badge_bg_color": self.current_grid_badge_bg_color,
+            "grid_lang_text_color": self.current_grid_badge_text_color,
+            "grid_lang_font_size": self.current_grid_badge_font_size,
+            "grid_lang_bg_color": self.current_grid_badge_bg_color,
+            "grid_duration_text_color": self.current_grid_badge_text_color,
+            "grid_duration_font_size": self.current_grid_badge_font_size,
+            "grid_duration_bg_color": self.current_grid_badge_bg_color,
         }

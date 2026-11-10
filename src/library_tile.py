@@ -621,7 +621,12 @@ class BookTileWidget(QWidget):
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             duration_text = format_duration(self.duration)
             font = p.font()
-            font.setPixelSize(10)
+            dur_size = (
+                getattr(self, "grid_badge_font_size", None)
+                or getattr(self, "grid_duration_font_size", 10)
+                or 10
+            )
+            font.setPixelSize(dur_size)
             font.setBold(True)
             p.setFont(font)
             fm = p.fontMetrics()
@@ -640,16 +645,31 @@ class BookTileWidget(QWidget):
             pill_y = icon_rect.bottom() - pill_height - margin_bottom
             pill_rect = QRectF(pill_x, pill_y, pill_width, pill_height)
 
-            p.setBrush(QColor(0, 0, 0, 180))
+            dur_bg_hex = (
+                getattr(self, "grid_badge_bg_color", "")
+                or getattr(self, "grid_duration_bg_color", "")
+                or "#000000"
+            )
+            dur_bg_color = QColor(dur_bg_hex)
+            if dur_bg_color.alpha() == 255:
+                dur_bg_color.setAlpha(180)
+            p.setBrush(dur_bg_color)
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(pill_rect, 3.0, 3.0)
 
-            p.setPen(QColor("#ffffff"))
+            dur_text_hex = (
+                getattr(self, "grid_badge_text_color", "")
+                or getattr(self, "grid_duration_text_color", "")
+                or "#ffffff"
+            )
+            p.setPen(QColor(dur_text_hex))
             p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, duration_text)
             p.restore()
 
+        show_lang = getattr(self, "grid_show_language", False)
         if (
-            self.language
+            show_lang
+            and self.language
             and str(self.language).strip()
             and str(self.language).lower() != "unknown"
         ):
@@ -657,7 +677,12 @@ class BookTileWidget(QWidget):
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             lang_text = str(self.language).strip().upper()
             font = p.font()
-            font.setPixelSize(10)
+            lang_size = (
+                getattr(self, "grid_badge_font_size", None)
+                or getattr(self, "grid_lang_font_size", 10)
+                or 10
+            )
+            font.setPixelSize(lang_size)
             font.setBold(True)
             p.setFont(font)
             fm = p.fontMetrics()
@@ -676,11 +701,24 @@ class BookTileWidget(QWidget):
             pill_y = icon_rect.bottom() - pill_height - margin_bottom
             pill_rect = QRectF(pill_x, pill_y, pill_width, pill_height)
 
-            p.setBrush(QColor(0, 0, 0, 180))
+            lang_bg_hex = (
+                getattr(self, "grid_badge_bg_color", "")
+                or getattr(self, "grid_lang_bg_color", "")
+                or "#000000"
+            )
+            lang_bg_color = QColor(lang_bg_hex)
+            if lang_bg_color.alpha() == 255:
+                lang_bg_color.setAlpha(180)
+            p.setBrush(lang_bg_color)
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(pill_rect, 3.0, 3.0)
 
-            p.setPen(QColor("#ffffff"))
+            lang_text_hex = (
+                getattr(self, "grid_badge_text_color", "")
+                or getattr(self, "grid_lang_text_color", "")
+                or "#ffffff"
+            )
+            p.setPen(QColor(lang_text_hex))
             p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, lang_text)
             p.restore()
 
@@ -3098,7 +3136,12 @@ class VirtualTileCanvas(QWidget):
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             duration_text = format_duration(duration)
             font = p.font()
-            font.setPixelSize(10)
+            dur_size = (
+                getattr(self, "grid_badge_font_size", None)
+                or getattr(self, "grid_duration_font_size", 10)
+                or 10
+            )
+            font.setPixelSize(dur_size)
             font.setBold(True)
             p.setFont(font)
             fm = p.fontMetrics()
@@ -3117,17 +3160,32 @@ class VirtualTileCanvas(QWidget):
             pill_y = icon_rect.bottom() - pill_height - margin_bottom
             pill_rect = QRectF(pill_x, pill_y, pill_width, pill_height)
 
-            p.setBrush(QColor(0, 0, 0, 180))
+            dur_bg_hex = (
+                getattr(self, "grid_badge_bg_color", "")
+                or getattr(self, "grid_duration_bg_color", "")
+                or "#000000"
+            )
+            dur_bg_color = QColor(dur_bg_hex)
+            if dur_bg_color.alpha() == 255:
+                dur_bg_color.setAlpha(180)
+            p.setBrush(dur_bg_color)
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(pill_rect, 3.0, 3.0)
 
-            p.setPen(QColor("#ffffff"))
+            dur_text_hex = (
+                getattr(self, "grid_badge_text_color", "")
+                or getattr(self, "grid_duration_text_color", "")
+                or "#ffffff"
+            )
+            p.setPen(QColor(dur_text_hex))
             p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, duration_text)
             p.restore()
 
+        show_lang = getattr(self, "grid_show_language", False)
         language = book.get("language")
         if (
-            language
+            show_lang
+            and language
             and str(language).strip()
             and str(language).lower() != "unknown"
         ):
@@ -3135,7 +3193,12 @@ class VirtualTileCanvas(QWidget):
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
             lang_text = str(language).strip().upper()
             font = p.font()
-            font.setPixelSize(10)
+            lang_size = (
+                getattr(self, "grid_badge_font_size", None)
+                or getattr(self, "grid_lang_font_size", 10)
+                or 10
+            )
+            font.setPixelSize(lang_size)
             font.setBold(True)
             p.setFont(font)
             fm = p.fontMetrics()
@@ -3154,11 +3217,24 @@ class VirtualTileCanvas(QWidget):
             pill_y = icon_rect.bottom() - pill_height - margin_bottom
             pill_rect = QRectF(pill_x, pill_y, pill_width, pill_height)
 
-            p.setBrush(QColor(0, 0, 0, 180))
+            lang_bg_hex = (
+                getattr(self, "grid_badge_bg_color", "")
+                or getattr(self, "grid_lang_bg_color", "")
+                or "#000000"
+            )
+            lang_bg_color = QColor(lang_bg_hex)
+            if lang_bg_color.alpha() == 255:
+                lang_bg_color.setAlpha(180)
+            p.setBrush(lang_bg_color)
             p.setPen(Qt.PenStyle.NoPen)
             p.drawRoundedRect(pill_rect, 3.0, 3.0)
 
-            p.setPen(QColor("#ffffff"))
+            lang_text_hex = (
+                getattr(self, "grid_badge_text_color", "")
+                or getattr(self, "grid_lang_text_color", "")
+                or "#ffffff"
+            )
+            p.setPen(QColor(lang_text_hex))
             p.drawText(pill_rect, Qt.AlignmentFlag.AlignCenter, lang_text)
             p.restore()
 
@@ -3364,6 +3440,73 @@ class TileFlowWidget(QScrollArea):
 
         self.canvas = VirtualTileCanvas(self)
         self.setWidget(self.canvas)
+
+        # Initialize badge settings from config or defaults
+        show_lang = False
+        badge_text = ""
+        badge_size = 10
+        badge_bg = ""
+        if self.config:
+            if hasattr(self.config, "has_section") and self.config.has_section("Appearance"):
+                show_lang = self.config.getboolean("Appearance", "grid_show_language", fallback=False)
+                badge_text = self.config.get("Appearance", "grid_badge_text_color", fallback=self.config.get("Appearance", "grid_duration_text_color", fallback=""))
+                badge_size = self.config.getint("Appearance", "grid_badge_font_size", fallback=self.config.getint("Appearance", "grid_duration_font_size", fallback=10))
+                badge_bg = self.config.get("Appearance", "grid_badge_bg_color", fallback=self.config.get("Appearance", "grid_duration_bg_color", fallback=""))
+            elif isinstance(self.config, dict):
+                app_conf = self.config.get("Appearance", {})
+                if isinstance(app_conf, dict):
+                    show_lang = app_conf.get("grid_show_language", False)
+                    badge_text = app_conf.get("grid_badge_text_color", app_conf.get("grid_duration_text_color", ""))
+                    badge_size = int(app_conf.get("grid_badge_font_size", app_conf.get("grid_duration_font_size", 10)))
+                    badge_bg = app_conf.get("grid_badge_bg_color", app_conf.get("grid_duration_bg_color", ""))
+        self.set_grid_badge_settings(
+            show_language=show_lang,
+            badge_text_color=badge_text,
+            badge_font_size=badge_size,
+            badge_bg_color=badge_bg,
+        )
+
+    def set_grid_badge_settings(
+        self,
+        show_language=False,
+        badge_text_color="",
+        badge_font_size=10,
+        badge_bg_color="",
+        lang_text_color=None,
+        lang_font_size=None,
+        lang_bg_color=None,
+        duration_text_color=None,
+        duration_font_size=None,
+        duration_bg_color=None,
+    ):
+        """Update grid view badge appearance for language and duration"""
+        text_color = badge_text_color or duration_text_color or lang_text_color or ""
+        font_size = badge_font_size if badge_font_size is not None else (duration_font_size or lang_font_size or 10)
+        bg_color = badge_bg_color or duration_bg_color or lang_bg_color or ""
+
+        self.grid_show_language = show_language
+        self.grid_badge_text_color = text_color
+        self.grid_badge_font_size = font_size
+        self.grid_badge_bg_color = bg_color
+        self.grid_lang_text_color = text_color
+        self.grid_lang_font_size = font_size
+        self.grid_lang_bg_color = bg_color
+        self.grid_duration_text_color = text_color
+        self.grid_duration_font_size = font_size
+        self.grid_duration_bg_color = bg_color
+
+        if hasattr(self, "canvas") and self.canvas:
+            self.canvas.grid_show_language = show_language
+            self.canvas.grid_badge_text_color = text_color
+            self.canvas.grid_badge_font_size = font_size
+            self.canvas.grid_badge_bg_color = bg_color
+            self.canvas.grid_lang_text_color = text_color
+            self.canvas.grid_lang_font_size = font_size
+            self.canvas.grid_lang_bg_color = bg_color
+            self.canvas.grid_duration_text_color = text_color
+            self.canvas.grid_duration_font_size = font_size
+            self.canvas.grid_duration_bg_color = bg_color
+            self.canvas.update()
 
     def clear(self):
         self.canvas.populate(None)

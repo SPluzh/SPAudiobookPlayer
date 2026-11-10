@@ -148,11 +148,11 @@ class AudiobookPlayerWindow(QMainWindow):
         self.last_pause_time = None
         self.show_visualizer = True
         self.show_nesting_lines = True
-        self.nesting_lines_single_color = False
+        self.nesting_lines_single_color = True
         self.nesting_lines_color = "#808080"
         self.show_detailed_info = True
         self.show_status_triangle = True
-        self.show_statusbar = True
+        self.show_statusbar = False
         self.show_subtitles = False
         self.subtitle_autoscroll = True
         
@@ -164,7 +164,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_info_technical = True
         self.show_info_year_written = True
         self.show_info_year_recorded = True
-        self.show_info_language = True
+        self.show_info_language = False
         self.info_order = "progress,file_count,duration,size,technical,year_written,year_recorded,language"
         self.normal_geometry = None
         self.normal_splitter_state = None
@@ -1076,6 +1076,16 @@ class AudiobookPlayerWindow(QMainWindow):
         self.cover_progress_color = config.get("Appearance", "cover_progress_color", fallback="")
         self.icon_color = config.get("Appearance", "icon_color", fallback="")
         self.icon_thickness = config.getfloat("Appearance", "icon_thickness", fallback=2.0)
+        self.grid_show_language = config.getboolean("Appearance", "grid_show_language", fallback=False)
+        self.grid_badge_text_color = config.get("Appearance", "grid_badge_text_color", fallback=config.get("Appearance", "grid_duration_text_color", fallback=""))
+        self.grid_badge_font_size = config.getint("Appearance", "grid_badge_font_size", fallback=config.getint("Appearance", "grid_duration_font_size", fallback=10))
+        self.grid_badge_bg_color = config.get("Appearance", "grid_badge_bg_color", fallback=config.get("Appearance", "grid_duration_bg_color", fallback=""))
+        self.grid_lang_text_color = self.grid_badge_text_color
+        self.grid_lang_font_size = self.grid_badge_font_size
+        self.grid_lang_bg_color = self.grid_badge_bg_color
+        self.grid_duration_text_color = self.grid_badge_text_color
+        self.grid_duration_font_size = self.grid_badge_font_size
+        self.grid_duration_bg_color = self.grid_badge_bg_color
         set_icon_color(self.icon_color or "#cccccc")
         set_icon_stroke_width(self.icon_thickness)
 
@@ -1157,7 +1167,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "Display", "always_on_top", fallback=False
         )
         self.show_statusbar = config.getboolean(
-            "Display", "show_statusbar", fallback=True
+            "Display", "show_statusbar", fallback=False
         )
         self.show_subtitles = config.getboolean(
             "Player", "show_subtitles", fallback=False
@@ -1261,7 +1271,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "Library", "show_nesting_lines", fallback=True
         )
         self.nesting_lines_single_color = config.getboolean(
-            "Library", "nesting_lines_single_color", fallback=False
+            "Library", "nesting_lines_single_color", fallback=True
         )
         self.nesting_lines_color = config.get(
             "Library", "nesting_lines_color", fallback="#808080"
@@ -1279,7 +1289,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_info_technical = config.getboolean("Library", "show_info_technical", fallback=True)
         self.show_info_year_written = config.getboolean("Library", "show_info_year_written", fallback=True)
         self.show_info_year_recorded = config.getboolean("Library", "show_info_year_recorded", fallback=True)
-        self.show_info_language = config.getboolean("Library", "show_info_language", fallback=True)
+        self.show_info_language = config.getboolean("Library", "show_info_language", fallback=False)
         self.info_order = config.get("Library", "info_order", fallback="progress,file_count,duration,size,technical,year_written,year_recorded,language")
         self.library_filter_mode = config.get("Library", "filter_mode", fallback="all")
         self.library_favorites_active = config.getboolean(
@@ -1385,10 +1395,11 @@ class AudiobookPlayerWindow(QMainWindow):
             "filter_mode": "all",
             "favorites_active": "False",
             "show_nesting_lines": "True",
-            "nesting_lines_single_color": "False",
+            "nesting_lines_single_color": "True",
             "nesting_lines_color": "#808080",
             "show_detailed_info": "True",
             "show_status_triangle": "True",
+            "show_info_language": "False",
             "info_order": "progress,file_count,duration,size,technical,year_written,year_recorded,language",
             "sort_order_all": "asc",
             "sort_order_not_started": "desc",
@@ -1492,6 +1503,10 @@ class AudiobookPlayerWindow(QMainWindow):
             if "Appearance" in config and "icon_color" in config["Appearance"]:
                 del config["Appearance"]["icon_color"]
         config["Appearance"]["icon_thickness"] = str(getattr(self, "icon_thickness", 2.0))
+        config["Appearance"]["grid_show_language"] = str(getattr(self, "grid_show_language", False))
+        config["Appearance"]["grid_badge_text_color"] = getattr(self, "grid_badge_text_color", "")
+        config["Appearance"]["grid_badge_font_size"] = str(getattr(self, "grid_badge_font_size", 10))
+        config["Appearance"]["grid_badge_bg_color"] = getattr(self, "grid_badge_bg_color", "")
         if "Appearance" in config and not config["Appearance"]:
             del config["Appearance"]
 
@@ -2603,7 +2618,15 @@ class AudiobookPlayerWindow(QMainWindow):
                 info_order=self.info_order,
                 nesting_lines_single_color=self.nesting_lines_single_color,
                 nesting_lines_color=self.nesting_lines_color,
-                default_nesting_lines_color="#808080"
+                default_nesting_lines_color="#808080",
+                current_grid_show_language=getattr(self, "grid_show_language", False),
+                default_grid_show_language=False,
+                current_grid_badge_text_color=getattr(self, "grid_badge_text_color", getattr(self, "grid_duration_text_color", "")),
+                default_grid_badge_text_color="#FFFFFF",
+                current_grid_badge_font_size=getattr(self, "grid_badge_font_size", getattr(self, "grid_duration_font_size", 10)),
+                default_grid_badge_font_size=10,
+                current_grid_badge_bg_color=getattr(self, "grid_badge_bg_color", getattr(self, "grid_duration_bg_color", "")),
+                default_grid_badge_bg_color="#000000"
             )
             
             self.appearance_dialog = dialog
@@ -2712,6 +2735,18 @@ class AudiobookPlayerWindow(QMainWindow):
                 # Remember filter folders
                 if hasattr(self, "library_widget") and self.library_widget.remember_filter_folders != interface_settings["remember_filter_folders"]:
                     self.library_widget.remember_filter_folders = interface_settings["remember_filter_folders"]
+                
+                # Grid view badge settings preview
+                if hasattr(self.appearance_dialog, "get_grid_settings"):
+                    grid_settings = self.appearance_dialog.get_grid_settings()
+                    if hasattr(self, "library_widget") and self.library_widget:
+                        if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
+                            self.library_widget.tile_view.set_grid_badge_settings(
+                                show_language=grid_settings["grid_show_language"],
+                                badge_text_color=grid_settings.get("grid_badge_text_color", grid_settings["grid_duration_text_color"]),
+                                badge_font_size=grid_settings.get("grid_badge_font_size", grid_settings["grid_duration_font_size"]),
+                                badge_bg_color=grid_settings.get("grid_badge_bg_color", grid_settings["grid_duration_bg_color"]),
+                            )
                 
 
 
@@ -2834,6 +2869,33 @@ class AudiobookPlayerWindow(QMainWindow):
                 self.toggle_visualizer(interface_settings["show_visualizer"])
             else:
                 self.save_setting("Player", "show_visualizer", str(self.show_visualizer))
+
+            if hasattr(self.appearance_dialog, "get_grid_settings"):
+                grid_settings = self.appearance_dialog.get_grid_settings()
+                self.grid_show_language = grid_settings["grid_show_language"]
+                self.grid_badge_text_color = grid_settings.get("grid_badge_text_color", grid_settings["grid_duration_text_color"])
+                self.grid_badge_font_size = grid_settings.get("grid_badge_font_size", grid_settings["grid_duration_font_size"])
+                self.grid_badge_bg_color = grid_settings.get("grid_badge_bg_color", grid_settings["grid_duration_bg_color"])
+                self.grid_lang_text_color = self.grid_badge_text_color
+                self.grid_lang_font_size = self.grid_badge_font_size
+                self.grid_lang_bg_color = self.grid_badge_bg_color
+                self.grid_duration_text_color = self.grid_badge_text_color
+                self.grid_duration_font_size = self.grid_badge_font_size
+                self.grid_duration_bg_color = self.grid_badge_bg_color
+
+                self.save_setting("Appearance", "grid_show_language", str(self.grid_show_language))
+                self.save_setting("Appearance", "grid_badge_text_color", self.grid_badge_text_color)
+                self.save_setting("Appearance", "grid_badge_font_size", str(self.grid_badge_font_size))
+                self.save_setting("Appearance", "grid_badge_bg_color", self.grid_badge_bg_color)
+
+                if hasattr(self, "library_widget") and self.library_widget:
+                    if hasattr(self.library_widget, "tile_view") and self.library_widget.tile_view:
+                        self.library_widget.tile_view.set_grid_badge_settings(
+                            show_language=self.grid_show_language,
+                            badge_text_color=self.grid_badge_text_color,
+                            badge_font_size=self.grid_badge_font_size,
+                            badge_bg_color=self.grid_badge_bg_color,
+                        )
                 
         self.reload_styles()
         if hasattr(self, "library_widget") and self.library_widget:

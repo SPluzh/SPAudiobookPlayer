@@ -384,7 +384,7 @@ def test_appearance_dialog_interface_checkboxes():
     assert dialog.current_show_visualizer is True
     assert dialog.current_show_nesting_lines is True
     assert dialog.current_show_status_triangle is True
-    assert dialog.current_show_statusbar is True
+    assert dialog.current_show_statusbar is False
     assert dialog.current_remember_filter_folders is True
 
     # 4. Test reject restores original constructor values
@@ -726,9 +726,9 @@ def test_appearance_dialog_nesting_lines_single_color():
 
     # 3. Test reset to default
     dialog.reset_to_default()
-    assert dialog.current_nesting_lines_single_color is False
+    assert dialog.current_nesting_lines_single_color is True
     assert dialog.current_nesting_lines_color == "#808080"
-    assert dialog.chk_single_nesting_color.isChecked() is False
+    assert dialog.chk_single_nesting_color.isChecked() is True
     assert dialog.nesting_lines_hex_input.text() == "#808080"
 
     # 4. Test reject restores original values
@@ -870,6 +870,163 @@ def test_cancelling_accent_change_and_direct_apply_accent_preview_preserve_color
         assert applied_calls[0].get("text") == "#EEEEEE"
         assert applied_calls[0].get("border") == "#999999"
         assert applied_calls[0].get("theme-primary") == "#44AA88"
+
+
+def test_appearance_dialog_grid_settings_defaults():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(parent=None)
+    grid_settings = dialog.get_grid_settings()
+
+    assert grid_settings["grid_show_language"] is False
+    assert grid_settings["grid_badge_font_size"] == 10
+    assert grid_settings["grid_badge_text_color"] == "#FFFFFF"
+    assert grid_settings["grid_badge_bg_color"] == "#000000"
+    assert dialog.chk_grid_show_language.isChecked() is False
+    assert dialog.grid_badge_size_slider.value() == 10
+    assert dialog.grid_badge_text_color_btn.isEnabled() is True
+    assert dialog.grid_badge_text_hex_input.isEnabled() is True
+    assert dialog.grid_badge_bg_color_btn.isEnabled() is True
+
+
+def test_appearance_dialog_grid_settings_changes_and_preview():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        current_grid_show_language=False,
+        current_grid_badge_text_color="#112233",
+        current_grid_badge_font_size=12,
+        current_grid_badge_bg_color="#334455",
+    )
+
+    grid_settings = dialog.get_grid_settings()
+    assert grid_settings["grid_show_language"] is False
+    assert grid_settings["grid_badge_text_color"] == "#112233"
+    assert grid_settings["grid_badge_font_size"] == 12
+    assert grid_settings["grid_badge_bg_color"] == "#334455"
+
+    # Test changing values
+    dialog.chk_grid_show_language.setChecked(True)
+    assert dialog.current_grid_show_language is True
+
+    dialog.grid_badge_text_hex_input.setText("#AABBCC")
+    assert dialog.current_grid_badge_text_color == "#AABBCC"
+
+    dialog.grid_badge_bg_hex_input.setText("#DDEEFF")
+    assert dialog.current_grid_badge_bg_color == "#DDEEFF"
+
+    dialog.grid_badge_size_slider.setValue(16)
+    assert dialog.current_grid_badge_font_size == 16
+    assert dialog.grid_badge_size_label.text() == "16 px"
+
+
+def test_appearance_dialog_grid_settings_reset_to_default():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        current_grid_show_language=True,
+        current_grid_badge_text_color="#123456",
+        current_grid_badge_font_size=15,
+        default_grid_badge_font_size=10,
+        default_grid_badge_text_color="#FFFFFF",
+    )
+
+    dialog.default_btn.click()
+    settings = dialog.get_grid_settings()
+    assert settings["grid_show_language"] is False
+    assert settings["grid_badge_font_size"] == 10
+    assert settings["grid_badge_text_color"] == "#FFFFFF"
+
+
+def test_appearance_dialog_grid_settings_reject_reverts():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(
+        parent=None,
+        current_grid_show_language=False,
+        current_grid_badge_font_size=10,
+    )
+
+    dialog.chk_grid_show_language.setChecked(True)
+    dialog.grid_badge_size_slider.setValue(18)
+
+    dialog.reject()
+    settings = dialog.get_grid_settings()
+    assert settings["grid_show_language"] is False
+    assert settings["grid_badge_font_size"] == 10
+
+
+def test_show_detailed_info_label_and_tooltip_indicates_list_mode():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(parent=None)
+    # Check that tooltip or text conveys list mode
+    text = dialog.chk_show_detailed_info.text().lower()
+    tooltip = dialog.chk_show_detailed_info.toolTip().lower()
+    assert "списк" in text or "list" in text or "списк" in tooltip or "list" in tooltip
+
+
+def test_grid_show_language_label_indicates_grid_mode():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(parent=None)
+    text = dialog.chk_grid_show_language.text().lower()
+    tooltip = dialog.chk_grid_show_language.toolTip().lower()
+    assert "сетк" in text or "grid" in text or "сетк" in tooltip or "grid" in tooltip
+
+
+def test_cover_progress_widget_positioned_below_status_colors_and_spacing_reduced():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(parent=None)
+    
+    # Check that cover_progress_widget is positioned immediately after status_colors_widget
+    layout = dialog.status_colors_widget.parentWidget().layout()
+
+    # Check that remember_filter_folders is positioned at the very top of library settings
+    assert layout.indexOf(dialog.chk_remember_filter_folders) == 0
+    status_idx = layout.indexOf(dialog.status_colors_widget)
+    cover_idx = layout.indexOf(dialog.cover_progress_widget)
+    
+    assert status_idx >= 0
+    assert cover_idx == status_idx + 1
+
+    # Check reduced vertical spacing in library settings layout
+    assert layout.spacing() <= 4
+
+
+def test_info_list_widget_item_spacing_reduced():
+    from styles import StyleManager
+    app = QApplication.instance() or QApplication([])
+    StyleManager.apply_style(app, 'dark')
+
+    dialog = AppearanceDialog(parent=None)
+    assert dialog.info_list_widget.count() > 0
+    for i in range(dialog.info_list_widget.count()):
+        assert dialog.info_list_widget.sizeHintForRow(i) <= 25
+
+
+def test_appearance_dialog_default_options():
+    app = QApplication.instance() or QApplication([])
+
+    dialog = AppearanceDialog(parent=None)
+    assert dialog.chk_single_nesting_color.isChecked() is True
+    assert dialog.current_nesting_lines_single_color is True
+
+    assert dialog.chk_statusbar.isChecked() is False
+    assert dialog.current_show_statusbar is False
+
+    assert dialog.current_show_info_language is False
+    for idx in range(dialog.info_list_widget.count()):
+        item = dialog.info_list_widget.item(idx)
+        if item.data(Qt.ItemDataRole.UserRole) == "language":
+            assert item.checkState() == Qt.CheckState.Unchecked
+
+
+
+
 
 
 

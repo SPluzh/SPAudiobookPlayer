@@ -669,7 +669,7 @@ class LibraryWidget(QWidget):
         })
         self.is_tile_view = self.config.get("tile_view", False)
         self.show_nesting_lines = self.config.get("show_nesting_lines", True)
-        self.nesting_lines_single_color = self.config.get("nesting_lines_single_color", False)
+        self.nesting_lines_single_color = self.config.get("nesting_lines_single_color", True)
         self.nesting_lines_color = self.config.get("nesting_lines_color", "#808080")
         self._expanded_paths_cache = set()
         self.setup_ui()

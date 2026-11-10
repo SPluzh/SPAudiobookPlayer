@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.13]
+- **Appearance**: Added Grid View badge customization (language visibility, badge font size, text and background colors).
+- **UI / Settings**: Compacted Library Settings layout, reorganized order, and clarified List/Grid modes in labels.
+- **Defaults**: Enabled single-color nesting lines; disabled Language in list info and Window Status Bar by default.
+
 ## [1.8.12]
 - **Appearance**: Fixed an issue where changing the Accent Color in Window Settings reset the Secondary BG color and other custom theme colors during live preview.
 - **Performance**: Optimized appearance live preview and theme changes for large book libraries by avoiding full library tree rebuilds, skipping redundant SVG icon cache clears, and eliminating unnecessary layout recalculations.
