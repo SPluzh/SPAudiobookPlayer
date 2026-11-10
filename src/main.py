@@ -2495,30 +2495,43 @@ class AudiobookPlayerWindow(QMainWindow):
 
         start_scanning_process()
 
+    def _build_style_overrides(
+        self,
+        accent: Optional[str] = None,
+        window: Optional[str] = None,
+        bg_dark: Optional[str] = None,
+        text: Optional[str] = None,
+        border: Optional[str] = None,
+        status_new: Optional[str] = None,
+        status_started: Optional[str] = None,
+        status_completed: Optional[str] = None,
+        cover_progress: Optional[str] = None,
+    ) -> dict:
+        """Build QSS variable overrides from explicit values or saved appearance attributes"""
+        mapping = [
+            ("accent", accent, "accent_color"),
+            ("bg-main", window, "window_color"),
+            ("bg-dark", bg_dark, "bg_dark_color"),
+            ("text", text, "text_color"),
+            ("border", border, "border_color"),
+            ("status-error", status_new, "status_new_color"),
+            ("status-warning", status_started, "status_started_color"),
+            ("status-ok", status_completed, "status_completed_color"),
+            ("theme-primary", cover_progress, "cover_progress_color"),
+        ]
+        overrides = {}
+        for var_name, value, attr_name in mapping:
+            resolved = getattr(self, attr_name, "") if value is None else value
+            if resolved:
+                overrides[var_name] = resolved
+        return overrides
+
     def reload_styles(self):
         """Immediately re-apply global CSS styles and update presentation delegates to reflect theme changes"""
         try:
             from styles import StyleManager
 
-            overrides = {}
-            if getattr(self, "accent_color", ""):
-                overrides["accent"] = self.accent_color
-            if getattr(self, "window_color", ""):
-                overrides["bg-main"] = self.window_color
-            if getattr(self, "bg_dark_color", ""):
-                overrides["bg-dark"] = self.bg_dark_color
-            if getattr(self, "text_color", ""):
-                overrides["text"] = self.text_color
-            if getattr(self, "border_color", ""):
-                overrides["border"] = self.border_color
-            if getattr(self, "status_new_color", ""):
-                overrides["status-error"] = self.status_new_color
-            if getattr(self, "status_started_color", ""):
-                overrides["status-warning"] = self.status_started_color
-            if getattr(self, "status_completed_color", ""):
-                overrides["status-ok"] = self.status_completed_color
-            if getattr(self, "cover_progress_color", ""):
-                overrides["theme-primary"] = self.cover_progress_color
+            overrides = self._build_style_overrides()
 
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
 
@@ -2598,10 +2611,6 @@ class AudiobookPlayerWindow(QMainWindow):
             dialog.appearance_preview.connect(self.apply_appearance_preview)
             dialog.appearance_saved.connect(self.save_appearance_colors)
             
-            # Keep compatibility connects if dialog is ever opened elsewhere using old signals
-            dialog.accent_preview.connect(self.apply_accent_preview)
-            dialog.accent_saved.connect(self.save_accent_color)
-            
             dialog.exec()
             self.appearance_dialog = None
         except Exception as e:
@@ -2617,25 +2626,17 @@ class AudiobookPlayerWindow(QMainWindow):
             self.reload_icons()
             
             from styles import StyleManager
-            overrides = {}
-            if accent_hex:
-                overrides["accent"] = accent_hex
-            if window_hex:
-                overrides["bg-main"] = window_hex
-            if bg_dark_hex:
-                overrides["bg-dark"] = bg_dark_hex
-            if text_hex:
-                overrides["text"] = text_hex
-            if border_hex:
-                overrides["border"] = border_hex
-            if status_new_hex:
-                overrides["status-error"] = status_new_hex
-            if status_started_hex:
-                overrides["status-warning"] = status_started_hex
-            if status_completed_hex:
-                overrides["status-ok"] = status_completed_hex
-            if cover_progress_hex:
-                overrides["theme-primary"] = cover_progress_hex
+            overrides = self._build_style_overrides(
+                accent=accent_hex,
+                window=window_hex,
+                bg_dark=bg_dark_hex,
+                text=text_hex,
+                border=border_hex,
+                status_new=status_new_hex,
+                status_started=status_started_hex,
+                status_completed=status_completed_hex,
+                cover_progress=cover_progress_hex,
+            )
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
             
             # Apply temporary settings if previewing
@@ -2816,13 +2817,7 @@ class AudiobookPlayerWindow(QMainWindow):
         """Apply a temporary accent color override for live previewing (backward compatibility)"""
         try:
             from styles import StyleManager
-            overrides = {}
-            if color_hex:
-                overrides["accent"] = color_hex
-            if getattr(self, "window_color", ""):
-                overrides["bg-main"] = self.window_color
-            if getattr(self, "bg_dark_color", ""):
-                overrides["bg-dark"] = self.bg_dark_color
+            overrides = self._build_style_overrides(accent=color_hex)
             StyleManager.apply_style(QApplication.instance(), theme=self.current_theme, overrides=overrides)
             
             if self.delegate:

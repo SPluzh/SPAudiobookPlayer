@@ -737,4 +737,140 @@ def test_appearance_dialog_nesting_lines_single_color():
     assert dialog.current_nesting_lines_color == "#123456"
 
 
+def test_changing_accent_color_preserves_secondary_bg_and_other_colors(tmp_path):
+    """Changing Accent Color in Appearance Settings must not reset Secondary BG or other colors."""
+    from unittest.mock import patch
+    from main import AudiobookPlayerWindow
+    from styles import StyleManager
+
+    app = QApplication.instance() or QApplication([])
+
+    resources_dir = tmp_path / "resources"
+    resources_dir.mkdir(parents=True, exist_ok=True)
+    settings_file = resources_dir / "settings.ini"
+    settings_file.write_text("", encoding="utf-8")
+
+    with patch("main.DatabaseManager") as mock_db_class, \
+         patch("main.BassPlayer"), \
+         patch("main.get_base_path", return_value=tmp_path):
+
+        mock_db = mock_db_class.return_value
+        mock_db.get_audiobook_count.return_value = 0
+        mock_db.load_audiobooks_from_db.return_value = {}
+        mock_db.get_all_audiobook_tags.return_value = {}
+        mock_db.get_all_tags.return_value = []
+
+        window = AudiobookPlayerWindow()
+
+        applied_calls = []
+        original_apply_style = StyleManager.apply_style
+
+        def spy_apply_style(app_inst, theme="dark", overrides=None):
+            applied_calls.append(dict(overrides or {}))
+            return original_apply_style(app_inst, theme=theme, overrides=overrides)
+
+        def fake_exec(dialog_self):
+            # 1. Change Secondary BG and Font Color first
+            dialog_self.bg_dark_hex_input.setText("#123456")
+            dialog_self.text_hex_input.setText("#FEDCBA")
+            applied_calls.clear()
+
+            # 2. Change Accent Color via hex input and picker preview
+            dialog_self.accent_hex_input.setText("#FF00AA")
+            dialog_self.select_accent_color_preview(QColor("#00AAFF"))
+
+            # Verify no preview call dropped Secondary BG or Font Color
+            assert len(applied_calls) == 2
+            for call_overrides in applied_calls:
+                assert call_overrides.get("bg-dark") == "#123456"
+                assert call_overrides.get("text") == "#FEDCBA"
+            assert applied_calls[-1].get("accent") == "#00AAFF"
+
+            dialog_self.accept()
+            return dialog_self.DialogCode.Accepted
+
+        with patch.object(StyleManager, "apply_style", side_effect=spy_apply_style), \
+             patch.object(AppearanceDialog, "exec", fake_exec):
+            window.show_appearance_settings()
+
+        assert window.bg_dark_color == "#123456"
+        assert window.text_color == "#FEDCBA"
+        assert window.accent_color == "#00AAFF"
+        assert applied_calls[-1].get("bg-dark") == "#123456"
+        assert applied_calls[-1].get("accent") == "#00AAFF"
+
+        saved_ini = settings_file.read_text(encoding="utf-8")
+        assert "bg_dark_color = #123456" in saved_ini
+        assert "accent_color = #00AAFF" in saved_ini
+
+
+def test_cancelling_accent_change_and_direct_apply_accent_preview_preserve_colors(tmp_path):
+    """Cancelling after accent change and calling apply_accent_preview directly must preserve saved colors."""
+    from unittest.mock import patch
+    from main import AudiobookPlayerWindow
+    from styles import StyleManager
+
+    app = QApplication.instance() or QApplication([])
+
+    resources_dir = tmp_path / "resources"
+    resources_dir.mkdir(parents=True, exist_ok=True)
+    settings_file = resources_dir / "settings.ini"
+    settings_file.write_text(
+        "[Appearance]\n"
+        "bg_dark_color = #223344\n"
+        "text_color = #EEEEEE\n"
+        "border_color = #999999\n"
+        "cover_progress_color = #44AA88\n",
+        encoding="utf-8",
+    )
+
+    with patch("main.DatabaseManager") as mock_db_class, \
+         patch("main.BassPlayer"), \
+         patch("main.get_base_path", return_value=tmp_path):
+
+        mock_db = mock_db_class.return_value
+        mock_db.get_audiobook_count.return_value = 0
+        mock_db.load_audiobooks_from_db.return_value = {}
+        mock_db.get_all_audiobook_tags.return_value = {}
+        mock_db.get_all_tags.return_value = []
+
+        window = AudiobookPlayerWindow()
+
+        applied_calls = []
+        original_apply_style = StyleManager.apply_style
+
+        def spy_apply_style(app_inst, theme="dark", overrides=None):
+            applied_calls.append(dict(overrides or {}))
+            return original_apply_style(app_inst, theme=theme, overrides=overrides)
+
+        def fake_exec_reject(dialog_self):
+            dialog_self.accent_hex_input.setText("#FF5500")
+            dialog_self.reject()
+            return dialog_self.DialogCode.Rejected
+
+        with patch.object(StyleManager, "apply_style", side_effect=spy_apply_style), \
+             patch.object(AppearanceDialog, "exec", fake_exec_reject):
+            window.show_appearance_settings()
+
+        # Final call (from reject) must keep all saved appearance colors intact
+        assert applied_calls[-1].get("bg-dark") == "#223344"
+        assert applied_calls[-1].get("text") == "#EEEEEE"
+        assert applied_calls[-1].get("border") == "#999999"
+        assert applied_calls[-1].get("theme-primary") == "#44AA88"
+        assert "accent" not in applied_calls[-1]
+
+        # Direct call to backward-compatibility apply_accent_preview also preserves all saved colors
+        applied_calls.clear()
+        with patch.object(StyleManager, "apply_style", side_effect=spy_apply_style):
+            window.apply_accent_preview("#ABCDEF")
+
+        assert len(applied_calls) == 1
+        assert applied_calls[0].get("accent") == "#ABCDEF"
+        assert applied_calls[0].get("bg-dark") == "#223344"
+        assert applied_calls[0].get("text") == "#EEEEEE"
+        assert applied_calls[0].get("border") == "#999999"
+        assert applied_calls[0].get("theme-primary") == "#44AA88"
+
+
+
 
