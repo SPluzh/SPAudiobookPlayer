@@ -589,29 +589,34 @@ QListWidget::item:selected:hover {
     border-radius: 0px;
 }
 
-/* --- Custom active/inactive selection override for #infoListWidget --- */
-QListWidget#infoListWidget {
+/* --- Custom active/inactive selection override for #infoListWidget and #buttonsListWidget --- */
+QListWidget#infoListWidget,
+QListWidget#buttonsListWidget {
     padding: 2px;
 }
 
-QListWidget#infoListWidget::item {
+QListWidget#infoListWidget::item,
+QListWidget#buttonsListWidget::item {
     padding: 2px 4px;
     border: none;
 }
 
-QListWidget#infoListWidget::item:selected:active {
+QListWidget#infoListWidget::item:selected:active,
+QListWidget#buttonsListWidget::item:selected:active {
     background-color: @accent;
     color: @text-bright;
     border-radius: 3px;
 }
 
-QListWidget#infoListWidget::item:selected:!active {
+QListWidget#infoListWidget::item:selected:!active,
+QListWidget#buttonsListWidget::item:selected:!active {
     background-color: @accent;
     color: @text-bright;
     border-radius: 3px;
 }
 
-QListWidget#infoListWidget::item:selected:hover {
+QListWidget#infoListWidget::item:selected:hover,
+QListWidget#buttonsListWidget::item:selected:hover {
     background-color: @accent-light;
     color: @text-bright;
     border-radius: 3px;
@@ -1648,8 +1653,8 @@ QPushButton#filterBtnArrow:pressed {
 QGroupBox {
     border: 1px solid @border;
     border-radius: 6px;
-    margin-top: 10px;
-    padding-top: 12px;
+    margin-top: 9px;
+    padding-top: 7px;
     font-weight: bold;
 }
 

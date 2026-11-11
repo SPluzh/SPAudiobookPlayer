@@ -111,6 +111,27 @@ from about_dialog import AboutDialog
 from update_dialog import UpdateCheckThread, UpdateDialog
 from updater import get_current_version
 
+DEFAULT_PLAYER_BUTTONS_ORDER = (
+    "timer,id3,subtitles,auto_rewind,bookmarks,separator,volume_boost,deesser,compressor,noise_suppression,pitch,mono"
+)
+DEFAULT_PLAYER_BUTTONS_VISIBLE = (
+    "timer,id3,subtitles,auto_rewind,bookmarks,volume_boost,deesser,compressor,noise_suppression,pitch,mono"
+)
+PLAYER_BUTTON_WIDTHS = {
+    "timer": 40,
+    "id3": 40,
+    "subtitles": 40,
+    "auto_rewind": 40,
+    "bookmarks": 60,
+    "volume_boost": 40,
+    "deesser": 40,
+    "compressor": 40,
+    "noise_suppression": 40,
+    "pitch": 40,
+    "mono": 40,
+}
+PLAYER_BUTTON_SPACING = 5
+
 
 class AudiobookPlayerWindow(QMainWindow):
     status_requested = pyqtSignal(str)
@@ -170,6 +191,8 @@ class AudiobookPlayerWindow(QMainWindow):
         self.show_info_year_recorded = True
         self.show_info_language = False
         self.info_order = "progress,file_count,duration,size,technical,year_written,year_recorded,language"
+        self.player_buttons_order = DEFAULT_PLAYER_BUTTONS_ORDER
+        self.player_buttons_visible = DEFAULT_PLAYER_BUTTONS_VISIBLE
         self.normal_geometry = None
         self.normal_splitter_state = None
         self.player_splitter_state = None
@@ -262,7 +285,7 @@ class AudiobookPlayerWindow(QMainWindow):
             # Fix potential "creeping" issues from previous bugs where coordinates became negative or zero
             safe_x = max(0, self.window_x)
             safe_y = max(30, self.window_y)  # Ensure title bar is likely visible
-            safe_width = max(535, self.window_width)
+            safe_width = max(self.minimal_width, self.window_width)
             safe_height = max(450, self.window_height)
             self.setGeometry(safe_x, safe_y, safe_width, safe_height)
 
@@ -396,7 +419,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Playback Controls Component
         self.player_widget = PlayerWidget()
-        self.player_widget.setMinimumWidth(535)
+        self.apply_player_buttons_settings(self.player_buttons_order, self.player_buttons_visible)
         self.player_widget.id3_btn.setChecked(self.show_id3)
         self.player_widget.on_id3_toggled(self.show_id3)
 
@@ -1064,13 +1087,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.normal_splitter_state = config.get(
             "Display", "normal_splitter_state", fallback=None
         )
-        self.normal_min_width = max(700, config.getint(
+        self.normal_min_width = config.getint(
             "Display", "normal_min_width", fallback=700
-        ))
+        )
         self.normal_min_height = config.getint(
             "Display", "normal_min_height", fallback=450
         )
-        self.minimal_width = max(535, config.getint("Display", "minimal_width", fallback=535))
+        self.minimal_width = config.getint("Display", "minimal_width", fallback=535)
         self.minimal_height = config.getint("Display", "minimal_height", fallback=270)
         self.current_theme = config.get("Display", "theme", fallback="dark")
         self.accent_color = config.get("Appearance", "accent_color", fallback="")
@@ -1160,6 +1183,13 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_saved_splitter_state = config.get("Layout", "player_saved_splitter_state", fallback="")
 
         # Player Functional Preferences
+        self.player_buttons_order = config.get(
+            "Player", "buttons_order", fallback=DEFAULT_PLAYER_BUTTONS_ORDER
+        )
+        self.player_buttons_visible = config.get(
+            "Player", "buttons_visible", fallback=DEFAULT_PLAYER_BUTTONS_VISIBLE
+        )
+
         self.show_id3 = config.getboolean("Player", "show_id3", fallback=False)
         self.minimal_interface = config.getboolean(
             "Player", "minimal_interface", fallback=False
@@ -1387,6 +1417,8 @@ class AudiobookPlayerWindow(QMainWindow):
         config["Folder_Style"] = {"icon_size": "35", "row_height": "45"}
         config["Layout"] = {"splitter_state": ""}
         config["Player"] = {
+            "buttons_order": DEFAULT_PLAYER_BUTTONS_ORDER,
+            "buttons_visible": DEFAULT_PLAYER_BUTTONS_VISIBLE,
             "show_id3": "True",
             "auto_rewind": "True",
             "auto_check_updates": "True",
@@ -1559,6 +1591,8 @@ class AudiobookPlayerWindow(QMainWindow):
         # Player and Audio Functional Preferences
         if "Player" not in config:
             config["Player"] = {}
+        config["Player"]["buttons_order"] = self.player_buttons_order
+        config["Player"]["buttons_visible"] = self.player_buttons_visible
         config["Player"]["show_id3"] = str(self.show_id3)
         config["Player"]["minimal_interface"] = str(
             getattr(self, "minimal_interface", False)
@@ -2650,6 +2684,53 @@ class AudiobookPlayerWindow(QMainWindow):
         except Exception as e:
             self.statusBar().showMessage(trf("status.styles_error", error=str(e)))
 
+    def calculate_player_min_width(self, visible_keys: set) -> tuple:
+        """Calculate minimum width for player widget and main window based on visible buttons"""
+        base_player_min_w = 535
+        base_normal_min_w = 700
+        total_reduction = 0
+        for key, width in PLAYER_BUTTON_WIDTHS.items():
+            if key not in visible_keys:
+                total_reduction += (width + PLAYER_BUTTON_SPACING)
+        player_min_w = max(280, base_player_min_w - total_reduction)
+        normal_min_w = max(450, base_normal_min_w - total_reduction)
+        return player_min_w, normal_min_w
+
+    def apply_player_buttons_settings(self, order_str: str, visible_str: str):
+        """Apply player buttons ordering, visibility, and adjust minimum window dimensions"""
+        self.player_buttons_order = order_str
+        self.player_buttons_visible = visible_str
+
+        order = [k.strip() for k in order_str.split(",") if k.strip() in PLAYER_BUTTON_WIDTHS or k.strip() == "separator"]
+        if "separator" not in order:
+            if "bookmarks" in order:
+                idx = order.index("bookmarks") + 1
+                order.insert(idx, "separator")
+            else:
+                order.append("separator")
+        for k in PLAYER_BUTTON_WIDTHS:
+            if k not in order:
+                order.append(k)
+
+        visible_keys = set(k.strip() for k in visible_str.split(",") if k.strip() != "separator")
+        visibility = {k: (k in visible_keys) for k in PLAYER_BUTTON_WIDTHS}
+
+        player_min_w, normal_min_w = self.calculate_player_min_width(visible_keys)
+        self.minimal_width = player_min_w
+        self.normal_min_width = normal_min_w
+
+        if hasattr(self, "player_widget") and self.player_widget:
+            self.player_widget.update_buttons_layout(order, visibility)
+            self.player_widget.setMinimumWidth(player_min_w)
+
+        if getattr(self, "minimal_interface", False):
+            mh = self.get_minimal_height()
+            self.setMinimumSize(self.minimal_width, mh)
+            if self.width() > self.minimal_width:
+                self.resize(self.minimal_width, mh)
+        else:
+            self.setMinimumSize(self.normal_min_width, self.normal_min_height)
+
     def show_appearance_settings(self):
         """Display the appearance settings dialog to configure accent color, window background color, and preview changes live"""
         try:
@@ -2715,7 +2796,11 @@ class AudiobookPlayerWindow(QMainWindow):
                 current_grid_badge_font_size=getattr(self, "grid_badge_font_size", getattr(self, "grid_duration_font_size", 10)),
                 default_grid_badge_font_size=10,
                 current_grid_badge_bg_color=getattr(self, "grid_badge_bg_color", getattr(self, "grid_duration_bg_color", "")),
-                default_grid_badge_bg_color="#000000"
+                default_grid_badge_bg_color="#000000",
+                player_buttons_order=self.player_buttons_order,
+                default_player_buttons_order=DEFAULT_PLAYER_BUTTONS_ORDER,
+                player_buttons_visible=self.player_buttons_visible,
+                default_player_buttons_visible=DEFAULT_PLAYER_BUTTONS_VISIBLE
             )
             
             self.appearance_dialog = dialog
@@ -2836,6 +2921,14 @@ class AudiobookPlayerWindow(QMainWindow):
                                 badge_font_size=grid_settings.get("grid_badge_font_size", grid_settings["grid_duration_font_size"]),
                                 badge_bg_color=grid_settings.get("grid_badge_bg_color", grid_settings["grid_duration_bg_color"]),
                             )
+
+                # Player control buttons settings preview
+                if hasattr(self.appearance_dialog, "get_buttons_settings"):
+                    btn_settings = self.appearance_dialog.get_buttons_settings()
+                    self.apply_player_buttons_settings(
+                        btn_settings["player_buttons_order"],
+                        btn_settings["player_buttons_visible"],
+                    )
                 
 
 
@@ -2985,6 +3078,15 @@ class AudiobookPlayerWindow(QMainWindow):
                             badge_font_size=self.grid_badge_font_size,
                             badge_bg_color=self.grid_badge_bg_color,
                         )
+
+            # Save player control buttons settings
+            if hasattr(self.appearance_dialog, "get_buttons_settings"):
+                btn_settings = self.appearance_dialog.get_buttons_settings()
+                self.player_buttons_order = btn_settings["player_buttons_order"]
+                self.player_buttons_visible = btn_settings["player_buttons_visible"]
+                self.save_setting("Player", "buttons_order", self.player_buttons_order)
+                self.save_setting("Player", "buttons_visible", self.player_buttons_visible)
+                self.apply_player_buttons_settings(self.player_buttons_order, self.player_buttons_visible)
                 
         self.reload_styles()
         if hasattr(self, "library_widget") and self.library_widget:

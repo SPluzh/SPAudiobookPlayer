@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.16]
+- **Player**: Added customization for player control buttons in Appearance Settings (toggle visibility, reorder with up/down buttons, and live preview).
+
 ## [1.8.15]
 - **Player**: Added Sleep Timer button (`TMR`): set 1–90 minutes countdown or stop at the end of the chapter.
 

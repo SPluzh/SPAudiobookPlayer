@@ -186,7 +186,11 @@ class AppearanceDialog(QDialog):
                  current_grid_lang_bg_color=None, default_grid_lang_bg_color=None,
                  current_grid_duration_text_color=None, default_grid_duration_text_color=None,
                  current_grid_duration_font_size=None, default_grid_duration_font_size=None,
-                 current_grid_duration_bg_color=None, default_grid_duration_bg_color=None):
+                 current_grid_duration_bg_color=None, default_grid_duration_bg_color=None,
+                 player_buttons_order="timer,id3,subtitles,auto_rewind,bookmarks,separator,volume_boost,deesser,compressor,noise_suppression,pitch,mono",
+                 default_player_buttons_order="timer,id3,subtitles,auto_rewind,bookmarks,separator,volume_boost,deesser,compressor,noise_suppression,pitch,mono",
+                 player_buttons_visible="timer,id3,subtitles,auto_rewind,bookmarks,volume_boost,deesser,compressor,noise_suppression,pitch,mono",
+                 default_player_buttons_visible="timer,id3,subtitles,auto_rewind,bookmarks,volume_boost,deesser,compressor,noise_suppression,pitch,mono"):
         """Initialize appearance settings dialog"""
         super().__init__(parent)
         self.setWindowTitle(tr("appearance.title"))
@@ -360,6 +364,33 @@ class AppearanceDialog(QDialog):
         self.original_grid_duration_bg_color = self.original_grid_badge_bg_color
         self.default_grid_duration_bg_color = self.default_grid_badge_bg_color
         self.current_grid_duration_bg_color = self.current_grid_badge_bg_color
+
+        # Player control buttons states
+        self.player_button_keys = [
+            "timer", "id3", "subtitles", "auto_rewind", "bookmarks",
+            "separator",
+            "volume_boost", "deesser", "compressor", "noise_suppression", "pitch", "mono"
+        ]
+        self.button_key_to_translation = {
+            "timer": "appearance.btn_timer",
+            "id3": "appearance.btn_id3",
+            "subtitles": "appearance.btn_subtitles",
+            "auto_rewind": "appearance.btn_autorewind",
+            "bookmarks": "appearance.btn_bookmarks",
+            "volume_boost": "appearance.btn_volume_boost",
+            "deesser": "appearance.btn_deesser",
+            "compressor": "appearance.btn_compressor",
+            "noise_suppression": "appearance.btn_noise_suppression",
+            "pitch": "appearance.btn_pitch",
+            "mono": "appearance.btn_mono",
+        }
+        self.original_player_buttons_order = player_buttons_order
+        self.default_player_buttons_order = default_player_buttons_order
+        self.current_player_buttons_order = player_buttons_order or default_player_buttons_order
+
+        self.original_player_buttons_visible = player_buttons_visible
+        self.default_player_buttons_visible = default_player_buttons_visible
+        self.current_player_buttons_visible = player_buttons_visible or default_player_buttons_visible
         
 
         
@@ -389,7 +420,7 @@ class AppearanceDialog(QDialog):
         cols_layout.setContentsMargins(0, 0, 4, 0)
         
         left_layout = QVBoxLayout()
-        left_layout.setSpacing(12)
+        left_layout.setSpacing(8)
         left_layout.setContentsMargins(0, 0, 0, 0)
         
         right_layout = QVBoxLayout()
@@ -402,8 +433,8 @@ class AppearanceDialog(QDialog):
         # ------------------ GROUP 1: WINDOW SETTINGS ------------------
         group_colors = QGroupBox(tr("appearance.tab_colors", "Window Settings"))
         colors_layout = QVBoxLayout(group_colors)
-        colors_layout.setSpacing(10)
-        colors_layout.setContentsMargins(8, 12, 8, 8)
+        colors_layout.setSpacing(4)
+        colors_layout.setContentsMargins(8, 4, 8, 8)
         
         # Helper regex validator for HEX colors
         hex_regex = QRegularExpression("^#[0-9A-Fa-f]{0,6}$")
@@ -417,7 +448,7 @@ class AppearanceDialog(QDialog):
         # Grid layout for the color options to keep them perfectly aligned vertically
         grid_layout = QGridLayout()
         grid_layout.setHorizontalSpacing(8)
-        grid_layout.setVerticalSpacing(10)
+        grid_layout.setVerticalSpacing(4)
         grid_layout.setContentsMargins(0, 0, 0, 0)
         
         # 1. Accent Color Row
@@ -595,7 +626,6 @@ class AppearanceDialog(QDialog):
         colors_layout.addLayout(grid_layout)
         
         # Add window settings checkboxes (like Show Status Bar)
-        colors_layout.addSpacing(4)
         self.chk_statusbar = QCheckBox(tr("menu.show_statusbar", "Show Status Bar"))
         self.chk_statusbar.setToolTip(tr("appearance.statusbar_tooltip"))
         self.chk_statusbar.stateChanged.connect(self.on_interface_checkbox_changed)
@@ -607,7 +637,7 @@ class AppearanceDialog(QDialog):
         group_info = QGroupBox(tr("appearance.tab_info", "Library Settings"))
         info_layout = QVBoxLayout(group_info)
         info_layout.setSpacing(4)
-        info_layout.setContentsMargins(8, 8, 8, 8)
+        info_layout.setContentsMargins(8, 4, 8, 8)
         
         # Library View checkboxes
         self.chk_remember_filter_folders = QCheckBox(tr("menu.remember_filter_folders", "Remember Folder View"))
@@ -938,8 +968,8 @@ class AppearanceDialog(QDialog):
         # ------------------ GROUP 3: PLAYER SETTINGS ------------------
         group_interface = QGroupBox(tr("appearance.tab_interface", "Player Settings"))
         interface_layout = QVBoxLayout(group_interface)
-        interface_layout.setSpacing(8)
-        interface_layout.setContentsMargins(8, 12, 8, 8)
+        interface_layout.setSpacing(4)
+        interface_layout.setContentsMargins(8, 4, 8, 8)
 
         self.chk_visualizer = QCheckBox(tr("menu.show_visualizer", "Show Visualizer"))
         self.chk_visualizer.setToolTip(tr("appearance.visualizer_tooltip"))
@@ -947,6 +977,53 @@ class AppearanceDialog(QDialog):
         interface_layout.addWidget(self.chk_visualizer)
 
         self.chk_visualizer.stateChanged.connect(self.on_interface_checkbox_changed)
+
+        # Horizontal separator below visualizer checkbox
+        btn_sep = QFrame()
+        btn_sep.setFrameShape(QFrame.Shape.HLine)
+        btn_sep.setFrameShadow(QFrame.Shadow.Sunken)
+        btn_sep.setObjectName("appearanceButtonSeparator")
+        interface_layout.addSpacing(2)
+        interface_layout.addWidget(btn_sep)
+        interface_layout.addSpacing(2)
+
+        # Player Buttons Section
+        self.lbl_player_buttons = QLabel(tr("appearance.player_buttons_title", "Player Control Buttons"))
+        self.lbl_player_buttons.setToolTip(tr("appearance.player_buttons_tooltip"))
+        interface_layout.addWidget(self.lbl_player_buttons)
+
+        buttons_list_layout = QHBoxLayout()
+        buttons_list_layout.setSpacing(8)
+
+        self.buttons_list_widget = QListWidget()
+        self.buttons_list_widget.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.buttons_list_widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.buttons_list_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.buttons_list_widget.setObjectName("buttonsListWidget")
+        self.buttons_list_widget.setToolTip(tr("appearance.player_buttons_tooltip"))
+        self.buttons_list_widget.setFixedHeight(220)
+        buttons_list_layout.addWidget(self.buttons_list_widget, 1)
+
+        self.btn_btn_up = QPushButton("▲")
+        self.btn_btn_up.setToolTip(tr("appearance.move_up", "Move Up"))
+        self.btn_btn_up.setFixedSize(30, 30)
+        self.btn_btn_up.clicked.connect(self.move_button_up)
+
+        self.btn_btn_down = QPushButton("▼")
+        self.btn_btn_down.setToolTip(tr("appearance.move_down", "Move Down"))
+        self.btn_btn_down.setFixedSize(30, 30)
+        self.btn_btn_down.clicked.connect(self.move_button_down)
+
+        btn_ctrl_v_layout = QVBoxLayout()
+        btn_ctrl_v_layout.setSpacing(4)
+        btn_ctrl_v_layout.addWidget(self.btn_btn_up)
+        btn_ctrl_v_layout.addWidget(self.btn_btn_down)
+        btn_ctrl_v_layout.addStretch()
+
+        buttons_list_layout.addLayout(btn_ctrl_v_layout)
+        interface_layout.addLayout(buttons_list_layout)
+
+        self.buttons_list_widget.itemChanged.connect(self.on_buttons_list_item_changed)
 
         left_layout.addWidget(group_interface)
         left_layout.addStretch()
@@ -1842,6 +1919,10 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_grid_badge_bg_color(self.default_grid_badge_bg_color)
         self.update_ui_from_grid_badge_font_size(self.default_grid_badge_font_size)
 
+        # Reset player control buttons to default
+        self.current_player_buttons_order = self.default_player_buttons_order
+        self.current_player_buttons_visible = self.default_player_buttons_visible
+
         self.update_checkboxes_ui()
         
         self.emit_preview()
@@ -1960,6 +2041,10 @@ class AppearanceDialog(QDialog):
         self.update_ui_from_grid_badge_bg_color(self.current_grid_badge_bg_color)
         self.update_ui_from_grid_badge_font_size(self.current_grid_badge_font_size)
 
+        # Revert player control buttons to original
+        self.current_player_buttons_order = self.original_player_buttons_order
+        self.current_player_buttons_visible = self.original_player_buttons_visible
+
         self.update_checkboxes_ui()
  
         self.emit_preview()
@@ -2016,6 +2101,91 @@ class AppearanceDialog(QDialog):
     def showEvent(self, event):
         super().showEvent(event)
         self.adjust_list_widget_height()
+        self.adjust_buttons_list_height()
+
+    def populate_buttons_list(self, keys, visible_keys):
+        old_updating = self.updating_ui
+        self.updating_ui = True
+        try:
+            self.buttons_list_widget.clear()
+            for key in keys:
+                if key == "separator":
+                    name = tr("appearance.buttons_separator", "⸺ Alignment Spacer (Left / Right) ⸺")
+                    item = QListWidgetItem(name)
+                    item.setData(Qt.ItemDataRole.UserRole, "separator")
+                    item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+                    item.setToolTip(tr("appearance.buttons_separator_tooltip", "Separates buttons aligned to the left edge from buttons aligned to the right edge. Use arrows to move."))
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.buttons_list_widget.addItem(item)
+                    continue
+                if key in self.player_button_keys:
+                    name_key = self.button_key_to_translation.get(key, f"appearance.btn_{key}")
+                    name = tr(name_key)
+                    item = QListWidgetItem(name)
+                    item.setData(Qt.ItemDataRole.UserRole, key)
+                    item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+                    tooltip_key = f"appearance.btn_{key}_tooltip"
+                    item.setToolTip(tr(tooltip_key))
+                    checked = key in visible_keys
+                    item.setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
+                    self.buttons_list_widget.addItem(item)
+            self.adjust_buttons_list_height()
+        finally:
+            self.updating_ui = old_updating
+
+    def adjust_buttons_list_height(self):
+        h = 0
+        for i in range(self.buttons_list_widget.count()):
+            row_h = self.buttons_list_widget.sizeHintForRow(i)
+            if row_h <= 0:
+                row_h = 24
+            h += row_h
+        h += self.buttons_list_widget.frameWidth() * 2 + 4
+        self.buttons_list_widget.setFixedHeight(max(h, 150))
+
+    def update_buttons_order_from_list(self):
+        keys = []
+        visible = []
+        for i in range(self.buttons_list_widget.count()):
+            item = self.buttons_list_widget.item(i)
+            key = item.data(Qt.ItemDataRole.UserRole)
+            keys.append(key)
+            if key != "separator" and item.checkState() == Qt.CheckState.Checked:
+                visible.append(key)
+        self.current_player_buttons_order = ",".join(keys)
+        self.current_player_buttons_visible = ",".join(visible)
+
+    def on_buttons_list_item_changed(self, item):
+        if self.updating_ui:
+            return
+        self.update_buttons_order_from_list()
+        self.emit_preview()
+
+    def move_button_up(self):
+        curr_row = self.buttons_list_widget.currentRow()
+        if curr_row > 0:
+            self.buttons_list_widget.itemChanged.disconnect(self.on_buttons_list_item_changed)
+            try:
+                item = self.buttons_list_widget.takeItem(curr_row)
+                self.buttons_list_widget.insertItem(curr_row - 1, item)
+                self.buttons_list_widget.setCurrentRow(curr_row - 1)
+                self.update_buttons_order_from_list()
+                self.emit_preview()
+            finally:
+                self.buttons_list_widget.itemChanged.connect(self.on_buttons_list_item_changed)
+
+    def move_button_down(self):
+        curr_row = self.buttons_list_widget.currentRow()
+        if curr_row >= 0 and curr_row < self.buttons_list_widget.count() - 1:
+            self.buttons_list_widget.itemChanged.disconnect(self.on_buttons_list_item_changed)
+            try:
+                item = self.buttons_list_widget.takeItem(curr_row)
+                self.buttons_list_widget.insertItem(curr_row + 1, item)
+                self.buttons_list_widget.setCurrentRow(curr_row + 1)
+                self.update_buttons_order_from_list()
+                self.emit_preview()
+            finally:
+                self.buttons_list_widget.itemChanged.connect(self.on_buttons_list_item_changed)
 
     def update_info_order_from_list(self):
         keys = []
@@ -2086,6 +2256,20 @@ class AppearanceDialog(QDialog):
                 if k not in order_keys:
                     order_keys.append(k)
             self.populate_info_list(order_keys)
+
+            # Populate player control buttons list
+            btn_order_keys = [k.strip() for k in self.current_player_buttons_order.split(",") if k.strip() in self.player_button_keys]
+            if "separator" not in btn_order_keys:
+                if "bookmarks" in btn_order_keys:
+                    idx = btn_order_keys.index("bookmarks") + 1
+                    btn_order_keys.insert(idx, "separator")
+                else:
+                    btn_order_keys.append("separator")
+            for k in self.player_button_keys:
+                if k not in btn_order_keys:
+                    btn_order_keys.append(k)
+            btn_visible_keys = set(k.strip() for k in self.current_player_buttons_visible.split(","))
+            self.populate_buttons_list(btn_order_keys, btn_visible_keys)
             
             self.chk_visualizer.setChecked(self.current_show_visualizer)
             self.chk_nesting_lines.setChecked(self.current_show_nesting_lines)
@@ -2190,4 +2374,11 @@ class AppearanceDialog(QDialog):
             "grid_duration_text_color": self.current_grid_badge_text_color,
             "grid_duration_font_size": self.current_grid_badge_font_size,
             "grid_duration_bg_color": self.current_grid_badge_bg_color,
+        }
+
+    def get_buttons_settings(self) -> dict:
+        """Get the current settings of player control buttons"""
+        return {
+            "player_buttons_order": self.current_player_buttons_order,
+            "player_buttons_visible": self.current_player_buttons_visible,
         }

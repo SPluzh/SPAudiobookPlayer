@@ -780,8 +780,8 @@ class PlayerWidget(QWidget):
         settings_layout.setSpacing(10)
         
         # Audio Effect Buttons Row (Above Volume)
-        btns_row = QHBoxLayout()
-        btns_row.setSpacing(5)
+        self.btns_row = QHBoxLayout()
+        self.btns_row.setSpacing(5)
         
         icon_size = QSize(20, 20) # Added as per instruction
         
@@ -794,7 +794,7 @@ class PlayerWidget(QWidget):
         self.timer_btn.clicked.connect(self._on_timer_btn_clicked)
         self.timer_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.timer_btn.customContextMenuRequested.connect(self.show_timer_popup)
-        btns_row.addWidget(self.timer_btn)
+        self.btns_row.addWidget(self.timer_btn)
 
         # ID3 Meta-tag Toggle
         self.id3_btn = QPushButton(tr("player.btn_id3"))
@@ -803,7 +803,7 @@ class PlayerWidget(QWidget):
         self.id3_btn.setObjectName("id3Btn")
         self.id3_btn.setToolTip(tr("player.show_id3"))
         self.id3_btn.toggled.connect(self.on_id3_toggled)
-        btns_row.addWidget(self.id3_btn)
+        self.btns_row.addWidget(self.id3_btn)
         
         # Subtitles Toggle
         self.subtitles_btn = QPushButton(tr("player.btn_subtitles"))
@@ -812,7 +812,7 @@ class PlayerWidget(QWidget):
         self.subtitles_btn.setObjectName("subtitlesBtn")
         self.subtitles_btn.setToolTip(tr("player.show_subtitles"))
         self.subtitles_btn.toggled.connect(self._on_subtitles_toggled)
-        btns_row.addWidget(self.subtitles_btn)
+        self.btns_row.addWidget(self.subtitles_btn)
         
         # Auto-rewind Toggle
         self.auto_rewind_btn = QPushButton(tr("player.btn_autorewind"))
@@ -821,12 +821,13 @@ class PlayerWidget(QWidget):
         self.auto_rewind_btn.setObjectName("autoRewindBtn")
         self.auto_rewind_btn.setToolTip(tr("player.tooltip_auto_rewind"))
         self.auto_rewind_btn.toggled.connect(self.on_auto_rewind_toggled)
-        btns_row.addWidget(self.auto_rewind_btn)
+        self.btns_row.addWidget(self.auto_rewind_btn)
 
         # Bookmarks container widget to group list and add button flush together and prevent overlap on resize
         bookmarks_container = QWidget()
         bookmarks_container.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         bookmarks_container.setFixedWidth(60)
+        self.bookmarks_container = bookmarks_container
         bookmarks_layout = QHBoxLayout(bookmarks_container)
         bookmarks_layout.setSpacing(0)
         bookmarks_layout.setContentsMargins(0, 0, 0, 0)
@@ -850,9 +851,9 @@ class PlayerWidget(QWidget):
         self.add_bookmark_btn.clicked.connect(self.add_bookmark_clicked)
         bookmarks_layout.addWidget(self.add_bookmark_btn)
 
-        btns_row.addWidget(bookmarks_container)
+        self.btns_row.addWidget(bookmarks_container)
 
-        btns_row.addStretch()
+        self.btns_row.addStretch()
         
         # Volume Boost Toggle
         self.volume_boost_btn = QPushButton(tr("player.btn_volume_boost"))
@@ -864,7 +865,7 @@ class PlayerWidget(QWidget):
         # Right-click for Volume Boost level
         self.volume_boost_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.volume_boost_btn.customContextMenuRequested.connect(self.show_volume_boost_popup)
-        btns_row.addWidget(self.volume_boost_btn)
+        self.btns_row.addWidget(self.volume_boost_btn)
         
         # DeEsser Toggle
         self.deesser_btn = QPushButton(tr("player.btn_deesser"))
@@ -876,7 +877,7 @@ class PlayerWidget(QWidget):
         # Right-click for DeEsser presets
         self.deesser_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.deesser_btn.customContextMenuRequested.connect(self.show_deesser_popup)
-        btns_row.addWidget(self.deesser_btn)
+        self.btns_row.addWidget(self.deesser_btn)
         
         self.compressor_btn = QPushButton(tr("player.btn_compressor"))
         self.compressor_btn.setCheckable(True)
@@ -887,7 +888,7 @@ class PlayerWidget(QWidget):
         # Right-click for Compressor presets
         self.compressor_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.compressor_btn.customContextMenuRequested.connect(self.show_compressor_popup)
-        btns_row.addWidget(self.compressor_btn)
+        self.btns_row.addWidget(self.compressor_btn)
         
         # Noise Suppression Toggle
         self.noise_suppression_btn = QPushButton(tr("player.btn_noise_suppression"))
@@ -899,7 +900,7 @@ class PlayerWidget(QWidget):
         # Right-click for VAD threshold popup
         self.noise_suppression_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.noise_suppression_btn.customContextMenuRequested.connect(self.show_vad_slider_popup)
-        btns_row.addWidget(self.noise_suppression_btn)
+        self.btns_row.addWidget(self.noise_suppression_btn)
         
         # Pitch Toggle
         self.pitch_btn = QPushButton(tr("player.btn_pitch"))
@@ -911,7 +912,7 @@ class PlayerWidget(QWidget):
         # Right-click for Pitch settings
         self.pitch_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.pitch_btn.customContextMenuRequested.connect(self.show_pitch_popup)
-        btns_row.addWidget(self.pitch_btn)
+        self.btns_row.addWidget(self.pitch_btn)
         
         # Mono Toggle
         self.mono_btn = QPushButton(tr("player.btn_mono"))
@@ -920,7 +921,21 @@ class PlayerWidget(QWidget):
         self.mono_btn.setObjectName("monoBtn")
         self.mono_btn.setToolTip(tr("player.tooltip_mono"))
         self.mono_btn.toggled.connect(self.on_mono_toggled)
-        btns_row.addWidget(self.mono_btn)
+        self.btns_row.addWidget(self.mono_btn)
+
+        self.action_buttons = {
+            "timer": self.timer_btn,
+            "id3": self.id3_btn,
+            "subtitles": self.subtitles_btn,
+            "auto_rewind": self.auto_rewind_btn,
+            "bookmarks": self.bookmarks_container,
+            "volume_boost": self.volume_boost_btn,
+            "deesser": self.deesser_btn,
+            "compressor": self.compressor_btn,
+            "noise_suppression": self.noise_suppression_btn,
+            "pitch": self.pitch_btn,
+            "mono": self.mono_btn,
+        }
         
         # VAD Threshold Popup (Advanced Settings)
         self.vad_popup = QWidget(self, Qt.WindowType.Popup)
@@ -1075,7 +1090,7 @@ class PlayerWidget(QWidget):
         self.timer_chapter_btn.clicked.connect(self._on_timer_chapter_clicked)
         timer_popup_layout.addWidget(self.timer_chapter_btn)
 
-        settings_layout.addLayout(btns_row)
+        settings_layout.addLayout(self.btns_row)
         
         # Sliders Row (Volume + Speed)
         sliders_row = QHBoxLayout()
@@ -1246,6 +1261,29 @@ class PlayerWidget(QWidget):
         return btn
 
     
+    def update_buttons_layout(self, order: list, visibility: dict):
+        """Reorder and update visibility of player action buttons, keeping left and right groups aligned"""
+        while self.btns_row.count():
+            item = self.btns_row.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.setParent(self)
+
+        has_stretch = False
+        for key in order:
+            if key == "separator":
+                self.btns_row.addStretch(1)
+                has_stretch = True
+                continue
+            widget = self.action_buttons.get(key)
+            if widget:
+                is_visible = visibility.get(key, True)
+                widget.setVisible(is_visible)
+                self.btns_row.addWidget(widget)
+
+        if not has_stretch:
+            self.btns_row.addStretch(1)
+
     def load_icons(self):
         self.play_icon = get_icon("play")
         self.pause_icon = get_icon("pause")
