@@ -191,7 +191,13 @@
     "zoom_out": "Decrease subtitle size",
     "translation_on_hover": "Toggle translation on hover",
     "autoscroll": "Toggle auto-scroll",
-    "no_subtitles_hint": "Subtitles not found. Place .srt subtitle files next to the audiobook files."
+    "no_subtitles_hint": "Subtitles not found. Place .srt subtitle files next to the audiobook files.",
+    "btn_timer": "TMR",
+    "tooltip_timer": "Sleep Timer. RMB: Settings",
+    "timer_minutes": "{mins} min",
+    "timer_end_of_chapter": "End of chapter",
+    "timer_remaining": "Sleep timer: {time}",
+    "timer_stopped": "⏹ Stopped by sleep timer"
   },
   "status": {
     "load_library": "📚 Load audiobook library",

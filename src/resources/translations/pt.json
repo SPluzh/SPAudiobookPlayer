@@ -173,7 +173,13 @@
     "zoom_out": "Diminuir tamanho da legenda",
     "translation_on_hover": "Ativar/desativar tradução ao passar o mouse",
     "autoscroll": "Alternar rolagem automática",
-    "no_subtitles_hint": "Legendas não encontradas. Coloque os arquivos de legenda .srt ao lado dos arquivos do livro falado."
+    "no_subtitles_hint": "Legendas não encontradas. Coloque os arquivos de legenda .srt ao lado dos arquivos do livro falado.",
+    "btn_timer": "TMP",
+    "tooltip_timer": "Temporizador de repouso. Botão direito: Configurações",
+    "timer_minutes": "{mins} min",
+    "timer_end_of_chapter": "Até o fim do capítulo",
+    "timer_remaining": "Temporizador: {time}",
+    "timer_stopped": "⏹ Parado pelo temporizador de repouso"
   },
   "status": {
     "load_library": "📚 Carregar biblioteca de audiolivros",

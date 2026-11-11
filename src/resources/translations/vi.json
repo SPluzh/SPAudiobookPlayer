@@ -191,7 +191,13 @@
     "zoom_out": "Giảm kích thước phụ đề",
     "translation_on_hover": "Bật/tắt dịch khi di chuột",
     "autoscroll": "Bật/tắt cuộn tự động",
-    "no_subtitles_hint": "Không tìm thấy phụ đề. Hãy đặt các tệp phụ đề .srt bên cạnh các tệp sách nói."
+    "no_subtitles_hint": "Không tìm thấy phụ đề. Hãy đặt các tệp phụ đề .srt bên cạnh các tệp sách nói.",
+    "btn_timer": "H.Giờ",
+    "tooltip_timer": "Hẹn giờ ngủ. Chuột phải: Cài đặt",
+    "timer_minutes": "{mins} phút",
+    "timer_end_of_chapter": "Đến hết chương",
+    "timer_remaining": "Hẹn giờ ngủ: {time}",
+    "timer_stopped": "⏹ Đã dừng theo hẹn giờ ngủ"
   },
   "status": {
     "load_library": "📚 Tải thư viện sách nói",

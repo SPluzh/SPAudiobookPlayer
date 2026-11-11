@@ -173,7 +173,13 @@
     "zoom_out": "Altyazı boyutunu azalt",
     "translation_on_hover": "Üzerine gelindiğinde çeviriyi aç/kapat",
     "autoscroll": "Otomatik kaydırmayı aç/kapat",
-    "no_subtitles_hint": "Altyazı bulunamadı. .srt altyazı dosyalarını sesli kitap dosyalarının yanına koyun."
+    "no_subtitles_hint": "Altyazı bulunamadı. .srt altyazı dosyalarını sesli kitap dosyalarının yanına koyun.",
+    "btn_timer": "ZMN",
+    "tooltip_timer": "Uyku Zamanlayıcısı. Sağ tık: Ayarlar",
+    "timer_minutes": "{mins} dk",
+    "timer_end_of_chapter": "Bölüm sonuna kadar",
+    "timer_remaining": "Uyku zamanlayıcısı: {time}",
+    "timer_stopped": "⏹ Uyku zamanlayıcısı ile durduruldu"
   },
   "status": {
     "load_library": "📚 Sesli kitap kütüphanesini yükle",

@@ -74,8 +74,8 @@ QPushButton#playBtn {
     /* min-width removed to allow stretching */
 }
 
-/* ID3 & Subtitles Toggle Buttons & Subtitle Zoom Buttons */
-QPushButton#id3Btn, QPushButton#subtitlesBtn, QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslationToggleBtn, QPushButton#subAutoscrollToggleBtn {
+/* ID3 & Subtitles Toggle Buttons & Subtitle Zoom Buttons & Timer Button */
+QPushButton#id3Btn, QPushButton#timerBtn, QPushButton#subtitlesBtn, QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslationToggleBtn, QPushButton#subAutoscrollToggleBtn {
     background-color: @bg-dark;
     border: 1px solid @border;
     color: @text;
@@ -86,7 +86,7 @@ QPushButton#id3Btn, QPushButton#subtitlesBtn, QPushButton#subSizeMinusBtn, QPush
     border-radius: 3px;
 }
 
-QPushButton#id3Btn, QPushButton#subtitlesBtn {
+QPushButton#id3Btn, QPushButton#timerBtn, QPushButton#subtitlesBtn {
     margin-top: 2px;
 }
 
@@ -94,13 +94,13 @@ QPushButton#subSizeMinusBtn, QPushButton#subSizePlusBtn, QPushButton#subTranslat
     margin-top: 0px;
 }
 
-QPushButton#id3Btn:hover, QPushButton#subtitlesBtn:hover, QPushButton#subSizeMinusBtn:hover, QPushButton#subSizePlusBtn:hover, QPushButton#subTranslationToggleBtn:hover, QPushButton#subAutoscrollToggleBtn:hover {
+QPushButton#id3Btn:hover, QPushButton#timerBtn:hover, QPushButton#subtitlesBtn:hover, QPushButton#subSizeMinusBtn:hover, QPushButton#subSizePlusBtn:hover, QPushButton#subTranslationToggleBtn:hover, QPushButton#subAutoscrollToggleBtn:hover {
     background-color: @accent;
     border-color: @accent;
     color: @text-bright;
 }
 
-QPushButton#id3Btn:checked, QPushButton#subtitlesBtn:checked, QPushButton#subTranslationToggleBtn:checked, QPushButton#subAutoscrollToggleBtn:checked {
+QPushButton#id3Btn:checked, QPushButton#timerBtn:checked, QPushButton#subtitlesBtn:checked, QPushButton#subTranslationToggleBtn:checked, QPushButton#subAutoscrollToggleBtn:checked {
     background-color: @accent;
     border-color: @accent;
     font-weight: bold;
@@ -1412,7 +1412,7 @@ QLabel#aboutRightContent {
 /* ============================================================
    POPUPS AND DIALOGS
    ============================================================ */
-#vadPopup, #deesserPopup, #compressorPopup, #pitchPopup, #volumeBoostPopup {
+#vadPopup, #deesserPopup, #compressorPopup, #pitchPopup, #volumeBoostPopup, #timerPopup {
     background-color: @bg-dark;
     border: 1px solid @border;
     border-radius: 3px;

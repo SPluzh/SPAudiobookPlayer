@@ -173,7 +173,13 @@
     "zoom_out": "Diminuer la taille des sous-titres",
     "translation_on_hover": "Activer/désactiver la traduction au survol",
     "autoscroll": "Activer/désactiver le défilement automatique",
-    "no_subtitles_hint": "Sous-titres introuvables. Placez les fichiers de sous-titres .srt à côté des fichiers du livre audio."
+    "no_subtitles_hint": "Sous-titres introuvables. Placez les fichiers de sous-titres .srt à côté des fichiers du livre audio.",
+    "btn_timer": "MIN",
+    "tooltip_timer": "Minuteur de veille. Clic droit: Paramètres",
+    "timer_minutes": "{mins} min",
+    "timer_end_of_chapter": "Jusqu’à la fin du chapitre",
+    "timer_remaining": "Minuteur: {time}",
+    "timer_stopped": "⏹ Arrêté par la minuterie de veille"
   },
   "status": {
     "load_library": "📚 Chargement de la bibliothèque",

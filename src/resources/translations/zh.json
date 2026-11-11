@@ -173,7 +173,13 @@
     "zoom_out": "减小字幕大小",
     "translation_on_hover": "切换悬停翻译",
     "autoscroll": "切换自动滚动",
-    "no_subtitles_hint": "未找到字幕。请将 .srt 字幕文件放置在有声书文件旁边。"
+    "no_subtitles_hint": "未找到字幕。请将 .srt 字幕文件放置在有声书文件旁边。",
+    "btn_timer": "定时",
+    "tooltip_timer": "睡眠定时器。右键：设置",
+    "timer_minutes": "{mins} 分钟",
+    "timer_end_of_chapter": "直到本章结束",
+    "timer_remaining": "睡眠定时器：{time}",
+    "timer_stopped": "⏹ 已按睡眠定时器停止"
   },
   "status": {
     "load_library": "📚 加载有声书库",

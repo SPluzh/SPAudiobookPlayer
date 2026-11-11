@@ -729,6 +729,9 @@ class PlayerWidget(QWidget):
     mono_toggled_signal = pyqtSignal(bool)
     volume_boost_toggled_signal = pyqtSignal(bool)
     volume_boost_level_changed_signal = pyqtSignal(float)
+    timer_toggled_signal = pyqtSignal(bool)
+    timer_minutes_changed_signal = pyqtSignal(int)
+    timer_mode_changed_signal = pyqtSignal(str) # "minutes" or "end_of_chapter"
     bookmarks_clicked = pyqtSignal()
     add_bookmark_clicked = pyqtSignal()
     subtitles_toggled_signal = pyqtSignal(bool)
@@ -746,6 +749,8 @@ class PlayerWidget(QWidget):
         self.deesser_preset = 1
         self.compressor_preset = 1
         self.volume_boost_level = 4.0  # 400%
+        self.timer_minutes = 30
+        self.timer_mode = "minutes"  # "minutes" or "end_of_chapter"
         
         # Icon resources
         self.play_icon = None
@@ -780,6 +785,17 @@ class PlayerWidget(QWidget):
         
         icon_size = QSize(20, 20) # Added as per instruction
         
+        # Sleep Timer Toggle (placed to the left of ID3 button)
+        self.timer_btn = QPushButton(tr("player.btn_timer"))
+        self.timer_btn.setCheckable(True)
+        self.timer_btn.setFixedWidth(40)
+        self.timer_btn.setObjectName("timerBtn")
+        self.timer_btn.setToolTip(tr("player.tooltip_timer"))
+        self.timer_btn.clicked.connect(self._on_timer_btn_clicked)
+        self.timer_btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.timer_btn.customContextMenuRequested.connect(self.show_timer_popup)
+        btns_row.addWidget(self.timer_btn)
+
         # ID3 Meta-tag Toggle
         self.id3_btn = QPushButton(tr("player.btn_id3"))
         self.id3_btn.setCheckable(True)
@@ -1030,6 +1046,34 @@ class PlayerWidget(QWidget):
         self.volume_boost_label.setFixedWidth(50)
         self.volume_boost_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         vb_layout.addWidget(self.volume_boost_label)
+
+        # Sleep Timer Popup
+        self.timer_popup = QWidget(self, Qt.WindowType.Popup)
+        self.timer_popup.setObjectName("timerPopup")
+        timer_popup_layout = QVBoxLayout(self.timer_popup)
+        timer_popup_layout.setContentsMargins(8, 8, 8, 8)
+        timer_popup_layout.setSpacing(6)
+
+        timer_slider_row = QHBoxLayout()
+        timer_slider_row.setSpacing(6)
+        self.timer_slider = ClickableSlider(Qt.Orientation.Horizontal)
+        self.timer_slider.setRange(1, 90)
+        self.timer_slider.setValue(self.timer_minutes)
+        self.timer_slider.setFixedWidth(130)
+        self.timer_slider.valueChanged.connect(self._on_timer_slider_changed)
+        timer_slider_row.addWidget(self.timer_slider)
+
+        self.timer_val_label = QLabel(trf("player.timer_minutes", mins=self.timer_minutes))
+        self.timer_val_label.setFixedWidth(55)
+        self.timer_val_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        timer_slider_row.addWidget(self.timer_val_label)
+        timer_popup_layout.addLayout(timer_slider_row)
+
+        self.timer_chapter_btn = QPushButton(tr("player.timer_end_of_chapter"))
+        self.timer_chapter_btn.setCheckable(True)
+        self.timer_chapter_btn.setObjectName("timerChapterBtn")
+        self.timer_chapter_btn.clicked.connect(self._on_timer_chapter_clicked)
+        timer_popup_layout.addWidget(self.timer_chapter_btn)
 
         settings_layout.addLayout(btns_row)
         
@@ -1521,6 +1565,74 @@ class PlayerWidget(QWidget):
         self.volume_boost_label.setText(f"{value}%")
         self.volume_boost_slider.blockSignals(False)
 
+    def show_timer_popup(self, pos=None):
+        """Show sleep timer settings popup below timer button"""
+        global_pos = self.timer_btn.mapToGlobal(QPoint(0, self.timer_btn.height()))
+        self.timer_popup.move(global_pos)
+        self.timer_popup.show()
+
+    def _on_timer_btn_clicked(self):
+        """Handle left click on timer button: toggle on/off without showing popup"""
+        is_active = self.timer_btn.isChecked()
+        if is_active:
+            # Turning ON with current timer_mode and timer_minutes
+            self.timer_toggled_signal.emit(True)
+        else:
+            # Turning OFF
+            self.timer_toggled_signal.emit(False)
+            self.timer_btn.setText(tr("player.btn_timer"))
+            self.timer_btn.setToolTip(tr("player.tooltip_timer"))
+            self.timer_chapter_btn.setChecked(False)
+
+    def _on_timer_slider_changed(self, value: int):
+        """Handle minutes slider change in sleep timer popup"""
+        self.timer_minutes = value
+        self.timer_mode = "minutes"
+        self.timer_val_label.setText(trf("player.timer_minutes", mins=value))
+        self.timer_chapter_btn.setChecked(False)
+        self.timer_minutes_changed_signal.emit(value)
+        self.timer_mode_changed_signal.emit("minutes")
+        if not self.timer_btn.isChecked():
+            self.timer_btn.setChecked(True)
+            self.timer_toggled_signal.emit(True)
+
+    def _on_timer_chapter_clicked(self):
+        """Handle 'End of chapter' button click in sleep timer popup"""
+        self.timer_mode = "end_of_chapter"
+        self.timer_chapter_btn.setChecked(True)
+        self.timer_mode_changed_signal.emit("end_of_chapter")
+        if not self.timer_btn.isChecked():
+            self.timer_btn.setChecked(True)
+            self.timer_toggled_signal.emit(True)
+        self.timer_popup.hide()
+
+    def set_timer_active(self, active: bool, text: Optional[str] = None, tooltip: Optional[str] = None):
+        """Update timer button appearance from main window timer tick"""
+        self.timer_btn.blockSignals(True)
+        self.timer_btn.setChecked(active)
+        self.timer_btn.blockSignals(False)
+        if active:
+            if text:
+                self.timer_btn.setText(text)
+            if tooltip:
+                self.timer_btn.setToolTip(tooltip)
+            if self.timer_mode == "end_of_chapter":
+                self.timer_chapter_btn.setChecked(True)
+            else:
+                self.timer_chapter_btn.setChecked(False)
+        else:
+            self.timer_btn.setText(tr("player.btn_timer"))
+            self.timer_btn.setToolTip(tr("player.tooltip_timer"))
+            self.timer_chapter_btn.setChecked(False)
+
+    def set_timer_minutes_value(self, minutes: int):
+        """Set timer minutes slider programmatically"""
+        self.timer_minutes = max(1, min(90, minutes))
+        self.timer_slider.blockSignals(True)
+        self.timer_slider.setValue(self.timer_minutes)
+        self.timer_val_label.setText(trf("player.timer_minutes", mins=self.timer_minutes))
+        self.timer_slider.blockSignals(False)
+
     
     def set_noise_suppression_active(self, active: bool):
         """Visual indicator when noise suppression is processing"""
@@ -1589,6 +1701,15 @@ class PlayerWidget(QWidget):
     def update_texts(self):
         """Update UI texts when language changes"""
         # Buttons
+        if hasattr(self, 'timer_btn') and self.timer_btn:
+            if not self.timer_btn.isChecked():
+                self.timer_btn.setText(tr("player.btn_timer"))
+                self.timer_btn.setToolTip(tr("player.tooltip_timer"))
+        if hasattr(self, 'timer_chapter_btn') and self.timer_chapter_btn:
+            self.timer_chapter_btn.setText(tr("player.timer_end_of_chapter"))
+        if hasattr(self, 'timer_val_label') and self.timer_val_label:
+            self.timer_val_label.setText(trf("player.timer_minutes", mins=self.timer_minutes))
+
         self.id3_btn.setText(tr("player.btn_id3"))
         self.id3_btn.setToolTip(tr("player.show_id3"))
         

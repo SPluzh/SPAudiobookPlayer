@@ -146,6 +146,10 @@ class AudiobookPlayerWindow(QMainWindow):
         self.pitch_value = 0.0
         self.mono_enabled = False
         self.last_pause_time = None
+        self.sleep_timer_mode = None  # None, "minutes", "end_of_chapter"
+        self.sleep_timer_remaining_sec = 0.0
+        self.sleep_timer_last_minutes = 30
+        self._sleep_timer_last_tick = None
         self.show_visualizer = True
         self.show_nesting_lines = True
         self.nesting_lines_single_color = True
@@ -258,7 +262,7 @@ class AudiobookPlayerWindow(QMainWindow):
             # Fix potential "creeping" issues from previous bugs where coordinates became negative or zero
             safe_x = max(0, self.window_x)
             safe_y = max(30, self.window_y)  # Ensure title bar is likely visible
-            safe_width = max(490, self.window_width)
+            safe_width = max(535, self.window_width)
             safe_height = max(450, self.window_height)
             self.setGeometry(safe_x, safe_y, safe_width, safe_height)
 
@@ -392,7 +396,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
         # Playback Controls Component
         self.player_widget = PlayerWidget()
-        self.player_widget.setMinimumWidth(490)
+        self.player_widget.setMinimumWidth(535)
         self.player_widget.id3_btn.setChecked(self.show_id3)
         self.player_widget.on_id3_toggled(self.show_id3)
 
@@ -450,6 +454,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.subtitle_panel.autoscroll_changed.connect(
             self.on_subtitle_autoscroll_changed
         )
+        self.player_widget.timer_toggled_signal.connect(self.on_timer_toggled)
+        self.player_widget.timer_minutes_changed_signal.connect(self.on_timer_minutes_changed)
+        self.player_widget.timer_mode_changed_signal.connect(self.on_timer_mode_changed)
 
         # Set initial states
         self.player_widget.id3_btn.setChecked(self.show_id3)
@@ -502,6 +509,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.set_deesser_preset_value(self.deesser_preset)
         self.player_widget.set_compressor_preset_value(self.compressor_preset)
         self.player_widget.set_pitch_value(self.pitch_value)
+        self.player_widget.set_timer_minutes_value(self.sleep_timer_last_minutes)
 
         self.splitter.addWidget(self.player_widget)
         self.splitter.setStretchFactor(0, 1)
@@ -1062,7 +1070,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.normal_min_height = config.getint(
             "Display", "normal_min_height", fallback=450
         )
-        self.minimal_width = max(490, config.getint("Display", "minimal_width", fallback=490))
+        self.minimal_width = max(535, config.getint("Display", "minimal_width", fallback=535))
         self.minimal_height = config.getint("Display", "minimal_height", fallback=270)
         self.current_theme = config.get("Display", "theme", fallback="dark")
         self.accent_color = config.get("Appearance", "accent_color", fallback="")
@@ -1187,6 +1195,9 @@ class AudiobookPlayerWindow(QMainWindow):
         self.subtitle_translation_provider = config.get(
             "Player", "subtitle_translation_provider", fallback="google"
         )
+        self.sleep_timer_last_minutes = max(1, min(90, config.getint(
+            "Player", "sleep_timer_minutes", fallback=30
+        )))
 
         # Audio Settings (Unified in [Audio])
         self.deesser_enabled = config.getboolean(
@@ -1367,7 +1378,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "window_y": "100",
             "normal_min_width": "700",
             "normal_min_height": "450",
-            "minimal_width": "490",
+            "minimal_width": "535",
             "minimal_height": "270",
             "language": "en",
             "show_statusbar": "False",
@@ -1388,6 +1399,7 @@ class AudiobookPlayerWindow(QMainWindow):
             "subtitle_autoscroll": "True",
             "subtitle_target_lang": "en",
             "subtitle_translation_provider": "google",
+            "sleep_timer_minutes": "30",
         }
         config["Library"] = {
             "show_folders": "False",
@@ -1564,6 +1576,7 @@ class AudiobookPlayerWindow(QMainWindow):
         )
         config["Player"]["subtitle_target_lang"] = self.subtitle_target_lang
         config["Player"]["subtitle_translation_provider"] = self.subtitle_translation_provider
+        config["Player"]["sleep_timer_minutes"] = str(self.sleep_timer_last_minutes)
 
         if "Audio" not in config:
             config["Audio"] = {}
@@ -1913,6 +1926,48 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player.set_mono_enabled(checked)
         self.save_settings()
 
+    def on_timer_toggled(self, active: bool):
+        """Handle timer button toggle state"""
+        if active:
+            mode = getattr(self.player_widget, "timer_mode", "minutes")
+            self.start_sleep_timer(mode)
+        else:
+            self.cancel_sleep_timer()
+
+    def on_timer_minutes_changed(self, minutes: int):
+        """Handle timer slider value change"""
+        self.sleep_timer_last_minutes = minutes
+        self.save_settings()
+        if self.sleep_timer_mode == "minutes":
+            self.start_sleep_timer("minutes", minutes=minutes)
+
+    def on_timer_mode_changed(self, mode: str):
+        """Handle timer mode change between minutes and end_of_chapter"""
+        self.start_sleep_timer(mode)
+
+    def start_sleep_timer(self, mode: str, minutes: Optional[int] = None):
+        """Start or re-arm sleep timer with the specified mode"""
+        self.sleep_timer_mode = mode
+        self._sleep_timer_last_tick = __import__("time").monotonic()
+
+        if mode == "minutes":
+            mins = minutes if minutes is not None else getattr(self.player_widget, "timer_minutes", 30)
+            self.sleep_timer_remaining_sec = float(mins * 60)
+            text = f"{mins}m"
+            tooltip = trf("player.timer_remaining", time=f"{mins}:00")
+            self.player_widget.set_timer_active(True, text=text, tooltip=tooltip)
+        elif mode == "end_of_chapter":
+            text = tr("player.timer_end_of_chapter")[:3]
+            tooltip = tr("player.timer_end_of_chapter")
+            self.player_widget.set_timer_active(True, text=text, tooltip=tooltip)
+
+    def cancel_sleep_timer(self):
+        """Cancel and reset sleep timer"""
+        self.sleep_timer_mode = None
+        self.sleep_timer_remaining_sec = 0.0
+        self._sleep_timer_last_tick = None
+        self.player_widget.set_timer_active(False)
+
     # Drag and Drop Events
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -2182,8 +2237,15 @@ class AudiobookPlayerWindow(QMainWindow):
         self.playback_controller.save_current_progress()
         self.save_last_session()
 
-    def on_next_clicked(self):
+    def on_next_clicked(self, auto_transition: bool = False):
         """Transition playback to the subsequent file in the audiobook sequence"""
+        if auto_transition and self.sleep_timer_mode == "end_of_chapter":
+            self.cancel_sleep_timer()
+            if self.player.is_playing():
+                self.toggle_play()
+            self.statusBar().showMessage(tr("player.timer_stopped"), 5000)
+            return
+
         if self.playback_controller.next_file():
             self.player_widget.highlight_current_file(
                 self.playback_controller.current_file_index
@@ -2388,6 +2450,33 @@ class AudiobookPlayerWindow(QMainWindow):
                 total=self.playback_controller.total_duration,
             )
 
+        # Update sleep timer countdown if active
+        if self.sleep_timer_mode == "minutes":
+            now = __import__("time").monotonic()
+            if self._sleep_timer_last_tick is not None:
+                elapsed = now - self._sleep_timer_last_tick
+                if self.player.is_playing():
+                    self.sleep_timer_remaining_sec = max(0.0, self.sleep_timer_remaining_sec - elapsed)
+            self._sleep_timer_last_tick = now
+
+            if self.sleep_timer_remaining_sec <= 0.0:
+                self.cancel_sleep_timer()
+                if self.player.is_playing():
+                    self.toggle_play()
+                self.statusBar().showMessage(tr("player.timer_stopped"), 5000)
+            else:
+                rem_mins = int(self.sleep_timer_remaining_sec // 60)
+                rem_secs = int(self.sleep_timer_remaining_sec % 60)
+                time_str = f"{rem_mins}:{rem_secs:02d}"
+                text = f"{rem_mins}m" if rem_mins > 0 else f"{rem_secs}s"
+                tooltip = trf("player.timer_remaining", time=time_str)
+                self.player_widget.set_timer_active(True, text=text, tooltip=tooltip)
+        elif self.sleep_timer_mode == "end_of_chapter":
+            self._sleep_timer_last_tick = __import__("time").monotonic()
+            text = tr("player.timer_end_of_chapter")[:3]
+            tooltip = tr("player.timer_end_of_chapter")
+            self.player_widget.set_timer_active(True, text=text, tooltip=tooltip)
+
         # Update streaming information in the status bar
         if self.playback_controller._url_loading:
             pass  # Do not touch the status bar while a URL is loading/seeking/connecting asynchronously
@@ -2462,14 +2551,14 @@ class AudiobookPlayerWindow(QMainWindow):
         
         # 1. Primary: callback-based stream end detection
         if self.playback_controller.check_stream_end():
-            self.on_next_clicked()
+            self.on_next_clicked(auto_transition=True)
             return
 
         # 2. Fallback: position-based detection (safety net if callback fails or file stops early)
         # Only trigger when playback has actually stopped AND we are near the end.
         # This avoids cutting off audio that is still playing.
         if not self.player.is_playing() and duration > 0 and pos >= chapter_end - 1.5:
-            self.on_next_clicked()
+            self.on_next_clicked(auto_transition=True)
 
     def rescan_directory(self, target_path: str = "", force_rescan: bool = False):
         """Initiate a comprehensive scan of the configured media directory with progress feedback via a dialog"""

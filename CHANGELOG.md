@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.15]
+- **Player**: Added Sleep Timer button (`TMR`): set 1–90 minutes countdown or stop at the end of the chapter.
+
 ## [1.8.14]
 - **Metadata**: Added Drag & Drop and `Ctrl+V` support to set book covers in the Edit Metadata dialog.
 

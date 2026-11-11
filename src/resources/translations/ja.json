@@ -173,7 +173,13 @@
     "zoom_out": "字幕のサイズを小さくする",
     "translation_on_hover": "ホバー時の翻訳の切り替え",
     "autoscroll": "自動スクロールの切り替え",
-    "no_subtitles_hint": "字幕が見つかりません。オーディオブックファイルの横に.srt字幕ファイルを配置してください。"
+    "no_subtitles_hint": "字幕が見つかりません。オーディオブックファイルの横に.srt字幕ファイルを配置してください。",
+    "btn_timer": "タイマー",
+    "tooltip_timer": "スリープタイマー。右クリック：設定",
+    "timer_minutes": "{mins}分",
+    "timer_end_of_chapter": "章の終わりまで",
+    "timer_remaining": "スリープタイマー：{time}",
+    "timer_stopped": "⏹ スリープタイマーにより停止しました"
   },
   "status": {
     "load_library": "📚 ライブラリを読み込み中",

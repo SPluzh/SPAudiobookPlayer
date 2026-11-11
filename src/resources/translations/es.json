@@ -173,7 +173,13 @@
     "zoom_out": "Disminuir tamaño de subtítulos",
     "translation_on_hover": "Activar/desactivar la traducción al pasar el cursor",
     "autoscroll": "Alternar desplazamiento automático",
-    "no_subtitles_hint": "Subtítulos no encontrados. Coloque los archivos de subtítulos .srt junto a los archivos del audiolibro."
+    "no_subtitles_hint": "Subtítulos no encontrados. Coloque los archivos de subtítulos .srt junto a los archivos del audiolibro.",
+    "btn_timer": "TMR",
+    "tooltip_timer": "Temporizador de apagado. Clic derecho: Configuración",
+    "timer_minutes": "{mins} min",
+    "timer_end_of_chapter": "Hasta el final del capítulo",
+    "timer_remaining": "Temporizador: {time}",
+    "timer_stopped": "⏹ Detenido por temporizador de apagado"
   },
   "status": {
     "load_library": "📚 Cargar biblioteca de audiolibros",

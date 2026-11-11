@@ -173,7 +173,13 @@
     "zoom_out": "Untertitel verkleinern",
     "translation_on_hover": "Übersetzung beim Hovern umschalten",
     "autoscroll": "Automatisches Scrollen umschalten",
-    "no_subtitles_hint": "Keine Untertitel gefunden. Legen Sie .srt-Untertiteldateien neben die Hörbuchdateien."
+    "no_subtitles_hint": "Keine Untertitel gefunden. Legen Sie .srt-Untertiteldateien neben die Hörbuchdateien.",
+    "btn_timer": "TMR",
+    "tooltip_timer": "Sleeptimer. RMT: Einstellungen",
+    "timer_minutes": "{mins} Min.",
+    "timer_end_of_chapter": "Bis Kapitelende",
+    "timer_remaining": "Sleeptimer: {time}",
+    "timer_stopped": "⏹ Durch Sleeptimer gestoppt"
   },
   "status": {
     "load_library": "📚 Hörbuch-Bibliothek laden",
