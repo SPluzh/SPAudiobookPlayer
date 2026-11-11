@@ -846,6 +846,15 @@ class BassPlayer:
 
     def free(self):
         """Free BASS resources"""
+        if hasattr(self, '_stream_load_thread') and self._stream_load_thread:
+            try:
+                if self._stream_load_thread.isRunning():
+                    self._stream_load_thread.quit()
+                    self._stream_load_thread.wait(200)
+            except Exception:
+                pass
+            self._stream_load_thread = None
+
         if self.chan != 0:
             bass.BASS_StreamFree(self.chan)
             self.chan = 0

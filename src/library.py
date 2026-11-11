@@ -3507,3 +3507,11 @@ class LibraryWidget(QWidget):
         if self.is_tile_view and hasattr(self, "tile_view"):
             self.tile_view.canvas.update_selection_state(self.tree.selected_audiobook_paths)
             self.tile_view.canvas.update()
+
+    def cleanup(self):
+        """Clean up child views and background threads before shutdown"""
+        if hasattr(self, "tile_view") and self.tile_view:
+            try:
+                self.tile_view.cleanup()
+            except Exception as e:
+                print(f"Error cleaning up tile_view: {e}")

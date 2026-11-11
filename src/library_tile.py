@@ -1346,6 +1346,14 @@ class CoverLoader(QThread):
 
     def stop(self):
         self._running = False
+        try:
+            while not self._queue.empty():
+                try:
+                    self._queue.get_nowait()
+                except Exception:
+                    break
+        except Exception:
+            pass
         self._queue.put((None, None))
 
     def run(self):
@@ -1542,13 +1550,22 @@ class VirtualTileCanvas(QWidget):
 
         self.cover_cache = {}
 
-    def destroy(self, destroyWindow=True, destroySubWindows=True):
+    def cleanup(self):
+        """Clean up background threads and resources before shutdown"""
         if hasattr(self, "cover_loader") and self.cover_loader:
             try:
-                self.cover_loader.stop()
-                self.cover_loader.wait()
-            except (RuntimeError, AttributeError, ReferenceError):
+                self.cover_loader.cover_loaded.disconnect()
+            except Exception:
                 pass
+            try:
+                if self.cover_loader.isRunning():
+                    self.cover_loader.stop()
+                    self.cover_loader.wait(300)
+            except Exception:
+                pass
+
+    def destroy(self, destroyWindow=True, destroySubWindows=True):
+        self.cleanup()
         super().destroy(destroyWindow, destroySubWindows)
 
     def populate(self, tree_root_item):
@@ -3585,3 +3602,8 @@ class TileFlowWidget(QScrollArea):
 
     def on_tile_description_requested(self, path):
         self.parent_library.show_description_dialog(path)
+
+    def cleanup(self):
+        """Clean up child canvas and background threads"""
+        if hasattr(self, "canvas") and self.canvas and hasattr(self.canvas, "cleanup"):
+            self.canvas.cleanup()

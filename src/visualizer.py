@@ -28,6 +28,11 @@ class VisualizerButton(QPushButton):
         
     def set_player(self, player):
         self.player = player
+
+    def stop(self):
+        """Stop animation timer"""
+        if hasattr(self, "timer") and self.timer:
+            self.timer.stop()
         
     def update_visualization(self):
         if not getattr(self, 'visualizer_enabled', True):

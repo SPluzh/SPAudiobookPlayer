@@ -3451,6 +3451,44 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def closeEvent(self, event):
         """Perform cleanup operations upon application termination, including session saving and engine release"""
+        # Immediately hide the window so the user experiences instant closure
+        self.hide()
+
+        # Stop UI timers immediately to avoid race conditions with freed resources
+        if hasattr(self, "timer") and self.timer:
+            self.timer.stop()
+        if (
+            hasattr(self, "player_widget")
+            and hasattr(self.player_widget, "play_btn")
+            and hasattr(self.player_widget.play_btn, "stop")
+        ):
+            self.player_widget.play_btn.stop()
+
+        # Clean up background threads in library (e.g., CoverLoader, scanner)
+        if hasattr(self, "library_widget") and hasattr(self.library_widget, "cleanup"):
+            self.library_widget.cleanup()
+
+        # Clean up file copy thread if active
+        if hasattr(self, "copy_thread") and self.copy_thread and self.copy_thread.isRunning():
+            try:
+                self.copy_thread.quit()
+                self.copy_thread.wait(300)
+            except Exception:
+                pass
+
+        # Clean up update check thread if active
+        if hasattr(self, "_update_check_thread") and self._update_check_thread:
+            try:
+                self._update_check_thread.result_ready.disconnect()
+            except Exception:
+                pass
+            try:
+                if self._update_check_thread.isRunning():
+                    self._update_check_thread.quit()
+                    self._update_check_thread.wait(200)
+            except Exception:
+                pass
+
         self.save_settings()
 
         # Check if the current audiobook is completed to skip automatic rewinding
@@ -3458,13 +3496,15 @@ class AudiobookPlayerWindow(QMainWindow):
         if self.playback_controller.current_audiobook_id:
             try:
                 import sqlite3
-                connection = sqlite3.connect(self.db_file)
-                cursor = connection.cursor()
-                cursor.execute("SELECT is_completed FROM audiobooks WHERE id = ?", (self.playback_controller.current_audiobook_id,))
-                row = cursor.fetchone()
-                connection.close()
-                if row and row[0] == 1:
-                    is_completed = True
+                with sqlite3.connect(self.db_file) as connection:
+                    cursor = connection.cursor()
+                    cursor.execute(
+                        "SELECT is_completed FROM audiobooks WHERE id = ?",
+                        (self.playback_controller.current_audiobook_id,),
+                    )
+                    row = cursor.fetchone()
+                    if row and row[0] == 1:
+                        is_completed = True
             except Exception as e:
                 print(f"Error checking is_completed in closeEvent: {e}")
 

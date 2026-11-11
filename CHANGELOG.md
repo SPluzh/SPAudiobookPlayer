@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.18]
+- **Performance**: Accelerated application shutdown and fixed the lingering spinning cursor on close.
+
 ## [1.8.17]
 - **System**: Added single-instance protection to prevent launching multiple copies of the player simultaneously. Re-opening the application restores and brings the existing window to the foreground.
 
