@@ -966,7 +966,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.player_widget.play_clicked.connect(self.toggle_play)
         self.player_widget.next_clicked.connect(self.on_next_clicked)
         self.player_widget.prev_clicked.connect(self.on_prev_clicked)
-        self.player_widget.rewind_clicked.connect(self.player.rewind)
+        self.player_widget.rewind_clicked.connect(self.playback_controller.rewind)
         self.player_widget.position_changed.connect(self.on_position_changed)
         self.player_widget.volume_changed.connect(self.player.set_volume)
         self.player_widget.speed_changed.connect(self.on_speed_changed)
@@ -1720,7 +1720,15 @@ class AudiobookPlayerWindow(QMainWindow):
         config["LastSession"]["last_file_index"] = str(
             self.playback_controller.current_file_index
         )
-        config["LastSession"]["last_position"] = str(self.player.get_position())
+        start_offset = 0
+        if (self.playback_controller.files_list and 
+            0 <= self.playback_controller.current_file_index < len(self.playback_controller.files_list)):
+            start_offset = self.playback_controller.files_list[
+                self.playback_controller.current_file_index
+            ].get("start_offset", 0)
+        config["LastSession"]["last_position"] = str(
+            max(start_offset, self.player.get_position())
+        )
 
         if "Display" not in config:
             config["Display"] = {}
@@ -1743,6 +1751,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def restore_last_session(self):
         """Re-establish the application's previous state by reloading playback meta-data and layout preferences"""
+        self.last_pause_time = None
         config = configparser.ConfigParser()
         config.read(self.config_file, encoding="utf-8")
 
@@ -1786,11 +1795,16 @@ class AudiobookPlayerWindow(QMainWindow):
                 if self.delegate:
                     self.delegate.playing_path = audiobook_path
 
+                safe_file_index = max(0, min(file_index, len(self.playback_controller.files_list) - 1)) if self.playback_controller.files_list else 0
+                current_file_info = self.playback_controller.files_list[safe_file_index] if self.playback_controller.files_list else {}
+                start_offset = current_file_info.get("start_offset", 0)
+                target_pos = max(start_offset, position)
+
                 if self.playback_controller._url_loading:
                     # URL track: re-inject the saved position and file_index into the context
                     # so _on_url_stream_ready() will seek correctly after connection.
                     ctx = self.playback_controller._url_load_context
-                    ctx['saved_position'] = position if position > 0 else ctx.get('saved_position')
+                    ctx['saved_position'] = target_pos if target_pos > 0 else ctx.get('saved_position')
                     ctx['restore_paused'] = True
                     # Update the UI for what we know so far (playlist, cover, speed)
                     self.update_ui_for_audiobook()
@@ -1798,10 +1812,10 @@ class AudiobookPlayerWindow(QMainWindow):
                     return  # playback will start in _on_url_load_complete once connected
 
                 # Synchronous path (local file) — same as before
-                self.playback_controller.current_file_index = file_index
-                self.playback_controller.play_file_at_index(file_index, False)
-                if position > 0:
-                    self.player.set_position(position)
+                self.playback_controller.current_file_index = safe_file_index
+                self.playback_controller.play_file_at_index(safe_file_index, False)
+                if target_pos > 0:
+                    self.player.set_position(target_pos)
 
                 self.update_ui_for_audiobook()
                 self.library_widget.tree.viewport().update()
@@ -2075,6 +2089,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def on_audiobook_selected(self, audiobook_path: str):
         """Handle the user's selection of an audiobook from the library, initiating playback and updating status"""
+        self.last_pause_time = None
         # Wire up the async-load callback before loading
         self.playback_controller.on_load_complete = self._on_url_load_complete
 
@@ -2176,6 +2191,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def unload_active_book(self, save_progress: bool = True):
         """Stop playback, save current progress (optional), and completely unload the active audiobook"""
+        self.last_pause_time = None
         if self.playback_controller.current_audiobook_path:
             if save_progress:
                 self.playback_controller.save_current_progress()
@@ -2243,7 +2259,7 @@ class AudiobookPlayerWindow(QMainWindow):
                     # Rewind logic: base 1s + 1s per 30s of pause, up to 30s total
                     # So: 1min pause -> 5 + 2 = 7s, 10min pause -> 5 + 20 = 25s
                     rewind_amount = min(30, 5 + (pause_duration / 30.0))
-                    self.player.rewind(-rewind_amount)
+                    self.playback_controller.rewind(-rewind_amount)
 
             self.player.play()
             self.last_pause_time = None
@@ -2304,20 +2320,17 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def on_rewind_10_clicked(self):
         """Rewind playback by a fixed 10-second interval within the current file"""
-        pos = self.player.get_position()
-        self.player.set_position(max(0, pos - 10))
+        self.playback_controller.rewind(-10)
         self.playback_controller.save_current_progress()
 
     def on_forward_10_clicked(self):
         """Advance playback by a fixed 10-second interval within the current file"""
-        pos = self.player.get_position()
-        duration = self.player.get_duration()
-        if duration > 0:
-            self.player.set_position(min(duration, pos + 10))
+        self.playback_controller.rewind(10)
         self.playback_controller.save_current_progress()
 
     def on_file_selected(self, index: int):
         """Handle manual file selection from the track list, initiating playback for the chosen segment"""
+        self.last_pause_time = None
         self.playback_controller.play_file_at_index(index)
         self.player_widget.highlight_current_file(index)
         self._load_subtitles_for_current_file()
@@ -2438,13 +2451,14 @@ class AudiobookPlayerWindow(QMainWindow):
         chapter_duration = current_file_info.get("duration", duration)
 
         # Synchronize individual track progress indicators
+        chapter_pos = max(0.0, pos - start_offset)
         self.player_widget.update_file_progress(
-            pos - start_offset, chapter_duration, self.player.speed_pos / 10.0
+            chapter_pos, chapter_duration, self.player.speed_pos / 10.0
         )
 
         # Synchronize Subtitles position
         if self.show_subtitles and hasattr(self.player_widget, 'subtitle_panel'):
-            self.player_widget.subtitle_panel.update_position(pos - start_offset)
+            self.player_widget.subtitle_panel.update_position(chapter_pos)
 
         # Synchronize aggregate audiobook progress indicators
         total_pos = self.playback_controller.get_current_position()
@@ -3509,7 +3523,7 @@ class AudiobookPlayerWindow(QMainWindow):
                 print(f"Error checking is_completed in closeEvent: {e}")
 
         if self.auto_rewind and not is_completed:
-            self.player.rewind(-30)
+            self.playback_controller.rewind(-30)
 
         self.playback_controller.save_current_progress()
         self.save_last_session()

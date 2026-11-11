@@ -182,12 +182,13 @@ class PlaybackController:
 
             # Synchronous path for local files
             if self.player.load(abs_file_path):
-                # Seek to saved position if present, otherwise to chapter start
+                # Seek to saved position if present and within chapter, otherwise to chapter start
                 start_offset = file_info.get('start_offset', 0)
-                if saved_position is not None and saved_position > 0:
-                     self.player.set_position(saved_position)
-                elif start_offset > 0:
-                    self.player.set_position(start_offset)
+                target_pos = start_offset
+                if saved_position is not None and saved_position > start_offset:
+                    target_pos = saved_position
+                if target_pos > 0:
+                    self.player.set_position(target_pos)
                 
                 # Update last_updated timestamp in database
                 self.db.update_last_updated(self.current_audiobook_id)
@@ -260,11 +261,9 @@ class PlaybackController:
 
         # Seek to saved position or start offset
         start_offset = file_info.get('start_offset', 0)
-        target_pos = 0.0
-        if saved_position is not None and saved_position > 0:
+        target_pos = start_offset
+        if saved_position is not None and saved_position > start_offset:
             target_pos = saved_position
-        elif start_offset > 0:
-            target_pos = start_offset
 
         if target_pos > 0:
             # Skip seek entirely for live / unbounded streams (e.g. radio)
@@ -476,6 +475,26 @@ class PlaybackController:
             self.save_current_progress()
             return True
         return False
+
+    def rewind(self, seconds: float):
+        """Rewind or fast forward by specified seconds, respecting chapter boundaries and start_offset"""
+        if getattr(self, '_url_loading', False):
+            return
+
+        if not self.files_list or self.current_file_index < 0 or self.current_file_index >= len(self.files_list):
+            self.player.rewind(seconds)
+            return
+
+        file_info = self.files_list[self.current_file_index]
+        start_offset = file_info.get('start_offset', 0)
+        chapter_duration = file_info.get('duration', self.player.get_duration())
+
+        current_pos = self.player.get_position()
+        min_pos = start_offset
+        max_pos = start_offset + chapter_duration if chapter_duration > 0 else self.player.get_duration()
+
+        target_pos = max(min_pos, min(max_pos, current_pos + seconds))
+        self.player.set_position(target_pos)
     
     def calculate_global_position(self):
         """Update the aggregate duration of all files preceding the current one"""
@@ -513,7 +532,9 @@ class PlaybackController:
         if getattr(self, '_url_loading', False):
             return
         
-        position = self.player.get_position()
+        current_file_info = self.files_list[self.current_file_index]
+        start_offset = current_file_info.get('start_offset', 0)
+        position = max(start_offset, self.player.get_position())
         speed = self.player.speed_pos / 10.0
         listened_duration = self.get_current_position()
         progress_percent = self.get_progress_percent()

@@ -89,28 +89,28 @@ class HotKeyManager(QObject):
         # Seek: Left/Right Arrows (10s), Shift + Left/Right (60s)
         self.shortcut_rewind_10 = QShortcut(QKeySequence(Qt.Key.Key_Left), self.window)
         self.shortcut_rewind_10.activated.connect(
-            lambda: self.window.player.rewind(-10)
+            lambda: self.window.playback_controller.rewind(-10)
         )
 
         self.shortcut_forward_10 = QShortcut(
             QKeySequence(Qt.Key.Key_Right), self.window
         )
         self.shortcut_forward_10.activated.connect(
-            lambda: self.window.player.rewind(10)
+            lambda: self.window.playback_controller.rewind(10)
         )
 
         self.shortcut_rewind_60 = QShortcut(
             QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Left), self.window
         )
         self.shortcut_rewind_60.activated.connect(
-            lambda: self.window.player.rewind(-60)
+            lambda: self.window.playback_controller.rewind(-60)
         )
 
         self.shortcut_forward_60 = QShortcut(
             QKeySequence(Qt.Modifier.SHIFT | Qt.Key.Key_Right), self.window
         )
         self.shortcut_forward_60.activated.connect(
-            lambda: self.window.player.rewind(60)
+            lambda: self.window.playback_controller.rewind(60)
         )
 
         # Playback Speed: Up/Down Arrows (0.1x steps)
@@ -173,10 +173,10 @@ class HotKeyManager(QObject):
                 self.window.toggle_play()
                 return True
             elif hotkey_id == HOTKEY_ID_NEXT:
-                self.window.player.rewind(10)
+                self.window.playback_controller.rewind(10)
                 return True
             elif hotkey_id == HOTKEY_ID_PREV:
-                self.window.player.rewind(-10)
+                self.window.playback_controller.rewind(-10)
                 return True
             elif hotkey_id == HOTKEY_ID_STOP:
                 if self.window.player.is_playing():
@@ -203,9 +203,9 @@ class HotKeyManager(QObject):
                 self.window.toggle_play()
             return True
         elif command == APPCOMMAND_MEDIA_NEXTTRACK:
-            self.window.player.rewind(10)
+            self.window.playback_controller.rewind(10)
             return True
         elif command == APPCOMMAND_MEDIA_PREVTRACK:
-            self.window.player.rewind(-10)
+            self.window.playback_controller.rewind(-10)
             return True
         return False

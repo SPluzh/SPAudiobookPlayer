@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [1.8.18]
+- **Playback**: Fixed Auto Rewind rewinding past chapter start and freezing playback time at 00:00.
 - **Performance**: Accelerated application shutdown and fixed the lingering spinning cursor on close.
 
 ## [1.8.17]
