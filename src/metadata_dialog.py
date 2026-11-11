@@ -4,8 +4,11 @@ from PyQt6.QtWidgets import (
     QScrollArea, QWidget, QApplication, QCheckBox, QLineEdit, QGridLayout
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, QRectF, QThread
-from PyQt6.QtGui import QIcon, QPixmap, QPainter, QPen, QColor
+from PyQt6.QtGui import QIcon, QPixmap, QPainter, QPen, QColor, QImage, QKeySequence
 from pathlib import Path
+import os
+import shutil
+import hashlib
 import sys
 
 try:
@@ -126,7 +129,7 @@ class MetadataEditDialog(QDialog):
         if self.is_bulk:
             self.resize(480, 320)
         else:
-            self.resize(480, 500)
+            self.resize(480, 520)
         
         if not self.audiobook_id:
             self.reject()
@@ -140,21 +143,32 @@ class MetadataEditDialog(QDialog):
 
         self.setup_ui()
         self.load_suggestions()
+        if not self.is_bulk:
+            self.setAcceptDrops(True)
+            self.initial_cover_id = self.selected_cover_id
         
     def setup_ui(self):
         layout = QVBoxLayout(self)
         
-        # Scroll area for thumbnails
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setFixedHeight(140)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll_area.setObjectName("coverScrollArea")
+        # Cover hint label
+        self.cover_hint_label = QLabel(tr("metadata.drop_cover_hint", default="Drop cover image here or press Ctrl+V to paste"))
+        self.cover_hint_label.setObjectName("coverDropHintLabel")
+        layout.addWidget(self.cover_hint_label)
         
-        scroll_content = QWidget()
-        scroll_content.setObjectName("coverScrollContent")
-        self.scroll_layout = QHBoxLayout(scroll_content)
+        # Scroll area for thumbnails
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFixedHeight(140)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setObjectName("coverScrollArea")
+        self.scroll_area.setAcceptDrops(False)
+        self.scroll_area.setToolTip(tr("metadata.drop_cover_hint", default="Drop cover image here or press Ctrl+V to paste"))
+        
+        self.scroll_content = QWidget()
+        self.scroll_content.setObjectName("coverScrollContent")
+        self.scroll_content.setAcceptDrops(False)
+        self.scroll_layout = QHBoxLayout(self.scroll_content)
         self.scroll_layout.setContentsMargins(5, 5, 5, 5)
         self.scroll_layout.setSpacing(10)
         
@@ -163,11 +177,12 @@ class MetadataEditDialog(QDialog):
         # Load cover thumbnails
         self.populate_covers()
         
-        scroll_area.setWidget(scroll_content)
-        layout.addWidget(scroll_area)
+        self.scroll_area.setWidget(self.scroll_content)
+        layout.addWidget(self.scroll_area)
         
         if self.is_bulk:
-            scroll_area.setVisible(False)
+            self.cover_hint_label.setVisible(False)
+            self.scroll_area.setVisible(False)
         
         # Form fields
         form_layout = QFormLayout()
@@ -474,6 +489,10 @@ class MetadataEditDialog(QDialog):
             self.open_folder_btn.setToolTip(tr("metadata.open_folder_tooltip", default="Open folder containing this book"))
         if hasattr(self, 'search_cover_btn') and self.search_cover_btn:
             self.search_cover_btn.setToolTip(tr("metadata.search_cover_tooltip", default="Search covers online"))
+        if hasattr(self, 'cover_hint_label') and self.cover_hint_label:
+            self.cover_hint_label.setText(tr("metadata.drop_cover_hint", default="Drop cover image here or press Ctrl+V to paste"))
+        if hasattr(self, 'scroll_area') and self.scroll_area:
+            self.scroll_area.setToolTip(tr("metadata.drop_cover_hint", default="Drop cover image here or press Ctrl+V to paste"))
 
     def get_data(self):
         """Return the entered metadata as a tuple"""
@@ -679,13 +698,24 @@ class MetadataEditDialog(QDialog):
         try:
             import sqlite3
             conn = sqlite3.connect(self.db.db_file)
-            cursor = conn.cursor()
-            cursor.execute("SELECT path, is_playlist, root_path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
-            row = cursor.fetchone()
-            conn.close()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT path, is_playlist, root_path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+                row = cursor.fetchone()
+            finally:
+                conn.close()
             
             if row:
                 relative_path, is_playlist, book_root = row[0], row[1], row[2]
+                
+                # If relative_path is already an absolute existing path
+                if relative_path:
+                    raw_path = Path(relative_path)
+                    if raw_path.is_absolute() and raw_path.exists():
+                        if is_playlist or raw_path.is_file():
+                            return raw_path.parent
+                        return raw_path
+
                 library_root = book_root or ""
                 if not library_root and self.parent() and hasattr(self.parent(), 'config') and self.parent().config:
                     library_root = self.parent().config.get("default_path", "")
@@ -778,6 +808,354 @@ class MetadataEditDialog(QDialog):
         if not self.is_bulk:
             self.db.set_selected_audiobook_cover(self.audiobook_id, self.selected_cover_id)
         super().accept()
+
+    def reject(self):
+        """Restore initial cover if user cancels the dialog"""
+        if not self.is_bulk and hasattr(self, 'initial_cover_id'):
+            if self.selected_cover_id != self.initial_cover_id:
+                self.db.set_selected_audiobook_cover(self.audiobook_id, self.initial_cover_id)
+        super().reject()
+
+    def _has_acceptable_drag_data(self, mime_data) -> bool:
+        """Check if mimeData contains an acceptable image (file, URL or bitmap)"""
+        if not mime_data or self.is_bulk:
+            return False
+        if mime_data.hasImage():
+            return True
+        if mime_data.hasUrls():
+            for url in mime_data.urls():
+                if url.isLocalFile():
+                    p = Path(url.toLocalFile())
+                    if p.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']:
+                        return True
+                else:
+                    s = url.toString().lower()
+                    if s.startswith(('http://', 'https://')):
+                        return True
+        if mime_data.hasText():
+            t = mime_data.text().strip().strip('"').strip("'")
+            if t.startswith(('http://', 'https://')) or (Path(t).is_file() and Path(t).suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']):
+                return True
+        return False
+
+    def _set_drag_over_state(self, active: bool):
+        """Set visual drag over indication on the cover scroll area and hint label"""
+        if hasattr(self, 'scroll_area') and self.scroll_area:
+            if self.scroll_area.property("dragOver") != active:
+                self.scroll_area.setProperty("dragOver", active)
+                self.scroll_area.style().unpolish(self.scroll_area)
+                self.scroll_area.style().polish(self.scroll_area)
+        if hasattr(self, 'cover_hint_label') and self.cover_hint_label:
+            if self.cover_hint_label.property("dragOver") != active:
+                self.cover_hint_label.setProperty("dragOver", active)
+                self.cover_hint_label.style().unpolish(self.cover_hint_label)
+                self.cover_hint_label.style().polish(self.cover_hint_label)
+
+    def dragEnterEvent(self, event):
+        if self._has_acceptable_drag_data(event.mimeData()):
+            self._set_drag_over_state(True)
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if self._has_acceptable_drag_data(event.mimeData()):
+            self._set_drag_over_state(True)
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragLeaveEvent(self, event):
+        self._set_drag_over_state(False)
+        event.accept()
+
+    def dropEvent(self, event):
+        self._set_drag_over_state(False)
+        if self.is_bulk:
+            event.ignore()
+            return
+            
+        mime = event.mimeData()
+        handled = False
+        
+        # 1. Check URLs
+        if mime.hasUrls():
+            for url in mime.urls():
+                if url.isLocalFile():
+                    file_path = Path(url.toLocalFile())
+                    if file_path.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']:
+                        if self.process_imported_file(file_path):
+                            handled = True
+                            break
+                else:
+                    url_str = url.toString()
+                    if self.process_imported_url(url_str):
+                        handled = True
+                        break
+                        
+        # 2. Check direct image data
+        if not handled and mime.hasImage():
+            img_data = mime.imageData()
+            if isinstance(img_data, QImage) and not img_data.isNull():
+                handled = self.process_imported_image(img_data)
+            elif isinstance(img_data, QPixmap) and not img_data.isNull():
+                handled = self.process_imported_image(img_data.toImage())
+
+        # 3. Check plain text
+        if not handled and mime.hasText():
+            text = mime.text().strip().strip('"').strip("'")
+            if text.startswith(('http://', 'https://')):
+                handled = self.process_imported_url(text)
+            elif Path(text).is_file():
+                handled = self.process_imported_file(Path(text))
+                
+        if handled:
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def keyPressEvent(self, event):
+        """Handle hotkeys, specifically Ctrl+V to paste cover from clipboard"""
+        if (event.key() == Qt.Key.Key_V and event.modifiers() & Qt.KeyboardModifier.ControlModifier) or event.matches(QKeySequence.StandardKey.Paste):
+            focused = self.focusWidget()
+            clipboard = QApplication.clipboard()
+            mime = clipboard.mimeData() if clipboard else None
+            
+            # If user is focused on a text box and clipboard contains text, allow standard paste
+            if isinstance(focused, (QLineEdit, QComboBox)) and mime and mime.hasText() and not mime.hasImage():
+                super().keyPressEvent(event)
+                return
+                
+            # Otherwise attempt to paste image as cover
+            if not self.is_bulk and self.import_image_from_clipboard():
+                event.accept()
+                return
+
+        super().keyPressEvent(event)
+
+    def import_image_from_clipboard(self) -> bool:
+        """Import cover image from system clipboard"""
+        clipboard = QApplication.clipboard()
+        if not clipboard:
+            return False
+        mime = clipboard.mimeData()
+        if not mime:
+            return False
+            
+        # 1. Image in clipboard
+        if mime.hasImage():
+            img = clipboard.image()
+            if not img.isNull():
+                return self.process_imported_image(img)
+                
+        # 2. Copied files (e.g. from Explorer)
+        if mime.hasUrls():
+            for url in mime.urls():
+                if url.isLocalFile():
+                    p = Path(url.toLocalFile())
+                    if p.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']:
+                        return self.process_imported_file(p)
+                else:
+                    if self.process_imported_url(url.toString()):
+                        return True
+                        
+        # 3. Plain text containing image path or web URL
+        if mime.hasText():
+            text = mime.text().strip().strip('"').strip("'")
+            if text.startswith(('http://', 'https://')):
+                return self.process_imported_url(text)
+            elif Path(text).is_file() and Path(text).suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']:
+                return self.process_imported_file(Path(text))
+                
+        return False
+
+    def process_imported_file(self, file_path: Path) -> bool:
+        """Validate and import a local image file"""
+        if not file_path.exists() or not file_path.is_file():
+            return False
+        img = QImage(str(file_path))
+        if img.isNull():
+            return False
+        return self._save_and_activate_cover(file_path, img, filename_hint=file_path.name)
+
+    def process_imported_image(self, qimage: QImage) -> bool:
+        """Validate and import a QImage directly"""
+        if qimage.isNull():
+            return False
+        return self._save_and_activate_cover(None, qimage, filename_hint="cover.jpg")
+
+    def process_imported_url(self, url_str: str) -> bool:
+        """Download and import an image from a URL"""
+        import urllib.request
+        from urllib.parse import urlparse
+        import posixpath
+        try:
+            url_path = urlparse(url_str).path
+            ext = posixpath.splitext(url_path)[1].lower()
+            if ext not in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']:
+                ext = '.jpg'
+            filename_hint = f"cover{ext}"
+            
+            req = urllib.request.Request(url_str, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = resp.read()
+            img = QImage.fromData(data)
+            if not img.isNull():
+                return self._save_and_activate_cover(None, img, filename_hint=filename_hint)
+        except Exception as e:
+            print(f"Error downloading cover from URL {url_str}: {e}")
+        return False
+
+    def _generate_unique_dest_path(self, target_dir: Path, stem: str, ext: str) -> Path:
+        """Generate a destination path that does not overwrite existing files"""
+        dest_file = target_dir / f"{stem}{ext}"
+        if not dest_file.exists():
+            return dest_file
+        counter = 1
+        while True:
+            candidate = target_dir / f"{stem}_{counter}{ext}"
+            if not candidate.exists():
+                return candidate
+            counter += 1
+
+    def _save_and_activate_cover(self, source_path_or_none, qimage: QImage, filename_hint: str = "cover.jpg") -> bool:
+        """Save cover to book directory (or cache fallback), generate thumbnail, insert into DB, and select it."""
+        import os
+        import shutil
+        import hashlib
+        import sqlite3
+        from utils import get_base_path
+        
+        # Check if already in covers
+        if source_path_or_none:
+            try:
+                src_p = Path(source_path_or_none).resolve()
+                existing_covers = self.db.get_audiobook_covers(self.audiobook_id)
+                for cov in existing_covers:
+                    if cov.get('original_path') and Path(cov['original_path']).resolve() == src_p:
+                        self.db.set_selected_audiobook_cover(self.audiobook_id, cov['id'])
+                        self.populate_covers()
+                        self._scroll_to_selected_cover(cov['id'])
+                        return True
+            except Exception:
+                pass
+
+        audiobook_dir = self.get_audiobook_dir()
+        covers_dir = get_base_path() / "data" / "extracted_covers"
+        covers_dir.mkdir(parents=True, exist_ok=True)
+        
+        target_dir = audiobook_dir if (audiobook_dir and audiobook_dir.exists() and os.access(audiobook_dir, os.W_OK)) else covers_dir
+        
+        ext = Path(filename_hint).suffix.lower()
+        if ext not in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']:
+            ext = '.jpg'
+        stem = Path(filename_hint).stem or 'cover'
+        
+        # Check if file is already inside target_dir
+        if source_path_or_none and Path(source_path_or_none).exists():
+            src_p = Path(source_path_or_none).resolve()
+            try:
+                target_resolved = target_dir.resolve()
+                if src_p.parent == target_resolved:
+                    dest_file = src_p
+                else:
+                    dest_file = self._generate_unique_dest_path(target_dir, stem, ext)
+                    shutil.copy2(src_p, dest_file)
+            except Exception as e:
+                print(f"Error copying cover to target_dir: {e}")
+                dest_file = covers_dir / f"cover_{self.audiobook_id}_{hashlib.md5(stem.encode()).hexdigest()[:8]}{ext}"
+                shutil.copy2(src_p, dest_file)
+        else:
+            dest_file = self._generate_unique_dest_path(target_dir, stem, ext)
+            try:
+                save_format = "PNG" if ext == ".png" else "JPEG"
+                qimage.save(str(dest_file), save_format)
+            except Exception as e:
+                print(f"Error saving image to target_dir: {e}")
+                dest_file = covers_dir / f"cover_{self.audiobook_id}_{hashlib.md5(stem.encode()).hexdigest()[:8]}{ext}"
+                qimage.save(str(dest_file), "JPEG")
+
+        # 3. Create cached 300x300 thumbnail
+        safe_name = f"book_{self.audiobook_id}"
+        try:
+            conn = sqlite3.connect(self.db.db_file)
+            try:
+                c = conn.cursor()
+                c.execute("SELECT path FROM audiobooks WHERE id = ?", (self.audiobook_id,))
+                row = c.fetchone()
+                if row and row[0]:
+                    safe_name = hashlib.md5(row[0].encode()).hexdigest()
+            finally:
+                conn.close()
+        except Exception:
+            pass
+            
+        image_hash = hashlib.md5(str(dest_file).encode()).hexdigest()[:8]
+        cached_dest = covers_dir / f"{safe_name}_{image_hash}.jpg"
+        
+        if qimage is None or qimage.isNull():
+            qimage = QImage(str(dest_file))
+            
+        # Composite on dark background if transparent to prevent black artifacts
+        thumb_img = qimage
+        if qimage.hasAlphaChannel():
+            bg = QImage(qimage.size(), QImage.Format.Format_RGB32)
+            bg.fill(QColor("#1a1a1a"))
+            p = QPainter(bg)
+            p.drawImage(0, 0, qimage)
+            p.end()
+            thumb_img = bg
+            
+        scaled = thumb_img.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        scaled.save(str(cached_dest), "JPG")
+        
+        # 4. Insert into audiobook_covers
+        original_path_str = str(dest_file)
+        cached_path_str = str(cached_dest)
+        
+        cover_id = None
+        try:
+            conn = sqlite3.connect(self.db.db_file)
+            try:
+                c = conn.cursor()
+                c.execute("""
+                    SELECT id FROM audiobook_covers 
+                    WHERE audiobook_id = ? AND (original_path = ? OR cached_path = ?)
+                """, (self.audiobook_id, original_path_str, cached_path_str))
+                row = c.fetchone()
+                if row:
+                    cover_id = row[0]
+                else:
+                    c.execute("""
+                        INSERT INTO audiobook_covers (audiobook_id, original_path, cached_path, is_selected, source_type)
+                        VALUES (?, ?, ?, 0, 'file')
+                    """, (self.audiobook_id, original_path_str, cached_path_str))
+                    cover_id = c.lastrowid
+                    conn.commit()
+            finally:
+                conn.close()
+        except Exception as e:
+            print(f"Error inserting cover into DB: {e}")
+            return False
+            
+        if cover_id is not None:
+            from utils import load_icon
+            load_icon.cache_clear()
+            
+            self.db.set_selected_audiobook_cover(self.audiobook_id, cover_id)
+            self.selected_cover_id = cover_id
+            self.populate_covers()
+            self._scroll_to_selected_cover(cover_id)
+            return True
+        return False
+
+    def _scroll_to_selected_cover(self, cover_id: int):
+        """Scroll the cover thumbnails area to show the selected cover"""
+        if hasattr(self, 'thumbnail_widgets') and hasattr(self, 'scroll_area') and self.scroll_area:
+            for thumb in self.thumbnail_widgets:
+                if getattr(thumb, 'cover_id', None) == cover_id:
+                    self.scroll_area.ensureWidgetVisible(thumb)
+                    break
 
 
 class SearchWorker(QThread):

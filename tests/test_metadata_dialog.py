@@ -1,6 +1,9 @@
 import pytest
 import sqlite3
+from pathlib import Path
 from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import Qt, QUrl, QMimeData, QPointF, QPoint
+from PyQt6.QtGui import QImage, QColor, QDragEnterEvent, QDropEvent
 from database import DatabaseManager, init_database
 from metadata_dialog import MetadataEditDialog
 
@@ -478,5 +481,233 @@ def test_cover_search_dialog_rearrange_grid(temp_db, temp_dir, monkeypatch):
     assert not hasattr(dialog, '_current_cols')
     assert len(dialog.result_widgets) == 0
     assert dialog.grid_layout.count() == 0
+
+
+def test_drag_and_drop_cover_file(temp_db, tmp_path):
+    """Test dropping a cover image file onto MetadataEditDialog."""
+    app = QApplication.instance() or QApplication([])
+    init_database(str(temp_db))
+    db = DatabaseManager(str(temp_db))
+    
+    # Create fake book folder and file
+    book_folder = tmp_path / "BookFolder"
+    book_folder.mkdir()
+    
+    conn = sqlite3.connect(db.db_file)
+    try:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO audiobooks (path, name, author, title, narrator, language, is_folder, root_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (str(book_folder), "Test Book", "Author", "Title", "Narrator", "ru", 1, ""))
+        audiobook_id = c.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
+        
+    dialog = MetadataEditDialog(db, audiobook_id)
+    assert dialog.acceptDrops() is True
+    
+    # Create a test cover image file outside the book folder
+    external_dir = tmp_path / "Downloads"
+    external_dir.mkdir()
+    external_cover = external_dir / "my_cover.png"
+    img = QImage(200, 200, QImage.Format.Format_RGB32)
+    img.fill(QColor("blue"))
+    img.save(str(external_cover), "PNG")
+    
+    # Process imported file
+    success = dialog.process_imported_file(external_cover)
+    assert success is True
+    
+    # Verify file was copied to book_folder
+    saved_file = book_folder / "my_cover.png"
+    assert saved_file.exists()
+    
+    # Verify cover was added to database and is selected
+    covers = db.get_audiobook_covers(audiobook_id)
+    assert len(covers) == 1
+    assert covers[0]['is_selected'] is True
+    assert covers[0]['id'] == dialog.selected_cover_id
+    
+    # Check dialog thumbnails
+    # There should be 2 thumbnails: our cover + "No Cover" option
+    assert len(dialog.thumbnail_widgets) == 2
+    assert dialog.thumbnail_widgets[0].is_selected is True
+    assert dialog.thumbnail_widgets[1].is_selected is False
+    
+    # Calling accept should persist selection
+    dialog.accept()
+    conn = sqlite3.connect(db.db_file)
+    try:
+        c = conn.cursor()
+        c.execute("SELECT cover_path FROM audiobooks WHERE id = ?", (audiobook_id,))
+        row = c.fetchone()
+        assert row is not None
+        assert row[0] == str(saved_file)
+    finally:
+        conn.close()
+
+
+def test_drag_accepts_and_visual_feedback(temp_db, tmp_path):
+    """Test mimeData checking and dragOver property state during drag events."""
+    app = QApplication.instance() or QApplication([])
+    init_database(str(temp_db))
+    db = DatabaseManager(str(temp_db))
+    
+    book_folder = tmp_path / "BookFolder2"
+    book_folder.mkdir()
+    
+    conn = sqlite3.connect(db.db_file)
+    try:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO audiobooks (path, name, author, title, narrator, language, is_folder, root_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (str(book_folder), "Test Book 2", "Author", "Title", "Narrator", "ru", 1, ""))
+        audiobook_id = c.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
+        
+    dialog = MetadataEditDialog(db, audiobook_id)
+    
+    # 1. Non-image mime data
+    mime_txt = QMimeData()
+    mime_txt.setText("Some non-path string")
+    assert dialog._has_acceptable_drag_data(mime_txt) is False
+    
+    # 2. Image URL mime data
+    mime_img = QMimeData()
+    img_file = tmp_path / "art.jpg"
+    img = QImage(100, 100, QImage.Format.Format_RGB32)
+    img.fill(QColor("red"))
+    img.save(str(img_file), "JPEG")
+    mime_img.setUrls([QUrl.fromLocalFile(str(img_file))])
+    assert dialog._has_acceptable_drag_data(mime_img) is True
+    
+    # 3. Test drag enter / leave changes scroll_area and cover_hint_label property
+    assert hasattr(dialog, 'cover_hint_label')
+    dialog._set_drag_over_state(True)
+    assert dialog.scroll_area.property("dragOver") is True
+    assert dialog.cover_hint_label.property("dragOver") is True
+    dialog._set_drag_over_state(False)
+    assert dialog.scroll_area.property("dragOver") is False
+    assert dialog.cover_hint_label.property("dragOver") is False
+
+
+def test_clipboard_paste_cover(temp_db, tmp_path, monkeypatch):
+    """Test importing a cover directly from clipboard image."""
+    app = QApplication.instance() or QApplication([])
+    init_database(str(temp_db))
+    db = DatabaseManager(str(temp_db))
+    
+    book_folder = tmp_path / "BookFolder3"
+    book_folder.mkdir()
+    
+    conn = sqlite3.connect(db.db_file)
+    try:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO audiobooks (path, name, author, title, narrator, language, is_folder, root_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (str(book_folder), "Test Book 3", "Author", "Title", "Narrator", "ru", 1, ""))
+        audiobook_id = c.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
+        
+    dialog = MetadataEditDialog(db, audiobook_id)
+    
+    img = QImage(150, 150, QImage.Format.Format_RGB32)
+    img.fill(QColor("green"))
+    
+    clipboard = QApplication.clipboard()
+    dummy_mime = QMimeData()
+    dummy_mime.setImageData(img)
+    monkeypatch.setattr(clipboard, "mimeData", lambda: dummy_mime)
+    monkeypatch.setattr(clipboard, "image", lambda: img)
+    
+    success = dialog.import_image_from_clipboard()
+    assert success is True
+    
+    # Check that a cover file was created in book_folder
+    created_covers = list(book_folder.glob("cover*.jpg"))
+    assert len(created_covers) >= 1
+    
+    # Check that the cover is active in dialog
+    covers = db.get_audiobook_covers(audiobook_id)
+    assert len(covers) == 1
+    assert covers[0]['is_selected'] is True
+    assert covers[0]['id'] == dialog.selected_cover_id
+
+
+def test_cancel_restores_initial_cover(temp_db, tmp_path):
+    """Test that closing dialog via reject() reverts active cover to the original one."""
+    app = QApplication.instance() or QApplication([])
+    init_database(str(temp_db))
+    db = DatabaseManager(str(temp_db))
+    
+    book_folder = tmp_path / "BookFolder4"
+    book_folder.mkdir()
+    
+    # Create original cover
+    orig_cover = book_folder / "original.jpg"
+    img = QImage(100, 100, QImage.Format.Format_RGB32)
+    img.fill(QColor("yellow"))
+    img.save(str(orig_cover), "JPEG")
+    
+    conn = sqlite3.connect(db.db_file)
+    try:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO audiobooks (path, name, author, title, narrator, language, cover_path, cached_cover_path, is_folder, root_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (str(book_folder), "Test Book 4", "Author", "Title", "Narrator", "ru", str(orig_cover), str(orig_cover), 1, ""))
+        audiobook_id = c.lastrowid
+        
+        c.execute("""
+            INSERT INTO audiobook_covers (audiobook_id, original_path, cached_path, is_selected, source_type)
+            VALUES (?, ?, ?, 1, 'file')
+        """, (audiobook_id, str(orig_cover), str(orig_cover)))
+        orig_cover_id = c.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
+        
+    dialog = MetadataEditDialog(db, audiobook_id)
+    assert dialog.initial_cover_id == orig_cover_id
+    assert dialog.selected_cover_id == orig_cover_id
+    
+    # Drop a new cover
+    new_cover = tmp_path / "new_cover.png"
+    img2 = QImage(120, 120, QImage.Format.Format_RGB32)
+    img2.fill(QColor("purple"))
+    img2.save(str(new_cover), "PNG")
+    
+    dialog.process_imported_file(new_cover)
+    assert dialog.selected_cover_id != orig_cover_id
+    
+    # Now user cancels
+    dialog.reject()
+    
+    # Verify DB restored the original cover
+    covers = db.get_audiobook_covers(audiobook_id)
+    for cov in covers:
+        if cov['id'] == orig_cover_id:
+            assert cov['is_selected'] is True
+        else:
+            assert cov['is_selected'] is False
+            
+    conn = sqlite3.connect(db.db_file)
+    try:
+        c = conn.cursor()
+        c.execute("SELECT cover_path FROM audiobooks WHERE id = ?", (audiobook_id,))
+        row = c.fetchone()
+        assert row is not None
+        assert row[0] == str(orig_cover)
+    finally:
+        conn.close()
+
 
 

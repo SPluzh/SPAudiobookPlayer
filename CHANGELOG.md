@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.14]
+- **Metadata**: Added Drag & Drop and `Ctrl+V` support to set book covers in the Edit Metadata dialog.
+
 ## [1.8.13]
 - **Appearance**: Added Grid View badge customization (language visibility, badge font size, text and background colors).
 - **UI / Settings**: Compacted Library Settings layout, reorganized order, and clarified List/Grid modes in labels.

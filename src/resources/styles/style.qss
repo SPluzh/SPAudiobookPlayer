@@ -1587,9 +1587,27 @@ QFrame#tooltipSeparator {
 /* ============================================================
    COVER SELECTOR (Metadata Dialog)
    ============================================================ */
+QLabel#coverDropHintLabel {
+    color: @text-dim;
+    font-size: 11px;
+    padding-bottom: 2px;
+}
+
+QLabel#coverDropHintLabel[dragOver="true"] {
+    color: @accent;
+    font-weight: bold;
+}
+
 QScrollArea#coverScrollArea {
-    border: none;
+    border: 2px solid transparent;
+    border-radius: 6px;
     background-color: transparent;
+}
+
+QScrollArea#coverScrollArea[dragOver="true"] {
+    border: 2px dashed @accent;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 QWidget#coverScrollContent {
