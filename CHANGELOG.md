@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.17]
+- **System**: Added single-instance protection to prevent launching multiple copies of the player simultaneously. Re-opening the application restores and brings the existing window to the foreground.
+
 ## [1.8.16]
 - **Player**: Added customization for player control buttons in Appearance Settings (toggle visibility, reorder with up/down buttons, and live preview).
 

@@ -110,6 +110,7 @@ from library import (
 from about_dialog import AboutDialog
 from update_dialog import UpdateCheckThread, UpdateDialog
 from updater import get_current_version
+from single_instance import SingleInstanceManager
 
 DEFAULT_PLAYER_BUTTONS_ORDER = (
     "timer,id3,subtitles,auto_rewind,bookmarks,separator,volume_boost,deesser,compressor,noise_suppression,pitch,mono"
@@ -154,6 +155,7 @@ class AudiobookPlayerWindow(QMainWindow):
         self.data_dir.mkdir(exist_ok=True)
 
         # Auto-rewind state tracking
+        self.single_instance_manager: Optional[SingleInstanceManager] = None
         self.auto_rewind = False
         self.deesser_enabled = False
         self.compressor_enabled = False
@@ -3482,6 +3484,9 @@ class AudiobookPlayerWindow(QMainWindow):
         if hasattr(self, "hotkey_manager"):
             self.hotkey_manager.unregister_all()
 
+        if hasattr(self, "single_instance_manager") and self.single_instance_manager:
+            self.single_instance_manager.cleanup()
+
         self.player.free()
         event.accept()
 
@@ -3506,6 +3511,12 @@ class TaskbarEventFilter(QAbstractNativeEventFilter):
 
                     # Handle multimedia keys and other global hotkeys via HotKeyManager
                     if self.window.hotkey_manager.handle_native_event(msg):
+                        return True, 0
+
+                    # Handle single instance activation from subsequent launch attempts
+                    show_msg_id = SingleInstanceManager.get_show_message_id()
+                    if show_msg_id and msg.message == show_msg_id:
+                        SingleInstanceManager.activate_window(self.window)
                         return True, 0
 
                     # Handle system resume from sleep to refresh taskbar progress state cache
@@ -3568,6 +3579,13 @@ def main():
         app = QApplication(sys.argv)
         print("QApplication created.")
 
+        single_instance = SingleInstanceManager("SPAudiobookPlayer")
+        if single_instance.is_already_running():
+            print("Another instance of SPAudiobookPlayer is already running. Exiting.")
+            sys.exit(0)
+
+        app.aboutToQuit.connect(single_instance.cleanup)
+
         app.setStyle("Fusion")
         # Load theme from settings
         config = configparser.ConfigParser()
@@ -3623,6 +3641,7 @@ def main():
 
         print("Initializing Main Window...")
         window = AudiobookPlayerWindow()
+        window.single_instance_manager = single_instance
 
         # Connect player instance to visualizer button
         if hasattr(window, "player_widget") and hasattr(window, "player"):

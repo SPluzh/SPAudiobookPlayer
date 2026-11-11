@@ -20,6 +20,7 @@ a = Analysis(
         ('../src/resources/icons/*.svg', 'resources/icons'),
     ],
     hiddenimports=[
+        'single_instance',
         'scanner',
         'updater',
         'update_dialog',
