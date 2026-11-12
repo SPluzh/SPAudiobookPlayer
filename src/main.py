@@ -3610,33 +3610,127 @@ class TaskbarEventFilter(QAbstractNativeEventFilter):
         return False, 0
 
 
-def main():
-    """Application entry point: initializes the Qt application context, registers native event filters, and launches the main window"""
-    import traceback
-    import datetime
+class SafeApplication(QApplication):
+    """QApplication subclass that intercepts unhandled exceptions in Qt events and slots,
+    logging them safely to crash.log instead of letting the application abruptly terminate."""
 
+    def notify(self, receiver, event):
+        try:
+            return super().notify(receiver, event)
+        except Exception:
+            try:
+                import traceback
+                err_msg = traceback.format_exc()
+                print("CRITICAL ERROR (Qt Event Exception):", err_msg, file=sys.stderr)
+                _append_to_crash_log("Qt Event Exception", err_msg)
+            except Exception:
+                pass
+            return False
+
+
+def _append_to_crash_log(category: str, err_msg: str, max_size_bytes: int = 1024 * 1024) -> None:
+    """Appends an error entry to data/crash.log with size-based log rotation."""
+    import datetime
+    try:
+        log_dir = get_base_path() / "data"
+        log_dir.mkdir(exist_ok=True)
+        log_file = log_dir / "crash.log"
+
+        if log_file.exists() and log_file.stat().st_size > max_size_bytes:
+            backup_file = log_dir / "crash.log.old"
+            try:
+                if backup_file.exists():
+                    backup_file.unlink()
+                log_file.rename(backup_file)
+            except Exception:
+                pass
+
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(f"\n[{datetime.datetime.now().isoformat()}] {category}:\n")
+            f.write(err_msg if err_msg.endswith("\n") else err_msg + "\n")
+            f.write("=" * 80 + "\n")
+    except Exception as log_err:
+        print(f"Failed to write crash log: {log_err}", file=sys.stderr)
+
+
+def _setup_crash_guards() -> Optional[object]:
+    """Configures multi-layer crash handlers: faulthandler, thread hook, unraisable hook, Qt message handler."""
+    import traceback
+    import faulthandler
+    from PyQt6.QtCore import qInstallMessageHandler, QtMsgType
+
+    # 1. Native crash handler (SIGSEGV, SIGFPE, SIGABRT, Windows Access Violation)
+    native_log_fp = None
+    try:
+        log_dir = get_base_path() / "data"
+        log_dir.mkdir(exist_ok=True)
+        native_log = log_dir / "native_crash.log"
+        if native_log.exists() and native_log.stat().st_size > 1024 * 1024:
+            backup_native = log_dir / "native_crash.log.old"
+            try:
+                if backup_native.exists():
+                    backup_native.unlink()
+                native_log.rename(backup_native)
+            except Exception:
+                pass
+        native_log_fp = open(native_log, "a", encoding="utf-8")
+        faulthandler.enable(file=native_log_fp, all_threads=True)
+    except Exception as fh_err:
+        print(f"Failed to enable faulthandler: {fh_err}", file=sys.stderr)
+
+    # 2. Main thread uncaught exceptions
     def log_uncaught_exception(exctype, value, tb):
         err_msg = "".join(traceback.format_exception(exctype, value, tb))
         print("CRITICAL ERROR (Uncaught Exception):", err_msg, file=sys.stderr)
-        
-        try:
-            log_dir = get_base_path() / "data"
-            log_dir.mkdir(exist_ok=True)
-            log_file = log_dir / "crash.log"
-            with open(log_file, "a", encoding="utf-8") as f:
-                f.write(f"\n[{datetime.datetime.now().isoformat()}] Uncaught Exception:\n")
-                f.write(err_msg)
-                f.write("="*80 + "\n")
-        except Exception as log_err:
-            print(f"Failed to write crash log: {log_err}", file=sys.stderr)
-            
+        _append_to_crash_log("Uncaught Exception", err_msg)
         sys.__excepthook__(exctype, value, tb)
 
     sys.excepthook = log_uncaught_exception
 
+    # 3. Background thread uncaught exceptions (Python 3.8+)
+    def log_thread_exception(args):
+        err_msg = "".join(traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback))
+        thread_name = getattr(args.thread, "name", "unknown")
+        print(f"CRITICAL ERROR (Thread Exception in '{thread_name}'):\n{err_msg}", file=sys.stderr)
+        _append_to_crash_log(f"Thread Exception ({thread_name})", err_msg)
+
+    threading.excepthook = log_thread_exception
+
+    # 4. Unraisable exceptions (e.g., inside __del__ or garbage collection)
+    def log_unraisable_exception(unraisable):
+        err_msg = f"Message: {unraisable.err_msg}\nObject: {unraisable.object}\n"
+        if unraisable.exc_type:
+            err_msg += "".join(traceback.format_exception(unraisable.exc_type, unraisable.exc_value, unraisable.exc_traceback))
+        print("CRITICAL ERROR (Unraisable Exception):\n", err_msg, file=sys.stderr)
+        _append_to_crash_log("Unraisable Exception", err_msg)
+
+    sys.unraisablehook = log_unraisable_exception
+
+    # 5. Qt C++ message handler (captures QtCriticalMsg / QtFatalMsg)
+    def qt_message_handler(mode, context, message):
+        if mode in (QtMsgType.QtCriticalMsg, QtMsgType.QtFatalMsg):
+            ctx_info = f"[{context.file}:{context.line}] " if context.file else ""
+            full_msg = f"Qt {mode.name}: {ctx_info}{message}"
+            print(full_msg, file=sys.stderr)
+            _append_to_crash_log(f"Qt Message ({mode.name})", full_msg)
+
+    try:
+        qInstallMessageHandler(qt_message_handler)
+    except Exception as q_err:
+        print(f"Failed to install Qt message handler: {q_err}", file=sys.stderr)
+
+    return native_log_fp
+
+
+def main():
+    """Application entry point: initializes the Qt application context, registers native event filters, and launches the main window"""
+    import traceback
+
+    native_log_fp = _setup_crash_guards()
+
     try:
         print("Starting SPAudiobookPlayer...")
-        app = QApplication(sys.argv)
+        app = SafeApplication(sys.argv)
         print("QApplication created.")
 
         single_instance = SingleInstanceManager("SPAudiobookPlayer")

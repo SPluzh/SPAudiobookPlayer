@@ -710,4 +710,63 @@ def test_cancel_restores_initial_cover(temp_db, tmp_path):
         conn.close()
 
 
+def test_cover_search_thread_safety(tmp_path, monkeypatch):
+    """Verify PreviewLoader emits QImage (thread-safe) and CoverSearchDialog retires threads without terminate()."""
+    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtGui import QImage, QColor
+    from PyQt6.QtCore import QBuffer, QIODevice
+    from metadata_dialog import CoverSearchDialog, PreviewLoader, SearchWorker
+
+    app = QApplication.instance() or QApplication([])
+
+    # Build valid PNG bytes for PreviewLoader
+    img = QImage(32, 32, QImage.Format.Format_RGB32)
+    img.fill(QColor("teal"))
+    buf = QBuffer()
+    buf.open(QIODevice.OpenModeFlag.WriteOnly)
+    img.save(buf, "PNG")
+    png_bytes = bytes(buf.data())
+
+    class MockResponse:
+        def __init__(self, data):
+            self._data = data
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+        def read(self, n=-1):
+            return self._data
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda req, timeout=5: MockResponse(png_bytes))
+
+    loader = PreviewLoader([(0, "https://example.com/cover.png")])
+    emitted = []
+    loader.preview_ready.connect(lambda idx, image: emitted.append((idx, image)))
+    loader.run()
+
+    assert len(emitted) == 1
+    assert emitted[0][0] == 0
+    assert isinstance(emitted[0][1], QImage)
+    assert not emitted[0][1].isNull()
+
+    # Prevent initial auto-search from hitting network
+    monkeypatch.setattr(CoverSearchDialog, "start_search", lambda self: None)
+    dialog = CoverSearchDialog("test", str(tmp_path))
+    worker = SearchWorker("test")
+
+    terminate_called = False
+    def fail_if_terminated():
+        nonlocal terminate_called
+        terminate_called = True
+
+    monkeypatch.setattr(worker, "terminate", fail_if_terminated)
+    dialog.search_worker = worker
+    dialog.stop_threads()
+
+    assert terminate_called is False
+    assert dialog.search_worker is None
+    dialog.close()
+
+
+
 

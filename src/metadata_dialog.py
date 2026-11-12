@@ -1158,6 +1158,47 @@ class MetadataEditDialog(QDialog):
                     break
 
 
+_ACTIVE_COVER_THREADS = set()
+
+
+def _retire_cover_thread(worker, wait_ms: int = 150) -> None:
+    """Gracefully stop and retire a QThread without calling unsafe terminate()."""
+    if worker is None:
+        return
+    try:
+        worker.disconnect()
+    except Exception:
+        pass
+    try:
+        if hasattr(worker, "stop"):
+            worker.stop()
+        else:
+            if hasattr(worker, "running"):
+                worker.running = False
+            worker.requestInterruption()
+    except Exception:
+        pass
+
+    try:
+        if worker.isRunning():
+            worker.wait(wait_ms)
+        if worker.isRunning():
+            _ACTIVE_COVER_THREADS.add(worker)
+
+            def _cleanup(w=worker):
+                _ACTIVE_COVER_THREADS.discard(w)
+                try:
+                    w.deleteLater()
+                except Exception:
+                    pass
+
+            worker.finished.connect(_cleanup)
+        else:
+            worker.deleteLater()
+    except Exception:
+        pass
+
+
 class SearchWorker(QThread):
     results_found = pyqtSignal(list)
     error_occurred = pyqtSignal(str)
@@ -1165,11 +1206,21 @@ class SearchWorker(QThread):
     def __init__(self, query):
         super().__init__()
         self.query = query
+        self.running = True
+
+    def stop(self):
+        self.running = False
+        self.requestInterruption()
+
+    def _is_cancelled(self) -> bool:
+        return (not self.running) or self.isInterruptionRequested()
         
     def run(self):
         import traceback
         import time
         try:
+            if self._is_cancelled():
+                return
             print(f"[SearchWorker] Starting search for query: '{self.query}'")
             try:
                 from ddgs import DDGS
@@ -1179,26 +1230,30 @@ class SearchWorker(QThread):
             litres_results = []
             direct_results = []
             
+            if self._is_cancelled():
+                return
             try:
                 print(f"[SearchWorker] Querying LitresScraper directly...")
                 from litres_scraper import LitresScraper
                 scraper = LitresScraper()
                 litres_results = scraper.search(self.query)
                 print(f"[SearchWorker] LitresScraper found {len(litres_results)} results")
-                if litres_results:
+                if litres_results and not self._is_cancelled():
                     for r in litres_results:
                         r['source'] = 'Litres'
                     self.results_found.emit(litres_results)
             except Exception as e:
                 print(f"[SearchWorker] LitresScraper failed: {e}")
             
+            if self._is_cancelled():
+                return
             try:
                 print(f"[SearchWorker] Querying StorytelScraper directly...")
                 from storytel_scraper import StorytelScraper
                 scraper = StorytelScraper()
                 storytel_res = scraper.search(self.query)
                 print(f"[SearchWorker] StorytelScraper found {len(storytel_res)} results")
-                if storytel_res:
+                if storytel_res and not self._is_cancelled():
                     for r in storytel_res:
                         r['source'] = 'Storytel'
                     direct_results.extend(storytel_res)
@@ -1206,13 +1261,15 @@ class SearchWorker(QThread):
             except Exception as e:
                 print(f"[SearchWorker] StorytelScraper failed: {e}")
 
+            if self._is_cancelled():
+                return
             try:
                 print(f"[SearchWorker] Querying GoodreadsScraper directly...")
                 from goodreads_scraper import GoodreadsScraper
                 scraper = GoodreadsScraper()
                 goodreads_res = scraper.search(self.query)
                 print(f"[SearchWorker] GoodreadsScraper found {len(goodreads_res)} results")
-                if goodreads_res:
+                if goodreads_res and not self._is_cancelled():
                     for r in goodreads_res:
                         r['source'] = 'Goodreads'
                     direct_results.extend(goodreads_res)
@@ -1220,13 +1277,15 @@ class SearchWorker(QThread):
             except Exception as e:
                 print(f"[SearchWorker] GoodreadsScraper failed: {e}")
 
+            if self._is_cancelled():
+                return
             try:
                 print(f"[SearchWorker] Querying AudibleScraper...")
                 from audible_scraper import AudibleScraper
                 scraper = AudibleScraper()
                 audible_res = scraper.search(self.query)
                 print(f"[SearchWorker] AudibleScraper found {len(audible_res)} results")
-                if audible_res:
+                if audible_res and not self._is_cancelled():
                     for r in audible_res:
                         r['source'] = 'Audible'
                     direct_results.extend(audible_res)
@@ -1234,13 +1293,16 @@ class SearchWorker(QThread):
             except Exception as e:
                 print(f"[SearchWorker] AudibleScraper failed: {e}")
             
-            
+            if self._is_cancelled():
+                return
             # Now run general search via DDGS
             general_results = []
             try:
                 print(f"[SearchWorker] Querying general search via DDGS...")
                 max_attempts = 3
                 for attempt in range(max_attempts):
+                    if self._is_cancelled():
+                        return
                     try:
                         with DDGS() as ddgs:
                             general_results = list(ddgs.images(self.query, safesearch='off', max_results=60))
@@ -1252,7 +1314,10 @@ class SearchWorker(QThread):
                         if attempt == max_attempts - 1 and not litres_results and not direct_results:
                             raise e
                     if attempt < max_attempts - 1:
-                        time.sleep(1.0)
+                        for _ in range(10):
+                            if self._is_cancelled():
+                                return
+                            time.sleep(0.1)
                 
                 for r in general_results:
                     r['source'] = 'Web'
@@ -1261,6 +1326,8 @@ class SearchWorker(QThread):
                 if not litres_results and not direct_results:
                     raise e
                     
+            if self._is_cancelled():
+                return
             # Merge results, keeping litres/direct results first
             seen_images = set()
             results = []
@@ -1283,40 +1350,60 @@ class SearchWorker(QThread):
                     seen_images.add(img_url)
                     results.append(res)
                     
-            print(f"[SearchWorker] Search completed successfully, found {len(results)} results")
-            self.results_found.emit(results)
+            if not self._is_cancelled():
+                print(f"[SearchWorker] Search completed successfully, found {len(results)} results")
+                self.results_found.emit(results)
         except Exception as e:
-            print(f"[SearchWorker] Exception during search:")
-            traceback.print_exc()
-            self.error_occurred.emit(str(e))
+            if not self._is_cancelled():
+                print(f"[SearchWorker] Exception during search:")
+                traceback.print_exc()
+                self.error_occurred.emit(str(e))
+
+
+def _read_limited(response, max_bytes: int) -> bytes:
+    """Read up to max_bytes + 1 from an HTTP response, supporting simple mock responses."""
+    try:
+        return response.read(max_bytes + 1)
+    except TypeError:
+        return response.read()
 
 
 class PreviewLoader(QThread):
-    preview_ready = pyqtSignal(int, QPixmap)
+    # Emit QImage (thread-safe), never QPixmap (main GUI thread only)
+    preview_ready = pyqtSignal(int, QImage)
+    MAX_PREVIEW_BYTES = 10 * 1024 * 1024
     
     def __init__(self, index_url_pairs):
         super().__init__()
         self.index_url_pairs = index_url_pairs
         self.running = True
+
+    def stop(self):
+        self.running = False
+        self.requestInterruption()
         
     def run(self):
         import urllib.request
-        import traceback
         print(f"[PreviewLoader] Starting loading of {len(self.index_url_pairs)} previews")
         for idx, url in self.index_url_pairs:
-            if not self.running:
+            if not self.running or self.isInterruptionRequested():
                 print("[PreviewLoader] Running flag set to False, stopping preview load")
                 break
+            if not url or not isinstance(url, str) or not url.startswith(("http://", "https://")):
+                continue
             try:
                 print(f"[PreviewLoader] Downloading preview {idx + 1}/{len(self.index_url_pairs)} (index {idx}): {url}")
                 req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
                 with urllib.request.urlopen(req, timeout=5) as response:
-                    data = response.read()
-                from PyQt6.QtGui import QImage
+                    data = _read_limited(response, self.MAX_PREVIEW_BYTES)
+                if not self.running or self.isInterruptionRequested():
+                    break
+                if len(data) > self.MAX_PREVIEW_BYTES:
+                    print(f"[PreviewLoader] Skipping oversized preview {idx} ({len(data)} bytes): {url}")
+                    continue
                 image = QImage.fromData(data)
                 if not image.isNull():
-                    pixmap = QPixmap.fromImage(image)
-                    self.preview_ready.emit(idx, pixmap)
+                    self.preview_ready.emit(idx, image)
                 else:
                     print(f"[PreviewLoader] Image data is null for: {url}")
             except Exception as e:
@@ -1326,15 +1413,23 @@ class PreviewLoader(QThread):
 class DownloadWorker(QThread):
     progress = pyqtSignal(int, int)
     finished_signal = pyqtSignal(int, str)
+    MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024
     
     def __init__(self, urls, destination_dir):
         super().__init__()
         self.urls = urls
         self.destination_dir = Path(destination_dir)
+        self.running = True
+
+    def stop(self):
+        self.running = False
+        self.requestInterruption()
         
     def run(self):
         import traceback
         try:
+            if not self.running or self.isInterruptionRequested():
+                return
             print(f"[DownloadWorker] Starting cover download of {len(self.urls)} images to {self.destination_dir}")
             if not self.destination_dir.exists():
                 try:
@@ -1342,7 +1437,8 @@ class DownloadWorker(QThread):
                     print(f"[DownloadWorker] Created directory: {self.destination_dir}")
                 except Exception as e:
                     print(f"[DownloadWorker] Failed to create folder: {e}")
-                    self.finished_signal.emit(0, f"Cannot create folder: {e}")
+                    if self.running and not self.isInterruptionRequested():
+                        self.finished_signal.emit(0, f"Cannot create folder: {e}")
                     return
                     
             import urllib.request
@@ -1354,6 +1450,10 @@ class DownloadWorker(QThread):
             total = len(self.urls)
             
             for idx, url in enumerate(self.urls):
+                if not self.running or self.isInterruptionRequested():
+                    return
+                if not url or not isinstance(url, str) or not url.startswith(("http://", "https://")):
+                    continue
                 self.progress.emit(idx + 1, total)
                 try:
                     url_path = urlparse(url).path
@@ -1375,7 +1475,11 @@ class DownloadWorker(QThread):
                     print(f"[DownloadWorker] Downloading {idx + 1}/{total} from {url} to {dest_file}")
                     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
                     with urllib.request.urlopen(req, timeout=15) as response:
-                        data = response.read()
+                        data = _read_limited(response, self.MAX_DOWNLOAD_BYTES)
+                    if not self.running or self.isInterruptionRequested():
+                        return
+                    if not data or len(data) > self.MAX_DOWNLOAD_BYTES:
+                        raise ValueError("Empty or oversized image response")
                         
                     with open(dest_file, 'wb') as f:
                         f.write(data)
@@ -1387,11 +1491,13 @@ class DownloadWorker(QThread):
                     traceback.print_exc()
                     error_msg = f"Failed to download some covers: {e}"
                     
-            self.finished_signal.emit(success_count, error_msg if success_count == 0 else "")
+            if self.running and not self.isInterruptionRequested():
+                self.finished_signal.emit(success_count, error_msg if success_count == 0 else "")
         except Exception as e:
             print("[DownloadWorker] Critical error inside worker thread:")
             traceback.print_exc()
-            self.finished_signal.emit(0, str(e))
+            if self.running and not self.isInterruptionRequested():
+                self.finished_signal.emit(0, str(e))
 
 
 class HoverPreviewPopup(QLabel):
@@ -1673,6 +1779,8 @@ class CoverSearchDialog(QDialog):
         
     def on_search_success(self, results):
         try:
+            if self.sender() is not None and self.sender() is not self.search_worker:
+                return
             print(f"[CoverSearchDialog] on_search_success received {len(results)} results")
             
             # Find which results are actually new
@@ -1701,10 +1809,9 @@ class CoverSearchDialog(QDialog):
                 
             self.rearrange_grid()
             
-            # Restart PreviewLoader for all not-yet-loaded images
+            # Restart PreviewLoader for all not-yet-loaded images without blocking UI
             if self.preview_loader:
-                self.preview_loader.running = False
-                self.preview_loader.wait()
+                _retire_cover_thread(self.preview_loader, wait_ms=50)
                 self.preview_loader = None
                 
             index_url_pairs = [
@@ -1724,18 +1831,26 @@ class CoverSearchDialog(QDialog):
             self.status_label.setText(f"Error loading results: {e}")
         
     def on_search_error(self, err_msg):
+        if self.sender() is not None and self.sender() is not self.search_worker:
+            return
         print(f"[CoverSearchDialog] on_search_error received: '{err_msg}'")
         self.status_label.setText(f"Search error: {err_msg}")
         
     def on_search_finished(self):
+        if self.sender() is not None and self.sender() is not self.search_worker:
+            return
         print("[CoverSearchDialog] Search worker finished")
         self.search_btn.setEnabled(True)
         
-    def on_preview_ready(self, idx, pixmap):
+    def on_preview_ready(self, idx, image):
         try:
-            if idx < len(self.result_widgets):
-                self.result_widgets[idx].set_pixmap(pixmap)
-                self.loaded_indices.add(idx)
+            if self.sender() is not None and self.sender() is not self.preview_loader:
+                return
+            if image and not image.isNull() and 0 <= idx < len(self.result_widgets):
+                pixmap = QPixmap.fromImage(image)
+                if not pixmap.isNull():
+                    self.result_widgets[idx].set_pixmap(pixmap)
+                    self.loaded_indices.add(idx)
         except Exception as e:
             print(f"[CoverSearchDialog] Error setting preview pixmap at index {idx}: {e}")
             
@@ -1803,30 +1918,25 @@ class CoverSearchDialog(QDialog):
             
     def stop_threads(self):
         print("[CoverSearchDialog] stop_threads called")
-        if self.search_worker and self.search_worker.isRunning():
-            print("[CoverSearchDialog] Terminating search worker thread...")
-            self.search_worker.terminate()
-            self.search_worker.wait()
-            print("[CoverSearchDialog] Search worker thread terminated.")
-        self.search_worker = None
+        if self.search_worker:
+            _retire_cover_thread(self.search_worker)
+            self.search_worker = None
         
         if self.preview_loader:
-            print("[CoverSearchDialog] Stopping preview loader thread...")
-            self.preview_loader.running = False
-            self.preview_loader.wait()
-            print("[CoverSearchDialog] Preview loader thread stopped.")
-        self.preview_loader = None
+            _retire_cover_thread(self.preview_loader)
+            self.preview_loader = None
         
-        if self.download_worker and self.download_worker.isRunning():
-            print("[CoverSearchDialog] Terminating download worker thread...")
-            self.download_worker.terminate()
-            self.download_worker.wait()
-            print("[CoverSearchDialog] Download worker thread terminated.")
-        self.download_worker = None
+        if self.download_worker:
+            _retire_cover_thread(self.download_worker)
+            self.download_worker = None
         
     def clear_grid(self):
         print("[CoverSearchDialog] clear_grid called")
         for widget in self.result_widgets:
+            try:
+                widget.hide_hover_popup()
+            except Exception:
+                pass
             widget.deleteLater()
         self.result_widgets = []
         self.results = []
@@ -1842,6 +1952,11 @@ class CoverSearchDialog(QDialog):
             if widget:
                 widget.deleteLater()
                 
+    def accept(self):
+        print("[CoverSearchDialog] accept triggered")
+        self.stop_threads()
+        super().accept()
+
     def closeEvent(self, event):
         print("[CoverSearchDialog] closeEvent triggered")
         self.stop_threads()

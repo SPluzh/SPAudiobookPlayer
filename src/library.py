@@ -672,9 +672,22 @@ class LibraryWidget(QWidget):
         self.nesting_lines_single_color = self.config.get("nesting_lines_single_color", True)
         self.nesting_lines_color = self.config.get("nesting_lines_color", "#808080")
         self._expanded_paths_cache = set()
+        self._list_cover_cache = {}
+        self._list_cover_loader = CoverLoader(self)
+        self._list_cover_loader.cover_loaded.connect(self._on_list_cover_loaded)
+        self._list_cover_loader.start()
         self.setup_ui()
         self.load_icons()
         self.set_tile_view_active(self.is_tile_view)
+
+    def _on_list_cover_loaded(self, path: str, physical_size: int, qimage):
+        """Store asynchronously loaded list-view cover and schedule viewport repaint"""
+        pixmap = QPixmap.fromImage(qimage)
+        if not pixmap.isNull():
+            pixmap.setDevicePixelRatio(self.devicePixelRatioF())
+            self._list_cover_cache[(path, physical_size)] = QIcon(pixmap)
+            if not self.is_tile_view and hasattr(self, "tree") and self.tree:
+                self.tree.viewport().update()
 
     @property
     def current_meta_filter(self) -> str:
@@ -951,6 +964,8 @@ class LibraryWidget(QWidget):
 
         if self.delegate:
             self.delegate.tree = self.tree
+            self.delegate.cover_cache = self._list_cover_cache
+            self.delegate.cover_loader = self._list_cover_loader
             self.tree.setItemDelegate(self.delegate)
 
         self.stack.addWidget(self.tree)
@@ -1637,25 +1652,22 @@ class LibraryWidget(QWidget):
             (data.get("is_started", False), data.get("is_completed", False), data.get("is_favorite", False)),
         )
 
-        # Fetch and scale the audiobook cover
-        cover_icon = None
-
         # Prioritize cached cover (fastest access)
         cover_p_str = data.get("cached_cover_path")
         if not cover_p_str:
             cover_p_str = data.get("cover_path")
 
+        abs_cover_str = None
         if cover_p_str:
             cover_p = Path(cover_p_str)
             # For relative paths (legacy or uncached), resolve them against the library's root directory
             if not cover_p.is_absolute():
                 cover_p = self._resolve_item_abs_path(cover_p_str, data)
+            abs_cover_str = str(cover_p)
 
-            cover_icon = load_icon(
-                cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
-            )
-        item.setIcon(0, cover_icon or self.default_audiobook_icon)
+        item.setIcon(0, self.default_audiobook_icon)
         item.setData(0, Qt.ItemDataRole.UserRole + 5, cover_p_str)
+        item.setData(0, Qt.ItemDataRole.UserRole + 6, abs_cover_str)
 
         # Store tags
         if "tags" in data:
@@ -2770,29 +2782,36 @@ class LibraryWidget(QWidget):
                 tags = self.db.get_tags_for_audiobook(info[0])
                 item.setData(0, Qt.ItemDataRole.UserRole + 4, tags)
 
-            # Refresh and scale the audiobook cover
-            cover_icon = None
+            # Refresh and update the audiobook cover
             cover_p_str = data.get("cached_cover_path")
             if not cover_p_str:
                 cover_p_str = data.get("cover_path")
 
             old_cover_p_str = item.data(0, Qt.ItemDataRole.UserRole + 5)
+            old_abs_cover_str = item.data(0, Qt.ItemDataRole.UserRole + 6)
             cover_is_changed = (cover_p_str != old_cover_p_str)
 
+            abs_cover_str = None
             if cover_p_str:
                 cover_p = Path(cover_p_str)
                 if not cover_p.is_absolute():
                     cover_p = self._resolve_item_abs_path(cover_p_str, data)
+                abs_cover_str = str(cover_p)
 
+            if cover_is_changed:
                 from utils import load_icon
-                # Only clear LRU cache if cover path actually changed
-                if cover_is_changed:
-                    load_icon.cache_clear()
-                cover_icon = load_icon(
-                    cover_p, self.config.get("audiobook_icon_size", 100), force_square=True
-                )
-            item.setIcon(0, cover_icon or self.default_audiobook_icon)
+                load_icon.cache_clear()
+                for target_p in (old_abs_cover_str, abs_cover_str):
+                    if target_p:
+                        for k in [k for k in self._list_cover_cache if k[0] == target_p]:
+                            del self._list_cover_cache[k]
+                        self._list_cover_loader._requested = {
+                            k for k in self._list_cover_loader._requested if k[0] != target_p
+                        }
+
+            item.setIcon(0, self.default_audiobook_icon)
             item.setData(0, Qt.ItemDataRole.UserRole + 5, cover_p_str)
+            item.setData(0, Qt.ItemDataRole.UserRole + 6, abs_cover_str)
 
             item.setText(0, item.text(0))
             self.update_cache_item_status(
@@ -3510,6 +3529,18 @@ class LibraryWidget(QWidget):
 
     def cleanup(self):
         """Clean up child views and background threads before shutdown"""
+        if hasattr(self, "_list_cover_loader") and self._list_cover_loader:
+            try:
+                self._list_cover_loader.cover_loaded.disconnect()
+            except Exception:
+                pass
+            try:
+                if self._list_cover_loader.isRunning():
+                    self._list_cover_loader.stop()
+                    self._list_cover_loader.wait(300)
+            except Exception as e:
+                print(f"Error cleaning up _list_cover_loader: {e}")
+
         if hasattr(self, "tile_view") and self.tile_view:
             try:
                 self.tile_view.cleanup()

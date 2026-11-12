@@ -207,6 +207,10 @@ class MultiLineDelegate(QStyledItemDelegate):
         # Nesting lines color palette
         self.NESTING_COLORS = NESTING_COLORS
 
+        # Async cover loading references (set by LibraryWidget)
+        self.cover_cache = None
+        self.cover_loader = None
+
     @lru_cache(maxsize=32)
     def _get_style(self, style_name: str) -> tuple[QFont, QColor]:
         """Fetch font and color settings from the style manager mapped to the given name"""
@@ -749,6 +753,17 @@ class MultiLineDelegate(QStyledItemDelegate):
         nesting_offset = self._draw_nesting_lines(painter, option.rect, chain, index)
 
         icon = index.data(Qt.ItemDataRole.DecorationRole)
+        if self.cover_cache is not None and self.cover_loader is not None:
+            abs_cover_str = index.data(Qt.ItemDataRole.UserRole + 6)
+            if abs_cover_str:
+                dpr = painter.device().devicePixelRatioF() if painter.device() else 1.0
+                physical_size = int(self.audiobook_icon_size * max(1.5, dpr))
+                cached_icon = self.cover_cache.get((abs_cover_str, physical_size))
+                if cached_icon is not None:
+                    icon = cached_icon
+                else:
+                    self.cover_loader.queue_load(abs_cover_str, physical_size)
+
         icon_rect = self.get_icon_rect(option.rect, index)
         data = index.data(Qt.ItemDataRole.UserRole + 2)
         if not data:

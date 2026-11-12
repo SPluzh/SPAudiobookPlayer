@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.21]
+- **Stability**: Fixed a crash when searching for and loading book covers online in the metadata editor.
+- **Stability**: Added overall crash protection to prevent unexpected app closures and save crash details for troubleshooting.
+
+## [1.8.20]
+- **Performance**: Accelerated application startup and library loading (eliminated duplicate library loading on session restore, switched list covers to asynchronous background loading, and lazy-loaded dialog modules).
+
 ## [1.8.19]
 - **UI / Grid View**: Added dynamic card height based on populated metadata (title lines, author, narrator, and tags) with per-row alignment, automatically recalculating when tags or metadata change.
 
