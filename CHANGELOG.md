@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.19]
+- **UI / Grid View**: Added dynamic card height based on populated metadata (title lines, author, narrator, and tags) with per-row alignment, automatically recalculating when tags or metadata change.
+
 ## [1.8.18]
 - **Playback**: Fixed Auto Rewind rewinding past chapter start and freezing playback time at 00:00.
 - **Performance**: Accelerated application shutdown and fixed the lingering spinning cursor on close.

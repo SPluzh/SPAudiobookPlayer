@@ -1702,6 +1702,77 @@ class VirtualTileCanvas(QWidget):
             "tree_item": item,
         }
 
+    def _get_book_content_height(
+        self, book: dict, icon_size: int, tile_w: int
+    ) -> int:
+        """Calculate the required height for a book tile based on populated metadata."""
+        cache_key = (
+            icon_size,
+            tile_w,
+            getattr(StyleManager, "current_theme", None),
+        )
+        if book.get("_height_cache_key") == cache_key:
+            return book["_content_height"]
+
+        available_width = tile_w - 16
+        text_offset_y = icon_size + 19
+        last_bottom = 8 + icon_size
+
+        title = book.get("title", "")
+        if title:
+            font, _ = StyleManager.get_theme_property("delegate_title")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(13)
+            fm = QFontMetrics(f)
+            elided_title = fm.elidedText(
+                title, Qt.TextElideMode.ElideRight, available_width * 2
+            )
+            title_bound = fm.boundingRect(
+                QRect(0, 0, available_width, 100),
+                Qt.AlignmentFlag.AlignLeft
+                | Qt.AlignmentFlag.AlignTop
+                | Qt.TextFlag.TextWordWrap,
+                elided_title,
+            )
+            title_height = min(title_bound.height(), fm.height() * 2)
+            last_bottom = text_offset_y + title_height
+            text_offset_y += title_height + 4
+
+        author = book.get("author", "")
+        if author:
+            font, _ = StyleManager.get_theme_property("delegate_author")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(11)
+            fm = QFontMetrics(f)
+            last_bottom = text_offset_y + fm.height()
+            text_offset_y += fm.height() + 2
+
+        narrator = book.get("narrator", "")
+        if narrator:
+            font, _ = StyleManager.get_theme_property("delegate_narrator")
+            f = QFont(font) if font else QFont()
+            f.setPixelSize(11)
+            fm = QFontMetrics(f)
+            last_bottom = text_offset_y + fm.height()
+            text_offset_y += fm.height() + 2
+
+        tags = book.get("tags")
+        if tags:
+            tag_y = text_offset_y
+            if not narrator and (author or title):
+                tag_y += 2
+            font_tag, _ = StyleManager.get_theme_property("delegate_info_font")
+            f_tag = QFont(font_tag) if font_tag else QFont()
+            fm_tag = QFontMetrics(f_tag)
+            first_tag_w = fm_tag.horizontalAdvance(tags[0]["name"]) + 12
+            if first_tag_w <= available_width:
+                last_bottom = tag_y + fm_tag.height() + 4
+
+        content_height = int(last_bottom + 8)
+        book["_height_cache_key"] = cache_key
+        book["_content_height"] = content_height
+        return content_height
+
     def update_layout(self):
         canvas_width = self.width()
         current_y = 4
@@ -1710,7 +1781,6 @@ class VirtualTileCanvas(QWidget):
             self.tile_flow_widget.config.get("audiobook_icon_size", 100) * 1.5
         )
         tile_w = icon_size + 16
-        tile_h = icon_size + 16 + 100
         hspacing = 6
         vspacing = 6
 
@@ -1741,20 +1811,36 @@ class VirtualTileCanvas(QWidget):
                 cols = max(1, int((avail_w + hspacing) / (tile_w + hspacing)))
                 block["cols"] = cols
 
-                n = len(block["books"])
+                books = block["books"]
+                n = len(books)
                 rows = math.ceil(n / cols)
+                row_heights = []
+                row_ys = []
+                row_y = current_y + 4
+
+                for r in range(rows):
+                    row_books = books[r * cols : (r + 1) * cols]
+                    row_h = max(
+                        self._get_book_content_height(b, icon_size, tile_w)
+                        for b in row_books
+                    )
+                    row_heights.append(row_h)
+                    row_ys.append(row_y)
+
+                    for c, book in enumerate(row_books):
+                        tx = grid_left + c * (tile_w + hspacing)
+                        book["rect"] = QRect(tx, row_y, tile_w, row_h)
+
+                    row_y += row_h + vspacing
+
+                block["row_heights"] = row_heights
+                block["row_ys"] = row_ys
                 grid_h = (
-                    rows * tile_h + (rows - 1) * vspacing + 8 if rows > 0 else 0
+                    sum(row_heights) + (rows - 1) * vspacing + 8
+                    if rows > 0
+                    else 0
                 )
                 block["height"] = grid_h
-
-                for idx, book in enumerate(block["books"]):
-                    row = idx // cols
-                    col = idx % cols
-                    tx = grid_left + col * (tile_w + hspacing)
-                    ty = current_y + 4 + row * (tile_h + vspacing)
-                    book["rect"] = QRect(tx, ty, tile_w, tile_h)
-
                 current_y += grid_h
 
         self.calculated_height = current_y + 4
@@ -1816,9 +1902,13 @@ class VirtualTileCanvas(QWidget):
                     break
 
         if found_book and found_book.get("tree_item"):
+            old_rect = QRect(found_book["rect"])
+            old_total_h = self.calculated_height
             old_cover_path = found_book.get("cover_path")
             new_data = self._extract_book_data(found_book["tree_item"])
             found_book.update(new_data)
+            found_book.pop("_height_cache_key", None)
+            found_book.pop("_content_height", None)
             physical_size = int(
                 self.tile_flow_widget.config.get("audiobook_icon_size", 100)
                 * 1.5
@@ -1843,7 +1933,13 @@ class VirtualTileCanvas(QWidget):
                 self.cover_loader._requested.discard((abs_path_str, physical_size))
                 self.cover_cache.pop((abs_path_str, physical_size), None)
             self.update_layout()
-            self.update(found_book["rect"])
+            if (
+                found_book["rect"] != old_rect
+                or self.calculated_height != old_total_h
+            ):
+                self.update()
+            else:
+                self.update(found_book["rect"])
 
     def on_folder_toggled(self, path, is_expanded):
         self.tile_flow_widget.parent_library.db.update_folder_expanded_state(
@@ -2397,7 +2493,6 @@ class VirtualTileCanvas(QWidget):
             self.tile_flow_widget.config.get("audiobook_icon_size", 100) * 1.5
         )
         tile_w = icon_size + 16
-        tile_h = icon_size + 16 + 100
         hspacing = 6
         vspacing = 6
 
@@ -2700,10 +2795,15 @@ class VirtualTileCanvas(QWidget):
                             n = len(block["books"])
                             cols = block.get("cols", 1)
                             rows = math.ceil(n / cols)
+                            row_ys = block.get("row_ys", [])
+                            row_heights = block.get("row_heights", [])
 
                             for r in range(rows):
-                                row_y = block_y + 4 + r * (tile_h + vspacing)
-                                row_h = tile_h
+                                if r < len(row_ys) and r < len(row_heights):
+                                    row_y = row_ys[r]
+                                    row_h = row_heights[r]
+                                else:
+                                    continue
                                 cover_center_y = row_y + 8 + icon_size // 2
 
                                 segment_top = block_y if r == 0 else row_y
