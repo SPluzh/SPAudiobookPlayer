@@ -4,7 +4,6 @@ import io
 import subprocess
 import sqlite3
 import configparser
-import update_ffmpeg
 import threading
 import shutil
 from pathlib import Path
@@ -74,8 +73,6 @@ import ctypes
 from ctypes import wintypes
 from hotkeys import HotKeyManager
 from player import PlayerWidget, PlaybackController
-from bookmarks_dialog import BookmarksListDialog, BookmarkEditorDialog
-from settings_dialog import SettingsDialog
 from translations import (
     tr,
     trf,
@@ -97,7 +94,6 @@ from utils import (
     set_icon_color,
     set_icon_stroke_width,
 )
-from player import PlaybackController, PlayerWidget
 from listening_tracker import ListeningTracker
 from library import (
     ScannerThread,
@@ -107,9 +103,6 @@ from library import (
     LibraryWidget,
     CopyThread,
 )
-from about_dialog import AboutDialog
-from update_dialog import UpdateCheckThread, UpdateDialog
-from updater import get_current_version
 from single_instance import SingleInstanceManager
 
 DEFAULT_PLAYER_BUTTONS_ORDER = (
@@ -996,6 +989,8 @@ class AudiobookPlayerWindow(QMainWindow):
             else ""
         )
 
+        from bookmarks_dialog import BookmarksListDialog
+
         dlg = BookmarksListDialog(
             self,
             self.db_manager,
@@ -1026,6 +1021,8 @@ class AudiobookPlayerWindow(QMainWindow):
         )
 
         from utils import format_time_short
+        from bookmarks_dialog import BookmarkEditorDialog
+
         timestamp = format_time_short(current_pos)
         default_title = f"{tr('bookmarks.bookmark_at')} {timestamp}"
 
@@ -1809,6 +1806,7 @@ class AudiobookPlayerWindow(QMainWindow):
                     # Update the UI for what we know so far (playlist, cover, speed)
                     self.update_ui_for_audiobook()
                     self.library_widget.tree.viewport().update()
+                    self.library_widget.update_tile_playback_state()
                     return  # playback will start in _on_url_load_complete once connected
 
                 # Synchronous path (local file) — same as before
@@ -1819,7 +1817,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
                 self.update_ui_for_audiobook()
                 self.library_widget.tree.viewport().update()
-                self.library_widget.load_audiobooks()
+                self.library_widget.update_tile_playback_state()
                 self.statusBar().showMessage(tr("status.restored_session"))
 
     def on_id3_state_toggled(self, state: bool):
@@ -3133,6 +3131,8 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def show_settings(self):
         """Display the configuration dialog for managing library paths, system binaries, and data preferences"""
+        from settings_dialog import SettingsDialog
+
         # Apply blur effect
         self.apply_blur()
 
@@ -3374,6 +3374,8 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def show_about(self):
         """Display the application information dialog, including versioning and credit details"""
+        from about_dialog import AboutDialog
+
         # Apply blur effect
         self.apply_blur()
 
@@ -3387,6 +3389,7 @@ class AudiobookPlayerWindow(QMainWindow):
         """Silently check for updates on startup"""
         if not self.auto_check_updates:
             return
+        from update_dialog import UpdateCheckThread
         self._update_check_thread = UpdateCheckThread()
         self._update_check_thread.result_ready.connect(self._on_update_check_auto)
         self._update_check_thread.start()
@@ -3398,6 +3401,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def check_for_updates_manual(self):
         """Manual check for updates from menu"""
+        from update_dialog import UpdateCheckThread
         self._update_check_thread = UpdateCheckThread()
         self._update_check_thread.result_ready.connect(self._on_update_check_manual)
         self._update_check_thread.start()
@@ -3420,6 +3424,7 @@ class AudiobookPlayerWindow(QMainWindow):
         elif result.update_available:
             self._show_update_dialog(result)
         else:
+            from updater import get_current_version
             QMessageBox.information(
                 self,
                 tr("info"),
@@ -3431,6 +3436,7 @@ class AudiobookPlayerWindow(QMainWindow):
 
     def _show_update_dialog(self, result):
         """Show the update dialog"""
+        from update_dialog import UpdateDialog
         self.apply_blur()
         dialog = UpdateDialog(result, self)
         dialog.update_accepted.connect(self._on_update_restart)
